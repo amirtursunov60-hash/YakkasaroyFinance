@@ -140,6 +140,18 @@ export const makeStyles = (C) => ({
   itemCur: { fontSize: 14, fontWeight: 600, fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap", textAlign: "right" },
   trend: { display: "inline-flex", alignItems: "center", gap: 2, fontWeight: 700, fontVariantNumeric: "tabular-nums" },
 
+  // ---- Модальная форма ----
+  mdOverlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 70, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 },
+  mdCard: { width: "min(560px, 100%)", maxHeight: "92vh", overflowY: "auto", background: C.panel, border: `1px solid ${C.line}`, borderRadius: 18, padding: "20px 22px 18px", boxShadow: `0 24px 60px ${C.shadow}` },
+  mdHead: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, gap: 10 },
+  mdTitle: { fontSize: 17, fontWeight: 800 },
+  mdGrid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 },
+  mdFull: { gridColumn: "1 / -1" },
+  mdInput: { width: "100%", background: C.inputBg, border: `1px solid ${C.line}`, borderRadius: 9, padding: "9px 11px", color: C.text, fontSize: 13.5, fontFamily: "inherit", outline: "none" },
+  mdSelect: { width: "100%", background: C.panel2, color: C.text, border: `1px solid ${C.line}`, borderRadius: 9, padding: "9px 11px", fontSize: 13, fontFamily: "inherit", cursor: "pointer", outline: "none" },
+  mdCheck: { display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: C.sub, cursor: "pointer", userSelect: "none", paddingTop: 4 },
+  mdActions: { display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 18 },
+
   // ---- Заявки ----
   reqTabs: { display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 18 },
   reqTab: { display: "inline-flex", alignItems: "center", gap: 7, background: C.panel, color: C.sub, border: `1px solid ${C.line}`, padding: "9px 14px", borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" },
