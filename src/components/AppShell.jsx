@@ -24,7 +24,20 @@ import { useTheme } from "../theme/theme";
 
 
 export function App({ onLogout }) {
-  const { C, st, theme, setTheme, lang, setLang, isMobile } = useTheme();
+  const { C, st, theme, setTheme, lang, setLang, isMobile, profile } = useTheme();
+  const ROLE_LABELS = {
+    owner: "Владелец",
+    fin_director: "Финансовый директор",
+    ops_director: "Операционный директор",
+    location_manager: "Управляющий точкой",
+    accountant: "Бухгалтер",
+    employee: "Сотрудник",
+  };
+  const userName = profile?.full_name || "Пользователь";
+  const userRole = ROLE_LABELS[profile?.role] || "—";
+  const userEmail = profile?.email || "";
+  const initials = userName.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
+
   const css = useMemo(() => makeCss(C), [C]);
   const [activeModule, setActiveModule] = useState("finance");
   const [active, setActive] = useState("directive");
@@ -33,9 +46,9 @@ export function App({ onLogout }) {
   const navList = MODULE_NAV[activeModule] || [];
   const pick = (key) => { setActive(key); setMenuOpen(false); };
   const pickModule = (key) => {
-    if (!MODULE_NAV[key]) return; // у модуля нет своих разделов — заглушка-навигация не нужна
+    if (!MODULE_NAV[key]) return;
     setActiveModule(key);
-    setActive(MODULE_NAV[key][0].key); // первый раздел модуля
+    setActive(MODULE_NAV[key][0].key);
     setMenuOpen(false);
   };
   return (
@@ -53,17 +66,17 @@ export function App({ onLogout }) {
         {!isMobile && <div style={st.searchWrap}><Search size={16} color={C.faint} /><input style={st.search} placeholder="Поиск…" /></div>}
         <div style={st.topRight}>
           <button style={st.iconBtn}><Bell size={17} /></button>
-          {!isMobile && <div style={st.user}><div style={st.uName}>Турсунов Амир</div><div style={st.uRole}>Генеральный директор</div></div>}
+          {!isMobile && <div style={st.user}><div style={st.uName}>{userName}</div><div style={st.uRole}>{userRole}</div></div>}
           <div style={st.profileWrap}>
-            <div style={st.avatar} className="ava" onClick={() => setProfileOpen((o) => !o)}>АТ</div>
+            <div style={st.avatar} className="ava" onClick={() => setProfileOpen((o) => !o)}>{initials}</div>
             {profileOpen && (
               <>
                 <div style={st.profileOverlay} onClick={() => setProfileOpen(false)} />
                 <div style={st.profileMenu}>
                   <div style={st.pmHead}>
                     <div>
-                      <div style={st.pmName}>Турсунов Амир</div>
-                      <div style={st.pmMail}>Amir.tursunov@mail.ru</div>
+                      <div style={st.pmName}>{userName}</div>
+                      <div style={st.pmMail}>{userEmail}</div>
                     </div>
                     <div style={st.pmLang} className="ava" onClick={() => setLang(lang === "ru" ? "tj" : "ru")} title="Сменить язык">
                       {lang === "ru" ? "RU" : "ТҶ"}
@@ -87,7 +100,6 @@ export function App({ onLogout }) {
         </div>
       </header>
 
-      {/* Верхний ярус — разделы активного модуля (вкладки) */}
       <nav style={st.modBar}>
         {navList.map((n) => { const Icon = n.icon; const on = active === n.key; return (
           <div key={n.key} style={{ ...st.mod, ...(on ? st.modActive : {}) }} className="mod" onClick={() => pick(n.key)}>
@@ -97,7 +109,6 @@ export function App({ onLogout }) {
 
       <div style={st.body}>
         {isMobile && menuOpen && <div style={st.overlay} onClick={() => setMenuOpen(false)} />}
-        {/* Левый сайдбар — модули */}
         <aside style={{
           ...st.sidebar,
           ...(isMobile ? st.sidebarMobile : {}),

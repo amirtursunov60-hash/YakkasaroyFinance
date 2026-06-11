@@ -1,8 +1,8 @@
 import { useState, useMemo } from "react";
-import { Layers, Eye, EyeOff } from "lucide-react";
+import { Layers, Eye, EyeOff, Loader2 } from "lucide-react";
 import { makeCss } from "../theme/css";
 import { useTheme } from "../theme/theme";
-
+import { signIn } from "../lib/auth";
 
 
 // ============================================================================
@@ -13,7 +13,26 @@ export function Login({ onEnter }) {
   const [email, setEmail] = useState("");
   const [pass, setPass] = useState("");
   const [show, setShow] = useState(false);
-  const submit = () => { onEnter(); }; // прототип: реальной проверки нет
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+
+  const submit = async () => {
+    if (busy) return;
+    setErr("");
+    if (!email.trim() || !pass) { setErr("Введите email и пароль"); return; }
+    setBusy(true);
+    try {
+      await signIn(email.trim(), pass);
+      onEnter();
+    } catch (e) {
+      const msg = e?.message || "";
+      if (msg.includes("Invalid login credentials")) setErr("Неверный email или пароль");
+      else if (msg.includes("Email not confirmed")) setErr("Email не подтверждён");
+      else setErr("Не удалось войти: " + msg);
+      setBusy(false);
+    }
+  };
+
   return (
     <div style={lg.screen}>
       <style>{css}</style>
@@ -30,7 +49,8 @@ export function Login({ onEnter }) {
           <div style={lg.field}>
             <label style={lg.label}>Email</label>
             <input style={lg.input} value={email} onChange={(e) => setEmail(e.target.value)}
-              placeholder="example@mail.ru" type="email" autoFocus />
+              placeholder="example@mail.ru" type="email" autoFocus
+              onKeyDown={(e) => e.key === "Enter" && submit()} />
           </div>
           <div style={lg.field}>
             <label style={lg.label}>Пароль</label>
@@ -41,8 +61,10 @@ export function Login({ onEnter }) {
               <span style={lg.eye} onClick={() => setShow(!show)}>{show ? <EyeOff size={18} /> : <Eye size={18} />}</span>
             </div>
           </div>
-          <button style={lg.btn} className="btn" onClick={submit}>Войти</button>
-          <div style={lg.note}>Демо-вход: данные не проверяются — это прототип без сервера.</div>
+          {err && <div style={lg.error}>{err}</div>}
+          <button style={{ ...lg.btn, opacity: busy ? 0.7 : 1 }} className="btn" onClick={submit} disabled={busy}>
+            {busy ? <span className="spin"><Loader2 size={17} /></span> : "Войти"}
+          </button>
         </div>
       </div>
     </div>
@@ -62,6 +84,7 @@ export const makeLg = (C) => ({
   input: { width: "100%", background: "transparent", border: "none", outline: "none", color: C.text, fontSize: 15, fontFamily: "inherit" },
   passWrap: { display: "flex", alignItems: "center", gap: 10 },
   eye: { color: C.sub, cursor: "pointer", display: "flex", flexShrink: 0 },
-  btn: { width: "100%", background: C.green, color: "#04130a", border: "none", padding: "14px", borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", marginTop: 6 },
+  btn: { width: "100%", background: C.green, color: "#04130a", border: "none", padding: "14px", borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", marginTop: 6, display: "flex", alignItems: "center", justifyContent: "center", minHeight: 50 },
+  error: { fontSize: 13, color: C.danger, background: `${C.danger}1a`, border: `1px solid ${C.danger}44`, borderRadius: 10, padding: "10px 12px", marginBottom: 12, textAlign: "center" },
   note: { fontSize: 11, color: C.faint, textAlign: "center", marginTop: 16, lineHeight: 1.5 },
 });
