@@ -118,3 +118,72 @@ export async function insertIncome(row) {
   if (error) throw error;
   return data;
 }
+
+// ---------------------------------------------------------------- Директива
+// Последние периоды ФП (для выбора недели)
+export async function fetchPeriods(limit = 12) {
+  const { data, error } = await supabase
+    .from("fp_periods").select("*")
+    .order("starts_on", { ascending: false }).limit(limit);
+  if (error) throw error;
+  return data;
+}
+
+export async function fetchFunds() {
+  const { data, error } = await supabase
+    .from("funds")
+    .select("id, code, name, kind, is_restricted, balance")
+    .eq("is_archived", false);
+  if (error) throw error;
+  return data;
+}
+
+// Правила схемы распределения по умолчанию (income_type_id is null)
+export async function fetchDefaultRules() {
+  const { data, error } = await supabase
+    .from("distribution_rules")
+    .select("id, fund_id, stage, percent, fixed_amount, priority")
+    .is("income_type_id", null)
+    .eq("is_archived", false)
+    .order("priority");
+  if (error) throw error;
+  return data;
+}
+
+// Доход периода в базовой валюте (возвраты вычитаются)
+export async function fetchPeriodIncome(periodId) {
+  if (!periodId) return 0;
+  const { data, error } = await supabase
+    .from("incomes").select("amount_base, is_return").eq("period_id", periodId);
+  if (error) throw error;
+  return data.reduce((s, r) => s + (r.is_return ? -r.amount_base : r.amount_base), 0);
+}
+
+// Уже проведённое распределение периода: { fund_id: сумма }
+export async function fetchPeriodDistribution(periodId) {
+  if (!periodId) return {};
+  const { data, error } = await supabase
+    .from("fp_register")
+    .select("fund_id, fund_amount")
+    .eq("period_id", periodId).eq("op_type", "distribution");
+  if (error) throw error;
+  const m = {};
+  for (const r of data) m[r.fund_id] = (m[r.fund_id] || 0) + Number(r.fund_amount);
+  return m;
+}
+
+// Атомарное проведение распределения (серверная функция, миграция 006)
+export async function runDistribution(periodId, allocations) {
+  const { error } = await supabase.rpc("fp_run_distribution", {
+    p_period_id: periodId, p_allocations: allocations,
+  });
+  if (error) throw error;
+}
+
+// Протокол Директивы + закрытие периода (серверная функция, миграция 006)
+export async function closePeriod(periodId, protocol) {
+  const { error } = await supabase.rpc("fp_close_period", {
+    p_period_id: periodId, p_protocol: protocol,
+  });
+  if (error) throw error;
+}
