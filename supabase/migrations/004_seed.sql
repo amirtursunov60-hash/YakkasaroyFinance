@@ -55,6 +55,8 @@ on conflict (code) do nothing;
 
 -- ------------------------------------------------- Схема распределения по умолчанию
 -- Три этапа из прототипа (FUND_LEVELS). ФД6 — на двух этапах: revenue 10% и margin 8%.
+-- Вместо on conflict — where not exists: on conflict не выводит уникальный
+-- индекс nulls not distinct на части версий PostgreSQL (ошибка 42P10).
 insert into public.distribution_rules (income_type_id, fund_id, stage, percent)
 select null, f.id, r.stage, r.pct
 from (values
@@ -76,7 +78,10 @@ from (values
   ('FD9/1', 'adjusted', 10.0)
 ) as r (fund_code, stage, pct)
 join public.funds f on f.code = r.fund_code
-on conflict (income_type_id, fund_id, stage) do nothing;
+where not exists (
+  select 1 from public.distribution_rules d
+  where d.income_type_id is null and d.fund_id = f.id and d.stage = r.stage
+);
 
 -- ---------------------------------------------------------------- Виды дохода (D-коды)
 -- Папки (направления/точки)
