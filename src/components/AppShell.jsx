@@ -12,6 +12,7 @@ import { Funds } from "../modules/finance/Funds";
 import { Income } from "../modules/finance/Income";
 import { Payroll } from "../modules/finance/Payroll";
 import { Reports } from "../modules/finance/Reports";
+import { Requests } from "../modules/finance/Requests";
 import { Suppliers } from "../modules/finance/Suppliers";
 import { OrgModule } from "../modules/org/OrgModule";
 import { RestMenu } from "../modules/restaurant/RestMenu";
@@ -136,12 +137,13 @@ export function App({ onLogout }) {
           {activeModule === "finance" && active === "directive" && <Directive />}
           {activeModule === "finance" && active === "income" && <Income />}
           {activeModule === "finance" && active === "expense" && <Expenses />}
+          {activeModule === "finance" && active === "requests" && <Requests />}
           {activeModule === "finance" && active === "funds" && <Funds />}
           {activeModule === "finance" && active === "suppliers" && <Suppliers />}
           {activeModule === "finance" && active === "clients" && <Clients />}
           {activeModule === "finance" && active === "reports" && <Reports />}
           {activeModule === "finance" && active === "payroll" && <Payroll />}
-          {activeModule === "finance" && !["directive", "income", "control", "expense", "funds", "suppliers", "clients", "reports", "payroll"].includes(active) && <Stub label={navList.find((n) => n.key === active)?.label} />}
+          {activeModule === "finance" && !["directive", "income", "control", "expense", "requests", "funds", "suppliers", "clients", "reports", "payroll"].includes(active) && <Stub label={navList.find((n) => n.key === active)?.label} />}
 
           {activeModule === "staff" && <StaffModule view={active} />}
 

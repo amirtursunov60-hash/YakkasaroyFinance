@@ -196,7 +196,7 @@ export async function fetchRequests(periodId) {
     .from("payment_requests")
     .select(`id, number, status, planned_amount, csw_data, csw_situation, csw_solution,
       rejection_reason, created_at, decided_at, period_id, expense_type_id,
-      position:org_positions(code, name),
+      position:org_positions(code, name, division:org_divisions(id, code, name)),
       requester:profiles!payment_requests_requester_id_fkey(full_name),
       expense_type:expense_types(code, name),
       fund:funds(id, code, name),
