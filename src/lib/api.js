@@ -322,11 +322,13 @@ export async function redeemInvite(token, fullName) {
 
 // ---------------------------------------------------------------- Счета поставщиков
 // Счёт живёт в двух периодах (одобрения и оплаты, ТЗ §4.1.6): показываем
-// поданные (ещё без периода) + одобренные/оплаченные в выбранном периоде
-export async function fetchBills(periodId) {
+// поданные (ещё без периода) + одобренные/оплаченные в выбранном периоде.
+// kind: 'supply' — поставщики (продукты/хозтовары), 'obligation' —
+// обязательства (оборудование, услуги, ремонт); без kind — все.
+export async function fetchBills(periodId, kind) {
   let q = supabase
     .from("supplier_bills")
-    .select(`id, number, status, amount, issued_on, due_on, is_recurring, comment,
+    .select(`id, number, status, kind, amount, issued_on, due_on, is_recurring, comment,
       rejection_reason, created_at, expense_type_id, counterparty_id, location_id,
       period_approved_id, period_paid_id,
       counterparty:counterparties(id, name),
@@ -338,6 +340,7 @@ export async function fetchBills(periodId) {
       paid_period:fp_periods!supplier_bills_period_paid_id_fkey(starts_on, ends_on)`)
     .eq("is_archived", false)
     .order("created_at", { ascending: false });
+  if (kind) q = q.eq("kind", kind);
   q = periodId
     ? q.or(`status.eq.submitted,period_approved_id.eq.${periodId},period_paid_id.eq.${periodId}`)
     : q.eq("status", "submitted");

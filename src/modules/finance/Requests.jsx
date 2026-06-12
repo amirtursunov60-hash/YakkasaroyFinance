@@ -176,7 +176,10 @@ export function Requests() {
           </div>
           <div style={st.locRight}>
             <div style={st.locSum}>{fmt(amount)} <span style={st.locUnit}>{item.currency?.code || ""}</span></div>
-            <span style={{ ...st.weekTag, marginLeft: 0, color: m.color, background: `${m.color}1a` }}>{m.label}</span>
+            <div style={{ display: "flex", gap: 4, justifyContent: "flex-end", flexWrap: "wrap" }}>
+              {item.kind === "obligation" && <span style={{ ...st.weekTag, marginLeft: 0, color: "#9c6ade", background: "#9c6ade1a" }}>обязательство</span>}
+              <span style={{ ...st.weekTag, marginLeft: 0, color: m.color, background: `${m.color}1a` }}>{m.label}</span>
+            </div>
           </div>
           <span style={{ ...st.locChevron, transform: isExp ? "rotate(90deg)" : "none" }}><ChevronRight size={18} /></span>
         </div>
@@ -231,7 +234,7 @@ export function Requests() {
     <section style={st.reqSection}>
       <div style={st.reqSectionHead}>
         <FileText size={18} color={C.green} />
-        <h3 style={st.reqSectionTitle}>Счета поставщиков</h3>
+        <h3 style={st.reqSectionTitle}>Счета поставщиков и обязательства</h3>
         <span style={st.reqSectionSub}>одобряются приоритетно</span>
       </div>
       {!bills.length && <div style={{ ...st.locCard, ...st.empty }}>Счетов на рассмотрении нет</div>}
