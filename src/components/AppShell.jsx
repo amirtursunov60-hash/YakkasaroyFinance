@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Layers, X, Menu, User2, Settings, LogOut, Sun, Moon } from "lucide-react";
+import { X, Menu, User2, Settings, LogOut, Sun, Moon } from "lucide-react";
 import { Stub } from "./common";
 import { MODULES, MODULE_NAV } from "../data/navigation";
 import { CrmModule } from "../modules/crm/CrmModule";
@@ -66,8 +66,9 @@ export function App({ onLogout }) {
         {isMobile && (
           <button style={st.burger} onClick={() => setMenuOpen(true)}><Menu size={20} /></button>
         )}
-        <div style={{ ...st.brand, ...(isMobile ? { gap: 0 } : {}) }}>
-          {!isMobile && <div style={st.logo}><Layers size={18} strokeWidth={2.4} /></div>}
+        <div style={{ ...st.brand, ...(isMobile ? { gap: 7 } : {}) }}>
+          <img src="/icons/icon-192.png" alt="Яккасарой"
+            style={{ width: isMobile ? 30 : 36, height: isMobile ? 30 : 36, borderRadius: isMobile ? 8 : 10, flexShrink: 0 }} />
           <div style={{ ...st.brandTxt, ...(isMobile ? { fontSize: 15.5 } : {}) }}>Яккасарой{!isMobile && <span style={st.brandThin}> финанс</span>}</div>
         </div>
         <WeekPicker />

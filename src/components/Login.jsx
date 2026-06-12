@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Layers, Eye, EyeOff, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { makeCss } from "../theme/css";
 import { useTheme } from "../theme/theme";
 import { signIn, signUp } from "../lib/auth";
@@ -57,7 +57,7 @@ export function Login({ onEnter }) {
       <div style={lg.glow} />
       <header style={lg.top}>
         <div style={st.brand}>
-          <div style={st.logo}><Layers size={18} strokeWidth={2.4} /></div>
+          <img src="/icons/icon-192.png" alt="Яккасарой" style={{ width: 36, height: 36, borderRadius: 10 }} />
           <div style={st.brandTxt}>Яккасарой<span style={st.brandThin}> финанс</span></div>
         </div>
       </header>
