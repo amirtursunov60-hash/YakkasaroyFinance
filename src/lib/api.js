@@ -184,6 +184,38 @@ export async function distributeStage(periodId, stage, allocations) {
   if (error) throw error;
 }
 
+// Создать период с заданными границами (кнопка «Добавить неделю»)
+export async function createPeriod(startsIso, endsIso) {
+  const ins = await supabase
+    .from("fp_periods")
+    .insert({ starts_on: startsIso, ends_on: endsIso })
+    .select().single();
+  if (!ins.error) return ins.data;
+  if (ins.error.code === "42501") return null; // нет прав
+  if (ins.error.code === "23505") {            // такая неделя уже есть
+    const again = await supabase
+      .from("fp_periods").select("*").eq("starts_on", startsIso).maybeSingle();
+    if (again.error) throw again.error;
+    return again.data;
+  }
+  throw ins.error;
+}
+
+// Есть ли в периоде операции (доходы, Реестр, заявки, протокол Директивы)
+export async function periodHasData(periodId) {
+  const cnt = (table) => supabase
+    .from(table).select("*", { count: "exact", head: true }).eq("period_id", periodId);
+  const rs = await Promise.all([cnt("incomes"), cnt("fp_register"), cnt("payment_requests"), cnt("directives")]);
+  for (const r of rs) if (r.error) throw r.error;
+  return rs.some((r) => (r.count || 0) > 0);
+}
+
+// Удаление пустой недели (FK в БД не дадут удалить неделю с операциями)
+export async function deletePeriod(periodId) {
+  const { error } = await supabase.from("fp_periods").delete().eq("id", periodId);
+  if (error) throw error;
+}
+
 // Статус периода: open ↔ planning (запрет подачи заявок на время финкомитета)
 export async function setPeriodStatus(periodId, status) {
   const { error } = await supabase.from("fp_periods").update({ status }).eq("id", periodId);
