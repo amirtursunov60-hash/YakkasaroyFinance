@@ -197,3 +197,9 @@ export async function closePeriod(periodId, protocol) {
   });
   if (error) throw error;
 }
+
+// Переоткрытие закрытого периода (серверная функция, миграция 008)
+export async function reopenPeriod(periodId) {
+  const { error } = await supabase.rpc("fp_reopen_period", { p_period_id: periodId });
+  if (error) throw error;
+}

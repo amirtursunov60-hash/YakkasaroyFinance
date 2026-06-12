@@ -1,11 +1,11 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { ClipboardList, Calculator, ChevronDown, CalendarDays, Check, RotateCcw, RotateCw, Lock, Ban, ArrowRightLeft, Loader2, AlertCircle, CheckCircle2, Plus, X } from "lucide-react";
+import { ClipboardList, Calculator, ChevronDown, CalendarDays, Check, RotateCcw, RotateCw, Lock, Unlock, Ban, ArrowRightLeft, Loader2, AlertCircle, CheckCircle2, Plus, X } from "lucide-react";
 import { Stat } from "../../components/common";
 import { useTheme } from "../../theme/theme";
 import { fmt } from "../../utils/format";
 import {
   weekBounds, isoDate, getPeriodFor, fetchPeriods, fetchFunds, fetchDefaultRules,
-  fetchPeriodIncome, fetchPeriodDistribution, distributeStage, setPeriodStatus, closePeriod,
+  fetchPeriodIncome, fetchPeriodDistribution, distributeStage, setPeriodStatus, closePeriod, reopenPeriod,
 } from "../../lib/api";
 
 
@@ -182,10 +182,23 @@ export function Directive() {
     finally { setBusy(null); }
   };
 
-  const doClose = async () => {
-    if (busy || !period || isClosed) return;
+  // Переключатель: закрытая неделя открывается обратно, открытая — закрывается
+  const doToggleClose = async () => {
+    if (busy || !period) return;
+    setErr(""); setDone("");
+    if (isClosed) {
+      if (!window.confirm("Открыть неделю заново? Протокол Директивы будет удалён, операции периода снова разрешены.")) return;
+      setBusy("close");
+      try {
+        await reopenPeriod(periodId);
+        await Promise.all([loadBase(true), reloadPeriodData()]);
+        setDone("Неделя открыта заново — операции периода разрешены");
+      } catch (e) { setErr(e?.message || String(e)); }
+      finally { setBusy(null); }
+      return;
+    }
     if (!window.confirm("Закрыть период ФП? Все операции периода будут заблокированы, протокол Директивы сохранится.")) return;
-    setBusy("close"); setErr(""); setDone("");
+    setBusy("close");
     try {
       const protocol = {
         income,
@@ -313,10 +326,10 @@ export function Directive() {
             : requestsBlocked ? <Lock size={15} /> : <Ban size={15} />}
           {requestsBlocked ? " Подача заявок запрещена" : " Запретить подачу заявок"}
         </button>
-        <button style={{ ...st.fpBtn, ...(isClosed ? st.fpBtnClosed : st.fpBtnPrimary), opacity: busy === "close" ? 0.7 : 1 }}
-          className="btn fpBtn" onClick={doClose} disabled={busy || isClosed || !period}>
-          {busy === "close" ? <Loader2 size={15} className="spin" /> : isClosed ? <Check size={15} /> : <Lock size={15} />}
-          {isClosed ? " Период ФП закрыт" : " Закрыть период ФП"}
+        <button style={{ ...st.fpBtn, ...(isClosed ? st.fpBtnDanger : st.fpBtnPrimary), opacity: busy === "close" ? 0.7 : 1 }}
+          className="btn fpBtn" onClick={doToggleClose} disabled={busy || !period}>
+          {busy === "close" ? <Loader2 size={15} className="spin" /> : isClosed ? <Unlock size={15} /> : <Lock size={15} />}
+          {isClosed ? " Открыть неделю" : " Закрыть период ФП"}
         </button>
         <button style={{ ...st.fpBtn, ...st.fpBtnGhost }} className="btn fpBtn"
           onClick={() => setTransferOpen(true)} disabled={busy || isClosed || !period || remainder <= 0}>
