@@ -19,7 +19,7 @@ import {
 const STAGE_LABEL = { revenue: "Выручка", margin: "Маржинальный", adjusted: "Скорректированный" };
 const OP_LABELS = {
   income: "Доход", income_return: "Возврат дохода", distribution: "Распределение",
-  request_payment: "Оплата заявки", bill_payment: "Оплата счёта", fund_transfer: "Перемещение",
+  request_payment: "Оплата заявки", bill_payment: "Оплата счёта", payroll_payment: "Выплата ЗП", fund_transfer: "Перемещение",
   fund_loan: "Заём", fund_loan_return: "Возврат займа", fx_exchange: "Обмен валют",
   cash_transfer: "Перемещение ДС", off_plan: "Вне ФП", adjustment: "Корректировка",
 };

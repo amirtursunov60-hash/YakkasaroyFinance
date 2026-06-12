@@ -24,7 +24,7 @@ const TYPE_META = {
 };
 const OP_LABELS = {
   income: "Доход", income_return: "Возврат дохода", distribution: "Распределение",
-  request_payment: "Оплата заявки", bill_payment: "Оплата счёта", fund_transfer: "Перемещение фондов",
+  request_payment: "Оплата заявки", bill_payment: "Оплата счёта", payroll_payment: "Выплата ЗП", fund_transfer: "Перемещение фондов",
   fund_loan: "Заём фонда", fund_loan_return: "Возврат займа", fx_exchange: "Обмен валют",
   cash_transfer: "Перемещение ДС", off_plan: "Трата вне ФП", adjustment: "Корректировка",
 };
