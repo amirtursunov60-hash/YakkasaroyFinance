@@ -1,2 +1,11 @@
 /* Базовый сброс — остальные глобальные стили генерируются в src/theme/css.js */
 body { margin: 0; }
+
+/* Режим «как приложение» на телефоне: запрет масштабирования жестом
+   (touch-action — страховка для iOS, который игнорирует user-scalable)
+   и двойным тапом; запрет резинового скролла за края */
+html, body {
+  touch-action: pan-x pan-y;
+  overscroll-behavior: none;
+  -webkit-text-size-adjust: 100%;
+}
