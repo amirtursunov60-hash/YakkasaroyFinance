@@ -8,6 +8,7 @@ import React from "react";
 
 export const THEMES = {
   dark: {
+    scheme: "dark",
     bg: "#0e1011", panel: "#16191a", panel2: "#202425", line: "#23282a",
     green: "#1fd65f", greenSoft: "#19b35c", text: "#f2f5f4", sub: "#8b9296", faint: "#5b6164",
     inputBg: "#0e1011", rowChild: "rgba(255,255,255,0.012)", rowHover: "#0f1714",
@@ -16,6 +17,7 @@ export const THEMES = {
     blueLink: "#9fc4ff", menuHover: "#1a1f20", shadow: "rgba(0,0,0,0.5)",
   },
   light: {
+    scheme: "light",
     bg: "#f4f6f5", panel: "#ffffff", panel2: "#eef2f0", line: "#e2e8e5",
     green: "#16b35c", greenSoft: "#16b35c", text: "#0e1a14", sub: "#5e6b64", faint: "#9aa6a0",
     inputBg: "#f4f6f5", rowChild: "rgba(0,0,0,0.015)", rowHover: "#f0f5f2",
