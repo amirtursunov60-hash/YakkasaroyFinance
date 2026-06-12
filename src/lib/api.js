@@ -129,20 +129,20 @@ export async function fetchExpenseTypes() {
   return data;
 }
 
-// Факт расходов по статьям за периоды (оплаты заявок из Реестра):
+// Факт расходов по статьям за периоды (оплаты заявок и счетов из Реестра):
 // { [expense_type_id]: { [period_id]: сумма в базовой валюте } }
 export async function fetchExpenseSums(periodIds) {
   const ids = periodIds.filter(Boolean);
   if (!ids.length) return {};
   const { data, error } = await supabase
     .from("fp_register")
-    .select("period_id, fund_amount, cash_amount, request:payment_requests(expense_type_id)")
-    .eq("op_type", "request_payment")
+    .select("period_id, op_type, fund_amount, cash_amount, request:payment_requests(expense_type_id), bill:supplier_bills(expense_type_id)")
+    .in("op_type", ["request_payment", "bill_payment"])
     .in("period_id", ids);
   if (error) throw error;
   const sums = {};
   for (const r of data) {
-    const tid = r.request?.expense_type_id;
+    const tid = r.request?.expense_type_id || r.bill?.expense_type_id;
     if (!tid) continue;
     const amt = -(Number(r.fund_amount ?? r.cash_amount) || 0);
     const byPeriod = (sums[tid] ??= {});
@@ -318,6 +318,67 @@ export async function redeemInvite(token, fullName) {
     p_token: token, p_full_name: fullName || null,
   });
   if (error) throw error;
+}
+
+// ---------------------------------------------------------------- Счета поставщиков
+// Счёт живёт в двух периодах (одобрения и оплаты, ТЗ §4.1.6): показываем
+// поданные (ещё без периода) + одобренные/оплаченные в выбранном периоде
+export async function fetchBills(periodId) {
+  let q = supabase
+    .from("supplier_bills")
+    .select(`id, number, status, amount, issued_on, due_on, is_recurring, comment,
+      rejection_reason, created_at, expense_type_id, counterparty_id, location_id,
+      period_approved_id, period_paid_id,
+      counterparty:counterparties(id, name),
+      expense_type:expense_types(code, name),
+      fund:funds(id, code, name),
+      location:locations(id, name),
+      currency:currencies(id, code, is_base),
+      approved_period:fp_periods!supplier_bills_period_approved_id_fkey(starts_on, ends_on),
+      paid_period:fp_periods!supplier_bills_period_paid_id_fkey(starts_on, ends_on)`)
+    .eq("is_archived", false)
+    .order("created_at", { ascending: false });
+  q = periodId
+    ? q.or(`status.eq.submitted,period_approved_id.eq.${periodId},period_paid_id.eq.${periodId}`)
+    : q.eq("status", "submitted");
+  const { data, error } = await q;
+  if (error) throw error;
+  return data;
+}
+
+export async function insertBill(row) {
+  const { data, error } = await supabase.from("supplier_bills").insert(row).select().single();
+  if (error) throw error;
+  return data;
+}
+
+// Одобрение (фонд + период одобрения = выбранная неделя) / отклонение
+export async function decideBill(id, patch) {
+  const upd = { ...patch };
+  if (patch.status === "approved" || patch.status === "rejected") {
+    upd.decided_by = (await supabase.auth.getUser()).data.user?.id;
+    upd.decided_at = new Date().toISOString();
+  }
+  const { error } = await supabase.from("supplier_bills").update(upd).eq("id", id);
+  if (error) throw error;
+}
+
+// Оплата одобренного счёта (серверная функция fp_pay_bill)
+export async function payBill(billId, cashAccountId, periodId) {
+  const { error } = await supabase.rpc("fp_pay_bill", {
+    p_bill_id: billId, p_cash_account_id: cashAccountId, p_period_id: periodId,
+  });
+  if (error) throw error;
+}
+
+// Быстрое добавление поставщика из формы счёта
+export async function createCounterparty(name, { isSupplier = true } = {}) {
+  const { data, error } = await supabase
+    .from("counterparties")
+    .insert({ name, is_supplier: isSupplier })
+    .select().single();
+  if (error) throw error;
+  return data;
 }
 
 // ---------------------------------------------------------------- Фонды
