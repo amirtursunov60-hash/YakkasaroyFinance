@@ -1,11 +1,12 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { ClipboardList, Calculator, ChevronDown, CalendarDays, Check, RotateCcw, RotateCw, Lock, Unlock, Ban, ArrowRightLeft, Loader2, AlertCircle, CheckCircle2, Plus, X } from "lucide-react";
+import { ClipboardList, Calculator, ChevronDown, CalendarDays, Check, RotateCcw, RotateCw, Lock, Unlock, Ban, ArrowRightLeft, Loader2, AlertCircle, CheckCircle2, Plus, X, Trash2 } from "lucide-react";
 import { Stat } from "../../components/common";
 import { useTheme } from "../../theme/theme";
 import { fmt } from "../../utils/format";
 import {
   weekBounds, isoDate, getPeriodFor, fetchPeriods, fetchFunds, fetchDefaultRules,
   fetchPeriodIncome, fetchPeriodDistribution, distributeStage, setPeriodStatus, closePeriod, reopenPeriod, resetDistribution,
+  createPeriod, periodHasData, deletePeriod,
 } from "../../lib/api";
 
 
@@ -98,20 +99,27 @@ export function Directive() {
   const fundById = useMemo(() => Object.fromEntries(funds.map((f) => [f.id, f])), [funds]);
   const pctOf = (r) => (pcts[r.id] !== undefined ? pcts[r.id] : Number(r.percent ?? 0));
 
-  // -------- одобренное по этапам из Реестра (легаси-строки без этапа — в первый подходящий)
-  const approvedByStage = useMemo(() => {
+  // -------- одобренное по этапам из Реестра.
+  // Перенесённые остатки (stage:remainder) и легаси-строки без этапа показываем
+  // в колонке «Одобрено» в строке фонда на его этапе. stageSources помнит, из
+  // каких меток Реестра собран этап — чтобы «Сброс» удалял и перенесённый остаток.
+  const { approvedByStage, stageSources } = useMemo(() => {
     const m = { revenue: {}, margin: {}, adjusted: {}, remainder: {} };
-    const legacy = [];
+    const src = { revenue: new Set(), margin: new Set(), adjusted: new Set() };
+    const misc = [];
     regRows.forEach((r) => {
-      if (r.stage && m[r.stage]) m[r.stage][r.fund_id] = (m[r.stage][r.fund_id] || 0) + r.amount;
-      else legacy.push(r);
+      if (r.stage && r.stage !== "remainder" && m[r.stage]) {
+        m[r.stage][r.fund_id] = (m[r.stage][r.fund_id] || 0) + r.amount;
+        src[r.stage].add(r.stage);
+      } else misc.push(r);
     });
-    legacy.forEach((r) => {
+    misc.forEach((r) => {
       const sg = STAGES.find((s) => rules.some((rule) => rule.stage === s.key && rule.fund_id === r.fund_id));
       const key = sg ? sg.key : "remainder";
       m[key][r.fund_id] = (m[key][r.fund_id] || 0) + r.amount;
+      if (sg) src[sg.key].add(r.stage === "remainder" ? "remainder" : "legacy");
     });
-    return m;
+    return { approvedByStage: m, stageSources: src };
   }, [regRows, rules]);
 
   // -------- этапы каскадом
@@ -129,11 +137,11 @@ export function Directive() {
       }));
       const sumCalc = rows.reduce((a, x) => a + x.calc, 0);
       const sumAppr = rows.reduce((a, x) => a + x.appr, 0);
-      const view = { ...meta, base, rows, sumCalc, sumAppr, isApproved };
+      const view = { ...meta, base, rows, sumCalc, sumAppr, isApproved, sources: stageSources[meta.key] };
       base -= isApproved ? sumAppr : sumCalc;
       return view;
     });
-  }, [rules, fundById, income, calculated, approvedByStage]);
+  }, [rules, fundById, income, calculated, approvedByStage, stageSources]);
 
   const approvedTotal = useMemo(
     () => Object.values(approvedByStage).reduce((a, m) => a + Object.values(m).reduce((s, v) => s + v, 0), 0),
@@ -173,17 +181,23 @@ export function Directive() {
   const doReset = (sg) => setCalculated((p) => ({ ...p, [sg.key]: {} }));
 
   // Сброс уже одобренного этапа: суммы списываются из фондов (удаление из Реестра).
+  // Если в этап попал перенесённый остаток (stage:remainder) — сбрасывается и он.
   // Старые распределения без метки этапа сбрасываются только целиком.
   const doResetApproved = async (sg) => {
     if (busy) return;
     const hasLegacy = regRows.some((r) => !r.stage);
+    const hasRemainder = sg.sources?.has("remainder");
     const msg = hasLegacy
       ? "Это распределение проведено без разбивки по этапам — будет сброшено ВСЁ распределение периода, суммы спишутся из фондов. Продолжить?"
-      : `Сбросить одобренный этап «${sg.title}»? Суммы будут списаны из фондов.`;
+      : `Сбросить одобренный этап «${sg.title}»${hasRemainder ? " (включая перенесённый остаток)" : ""}? Суммы будут списаны из фондов.`;
     if (!window.confirm(msg)) return;
     setBusy(`reset:${sg.key}`); setErr(""); setDone("");
     try {
-      await resetDistribution(periodId, hasLegacy ? "all" : sg.key);
+      if (hasLegacy) await resetDistribution(periodId, "all");
+      else {
+        if (sg.sources?.has(sg.key)) await resetDistribution(periodId, sg.key);
+        if (hasRemainder) await resetDistribution(periodId, "remainder");
+      }
       await Promise.all([reloadPeriodData(), loadBase(true)]);
       setCalculated({});
       setDone(hasLegacy ? "Распределение периода сброшено — можно рассчитать и одобрить заново" : `${sg.title}: одобрение сброшено`);
@@ -245,16 +259,51 @@ export function Directive() {
     finally { setBusy(null); }
   };
 
-  const createCurrent = async () => {
-    setBusy("create"); setErr("");
+  const addDaysIso = (iso, n) => {
+    const d = new Date(iso + "T00:00:00");
+    d.setDate(d.getDate() + n);
+    return isoDate(d);
+  };
+
+  // «+»: если текущей недели нет — создаёт её, иначе добавляет неделю после последней
+  const addWeek = async () => {
+    if (busy) return;
+    setBusy("create"); setErr(""); setDone("");
     try {
-      const p = await getPeriodFor(new Date(), { create: true });
+      let p;
+      if (!currentExists) {
+        p = await getPeriodFor(new Date(), { create: true });
+      } else {
+        const last = [...periods].sort((a, b) => a.starts_on.localeCompare(b.starts_on)).at(-1);
+        p = await createPeriod(addDaysIso(last.ends_on, 1), addDaysIso(last.ends_on, 7));
+      }
       if (!p) throw new Error("Нет прав на создание периода");
       await loadBase(true);
       setPeriodId(p.id);
-      setPickerOpen(false);
+      setDone(`Неделя добавлена: ${periodTitle(p)}`);
     } catch (e) { setErr(e?.message || String(e)); }
     finally { setBusy(null); }
+  };
+
+  // Удаление недели. Пока базовые условия: закрытую нельзя, с операциями нельзя.
+  const doDeletePeriod = async (p, e) => {
+    e.stopPropagation();
+    if (busy) return;
+    if (p.status === "closed") { setErr("Закрытую неделю нельзя удалить — сначала откройте её"); return; }
+    if (!window.confirm(`Удалить неделю ${periodTitle(p)}? Удалить можно только неделю без операций.`)) return;
+    setBusy(`del:${p.id}`); setErr(""); setDone("");
+    try {
+      if (await periodHasData(p.id))
+        throw new Error("В этой неделе уже есть операции (доходы, Реестр, заявки или протокол) — такую неделю удалить нельзя");
+      await deletePeriod(p.id);
+      if (p.id === periodId) setPeriodId(null);
+      await loadBase(p.id !== periodId);
+      setDone(`Неделя ${periodTitle(p)} удалена`);
+    } catch (e2) {
+      setErr(e2?.code === "23503"
+        ? "Неделя связана с операциями — удалить нельзя"
+        : (e2?.message || String(e2)));
+    } finally { setBusy(null); }
   };
 
   const currentExists = useMemo(
@@ -280,23 +329,30 @@ export function Directive() {
               {pickerOpen && (<>
                 <div style={st.weekOverlay} onClick={() => setPickerOpen(false)} />
                 <div style={st.weekMenu}>
-                  <div style={st.weekMenuHead}>Периоды ФП</div>
-                  {!currentExists && (
-                    <button style={st.weekOption} className="weekOpt" onClick={createCurrent} disabled={busy === "create"}>
-                      <span style={{ color: C.green, display: "inline-flex", alignItems: "center", gap: 7 }}>
-                        {busy === "create" ? <Loader2 size={14} className="spin" /> : <Plus size={14} />} Создать текущую неделю
-                      </span>
+                  <div style={{ ...st.weekMenuHead, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <span>Периоды ФП</span>
+                    <button style={{ ...st.iconBtn, color: C.green }} className="btn" title="Добавить неделю"
+                      onClick={addWeek} disabled={!!busy}>
+                      {busy === "create" ? <Loader2 size={15} className="spin" /> : <Plus size={15} />}
                     </button>
-                  )}
+                  </div>
                   {periods.map((p) => (
-                    <button key={p.id} style={{ ...st.weekOption, ...(p.id === periodId ? st.weekOptionOn : {}) }} className="weekOpt"
-                      onClick={() => { setPeriodId(p.id); setPickerOpen(false); }}>
-                      <span>{periodTitle(p)}</span>
-                      {p.status === "closed"
-                        ? <span style={{ ...st.weekTag, color: C.danger, background: `${C.danger}1a` }}>закрыт</span>
-                        : <span style={st.weekTag}>{STATUS_LABEL[p.status]}</span>}
-                      {p.id === periodId && <Check size={15} color={C.green} />}
-                    </button>
+                    <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 2 }}>
+                      <button style={{ ...st.weekOption, flex: 1, ...(p.id === periodId ? st.weekOptionOn : {}) }} className="weekOpt"
+                        onClick={() => { setPeriodId(p.id); setPickerOpen(false); }}>
+                        <span>{periodTitle(p)}</span>
+                        {p.status === "closed"
+                          ? <span style={{ ...st.weekTag, color: C.danger, background: `${C.danger}1a` }}>закрыт</span>
+                          : <span style={st.weekTag}>{STATUS_LABEL[p.status]}</span>}
+                        {p.id === periodId && <Check size={15} color={C.green} />}
+                      </button>
+                      {p.status !== "closed" && (
+                        <button style={{ ...st.iconBtn, color: C.danger, flexShrink: 0 }} className="btn" title="Удалить неделю"
+                          onClick={(e) => doDeletePeriod(p, e)} disabled={!!busy}>
+                          {busy === `del:${p.id}` ? <Loader2 size={14} className="spin" /> : <Trash2 size={14} />}
+                        </button>
+                      )}
+                    </div>
                   ))}
                   {!periods.length && <div style={st.empty}>Периодов пока нет</div>}
                 </div>
