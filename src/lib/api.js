@@ -320,6 +320,86 @@ export async function redeemInvite(token, fullName) {
   if (error) throw error;
 }
 
+// ---------------------------------------------------------------- Фонды
+export async function createFund({ code, name, kind, isRestricted, locationId, currencyId }) {
+  const { data, error } = await supabase
+    .from("funds")
+    .insert({ code, name, kind, is_restricted: isRestricted, location_id: locationId || null, currency_id: currencyId })
+    .select().single();
+  if (error) throw error;
+  return data;
+}
+
+// История операций между фондами: перемещения, займы, возвраты.
+// Пара строк Реестра (−из/+в) с общим pair_id собирается в одну запись.
+export async function fetchFundOps() {
+  const { data, error } = await supabase
+    .from("fp_register")
+    .select("id, op_type, fund_id, fund_amount, pair_id, loan_parent_id, comment, created_at")
+    .in("op_type", ["fund_transfer", "fund_loan", "fund_loan_return"])
+    .order("created_at", { ascending: false })
+    .limit(400);
+  if (error) throw error;
+
+  const byPair = {};
+  for (const r of data) (byPair[r.pair_id] ??= []).push(r);
+  // Сколько возвращено по каждому займу (родительская запись — отрицательная строка займа)
+  const returnedByLoan = {};
+  for (const r of data) {
+    if (r.op_type === "fund_loan_return" && r.loan_parent_id && Number(r.fund_amount) > 0)
+      returnedByLoan[r.loan_parent_id] = (returnedByLoan[r.loan_parent_id] || 0) + Number(r.fund_amount);
+  }
+  const ops = [];
+  for (const rows of Object.values(byPair)) {
+    const neg = rows.find((r) => Number(r.fund_amount) < 0);
+    const pos = rows.find((r) => Number(r.fund_amount) > 0);
+    if (!neg || !pos) continue;
+    ops.push({
+      id: neg.id, opType: neg.op_type, fromFundId: neg.fund_id, toFundId: pos.fund_id,
+      amount: Number(pos.fund_amount), comment: neg.comment, createdAt: neg.created_at,
+      loanParentId: neg.loan_parent_id,
+      returned: neg.op_type === "fund_loan" ? (returnedByLoan[neg.id] || 0) : null,
+    });
+  }
+  ops.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  return ops;
+}
+
+export async function fundTransfer(fromId, toId, amount, periodId, comment) {
+  const { error } = await supabase.rpc("fp_fund_transfer", {
+    p_from: fromId, p_to: toId, p_amount: amount, p_period_id: periodId, p_comment: comment || null,
+  });
+  if (error) throw error;
+}
+
+export async function fundLoan(fromId, toId, amount, periodId, comment) {
+  const { error } = await supabase.rpc("fp_fund_loan", {
+    p_from: fromId, p_to: toId, p_amount: amount, p_period_id: periodId, p_comment: comment || null,
+  });
+  if (error) throw error;
+}
+
+export async function fundLoanReturn(loanId, amount, periodId, comment) {
+  const { error } = await supabase.rpc("fp_fund_loan_return", {
+    p_loan_id: loanId, p_amount: amount, p_period_id: periodId, p_comment: comment || null,
+  });
+  if (error) throw error;
+}
+
+// Выписка по фонду из Реестра
+export async function fetchFundStatement(fundId, periodId) {
+  let q = supabase
+    .from("fp_register")
+    .select("id, op_type, fund_amount, comment, created_at")
+    .eq("fund_id", fundId)
+    .order("created_at", { ascending: false })
+    .limit(100);
+  if (periodId) q = q.eq("period_id", periodId);
+  const { data, error } = await q;
+  if (error) throw error;
+  return data;
+}
+
 // ---------------------------------------------------------------- Контроль средств
 export async function fetchCashAccounts() {
   const { data, error } = await supabase
