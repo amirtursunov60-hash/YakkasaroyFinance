@@ -119,6 +119,123 @@ export async function insertIncome(row) {
   return data;
 }
 
+// ---------------------------------------------------------------- Расходы / Заявки (ЗРС)
+export async function fetchExpenseTypes() {
+  const { data, error } = await supabase
+    .from("expense_types")
+    .select("id, code, name, parent_id, location_id")
+    .eq("is_archived", false);
+  if (error) throw error;
+  return data;
+}
+
+// Факт расходов по статьям за периоды (оплаты заявок из Реестра):
+// { [expense_type_id]: { [period_id]: сумма в базовой валюте } }
+export async function fetchExpenseSums(periodIds) {
+  const ids = periodIds.filter(Boolean);
+  if (!ids.length) return {};
+  const { data, error } = await supabase
+    .from("fp_register")
+    .select("period_id, fund_amount, cash_amount, request:payment_requests(expense_type_id)")
+    .eq("op_type", "request_payment")
+    .in("period_id", ids);
+  if (error) throw error;
+  const sums = {};
+  for (const r of data) {
+    const tid = r.request?.expense_type_id;
+    if (!tid) continue;
+    const amt = -(Number(r.fund_amount ?? r.cash_amount) || 0);
+    const byPeriod = (sums[tid] ??= {});
+    byPeriod[r.period_id] = (byPeriod[r.period_id] || 0) + amt;
+  }
+  return sums;
+}
+
+// Посты текущего пользователя (заявка подаётся от поста — ТЗ v2 §4.1.5)
+export async function fetchMyPositions(personId) {
+  const { data, error } = await supabase
+    .from("position_assignments")
+    .select("position:org_positions(id, code, name)")
+    .eq("person_id", personId);
+  if (error) throw error;
+  return data.map((r) => r.position).filter(Boolean);
+}
+
+export async function fetchOrgDivisions() {
+  const { data, error } = await supabase
+    .from("org_divisions").select("id, code, name").order("sort");
+  if (error) throw error;
+  return data;
+}
+
+// Создание поста с назначением себя (для старта, пока оргсхема не заполнена)
+export async function createPositionAndAssign(personId, { code, name, divisionId }) {
+  const pos = await supabase
+    .from("org_positions")
+    .insert({ code, name, division_id: divisionId || null })
+    .select().single();
+  if (pos.error) throw pos.error;
+  const asg = await supabase
+    .from("position_assignments")
+    .insert({ person_id: personId, position_id: pos.data.id, is_main: true });
+  if (asg.error) throw asg.error;
+  return pos.data;
+}
+
+export async function fetchCounterparties() {
+  const { data, error } = await supabase
+    .from("counterparties").select("id, name").eq("is_archived", false).order("name");
+  if (error) throw error;
+  return data;
+}
+
+// Заявки: выбранного периода + все поданные (ещё без периода — период
+// проставляется при одобрении, ТЗ: период одобрения)
+export async function fetchRequests(periodId) {
+  let q = supabase
+    .from("payment_requests")
+    .select(`id, number, status, planned_amount, csw_data, csw_situation, csw_solution,
+      rejection_reason, created_at, decided_at, period_id, expense_type_id,
+      position:org_positions(code, name),
+      requester:profiles!payment_requests_requester_id_fkey(full_name),
+      expense_type:expense_types(code, name),
+      fund:funds(id, code, name),
+      location:locations(id, name),
+      currency:currencies(id, code, is_base),
+      counterparty:counterparties(name),
+      payment_type:payment_types(name)`)
+    .order("created_at", { ascending: false });
+  q = periodId ? q.or(`period_id.eq.${periodId},status.eq.submitted`) : q.eq("status", "submitted");
+  const { data, error } = await q;
+  if (error) throw error;
+  return data;
+}
+
+export async function insertRequest(row) {
+  const { data, error } = await supabase.from("payment_requests").insert(row).select().single();
+  if (error) throw error;
+  return data;
+}
+
+// Решение финкомитета: approved (с фондом и периодом одобрения) | rejected | planning
+export async function decideRequest(id, patch) {
+  const upd = { ...patch };
+  if (patch.status === "approved" || patch.status === "rejected") {
+    upd.decided_by = (await supabase.auth.getUser()).data.user?.id;
+    upd.decided_at = new Date().toISOString();
+  }
+  const { error } = await supabase.from("payment_requests").update(upd).eq("id", id);
+  if (error) throw error;
+}
+
+// Оплата одобренной заявки (серверная функция, миграция fp_pay_request)
+export async function payRequest(requestId, cashAccountId, periodId) {
+  const { error } = await supabase.rpc("fp_pay_request", {
+    p_request_id: requestId, p_cash_account_id: cashAccountId, p_period_id: periodId,
+  });
+  if (error) throw error;
+}
+
 // ---------------------------------------------------------------- Директива
 // Последние периоды ФП (для выбора недели)
 export async function fetchPeriods(limit = 12) {
