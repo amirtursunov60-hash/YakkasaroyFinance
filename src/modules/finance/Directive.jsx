@@ -1,18 +1,20 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { ClipboardList, ChevronDown, CalendarDays, Check, CheckCircle2, RotateCcw, Lock, Loader2, AlertCircle, Plus } from "lucide-react";
+import { ClipboardList, Calculator, ChevronDown, CalendarDays, Check, RotateCcw, RotateCw, Lock, Ban, ArrowRightLeft, Loader2, AlertCircle, CheckCircle2, Plus, X } from "lucide-react";
 import { Stat } from "../../components/common";
 import { useTheme } from "../../theme/theme";
 import { fmt } from "../../utils/format";
 import {
-  weekBounds, getPeriodFor, fetchPeriods, fetchFunds, fetchDefaultRules,
-  fetchPeriodIncome, fetchPeriodDistribution, runDistribution, closePeriod,
+  weekBounds, isoDate, getPeriodFor, fetchPeriods, fetchFunds, fetchDefaultRules,
+  fetchPeriodIncome, fetchPeriodDistribution, distributeStage, setPeriodStatus, closePeriod,
 } from "../../lib/api";
 
 
 // ---------------------------------------------------------------- DIRECTIVE
-// Живые данные: недельное распределение дохода периода по фондам в 3 этапа
-// (схема по умолчанию из distribution_rules), проведение в Реестр и закрытие
-// периода — через серверные функции fp_run_distribution / fp_close_period.
+// Живые данные. Процесс как в прототипе: по каждому этапу «Рассчитать»
+// (оранжевый предварительный расчёт) → «Одобрить» (фактическое зачисление
+// в фонды через Реестр, зелёное) → «Сброс». Этапы каскадом: база следующего =
+// остаток после предыдущего. Внизу: запрет подачи заявок (статус периода
+// «на планировании»), закрытие периода Директивой, перенос остатка в фонд.
 
 const MON = ["янв", "фев", "мар", "апр", "май", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"];
 const STAGES = [
@@ -21,144 +23,212 @@ const STAGES = [
   { key: "adjusted", title: "Скорректированный доход", fundsTitle: "Фонды скорректированного дохода" },
 ];
 const STATUS_LABEL = { open: "открыт", planning: "на планировании", closed: "закрыт" };
+const ORANGE = "#e8911c";
 
 const periodTitle = (p) => {
   const s = new Date(p.starts_on + "T00:00:00"), e = new Date(p.ends_on + "T00:00:00");
   return `${s.getDate()} ${MON[s.getMonth()]} – ${e.getDate()} ${MON[e.getMonth()]} ${e.getFullYear()}`;
 };
+const byFundCode = (fundById) => (a, b) =>
+  (fundById[a.fund_id]?.code || "").localeCompare(fundById[b.fund_id]?.code || "", "ru", { numeric: true });
 
 export function Directive() {
   const { C, st, isMobile } = useTheme();
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
+  const [done, setDone] = useState("");
   const [periods, setPeriods] = useState([]);
   const [funds, setFunds] = useState([]);
   const [rules, setRules] = useState([]);
   const [periodId, setPeriodId] = useState(null);
   const [income, setIncome] = useState(0);
-  const [dist, setDist] = useState({});          // { fund_id: сумма } — факт из Реестра
-  const [pcts, setPcts] = useState({});          // правка процентов: { ruleId: число }
+  const [prevIncome, setPrevIncome] = useState(0);
+  const [regRows, setRegRows] = useState([]);     // распределение из Реестра
+  const [calculated, setCalculated] = useState({}); // { stage: { fund_id: сумма } }
+  const [pcts, setPcts] = useState({});             // правки процентов { ruleId: число }
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [busy, setBusy] = useState(null);        // 'run' | 'close' | 'create' | null
-  const [done, setDone] = useState("");          // сообщение об успехе
+  const [busy, setBusy] = useState(null);           // 'create'|'block'|'close'|'transfer'|`calc:х`|`appr:х`
+  const [transferOpen, setTransferOpen] = useState(false);
 
   const period = periods.find((p) => p.id === periodId) || null;
   const isClosed = period?.status === "closed";
-  const distributed = Object.keys(dist).length > 0;
+  const requestsBlocked = period?.status === "planning";
 
-  // Первичная загрузка справочников и списка периодов
-  const loadBase = useCallback(async () => {
+  // -------- загрузка
+  const loadBase = useCallback(async (keepPeriod) => {
     setErr("");
     try {
       const [ps, fs, rs] = await Promise.all([fetchPeriods(), fetchFunds(), fetchDefaultRules()]);
-      const cmp = (a, b) => a.code.localeCompare(b.code, "ru", { numeric: true });
-      setPeriods(ps); setFunds(fs.sort(cmp)); setRules(rs);
-      if (!periodId) {
-        const todayStart = weekBounds(new Date()).start;
-        const cur = ps.find((p) => p.starts_on === `${todayStart.getFullYear()}-${String(todayStart.getMonth() + 1).padStart(2, "0")}-${String(todayStart.getDate()).padStart(2, "0")}`);
-        setPeriodId(cur?.id || ps[0]?.id || null);
+      setPeriods(ps);
+      setFunds(fs.sort((a, b) => a.code.localeCompare(b.code, "ru", { numeric: true })));
+      setRules(rs);
+      if (!keepPeriod) {
+        const curIso = isoDate(weekBounds(new Date()).start);
+        const cur = ps.find((p) => p.starts_on === curIso);
+        setPeriodId((id) => id || cur?.id || ps[0]?.id || null);
       }
     } catch (e) {
       setErr("Не удалось загрузить данные: " + (e?.message || e));
     } finally {
       setLoading(false);
     }
-  }, [periodId]);
-  useEffect(() => { loadBase(); }, []);          // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => { loadBase(); }, [loadBase]);
 
-  // Данные выбранного периода
+  const reloadPeriodData = useCallback(async () => {
+    if (!periodId) { setIncome(0); setPrevIncome(0); setRegRows([]); return; }
+    const prev = periods.find((p) => p.starts_on < (period?.starts_on || "")) || null;
+    const [inc, pinc, rows] = await Promise.all([
+      fetchPeriodIncome(periodId),
+      prev ? fetchPeriodIncome(prev.id) : Promise.resolve(0),
+      fetchPeriodDistribution(periodId),
+    ]);
+    setIncome(inc); setPrevIncome(pinc); setRegRows(rows);
+  }, [periodId, periods, period]);
+
   useEffect(() => {
-    if (!periodId) { setIncome(0); setDist({}); return; }
     let on = true;
     (async () => {
-      try {
-        const [inc, d] = await Promise.all([fetchPeriodIncome(periodId), fetchPeriodDistribution(periodId)]);
-        if (on) { setIncome(inc); setDist(d); setPcts({}); setDone(""); }
-      } catch (e) { if (on) setErr("Не удалось загрузить период: " + (e?.message || e)); }
+      try { if (on) { await reloadPeriodData(); setCalculated({}); setPcts({}); setDone(""); } }
+      catch (e) { if (on) setErr("Не удалось загрузить период: " + (e?.message || e)); }
     })();
     return () => { on = false; };
-  }, [periodId]);
+  }, [periodId]);                                   // eslint-disable-line react-hooks/exhaustive-deps
 
   const fundById = useMemo(() => Object.fromEntries(funds.map((f) => [f.id, f])), [funds]);
   const pctOf = (r) => (pcts[r.id] !== undefined ? pcts[r.id] : Number(r.percent ?? 0));
 
-  // Каскад этапов: выручка → маржинальный → скорректированный.
-  // База этапа = остаток после распределения предыдущего.
-  const stages = useMemo(() => {
-    let base = income;
-    return STAGES.map((sMeta) => {
-      const stageRules = rules
-        .filter((r) => r.stage === sMeta.key)
-        .sort((a, b) => (fundById[a.fund_id]?.code || "").localeCompare(fundById[b.fund_id]?.code || "", "ru", { numeric: true }));
-      const rows = stageRules.map((r) => ({
-        rule: r,
-        fund: fundById[r.fund_id],
-        // сумма этапа с округлением до сомони с дирамами (2 знака)
-        amount: distributed ? 0 : Math.round(base * pctOf(r)) / 100,
-      }));
-      const sum = rows.reduce((a, x) => a + x.amount, 0);
-      const stage = { ...sMeta, base, rows, sum };
-      base = base - sum;
-      return stage;
+  // -------- одобренное по этапам из Реестра (легаси-строки без этапа — в первый подходящий)
+  const approvedByStage = useMemo(() => {
+    const m = { revenue: {}, margin: {}, adjusted: {}, remainder: {} };
+    const legacy = [];
+    regRows.forEach((r) => {
+      if (r.stage && m[r.stage]) m[r.stage][r.fund_id] = (m[r.stage][r.fund_id] || 0) + r.amount;
+      else legacy.push(r);
     });
-  }, [rules, fundById, income, pcts, distributed]);
+    legacy.forEach((r) => {
+      const sg = STAGES.find((s) => rules.some((rule) => rule.stage === s.key && rule.fund_id === r.fund_id));
+      const key = sg ? sg.key : "remainder";
+      m[key][r.fund_id] = (m[key][r.fund_id] || 0) + r.amount;
+    });
+    return m;
+  }, [regRows, rules]);
 
-  const plannedTotal = stages.reduce((a, s) => a + s.sum, 0);
-  const remainder = income - plannedTotal;
-  const distributedTotal = useMemo(() => Object.values(dist).reduce((a, v) => a + v, 0), [dist]);
+  // -------- этапы каскадом
+  const stagesView = useMemo(() => {
+    let base = income;
+    return STAGES.map((meta) => {
+      const stageRules = rules.filter((r) => r.stage === meta.key).sort(byFundCode(fundById));
+      const appr = approvedByStage[meta.key] || {};
+      const isApproved = Object.keys(appr).length > 0;
+      const calc = calculated[meta.key] || {};
+      const rows = stageRules.map((r) => ({
+        rule: r, fund: fundById[r.fund_id],
+        calc: calc[r.fund_id] || 0,
+        appr: appr[r.fund_id] || 0,
+      }));
+      const sumCalc = rows.reduce((a, x) => a + x.calc, 0);
+      const sumAppr = rows.reduce((a, x) => a + x.appr, 0);
+      const view = { ...meta, base, rows, sumCalc, sumAppr, isApproved };
+      base -= isApproved ? sumAppr : sumCalc;
+      return view;
+    });
+  }, [rules, fundById, income, calculated, approvedByStage]);
+
+  const approvedTotal = useMemo(
+    () => Object.values(approvedByStage).reduce((a, m) => a + Object.values(m).reduce((s, v) => s + v, 0), 0),
+    [approvedByStage],
+  );
+  const remainder = income - approvedTotal;
   const fundsTotal = useMemo(() => funds.reduce((a, f) => a + Number(f.balance || 0), 0), [funds]);
 
-  // Создать период текущей недели, если его ещё нет
-  const currentExists = useMemo(() => {
-    const s = weekBounds(new Date()).start;
-    const iso = `${s.getFullYear()}-${String(s.getMonth() + 1).padStart(2, "0")}-${String(s.getDate()).padStart(2, "0")}`;
-    return periods.some((p) => p.starts_on === iso);
-  }, [periods]);
+  // -------- действия
+  const doCalc = (sg) => {
+    setBusy(`calc:${sg.key}`);
+    // лёгкая задержка, чтобы анимация расчёта читалась, как в прототипе
+    setTimeout(() => {
+      setCalculated((p) => ({
+        ...p,
+        [sg.key]: Object.fromEntries(sg.rows.map((x) => [x.rule.fund_id, Math.round(sg.base * pctOf(x.rule)) / 100])),
+      }));
+      setBusy(null);
+    }, 400);
+  };
+
+  const doApprove = async (sg) => {
+    if (busy) return;
+    const calc = calculated[sg.key] || {};
+    const allocations = Object.entries(calc).filter(([, v]) => v > 0).map(([fund_id, amount]) => ({ fund_id, amount }));
+    if (!allocations.length) { setErr(`${sg.title}: сначала нажмите «Рассчитать»`); return; }
+    setBusy(`appr:${sg.key}`); setErr(""); setDone("");
+    try {
+      await distributeStage(periodId, sg.key, allocations);
+      await Promise.all([reloadPeriodData(), loadBase(true)]);
+      setCalculated((p) => ({ ...p, [sg.key]: {} }));
+      setDone(`${sg.title}: распределение одобрено и зачислено в фонды`);
+    } catch (e) { setErr(e?.message || String(e)); }
+    finally { setBusy(null); }
+  };
+
+  const doReset = (sg) => setCalculated((p) => ({ ...p, [sg.key]: {} }));
+
+  const toggleRequests = async () => {
+    if (busy || !period || isClosed) return;
+    setBusy("block"); setErr("");
+    try {
+      await setPeriodStatus(periodId, requestsBlocked ? "open" : "planning");
+      await loadBase(true);
+    } catch (e) { setErr(e?.message || String(e)); }
+    finally { setBusy(null); }
+  };
+
+  const doClose = async () => {
+    if (busy || !period || isClosed) return;
+    if (!window.confirm("Закрыть период ФП? Все операции периода будут заблокированы, протокол Директивы сохранится.")) return;
+    setBusy("close"); setErr(""); setDone("");
+    try {
+      const protocol = {
+        income,
+        allocations: regRows.map((r) => ({
+          stage: r.stage, fund: fundById[r.fund_id]?.code, name: fundById[r.fund_id]?.name, amount: r.amount,
+        })),
+        remainder,
+      };
+      await closePeriod(periodId, protocol);
+      await Promise.all([loadBase(true), reloadPeriodData()]);
+      setDone("Период закрыт, протокол Директивы сохранён");
+    } catch (e) { setErr(e?.message || String(e)); }
+    finally { setBusy(null); }
+  };
+
+  const doTransfer = async (fundId) => {
+    if (busy) return;
+    setBusy("transfer"); setErr(""); setDone("");
+    try {
+      await distributeStage(periodId, "remainder", [{ fund_id: fundId, amount: Math.round(remainder * 100) / 100 }]);
+      await Promise.all([reloadPeriodData(), loadBase(true)]);
+      setTransferOpen(false);
+      setDone(`Остаток ${fmt(remainder)} перенесён в фонд ${fundById[fundId]?.code}`);
+    } catch (e) { setErr(e?.message || String(e)); }
+    finally { setBusy(null); }
+  };
 
   const createCurrent = async () => {
     setBusy("create"); setErr("");
     try {
       const p = await getPeriodFor(new Date(), { create: true });
       if (!p) throw new Error("Нет прав на создание периода");
-      await loadBase();
+      await loadBase(true);
       setPeriodId(p.id);
       setPickerOpen(false);
     } catch (e) { setErr(e?.message || String(e)); }
     finally { setBusy(null); }
   };
 
-  const protocolJson = () => ({
-    income,
-    allocations: stages.flatMap((s) => s.rows
-      .filter((x) => x.amount > 0)
-      .map((x) => ({ stage: s.key, fund: x.fund?.code, name: x.fund?.name, percent: pctOf(x.rule), amount: x.amount }))),
-  });
-
-  const doRun = async () => {
-    if (busy) return;
-    setBusy("run"); setErr(""); setDone("");
-    try {
-      const allocations = stages.flatMap((s) => s.rows
-        .filter((x) => x.amount > 0)
-        .map((x) => ({ fund_id: x.rule.fund_id, amount: x.amount })));
-      await runDistribution(periodId, allocations);
-      const [d, fs] = await Promise.all([fetchPeriodDistribution(periodId), fetchFunds()]);
-      setDist(d); setFunds(fs.sort((a, b) => a.code.localeCompare(b.code, "ru", { numeric: true })));
-      setDone("Распределение проведено — суммы зачислены в фонды через Реестр");
-    } catch (e) { setErr(e?.message || String(e)); }
-    finally { setBusy(null); }
-  };
-
-  const doClose = async () => {
-    if (busy) return;
-    setBusy("close"); setErr(""); setDone("");
-    try {
-      await closePeriod(periodId, protocolJson());
-      await loadBase();
-      setDone("Период закрыт, протокол Директивы сохранён");
-    } catch (e) { setErr(e?.message || String(e)); }
-    finally { setBusy(null); }
-  };
+  const currentExists = useMemo(
+    () => periods.some((p) => p.starts_on === isoDate(weekBounds(new Date()).start)),
+    [periods],
+  );
 
   if (loading) return <div style={st.empty}><Loader2 size={18} className="spin" /> Загрузка…</div>;
 
@@ -203,10 +273,10 @@ export function Directive() {
           </div>
         </div>
         <div style={st.heroStats}>
-          <Stat label="Доход периода" value={fmt(income)} unit="TJS" />
+          <Stat label="Доход на этой неделе" value={fmt(income)} unit="TJS" />
           <Stat label="Доступно во всех фондах" value={fmt(fundsTotal)} unit="TJS" accent />
-          <Stat label={distributed ? "Распределено по фондам" : "К распределению по схеме"} value={fmt(distributed ? distributedTotal : plannedTotal)} unit="TJS" />
-          <Stat label="Статус периода" value={period ? STATUS_LABEL[period.status] : "—"} unit="" />
+          <Stat label="Доход за прошлую неделю" value={fmt(prevIncome)} unit="TJS" />
+          <Stat label="Одобрено распределение" value={fmt(approvedTotal)} unit="TJS" />
         </div>
       </div>
     </section>
@@ -216,101 +286,42 @@ export function Directive() {
 
     {!rules.length && (
       <div style={{ ...st.locCard, ...st.empty }}>
-        Схема распределения не настроена — примените миграцию 006 (supabase/README.md).
+        Схема распределения не настроена — примените миграции 006–007 (supabase/README.md).
       </div>
     )}
 
-    {stages.map((sg) => (
-      <div key={sg.key} style={st.cardWrap}>
-        <section style={st.card}>
-          <div style={st.cardHead}>
-            <div style={st.cardTitle}>{sg.title}</div>
-            <div style={st.cardTotal}>{fmt(sg.base)} <span style={st.unit}>TJS</span></div>
-          </div>
-          <div style={st.subHead}>
-            <span style={st.subHeadTitle}>{sg.fundsTitle}</span>
-            <span style={st.subHeadAppr}>{distributed ? "Зачислено фактически" : <>Будет зачислено: <b style={{ color: C.green }}>{fmt(sg.sum)}</b></>}</span>
-          </div>
-          {sg.rows.length === 0 ? <div style={st.empty}>Фонды этого этапа не настроены</div> : (<>
-            <div style={{ ...st.frow, ...st.frowHead }}>
-              <div style={st.fName}>Фонд</div><div style={st.fPct}>%</div>
-              <div style={st.fNum}>Доступно</div><div style={st.fNum}>{distributed ? "Зачислено" : "Будет зачислено"}</div><div style={st.fNum} />
-            </div>
-            {sg.rows.map((x) => {
-              const actual = dist[x.rule.fund_id] || 0;
-              const val = distributed ? actual : x.amount;
-              return (
-                <div key={x.rule.id} style={st.frow} className="frow">
-                  <div style={st.fName}>
-                    <div style={st.fundTop}>
-                      <span style={st.fundCode}>{x.fund?.code}</span><span>{x.fund?.name}</span>
-                      {x.fund?.is_restricted && <Lock size={12} color={C.faint} />}
-                    </div>
-                  </div>
-                  <div style={st.fPct}>
-                    {distributed || isClosed
-                      ? <>{pctOf(x.rule)}<span style={st.pctSign}>%</span></>
-                      : (<>
-                        <input style={st.pctInput} className="pctIn" type="number" inputMode="decimal"
-                          value={pctOf(x.rule)}
-                          onChange={(e) => setPcts((p) => ({ ...p, [x.rule.id]: e.target.value === "" ? 0 : Number(e.target.value) }))}
-                          onWheel={(e) => e.target.blur()} />
-                        <span style={st.pctSign}>%</span>
-                      </>)}
-                  </div>
-                  <div style={{ ...st.fNum, fontWeight: 700 }}>{fmt(Number(x.fund?.balance || 0))}</div>
-                  <div style={{ ...st.fNum, color: val ? C.green : C.faint, fontWeight: val ? 700 : 400 }}>{fmt(val)}</div>
-                  <div style={st.fNum} />
-                </div>
-              );
-            })}
-            <div style={{ ...st.frow, ...st.frowTotal }}>
-              <div style={st.fName}><b>Итого этап</b></div>
-              <div style={st.fPct} />
-              <div style={{ ...st.fNum, fontWeight: 700 }}>{fmt(sg.rows.reduce((a, x) => a + Number(x.fund?.balance || 0), 0))}</div>
-              <div style={{ ...st.fNum, fontWeight: 700, color: C.green }}>
-                {fmt(distributed ? sg.rows.reduce((a, x) => a + (dist[x.rule.fund_id] || 0), 0) : sg.sum)}
-              </div>
-              <div style={st.fNum} />
-            </div>
-          </>)}
-        </section>
-      </div>
+    {stagesView.map((sg) => (
+      <LevelCard key={sg.key} sg={sg} C={C} st={st} isMobile={isMobile}
+        pctOf={pctOf} setPcts={setPcts} busy={busy} locked={isClosed || !period}
+        onCalc={() => doCalc(sg)} onApprove={() => doApprove(sg)} onReset={() => doReset(sg)} />
     ))}
 
-    {/* Итог распределения и закрытие периода */}
+    {/* Итог распределения на ФП */}
     <section style={st.fpCard}>
       <div style={st.fpRows}>
-        <div style={st.fpRow}><span style={st.fpLabelBold}>Доход периода к распределению</span><span style={st.fpValBold}>{fmt(income)}</span></div>
-        <div style={st.fpRow}>
-          <span style={st.fpLabel}>{distributed ? "Распределено по фондам (Реестр)" : "Будет распределено по схеме"}</span>
-          <span style={st.fpVal}>{fmt(distributed ? distributedTotal : plannedTotal)}</span>
-        </div>
+        <div style={st.fpRow}><span style={st.fpLabelBold}>Сумма к распределению на ФП</span><span style={st.fpValBold}>{fmt(income)}</span></div>
+        <div style={st.fpRow}><span style={st.fpLabel}>Распределено по фондам (Реестр)</span><span style={st.fpVal}>{fmt(approvedTotal)}</span></div>
         <div style={{ ...st.fpRow, ...st.fpRemainder }}>
           <span style={st.fpLabelBold}>Остаток нераспределённого</span>
-          <span style={{ ...st.fpValBold, color: C.green }}>{fmt(income - (distributed ? distributedTotal : plannedTotal))}</span>
+          <span style={{ ...st.fpValBold, color: C.green }}>{fmt(remainder)}</span>
         </div>
       </div>
       <div style={st.fpActions} className="fpActions">
-        {!distributed && !isClosed && (
-          <button style={{ ...st.fpBtn, ...st.fpBtnPrimary, opacity: busy ? 0.7 : 1 }} className="btn fpBtn"
-            onClick={doRun} disabled={busy || !period || income <= 0}>
-            {busy === "run" ? <Loader2 size={15} className="spin" /> : <Check size={15} />} Провести распределение
-          </button>
-        )}
-        {distributed && !isClosed && (
-          <span style={{ ...st.fpBtn, ...st.fpBtnGhost, cursor: "default" }}><CheckCircle2 size={15} color={C.green} /> Распределение проведено</span>
-        )}
-        <button style={{ ...st.fpBtn, ...(isClosed ? st.fpBtnClosed : st.fpBtnDanger), opacity: busy ? 0.7 : 1 }} className="btn fpBtn"
-          onClick={doClose} disabled={busy || !period || isClosed}>
+        <button style={{ ...st.fpBtn, ...(requestsBlocked ? st.fpBtnDanger : st.fpBtnGhost), opacity: busy === "block" ? 0.7 : 1 }}
+          className="btn fpBtn" onClick={toggleRequests} disabled={busy || isClosed || !period}>
+          {busy === "block" ? <Loader2 size={15} className="spin" />
+            : requestsBlocked ? <Lock size={15} /> : <Ban size={15} />}
+          {requestsBlocked ? " Подача заявок запрещена" : " Запретить подачу заявок"}
+        </button>
+        <button style={{ ...st.fpBtn, ...(isClosed ? st.fpBtnClosed : st.fpBtnPrimary), opacity: busy === "close" ? 0.7 : 1 }}
+          className="btn fpBtn" onClick={doClose} disabled={busy || isClosed || !period}>
           {busy === "close" ? <Loader2 size={15} className="spin" /> : isClosed ? <Check size={15} /> : <Lock size={15} />}
           {isClosed ? " Период ФП закрыт" : " Закрыть период ФП"}
         </button>
-        {!period && (
-          <button style={{ ...st.fpBtn, ...st.fpBtnGhost }} className="btn fpBtn" onClick={createCurrent} disabled={busy === "create"}>
-            {busy === "create" ? <Loader2 size={15} className="spin" /> : <RotateCcw size={15} />} Создать период текущей недели
-          </button>
-        )}
+        <button style={{ ...st.fpBtn, ...st.fpBtnGhost }} className="btn fpBtn"
+          onClick={() => setTransferOpen(true)} disabled={busy || isClosed || !period || remainder <= 0}>
+          <ArrowRightLeft size={15} /> Перенести остатки в фонд
+        </button>
       </div>
     </section>
 
@@ -320,11 +331,143 @@ export function Directive() {
         <ClipboardList size={18} color={C.green} />
         <h3 style={st.reqSectionTitle}>Заявки к рассмотрению</h3>
         <span style={st.reqSectionSub}>Финкомитет одобряет или отклоняет</span>
+        {requestsBlocked && <span style={st.reqBlockedTag}><Lock size={12} /> Подача закрыта</span>}
       </div>
       <div style={{ ...st.locCard, ...st.empty }}>
         Заявок пока нет. Подача заявок (от поста, в формате ЗРС) появится в Личном кабинете —
         после этого они будут рассматриваться здесь.
       </div>
     </section>
+
+    {transferOpen && (
+      <TransferModal C={C} st={st} funds={funds} remainder={remainder}
+        busy={busy === "transfer"} onClose={() => setTransferOpen(false)} onTransfer={doTransfer} />
+    )}
   </>);
+}
+
+
+// ---------------------------------------------------------------- Этап распределения
+function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, onCalc, onApprove, onReset }) {
+  const calcBusy = busy === `calc:${sg.key}`;
+  const apprBusy = busy === `appr:${sg.key}`;
+  const editable = !sg.isApproved && !locked;
+
+  const CalcBtn = () => (
+    <button style={st.btnGhost} onClick={onCalc} className="btn" disabled={!!busy || !editable}>
+      {calcBusy ? <span className="spin"><RotateCw size={15} /></span> : <Calculator size={15} />} Рассчитать
+    </button>
+  );
+  const ApproveBtn = () => (
+    <button style={{ ...st.btnGreen, opacity: editable ? (busy ? 0.7 : 1) : 0.35, cursor: editable ? "pointer" : "not-allowed" }}
+      onClick={onApprove} className="btn" disabled={!!busy || !editable}>
+      {apprBusy ? <span className="spin"><RotateCw size={15} /></span> : <Check size={15} />} Одобрить
+    </button>
+  );
+  const ResetBtn = () => (
+    <button style={st.btnGhost} onClick={onReset} className="btn" disabled={!!busy || !editable}><RotateCcw size={14} /> Сброс</button>
+  );
+
+  const totals = sg.rows.reduce((t, x) => ({
+    avail: t.avail + Number(x.fund?.balance || 0), calc: t.calc + x.calc, appr: t.appr + x.appr,
+  }), { avail: 0, calc: 0, appr: 0 });
+
+  return (
+    <div style={st.cardWrap}>
+      <section style={st.card}>
+        <div style={st.cardHead}>
+          <div style={st.cardTitle}>{sg.title}</div>
+          <div style={st.cardTotal}>{fmt(sg.base)} <span style={st.unit}>TJS</span></div>
+        </div>
+        <div style={st.subHead}>
+          <span style={st.subHeadTitle}>{sg.fundsTitle}</span>
+          <span style={st.subHeadAppr}>Одобрено: <b style={{ color: C.green }}>{fmt(totals.appr)}</b></span>
+        </div>
+        {sg.rows.length === 0 ? <div style={st.empty}>Фонды этого этапа не настроены</div> : (<>
+          <div style={{ ...st.frow, ...st.frowHead }}>
+            <div style={st.fName}>Название</div><div style={st.fPct}>%</div>
+            <div style={st.fNum}>Доступно</div><div style={st.fNum}>Рассчитано</div><div style={st.fNum}>Одобрено</div>
+          </div>
+          {sg.rows.map((x) => {
+            const avail = Number(x.fund?.balance || 0);
+            const barVal = x.appr || x.calc;
+            const barBase = avail > 0 ? avail : (barVal || 1);
+            const fill = barVal > 0 ? Math.min(100, (barVal / barBase) * 100) : 0;
+            return (
+              <div key={x.rule.id} style={st.frow} className="frow">
+                <div style={st.fName}>
+                  <div style={st.fundTop}>
+                    <span style={st.fundCode}>{x.fund?.code}</span><span>{x.fund?.name}</span>
+                    {x.fund?.is_restricted && <Lock size={12} color={C.faint} />}
+                  </div>
+                  <div style={st.bar}><div style={{ ...st.barFill, width: `${fill}%`, background: x.appr ? C.green : ORANGE }} /></div>
+                </div>
+                <div style={st.fPct}>
+                  {editable ? (<>
+                    <input style={st.pctInput} className="pctIn" type="number" inputMode="decimal"
+                      value={pctOf(x.rule)}
+                      onChange={(e) => setPcts((p) => ({ ...p, [x.rule.id]: e.target.value === "" ? 0 : Number(e.target.value) }))}
+                      onWheel={(e) => e.target.blur()} />
+                    <span style={st.pctSign}>%</span>
+                  </>) : (<>{pctOf(x.rule)}<span style={st.pctSign}>%</span></>)}
+                </div>
+                <div style={{ ...st.fNum, fontWeight: 700 }}>{fmt(avail)}</div>
+                <div style={{ ...st.fNum, color: x.calc ? ORANGE : C.faint, fontWeight: x.calc ? 600 : 400 }}>
+                  <span className={calcBusy ? "" : x.calc ? "pop" : ""}>{fmt(x.calc)}</span>
+                </div>
+                <div style={{ ...st.fNum, color: x.appr ? C.green : C.faint, fontWeight: x.appr ? 700 : 400 }}>
+                  <span className={x.appr ? "pop" : ""}>{fmt(x.appr)}</span>
+                </div>
+              </div>
+            );
+          })}
+          <div style={{ ...st.frow, ...st.frowTotal }}>
+            {isMobile ? <div style={st.fName}><b>Итого</b></div> : (
+              <div style={st.fName}><div style={st.actions}><CalcBtn /><ApproveBtn /><ResetBtn /></div></div>
+            )}
+            <div style={st.fPct} />
+            <div style={{ ...st.fNum, fontWeight: 700 }}>{fmt(totals.avail)}</div>
+            <div style={{ ...st.fNum, fontWeight: 700, color: totals.calc ? ORANGE : C.faint }}>{fmt(totals.calc)}</div>
+            <div style={{ ...st.fNum, fontWeight: 700, color: C.green }}>{fmt(totals.appr)}</div>
+          </div>
+          {isMobile && <div style={st.mActions}><CalcBtn /><ApproveBtn /><ResetBtn /></div>}
+        </>)}
+      </section>
+    </div>
+  );
+}
+
+
+// ---------------------------------------------------------------- Перенос остатка в фонд
+function TransferModal({ C, st, funds, remainder, busy, onClose, onTransfer }) {
+  const [fundId, setFundId] = useState(funds.find((f) => f.code === "FD6")?.id || funds[0]?.id || "");
+  return (
+    <div style={st.mdOverlay} onClick={onClose}>
+      <div style={{ ...st.mdCard, width: "min(420px, 100%)" }} onClick={(e) => e.stopPropagation()}>
+        <div style={st.mdHead}>
+          <div style={st.mdTitle}>Перенести остаток в фонд</div>
+          <button style={st.iconBtn} onClick={onClose}><X size={17} /></button>
+        </div>
+        <div style={{ ...st.reqField, marginBottom: 12 }}>
+          <span style={st.reqFieldLbl}>Сумма остатка</span>
+          <div style={{ fontSize: 22, fontWeight: 800, fontVariantNumeric: "tabular-nums" }}>
+            {fmt(remainder)} <span style={st.locUnit}>TJS</span>
+          </div>
+        </div>
+        <div style={st.reqField}>
+          <span style={st.reqFieldLbl}>Фонд-получатель</span>
+          <select style={st.mdSelect} className="fin" value={fundId} onChange={(e) => setFundId(e.target.value)}>
+            {funds.map((f) => <option key={f.id} value={f.id}>{f.code} — {f.name}</option>)}
+          </select>
+        </div>
+        <div style={st.mdActions}>
+          <button style={st.btnGhost} className="btn" onClick={onClose}>Отмена</button>
+          <button style={{ ...st.btnGreen, opacity: busy ? 0.7 : 1 }} className="btn"
+            onClick={() => onTransfer(fundId)} disabled={busy || !fundId}>
+            {busy ? <Loader2 size={15} className="spin" /> : <ArrowRightLeft size={15} />} Перенести
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }

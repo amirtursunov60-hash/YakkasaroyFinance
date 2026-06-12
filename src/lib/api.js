@@ -159,24 +159,34 @@ export async function fetchPeriodIncome(periodId) {
   return data.reduce((s, r) => s + (r.is_return ? -r.amount_base : r.amount_base), 0);
 }
 
-// Уже проведённое распределение периода: { fund_id: сумма }
+// Проведённое распределение периода: [{ fund_id, amount, stage|null }]
+// Этап хранится в comment Реестра как 'stage:revenue' (см. миграцию 007);
+// stage = null — строки, проведённые до поэтапной модели.
 export async function fetchPeriodDistribution(periodId) {
-  if (!periodId) return {};
+  if (!periodId) return [];
   const { data, error } = await supabase
     .from("fp_register")
-    .select("fund_id, fund_amount")
+    .select("fund_id, fund_amount, comment")
     .eq("period_id", periodId).eq("op_type", "distribution");
   if (error) throw error;
-  const m = {};
-  for (const r of data) m[r.fund_id] = (m[r.fund_id] || 0) + Number(r.fund_amount);
-  return m;
+  return data.map((r) => ({
+    fund_id: r.fund_id,
+    amount: Number(r.fund_amount),
+    stage: r.comment?.startsWith("stage:") ? r.comment.slice(6) : null,
+  }));
 }
 
-// Атомарное проведение распределения (серверная функция, миграция 006)
-export async function runDistribution(periodId, allocations) {
-  const { error } = await supabase.rpc("fp_run_distribution", {
-    p_period_id: periodId, p_allocations: allocations,
+// Одобрение этапа распределения (серверная функция, миграция 007)
+export async function distributeStage(periodId, stage, allocations) {
+  const { error } = await supabase.rpc("fp_distribute_stage", {
+    p_period_id: periodId, p_stage: stage, p_allocations: allocations,
   });
+  if (error) throw error;
+}
+
+// Статус периода: open ↔ planning (запрет подачи заявок на время финкомитета)
+export async function setPeriodStatus(periodId, status) {
+  const { error } = await supabase.from("fp_periods").update({ status }).eq("id", periodId);
   if (error) throw error;
 }
 
