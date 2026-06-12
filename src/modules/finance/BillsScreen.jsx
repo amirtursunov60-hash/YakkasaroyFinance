@@ -4,6 +4,7 @@ import { Stat } from "../../components/common";
 import { useTheme } from "../../theme/theme";
 import { fmt } from "../../utils/format";
 import { usePeriod, periodTitle } from "../../lib/PeriodCtx";
+import { AttachmentsBlock } from "../../components/AttachmentsBlock";
 import {
   fetchBills, insertBill, decideBill, payBill, createCounterparty,
   fetchExpenseTypes, fetchIncomeRefs, fetchFunds, fetchCounterparties,
@@ -29,7 +30,7 @@ const shortPeriod = (p) => p ? `${p.starts_on.slice(8, 10)}.${p.starts_on.slice(
 
 export function BillsScreen({ kind, ui }) {
   const { C, st, isMobile, profile } = useTheme();
-  const { period, periodId, loading: periodsLoading } = usePeriod();
+  const { period, periodId, loading: periodsLoading, locationId: ctxLocationId } = usePeriod();
   const isFinAdmin = ["owner", "fin_director"].includes(profile?.role);
   const canPay = isFinAdmin || profile?.role === "accountant";
   const canSubmit = ["owner", "fin_director", "accountant", "location_manager", "ops_director"].includes(profile?.role);
@@ -66,9 +67,9 @@ export function BillsScreen({ kind, ui }) {
   useEffect(() => { loadStatic(); }, [loadStatic]);
 
   const loadBills = useCallback(async () => {
-    try { setBills(await fetchBills(periodId, kind)); }
+    try { setBills(await fetchBills(periodId, kind, ctxLocationId)); }
     catch (e) { setErr("Не удалось загрузить счета: " + (e?.message || e)); }
-  }, [periodId, kind]);
+  }, [periodId, kind, ctxLocationId]);
   useEffect(() => { if (!periodsLoading) loadBills(); }, [loadBills, periodsLoading]);
 
   // дерево статей → листья для формы
@@ -229,6 +230,8 @@ export function BillsScreen({ kind, ui }) {
                   {b.paid_period && <span>Период оплаты: <b style={{ color: C.text }}>{shortPeriod(b.paid_period)}</b></span>}
                 </div>
                 {b.comment && <div style={{ fontSize: 13 }}>{b.comment}</div>}
+                <AttachmentsBlock kind="bill" parentId={b.id} attachments={b.attachments}
+                  canUpload={canSubmit && !["rejected"].includes(b.status)} profileId={profile.id} onChanged={loadBills} />
                 {b.status === "rejected" && b.rejection_reason && (
                   <div style={{ color: C.danger, fontSize: 13 }}>Причина отклонения: {b.rejection_reason}</div>
                 )}

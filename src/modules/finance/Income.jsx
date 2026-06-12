@@ -17,7 +17,7 @@ const PALETTE = ["#e8911c", "#7bd88f", "#5bd6c9", "#5b8def", "#d6c14a", "#9c6ade
 
 export function Income() {
   const { C, st, isMobile, profile } = useTheme();
-  const { period, prevPeriod, loading: periodsLoading } = usePeriod();
+  const { period, prevPeriod, loading: periodsLoading, locationId: ctxLocationId } = usePeriod();
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [types, setTypes] = useState([]);
@@ -44,11 +44,11 @@ export function Income() {
 
   const loadSums = useCallback(async () => {
     try {
-      setSums(await fetchIncomeSums([period?.id, prevPeriod?.id]));
+      setSums(await fetchIncomeSums([period?.id, prevPeriod?.id], ctxLocationId));
     } catch (e) {
       setLoadError("Не удалось загрузить суммы периода: " + (e?.message || e));
     }
-  }, [period?.id, prevPeriod?.id]);
+  }, [period?.id, prevPeriod?.id, ctxLocationId]);
   useEffect(() => { if (!periodsLoading) loadSums(); }, [loadSums, periodsLoading]);
 
   // Дерево из плоского списка; сортировка по коду
@@ -192,7 +192,7 @@ export function Income() {
     {showForm && refs && (
       <IncomeForm
         refs={refs} tree={tree} byParent={byParent} locationOf={locationOf}
-        period={period} profile={profile} isMobile={isMobile} C={C} st={st}
+        period={period} ctxLocationId={ctxLocationId} profile={profile} isMobile={isMobile} C={C} st={st}
         onClose={() => setShowForm(false)}
         onSaved={() => { setShowForm(false); loadSums(); }}
       />
@@ -211,7 +211,7 @@ const Field = ({ st, label, full, children }) => (
   </div>
 );
 
-function IncomeForm({ refs, tree, byParent, locationOf, period, profile, isMobile, C, st, onClose, onSaved }) {
+function IncomeForm({ refs, tree, byParent, locationOf, period, ctxLocationId, profile, isMobile, C, st, onClose, onSaved }) {
   const baseCur = refs.currencies.find((c) => c.is_base) || refs.currencies[0];
   // Дата по умолчанию: сегодня, если попадает в выбранную неделю, иначе её начало
   const today = isoDate(new Date());
@@ -219,7 +219,7 @@ function IncomeForm({ refs, tree, byParent, locationOf, period, profile, isMobil
     ? period.starts_on : today;
   const [f, setF] = useState({
     typeId: "", amount: "", currencyId: baseCur?.id || "", date: defDate,
-    accountId: "", payTypeId: "", locationId: "", isReturn: false, comment: "",
+    accountId: "", payTypeId: "", locationId: ctxLocationId || "", isReturn: false, comment: "",
   });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");

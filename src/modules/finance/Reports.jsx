@@ -31,7 +31,7 @@ const EXP_LABELS = {
 
 export function Reports() {
   const { C, st, isMobile } = useTheme();
-  const { periods, period, periodId, loading: periodsLoading } = usePeriod();
+  const { periods, period, periodId, loading: periodsLoading, locationId: ctxLocationId, location } = usePeriod();
   const [tab, setTab] = useState("dds");
   const [rangeN, setRangeN] = useState(8);
   const [loading, setLoading] = useState(true);
@@ -68,17 +68,21 @@ export function Reports() {
   }, [range, periodId, periodsLoading]);
   useEffect(() => { load(); }, [load]);
 
-  // -------- агрегаты
+  // -------- агрегаты (с учётом переключателя «вся сеть / точка»)
   const expAmount = (r) => -(Number(r.fund_amount ?? r.cash_amount) || 0);
   const expLocation = (r) => r.request?.location_id || r.bill?.location_id || null;
+  const fIncomes = useMemo(() => ctxLocationId
+    ? data.incomes.filter((i) => i.location_id === ctxLocationId) : data.incomes, [data, ctxLocationId]);
+  const fExpenses = useMemo(() => ctxLocationId
+    ? data.expenses.filter((e) => expLocation(e) === ctxLocationId) : data.expenses, [data, ctxLocationId]);
 
   const byWeek = useMemo(() => range.map((p) => {
-    const inc = data.incomes.filter((i) => i.period_id === p.id)
+    const inc = fIncomes.filter((i) => i.period_id === p.id)
       .reduce((a, i) => a + (i.is_return ? -i.amount_base : Number(i.amount_base)), 0);
-    const exp = data.expenses.filter((e) => e.period_id === p.id)
+    const exp = fExpenses.filter((e) => e.period_id === p.id)
       .reduce((a, e) => a + expAmount(e), 0);
     return { period: p, inc, exp, net: inc - exp };
-  }), [range, data]);
+  }), [range, fIncomes, fExpenses]);
 
   const totals = useMemo(() => byWeek.reduce(
     (t, w) => ({ inc: t.inc + w.inc, exp: t.exp + w.exp }), { inc: 0, exp: 0 }), [byWeek]);
@@ -86,9 +90,9 @@ export function Reports() {
 
   const expByType = useMemo(() => {
     const m = {};
-    for (const e of data.expenses) m[e.op_type] = (m[e.op_type] || 0) + expAmount(e);
+    for (const e of fExpenses) m[e.op_type] = (m[e.op_type] || 0) + expAmount(e);
     return m;
-  }, [data]);
+  }, [fExpenses]);
 
   const byLocation = useMemo(() => locations.map((l) => {
     const inc = data.incomes.filter((i) => i.location_id === l.id)
@@ -139,7 +143,7 @@ export function Reports() {
         <div style={st.heroTop}>
           <div>
             <div style={st.heroLabel}>Управленческие отчёты · сеть Яккасарой</div>
-            <div style={st.heroTitle}>{range.length} нед. · {rangeLabel}</div>
+            <div style={st.heroTitle}>{range.length} нед. · {rangeLabel}{location ? ` · ${location.name}` : ""}</div>
           </div>
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
             <select style={{ ...st.reqSelect, padding: "8px 10px", fontSize: 13 }} className="fin"

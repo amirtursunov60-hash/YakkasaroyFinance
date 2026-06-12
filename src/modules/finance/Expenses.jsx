@@ -3,6 +3,7 @@ import { ArrowUpRight, ArrowDownRight, ChevronRight, Plus, X, Loader2, AlertCirc
 import { useTheme } from "../../theme/theme";
 import { fmt } from "../../utils/format";
 import { usePeriod, periodTitle } from "../../lib/PeriodCtx";
+import { AttachmentsBlock } from "../../components/AttachmentsBlock";
 import {
   fetchExpenseTypes, fetchExpenseSums, fetchIncomeRefs, fetchFunds, fetchCounterparties,
   fetchMyPositions, fetchOrgDivisions, createPositionAndAssign,
@@ -29,7 +30,7 @@ const FILTERS = [["all", "Все"], ["submitted", "Поданы"], ["planning", 
 
 export function Expenses() {
   const { C, st, isMobile, profile } = useTheme();
-  const { period, prevPeriod, periodId, loading: periodsLoading } = usePeriod();
+  const { period, prevPeriod, periodId, loading: periodsLoading, locationId: ctxLocationId } = usePeriod();
   const isFinAdmin = ["owner", "fin_director"].includes(profile?.role);
   const canPay = isFinAdmin || profile?.role === "accountant";
 
@@ -72,14 +73,14 @@ export function Expenses() {
   const loadPeriodData = useCallback(async () => {
     try {
       const [sumData, reqs] = await Promise.all([
-        fetchExpenseSums([period?.id, prevPeriod?.id]),
-        fetchRequests(periodId),
+        fetchExpenseSums([period?.id, prevPeriod?.id], ctxLocationId),
+        fetchRequests(periodId, ctxLocationId),
       ]);
       setSums(sumData); setRequests(reqs);
     } catch (e) {
       setErr("Не удалось загрузить данные периода: " + (e?.message || e));
     }
-  }, [period?.id, prevPeriod?.id, periodId]);
+  }, [period?.id, prevPeriod?.id, periodId, ctxLocationId]);
   useEffect(() => { if (!periodsLoading) loadPeriodData(); }, [loadPeriodData, periodsLoading]);
 
   // -------- дерево статей РД (как в Доходах)
@@ -312,6 +313,8 @@ export function Expenses() {
                   <CswRow C={C} label="Данные" text={req.csw_data} />
                   <CswRow C={C} label="Ситуация" text={req.csw_situation} />
                   <CswRow C={C} label="Решение" text={req.csw_solution} />
+                  <AttachmentsBlock kind="request" parentId={req.id} attachments={req.attachments}
+                    canUpload={!["paid", "rejected"].includes(req.status)} profileId={profile.id} onChanged={loadPeriodData} />
                   <div style={{ display: "flex", gap: 16, flexWrap: "wrap", fontSize: 12.5, color: C.sub }}>
                     {req.fund && <span>Фонд: <b style={{ color: C.text }}>{req.fund.code} {req.fund.name}</b></span>}
                     {req.payment_type && <span>Оплата: <b style={{ color: C.text }}>{req.payment_type.name}</b></span>}

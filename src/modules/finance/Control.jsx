@@ -4,9 +4,10 @@ import { Stat } from "../../components/common";
 import { useTheme } from "../../theme/theme";
 import { fmt } from "../../utils/format";
 import { usePeriod, periodTitle } from "../../lib/PeriodCtx";
+import { ArrowRightLeft } from "lucide-react";
 import {
   fetchCashAccounts, createCashAccount, fetchReconciliations, saveReconciliations,
-  fetchAccountStatement, fetchIncomeRefs,
+  fetchAccountStatement, fetchIncomeRefs, cashTransfer,
 } from "../../lib/api";
 
 
@@ -31,7 +32,7 @@ const OP_LABELS = {
 
 export function Control() {
   const { C, st, isMobile, profile } = useTheme();
-  const { period, periodId, loading: periodsLoading } = usePeriod();
+  const { period, periodId, loading: periodsLoading, locationId: ctxLocationId } = usePeriod();
   const canEdit = ["owner", "fin_director", "accountant"].includes(profile?.role);
 
   const [loading, setLoading] = useState(true);
@@ -43,6 +44,7 @@ export function Control() {
   const [busy, setBusy] = useState(null);
   const [statement, setStatement] = useState(null); // { account, rows, allTime }
   const [showAdd, setShowAdd] = useState(false);
+  const [showTransfer, setShowTransfer] = useState(false);
   const [refs, setRefs] = useState(null);
 
   const load = useCallback(async () => {
@@ -71,23 +73,27 @@ export function Control() {
     })();
   }, [periodId, periodsLoading]);
 
+  const shownAccounts = useMemo(
+    () => ctxLocationId ? accounts.filter((a) => a.location_id === ctxLocationId || !a.location_id) : accounts,
+    [accounts, ctxLocationId]);
+
   const totals = useMemo(() => {
     let calc = 0, fact = 0, entered = 0;
-    for (const a of accounts) {
+    for (const a of shownAccounts) {
       calc += Number(a.balance) || 0;
       const v = values[a.id];
       if (v !== undefined && v !== "") { fact += Number(v) || 0; entered++; }
     }
     return { calc, fact, entered, diff: fact - (entered ? calc : 0) };
-  }, [accounts, values]);
+  }, [shownAccounts, values]);
   const anyEntered = totals.entered > 0;
-  const allEntered = totals.entered === accounts.length && accounts.length > 0;
+  const allEntered = totals.entered === shownAccounts.length && shownAccounts.length > 0;
   const diffTotal = allEntered ? totals.fact - totals.calc : null;
 
   const save = async () => {
     if (busy) return;
     if (!periodId) { setErr("Нет выбранного периода ФП — добавьте неделю в шапке"); return; }
-    const rows = accounts
+    const rows = shownAccounts
       .filter((a) => values[a.id] !== undefined && values[a.id] !== "")
       .map((a) => ({
         cash_account_id: a.id, period_id: periodId,
@@ -132,7 +138,7 @@ export function Control() {
           <Stat label="Расчёт системы (Реестр)" value={fmt(totals.calc)} unit="TJS" accent />
           <Stat label="Факт (введено)" value={anyEntered ? fmt(totals.fact) : "—"} unit={anyEntered ? "TJS" : ""} />
           <Stat label="Расхождение" value={diffTotal === null ? "—" : fmt(diffTotal)} unit={diffTotal === null ? "" : "TJS"} />
-          <Stat label="Сверено счетов" value={`${Object.keys(recons).length} / ${accounts.length}`} unit="" />
+          <Stat label="Сверено счетов" value={`${Object.keys(recons).length} / ${shownAccounts.length}`} unit="" />
         </div>
       </div>
     </section>
@@ -149,6 +155,11 @@ export function Control() {
           <div style={st.cardTitle}>Остатки по счетам</div>
           <div style={{ display: "flex", gap: 8 }}>
             {canEdit && (
+              <button style={st.btnGhost} className="btn" onClick={() => setShowTransfer(true)}>
+                <ArrowRightLeft size={15} /> {!isMobile && "Переместить ДС"}
+              </button>
+            )}
+            {canEdit && (
               <button style={st.btnGhost} className="btn" onClick={() => setShowAdd(true)}>
                 <Plus size={15} /> {!isMobile && "Добавить счёт"}
               </button>
@@ -161,8 +172,8 @@ export function Control() {
           </div>
         </div>
 
-        {!accounts.length && <div style={st.empty}>Счетов ДС пока нет — добавьте кассу или банковский счёт</div>}
-        {accounts.length > 0 && (<>
+        {!shownAccounts.length && <div style={st.empty}>Счетов ДС пока нет — добавьте кассу или банковский счёт</div>}
+        {shownAccounts.length > 0 && (<>
           <div style={{ ...st.frow, ...st.frowHead, gridTemplateColumns: GRID }}>
             <div style={st.fName}>Счёт / касса</div>
             {!isMobile && <div style={st.fPct}>Валюта</div>}
@@ -171,7 +182,7 @@ export function Control() {
             {!isMobile && <div style={st.fNum}>Расхождение</div>}
             {!isMobile && <div style={st.fNum} />}
           </div>
-          {accounts.map((a) => {
+          {shownAccounts.map((a) => {
             const Icon = TYPE_META[a.type]?.icon || Banknote;
             const calc = Number(a.balance) || 0;
             const v = values[a.id] === undefined || values[a.id] === "" ? null : Number(values[a.id]) || 0;
@@ -227,9 +238,9 @@ export function Control() {
             {!isMobile && <div />}
           </div>
         </>)}
-        {isMobile && accounts.length > 0 && (
+        {isMobile && shownAccounts.length > 0 && (
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 10 }}>
-            {accounts.map((a) => (
+            {shownAccounts.map((a) => (
               <button key={a.id} style={{ ...st.btnGhost, padding: "6px 10px", fontSize: 12 }} className="btn"
                 disabled={!!busy} onClick={() => openStatement(a)}>
                 <List size={13} /> {a.name}
@@ -256,7 +267,80 @@ export function Control() {
         onClose={() => setShowAdd(false)}
         onSaved={async () => { setShowAdd(false); await load(); setDone("Счёт ДС добавлен"); }} />
     )}
+    {showTransfer && (
+      <CashTransferModal C={C} st={st} accounts={accounts} periodId={periodId}
+        onClose={() => setShowTransfer(false)}
+        onSaved={async (msg) => { setShowTransfer(false); await load(); setDone(msg); }} />
+    )}
   </>);
+}
+
+
+// ---------------------------------------------------------------- Перемещение ДС (инкассация)
+function CashTransferModal({ C, st, accounts, periodId, onClose, onSaved }) {
+  const [from, setFrom] = useState(accounts[0]?.id || "");
+  const [to, setTo] = useState(accounts[1]?.id || "");
+  const [amount, setAmount] = useState("");
+  const [comment, setComment] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  const fromAcc = accounts.find((a) => a.id === from);
+
+  const submit = async () => {
+    if (busy) return;
+    setErr("");
+    const a = parseFloat(String(amount).replace(",", ".")) || 0;
+    if (a <= 0) return setErr("Введите сумму больше нуля");
+    if (!from || !to || from === to) return setErr("Выберите два разных счёта");
+    if (!periodId) return setErr("Нет выбранного периода ФП");
+    setBusy(true);
+    try {
+      await cashTransfer(from, to, a, periodId, comment.trim() || null);
+      onSaved(`Перемещено ${fmt(a)} TJS: ${fromAcc?.name} → ${accounts.find((x) => x.id === to)?.name}`);
+    } catch (e) { setErr(e?.message || String(e)); setBusy(false); }
+  };
+
+  return (
+    <div style={st.mdOverlay} onClick={onClose}>
+      <div style={{ ...st.mdCard, width: "min(420px, 100%)" }} onClick={(e) => e.stopPropagation()}>
+        <div style={st.mdHead}>
+          <div style={st.mdTitle}>Перемещение между счетами ДС</div>
+          <button style={st.iconBtn} onClick={onClose}><X size={17} /></button>
+        </div>
+        <div style={{ display: "grid", gap: 10 }}>
+          <div style={st.reqField}>
+            <span style={st.reqFieldLbl}>Откуда · остаток {fmt(Number(fromAcc?.balance || 0))}</span>
+            <select style={st.mdSelect} className="fin" value={from} onChange={(e) => setFrom(e.target.value)}>
+              {accounts.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+            </select>
+          </div>
+          <div style={st.reqField}>
+            <span style={st.reqFieldLbl}>Куда</span>
+            <select style={st.mdSelect} className="fin" value={to} onChange={(e) => setTo(e.target.value)}>
+              {accounts.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+            </select>
+          </div>
+          <div style={st.reqField}>
+            <span style={st.reqFieldLbl}>Сумма, TJS</span>
+            <input type="number" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)}
+              onWheel={(e) => e.target.blur()} style={{ ...st.numInput, width: "100%" }} autoFocus />
+          </div>
+          <div style={st.reqField}>
+            <span style={st.reqFieldLbl}>Комментарий</span>
+            <input style={st.mdInput} className="fin" placeholder="Инкассация…"
+              value={comment} onChange={(e) => setComment(e.target.value)} />
+          </div>
+        </div>
+        {err && <div style={st.reqError}><AlertCircle size={15} /> {err}</div>}
+        <div style={st.mdActions}>
+          <button style={st.btnGhost} className="btn" onClick={onClose}>Отмена</button>
+          <button style={{ ...st.btnGreen, opacity: busy ? 0.7 : 1 }} className="btn" onClick={submit} disabled={busy}>
+            {busy ? <Loader2 size={15} className="spin" /> : <ArrowRightLeft size={15} />} Переместить
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 

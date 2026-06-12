@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Layers, Bell, Search, X, Menu, User2, Settings, LogOut, Sun, Moon } from "lucide-react";
+import { Layers, X, Menu, User2, Settings, LogOut, Sun, Moon } from "lucide-react";
 import { Stub } from "./common";
 import { MODULES, MODULE_NAV } from "../data/navigation";
 import { CrmModule } from "../modules/crm/CrmModule";
@@ -25,7 +25,8 @@ import { StaffModule } from "../modules/staff/StaffModule";
 import { StatsModule } from "../modules/stats/StatsModule";
 import { makeCss } from "../theme/css";
 import { useTheme } from "../theme/theme";
-import { PeriodProvider, WeekPicker } from "../lib/PeriodCtx";
+import { PeriodProvider, WeekPicker, LocationPicker } from "../lib/PeriodCtx";
+import { GlobalSearch, NotifyBell } from "./TopWidgets";
 
 
 export function App({ onLogout }) {
@@ -70,9 +71,10 @@ export function App({ onLogout }) {
           <div style={st.brandTxt}>Яккасарой{!isMobile && <span style={st.brandThin}> финанс</span>}</div>
         </div>
         <WeekPicker />
-        {!isMobile && <div style={st.searchWrap}><Search size={16} color={C.faint} /><input style={st.search} placeholder="Поиск…" /></div>}
+        <LocationPicker />
+        {!isMobile && <GlobalSearch onGo={(m, sec) => { setActiveModule(m); setActive(sec); }} />}
         <div style={st.topRight}>
-          <button style={st.iconBtn}><Bell size={17} /></button>
+          <NotifyBell onGo={(m, sec) => { setActiveModule(m); setActive(sec); }} />
           {!isMobile && <div style={st.user}><div style={st.uName}>{userName}</div><div style={st.uRole}>{userRole}</div></div>}
           <div style={st.profileWrap}>
             <div style={st.avatar} className="ava" onClick={() => setProfileOpen((o) => !o)}>{initials}</div>
