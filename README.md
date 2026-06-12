@@ -6,7 +6,7 @@
 
 ## Текущий статус
 
-**Стадия: интерактивный прототип (фронтенд).** Все данные — моки в памяти (`src/data/`), бэкенда и авторизации пока нет. Следующий шаг — подключение Supabase (PostgreSQL, Auth, Storage) и перевод модулей на реальные данные.
+**Стадия: интерактивный прототип + реальная авторизация.** Данные модулей — пока моки в памяти (`src/data/`), но вход выполняется через Supabase Auth (email + пароль), профиль с ролью хранится в таблице `profiles`. Следующий шаг — перевод модулей на реальные данные.
 
 ## Модули
 
@@ -24,16 +24,33 @@
 
 ```bash
 npm install
-npm run dev        # http://localhost:5173
-npm run build      # сборка в dist/
+cp .env.example .env   # и заполнить ключи Supabase
+npm run dev            # http://localhost:5173
+npm run build          # сборка в dist/
 ```
 
 Требуется Node.js 18+.
+
+## Настройка Supabase (авторизация)
+
+1. Создайте проект на [supabase.com](https://supabase.com).
+2. В **SQL Editor** выполните скрипт [`supabase/schema.sql`](supabase/schema.sql) — он создаёт таблицу `profiles` (роль, ФИО, телефон, активность), триггер автосоздания профиля при регистрации и RLS-политики.
+3. В **Project Settings → API** скопируйте `Project URL` и `anon public` ключ в `.env`:
+   ```
+   VITE_SUPABASE_URL=https://your-project.supabase.co
+   VITE_SUPABASE_KEY=your-anon-public-key
+   ```
+4. В **Authentication → Users** создайте первого пользователя (кнопка *Add user*, поставьте галочку *Auto Confirm User*).
+5. Назначьте ему роль владельца — SQL-запрос приведён в конце `schema.sql`.
+
+Роли (`owner`, `fin_director`, `ops_director`, `location_manager`, `accountant`, `employee`) соответствуют ТЗ §2; подписи — в `ROLE_LABELS` (`src/components/AppShell.jsx`).
 
 ## Структура проекта
 
 ```
 ├── docs/                      # ТЗ и документация
+├── supabase/
+│   └── schema.sql             # таблица profiles, роли, триггеры, RLS
 ├── index.html
 ├── vite.config.js
 └── src/
@@ -43,6 +60,9 @@ npm run build      # сборка в dist/
     │   ├── theme.js           # THEMES (dark/light), ThemeCtx, useTheme
     │   ├── styles.js          # makeStyles(C) — все inline-стили
     │   └── css.js             # makeCss(C) — глобальный CSS (hover, анимации)
+    ├── lib/
+    │   ├── supabase.js        # клиент Supabase (ключи из .env)
+    │   └── auth.js            # signIn / signOut / getSession / getProfile
     ├── hooks/
     │   └── useIsMobile.js
     ├── utils/
@@ -86,7 +106,8 @@ npm run build      # сборка в dist/
 
 - [x] Прототип всех ключевых экранов (моки)
 - [x] Разбивка монолита на модульную структуру
-- [ ] **Supabase**: схема БД (PostgreSQL), Auth (роли из ТЗ §2), Storage для вложений
+- [x] **Supabase Auth**: вход по email/паролю, профили с ролями из ТЗ §2 (`supabase/schema.sql`)
+- [ ] **Supabase**: схема БД остальных модулей (PostgreSQL), Storage для вложений
 - [ ] API-слой вместо `src/data/` + реальный ввод доходов и заявок
 - [ ] Проведение полной финансовой недели в системе (критерий приёмки этапа 1)
 - [ ] Telegram-уведомления, интеграция iiko (этапы 2–3 по ТЗ §8)
