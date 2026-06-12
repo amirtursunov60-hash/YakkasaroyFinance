@@ -22,6 +22,7 @@ export default function YakkasaroyFinance() {
   const [theme, setTheme] = useState("dark");
   const [lang, setLang] = useState("ru");
   const [profile, setProfile] = useState(null);  // профиль вошедшего (с ролью) или null
+  const [hasUser, setHasUser] = useState(false);  // есть сессия, но возможно нет профиля
   const [loading, setLoading] = useState(true);   // идёт первичная проверка сессии
   const isMobile = useIsMobile();
   const C = THEMES[theme];
@@ -46,8 +47,9 @@ export default function YakkasaroyFinance() {
           localStorage.removeItem("yk_invite_name");
         }
       }
+      const { data: { user } } = await supabase.auth.getUser();
       const p = await getProfile();
-      if (active) { setProfile(p); setLoading(false); }
+      if (active) { setHasUser(!!user); setProfile(p); setLoading(false); }
     };
     load();
 
@@ -68,6 +70,31 @@ export default function YakkasaroyFinance() {
         display: "grid", placeItems: "center", fontFamily: "'Inter',system-ui,sans-serif", fontSize: 14 }}>
         Загрузка…
       </div>
+    );
+  }
+
+  // Вошёл, но профиля нет (регистрация без приглашения) — понятный экран
+  if (!profile && hasUser) {
+    return (
+      <ThemeCtx.Provider value={ctxVal}>
+        <div style={{ minHeight: "100vh", background: C.bg, color: C.text,
+          display: "grid", placeItems: "center", fontFamily: "'Inter',system-ui,sans-serif", padding: 20 }}>
+          <div style={{ maxWidth: 420, textAlign: "center", background: C.panel,
+            border: `1px solid ${C.line}`, borderRadius: 18, padding: "28px 24px" }}>
+            <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 10 }}>Профиль не найден</div>
+            <div style={{ fontSize: 13.5, color: C.sub, lineHeight: 1.6, marginBottom: 18 }}>
+              Вы вошли в аккаунт, но он не привязан к компании «Яккасарой».
+              Попросите владельца или директора прислать ссылку-приглашение
+              (Сотрудники → Приглашения) и откройте её.
+            </div>
+            <button onClick={handleLogout} style={{ background: C.green, color: "#04130a",
+              border: "none", padding: "12px 22px", borderRadius: 12, fontSize: 14,
+              fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
+              Выйти
+            </button>
+          </div>
+        </div>
+      </ThemeCtx.Provider>
     );
   }
 

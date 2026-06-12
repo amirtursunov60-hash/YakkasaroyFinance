@@ -4,6 +4,7 @@ import { Stat } from "../../components/common";
 import { useTheme } from "../../theme/theme";
 import { fmt } from "../../utils/format";
 import { usePeriod, periodTitle } from "../../lib/PeriodCtx";
+import { AttachmentsBlock } from "../../components/AttachmentsBlock";
 import {
   fetchRequests, decideRequest, payRequest,
   fetchBills, decideBill, payBill,
@@ -27,7 +28,7 @@ const ST_META = {
 
 export function Requests() {
   const { C, st, isMobile, profile } = useTheme();
-  const { period, periodId, loading: periodsLoading } = usePeriod();
+  const { period, periodId, loading: periodsLoading, locationId: ctxLocationId } = usePeriod();
   const isFinAdmin = ["owner", "fin_director"].includes(profile?.role);
   const canPay = isFinAdmin || profile?.role === "accountant";
 
@@ -54,10 +55,10 @@ export function Requests() {
 
   const loadItems = useCallback(async () => {
     try {
-      const [reqs, bls] = await Promise.all([fetchRequests(periodId), fetchBills(periodId)]);
+      const [reqs, bls] = await Promise.all([fetchRequests(periodId, ctxLocationId), fetchBills(periodId, null, ctxLocationId)]);
       setRequests(reqs); setBills(bls);
     } catch (e) { setErr("Не удалось загрузить заявки: " + (e?.message || e)); }
-  }, [periodId]);
+  }, [periodId, ctxLocationId]);
   useEffect(() => { if (!periodsLoading) loadItems(); }, [loadItems, periodsLoading]);
 
   // Заявки по отделениям оргсхемы (отделение — от поста заявителя)
@@ -191,6 +192,10 @@ export function Requests() {
                 <CswRow C={C} label="Ситуация" text={item.csw_situation} />
                 <CswRow C={C} label="Решение" text={item.csw_solution} />
               </>)}
+              {item.attachments?.length > 0 && (
+                <AttachmentsBlock kind={itemKind} parentId={item.id} attachments={item.attachments}
+                  canUpload={false} profileId={profile.id} onChanged={loadItems} />
+              )}
               <div style={{ display: "flex", gap: 16, flexWrap: "wrap", fontSize: 12.5, color: C.sub }}>
                 {item.fund && <span>Фонд: <b style={{ color: C.text }}>{item.fund.code} {item.fund.name}</b></span>}
                 {itemKind === "bill" && item.due_on && <span>Срок: <b style={{ color: C.text }}>{new Date(item.due_on + "T00:00:00").toLocaleDateString("ru")}</b></span>}

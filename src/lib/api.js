@@ -66,13 +66,15 @@ export async function fetchIncomeTypes() {
 
 // Суммы доходов по видам за указанные периоды:
 // { [income_type_id]: { [period_id]: сумма в базовой валюте } }
-export async function fetchIncomeSums(periodIds) {
+export async function fetchIncomeSums(periodIds, locationId) {
   const ids = periodIds.filter(Boolean);
   if (!ids.length) return {};
-  const { data, error } = await supabase
+  let q = supabase
     .from("incomes")
     .select("income_type_id, period_id, amount_base, is_return")
     .in("period_id", ids);
+  if (locationId) q = q.eq("location_id", locationId);
+  const { data, error } = await q;
   if (error) throw error;
   const sums = {};
   for (const r of data) {
@@ -80,6 +82,13 @@ export async function fetchIncomeSums(periodIds) {
     byPeriod[r.period_id] = (byPeriod[r.period_id] || 0) + (r.is_return ? -r.amount_base : r.amount_base);
   }
   return sums;
+}
+
+export async function fetchLocations() {
+  const { data, error } = await supabase
+    .from("locations").select("id, name, city").eq("is_archived", false).order("name");
+  if (error) throw error;
+  return data;
 }
 
 // Справочники для формы ввода дохода
@@ -131,12 +140,12 @@ export async function fetchExpenseTypes() {
 
 // Факт расходов по статьям за периоды (оплаты заявок и счетов из Реестра):
 // { [expense_type_id]: { [period_id]: сумма в базовой валюте } }
-export async function fetchExpenseSums(periodIds) {
+export async function fetchExpenseSums(periodIds, locationId) {
   const ids = periodIds.filter(Boolean);
   if (!ids.length) return {};
   const { data, error } = await supabase
     .from("fp_register")
-    .select("period_id, op_type, fund_amount, cash_amount, request:payment_requests(expense_type_id), bill:supplier_bills(expense_type_id)")
+    .select("period_id, op_type, fund_amount, cash_amount, request:payment_requests(expense_type_id, location_id), bill:supplier_bills(expense_type_id, location_id)")
     .in("op_type", ["request_payment", "bill_payment"])
     .in("period_id", ids);
   if (error) throw error;
@@ -144,6 +153,7 @@ export async function fetchExpenseSums(periodIds) {
   for (const r of data) {
     const tid = r.request?.expense_type_id || r.bill?.expense_type_id;
     if (!tid) continue;
+    if (locationId && (r.request?.location_id || r.bill?.location_id) !== locationId) continue;
     const amt = -(Number(r.fund_amount ?? r.cash_amount) || 0);
     const byPeriod = (sums[tid] ??= {});
     byPeriod[r.period_id] = (byPeriod[r.period_id] || 0) + amt;
@@ -191,7 +201,7 @@ export async function fetchCounterparties() {
 
 // Заявки: выбранного периода + все поданные (ещё без периода — период
 // проставляется при одобрении, ТЗ: период одобрения)
-export async function fetchRequests(periodId) {
+export async function fetchRequests(periodId, locationId) {
   let q = supabase
     .from("payment_requests")
     .select(`id, number, status, planned_amount, csw_data, csw_situation, csw_solution,
@@ -203,8 +213,10 @@ export async function fetchRequests(periodId) {
       location:locations(id, name),
       currency:currencies(id, code, is_base),
       counterparty:counterparties(name),
-      payment_type:payment_types(name)`)
+      payment_type:payment_types(name),
+      attachments:request_attachments(id, file_path, file_name)`)
     .order("created_at", { ascending: false });
+  if (locationId) q = q.eq("location_id", locationId);
   q = periodId ? q.or(`period_id.eq.${periodId},status.eq.submitted`) : q.eq("status", "submitted");
   const { data, error } = await q;
   if (error) throw error;
@@ -325,7 +337,7 @@ export async function redeemInvite(token, fullName) {
 // поданные (ещё без периода) + одобренные/оплаченные в выбранном периоде.
 // kind: 'supply' — поставщики (продукты/хозтовары), 'obligation' —
 // обязательства (оборудование, услуги, ремонт); без kind — все.
-export async function fetchBills(periodId, kind) {
+export async function fetchBills(periodId, kind, locationId) {
   let q = supabase
     .from("supplier_bills")
     .select(`id, number, status, kind, amount, issued_on, due_on, is_recurring, comment,
@@ -337,10 +349,12 @@ export async function fetchBills(periodId, kind) {
       location:locations(id, name),
       currency:currencies(id, code, is_base),
       approved_period:fp_periods!supplier_bills_period_approved_id_fkey(starts_on, ends_on),
-      paid_period:fp_periods!supplier_bills_period_paid_id_fkey(starts_on, ends_on)`)
+      paid_period:fp_periods!supplier_bills_period_paid_id_fkey(starts_on, ends_on),
+      attachments:bill_attachments(id, file_path, file_name)`)
     .eq("is_archived", false)
     .order("created_at", { ascending: false });
   if (kind) q = q.eq("kind", kind);
+  if (locationId) q = q.eq("location_id", locationId);
   q = periodId
     ? q.or(`status.eq.submitted,period_approved_id.eq.${periodId},period_paid_id.eq.${periodId}`)
     : q.eq("status", "submitted");
@@ -385,8 +399,8 @@ export async function createCounterparty(name, { isSupplier = true } = {}) {
 }
 
 // ---------------------------------------------------------------- Счета клиентов (банкеты)
-export async function fetchInvoices() {
-  const { data, error } = await supabase
+export async function fetchInvoices(locationId) {
+  let q = supabase
     .from("client_invoices")
     .select(`id, number, status, amount, event_name, hall, event_on, comment, created_at,
       counterparty:counterparties(id, name),
@@ -396,6 +410,8 @@ export async function fetchInvoices() {
     .eq("is_archived", false)
     .order("created_at", { ascending: false })
     .limit(200);
+  if (locationId) q = q.eq("location_id", locationId);
+  const { data, error } = await q;
   if (error) throw error;
   return data;
 }
@@ -433,6 +449,77 @@ export async function payInvoice({ invoiceId, amount, cashAccountId, paymentType
     p_payment_type_id: paymentTypeId, p_period_id: periodId, p_received_on: receivedOn,
   });
   if (error) throw error;
+}
+
+// Перемещение между счетами ДС — инкассация (fp_cash_transfer)
+export async function cashTransfer(fromId, toId, amount, periodId, comment) {
+  const { error } = await supabase.rpc("fp_cash_transfer", {
+    p_from: fromId, p_to: toId, p_amount: amount, p_period_id: periodId, p_comment: comment || null,
+  });
+  if (error) throw error;
+}
+
+// ---------------------------------------------------------------- Вложения
+// kind: 'request' | 'bill'; файл кладём в Storage, ссылку — в таблицу
+export async function uploadAttachment(kind, parentId, file, uploadedBy) {
+  const safe = file.name.replace(/[^\wа-яА-ЯёЁ.\-]+/gu, "_").slice(-80);
+  const path = `${kind}s/${parentId}/${Date.now()}_${safe}`;
+  const up = await supabase.storage.from("attachments").upload(path, file);
+  if (up.error) throw up.error;
+  const table = kind === "request" ? "request_attachments" : "bill_attachments";
+  const fk = kind === "request" ? "request_id" : "bill_id";
+  const { error } = await supabase.from(table)
+    .insert({ [fk]: parentId, file_path: path, file_name: file.name, uploaded_by: uploadedBy });
+  if (error) throw error;
+}
+
+export async function attachmentUrl(path) {
+  const { data, error } = await supabase.storage.from("attachments").createSignedUrl(path, 3600);
+  if (error) throw error;
+  return data.signedUrl;
+}
+
+// ---------------------------------------------------------------- Скорректированная схема недели
+// Правки процентов в Директиве сохраняются на период (ТЗ §4.1.3)
+export async function fetchPeriodOverrides(periodId) {
+  if (!periodId) return {};
+  const { data, error } = await supabase
+    .from("period_distribution_overrides")
+    .select("rule_id, percent")
+    .eq("period_id", periodId);
+  if (error) throw error;
+  return Object.fromEntries(data.map((r) => [r.rule_id, Number(r.percent)]));
+}
+
+export async function savePeriodOverrides(periodId, entries) {
+  if (!entries.length) return;
+  const { error } = await supabase
+    .from("period_distribution_overrides")
+    .upsert(entries.map(({ ruleId, percent }) => ({ period_id: periodId, rule_id: ruleId, percent })),
+      { onConflict: "period_id,rule_id" });
+  if (error) throw error;
+}
+
+// ---------------------------------------------------------------- Глобальный поиск
+// Ищет по контрагентам, заявкам, счетам, банкетам, фондам, сотрудникам
+export async function globalSearch(qstr) {
+  const like = `%${qstr}%`;
+  const [cp, req, bill, inv, fund, ppl] = await Promise.all([
+    supabase.from("counterparties").select("id, name").ilike("name", like).eq("is_archived", false).limit(5),
+    supabase.from("payment_requests").select("id, number, csw_solution, status").or(`csw_data.ilike.${like},csw_situation.ilike.${like},csw_solution.ilike.${like}`).limit(5),
+    supabase.from("supplier_bills").select("id, number, kind, status, counterparty:counterparties(name)").ilike("number", like).limit(5),
+    supabase.from("client_invoices").select("id, number, event_name, status").ilike("event_name", like).limit(5),
+    supabase.from("funds").select("id, code, name").or(`name.ilike.${like},code.ilike.${like}`).eq("is_archived", false).limit(5),
+    supabase.from("profiles").select("id, full_name, role").ilike("full_name", like).limit(5),
+  ]);
+  const res = [];
+  (cp.data || []).forEach((x) => res.push({ type: "Контрагент", label: x.name, module: "finance", section: "suppliers" }));
+  (req.data || []).forEach((x) => res.push({ type: "Заявка", label: `№${x.number} · ${x.csw_solution?.slice(0, 40) || ""}`, module: "finance", section: "requests" }));
+  (bill.data || []).forEach((x) => res.push({ type: x.kind === "obligation" ? "Обязательство" : "Счёт поставщика", label: `№${x.number} · ${x.counterparty?.name || ""}`, module: "finance", section: x.kind === "obligation" ? "obligations" : "suppliers" }));
+  (inv.data || []).forEach((x) => res.push({ type: "Банкет", label: `№${x.number} · ${x.event_name}`, module: "finance", section: "clients" }));
+  (fund.data || []).forEach((x) => res.push({ type: "Фонд", label: `${x.code} · ${x.name}`, module: "finance", section: "funds" }));
+  (ppl.data || []).forEach((x) => res.push({ type: "Сотрудник", label: x.full_name, module: "staff", section: "st_people" }));
+  return res.slice(0, 14);
 }
 
 // ---------------------------------------------------------------- Реестр операций

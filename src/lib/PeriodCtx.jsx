@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
-import { CalendarDays, ChevronDown, Check, Plus, Trash2, Loader2, AlertCircle } from "lucide-react";
+import { CalendarDays, MapPin, ChevronDown, Check, Plus, Trash2, Loader2, AlertCircle } from "lucide-react";
 import { useTheme } from "../theme/theme";
-import { isoDate, weekBounds, getPeriodFor, fetchPeriods, createPeriod, periodHasData, deletePeriod } from "./api";
+import { isoDate, weekBounds, getPeriodFor, fetchPeriods, createPeriod, periodHasData, deletePeriod, fetchLocations } from "./api";
 
 // ============================================================================
 //  Общий выбор недели ФП для всего приложения. Выбранный период живёт в
@@ -35,6 +35,9 @@ export function PeriodProvider({ children }) {
   const [periodId, setPeriodId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
+  // Переключатель «вся сеть / точка» (ТЗ v2 §5): null — вся сеть
+  const [locations, setLocations] = useState([]);
+  const [locationId, setLocationId] = useState(null);
 
   // Перечитать список периодов. keepPeriod=false — выбрать текущую неделю.
   const reload = useCallback(async (keepPeriod = true) => {
@@ -49,7 +52,10 @@ export function PeriodProvider({ children }) {
   }, []);
 
   useEffect(() => {
-    reload(false)
+    Promise.all([
+      reload(false),
+      fetchLocations().then(setLocations),
+    ])
       .catch((e) => setErr("Не удалось загрузить периоды: " + (e?.message || e)))
       .finally(() => setLoading(false));
   }, [reload]);
@@ -63,9 +69,11 @@ export function PeriodProvider({ children }) {
       .sort((a, b) => b.starts_on.localeCompare(a.starts_on))[0] || null;
   }, [periods, period]);
 
+  const location = locations.find((l) => l.id === locationId) || null;
   const value = useMemo(
-    () => ({ periods, periodId, setPeriodId, period, prevPeriod, loading, err, reload }),
-    [periods, periodId, period, prevPeriod, loading, err, reload],
+    () => ({ periods, periodId, setPeriodId, period, prevPeriod, loading, err, reload,
+      locations, locationId, setLocationId, location }),
+    [periods, periodId, period, prevPeriod, loading, err, reload, locations, locationId, location],
   );
   return <PeriodCtx.Provider value={value}>{children}</PeriodCtx.Provider>;
 }
@@ -171,6 +179,48 @@ export function WeekPicker() {
             </div>
           ))}
           {!periods.length && <div style={st.empty}>Периодов пока нет</div>}
+        </div>
+      </>)}
+    </div>
+  );
+}
+
+
+// ---------------------------------------------------------------- Точка в шапке
+// «Вся сеть / точка» — фильтр для всех разделов (ТЗ v2 §5)
+export function LocationPicker() {
+  const { C, st, isMobile } = useTheme();
+  const ctx = usePeriod();
+  const [open, setOpen] = useState(false);
+  if (!ctx) return null;
+  const { locations, locationId, setLocationId, location } = ctx;
+  if (!locations.length) return null;
+
+  const label = location ? (isMobile ? location.name.slice(0, 10) : location.name) : "Вся сеть";
+
+  return (
+    <div style={st.topWeekWrap}>
+      <button style={st.topWeekBtn} className="btn" onClick={() => setOpen((v) => !v)}>
+        <MapPin size={15} color={location ? "#e8911c" : C.green} />
+        {!isMobile && <span>{label}</span>}
+        <ChevronDown size={14} style={{ transform: open ? "rotate(180deg)" : "none", transition: "transform .2s" }} />
+      </button>
+      {open && (<>
+        <div style={st.weekOverlay} onClick={() => setOpen(false)} />
+        <div style={{ ...st.weekMenu, top: 44, width: 230 }}>
+          <div style={st.weekMenuHead}>Точка</div>
+          <button style={{ ...st.weekOption, ...(locationId === null ? st.weekOptionOn : {}) }} className="weekOpt"
+            onClick={() => { setLocationId(null); setOpen(false); }}>
+            <span>Вся сеть</span>
+            {locationId === null && <Check size={15} color={C.green} />}
+          </button>
+          {locations.map((l) => (
+            <button key={l.id} style={{ ...st.weekOption, ...(l.id === locationId ? st.weekOptionOn : {}) }} className="weekOpt"
+              onClick={() => { setLocationId(l.id); setOpen(false); }}>
+              <span>{l.name}{l.city ? ` · ${l.city}` : ""}</span>
+              {l.id === locationId && <Check size={15} color={C.green} />}
+            </button>
+          ))}
         </div>
       </>)}
     </div>

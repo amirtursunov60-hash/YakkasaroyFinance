@@ -7,7 +7,7 @@ import { usePeriod, periodTitle } from "../../lib/PeriodCtx";
 import {
   fetchFunds, fetchDefaultRules,
   fetchPeriodIncome, fetchPeriodDistribution, distributeStage, setPeriodStatus, closePeriod, reopenPeriod, resetDistribution,
-  fetchRequests, fetchBills,
+  fetchRequests, fetchBills, fetchPeriodOverrides, savePeriodOverrides,
 } from "../../lib/api";
 
 
@@ -77,7 +77,14 @@ export function Directive() {
   useEffect(() => {
     let on = true;
     (async () => {
-      try { if (on) { await reloadPeriodData(); setCalculated({}); setPcts({}); setDone(""); } }
+      try {
+        if (on) {
+          await reloadPeriodData();
+          // скорректированная схема недели (ТЗ §4.1.3) — сохранённые правки процентов
+          const ov = periodId ? await fetchPeriodOverrides(periodId) : {};
+          setCalculated({}); setPcts(ov); setDone("");
+        }
+      }
       catch (e) { if (on) setErr("Не удалось загрузить период: " + (e?.message || e)); }
       try {
         const [reqs, bills] = await Promise.all([fetchRequests(periodId), fetchBills(periodId)]);
@@ -165,6 +172,13 @@ export function Directive() {
     setBusy(`appr:${sg.key}`); setErr(""); setDone("");
     try {
       await distributeStage(periodId, sg.key, allocations);
+      // правки процентов этого этапа сохраняем как скорректированную схему недели
+      try {
+        const changed = sg.rows
+          .filter((x) => pctOf(x.rule) !== Number(x.rule.percent ?? 0))
+          .map((x) => ({ ruleId: x.rule.id, percent: pctOf(x.rule) }));
+        await savePeriodOverrides(periodId, changed);
+      } catch { /* не критично для одобрения */ }
       await Promise.all([reloadPeriodData(), loadRefs()]);
       setCalculated((p) => ({ ...p, [sg.key]: {} }));
       setDone(`${sg.title}: распределение одобрено и зачислено в фонды`);

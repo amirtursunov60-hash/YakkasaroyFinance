@@ -27,7 +27,7 @@ const FILTERS = [["all", "Все"], ["planned", "Брони"], ["issued", "В р
 
 export function Clients() {
   const { C, st, isMobile, profile } = useTheme();
-  const { periodId, loading: periodsLoading } = usePeriod();
+  const { periodId, loading: periodsLoading, locationId: ctxLocationId } = usePeriod();
   const isFinAdmin = ["owner", "fin_director"].includes(profile?.role);
   const canPay = isFinAdmin || ["accountant", "location_manager"].includes(profile?.role);
   const canSubmit = ["owner", "fin_director", "accountant", "location_manager", "ops_director"].includes(profile?.role);
@@ -50,7 +50,7 @@ export function Clients() {
     setErr("");
     try {
       const [invs, tps, refData, cps] = await Promise.all([
-        fetchInvoices(), fetchIncomeTypes(), fetchIncomeRefs(), fetchCounterparties(),
+        fetchInvoices(ctxLocationId), fetchIncomeTypes(), fetchIncomeRefs(), fetchCounterparties(),
       ]);
       setInvoices(invs); setTypes(tps); setRefs(refData); setCounterparties(cps);
       setPayments(await fetchInvoicePayments(invs.map((i) => i.id)));
@@ -59,7 +59,7 @@ export function Clients() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [ctxLocationId]);
   useEffect(() => { load(); }, [load]);
 
   const paidOf = useCallback((inv) =>
