@@ -2,52 +2,54 @@ import { useState, useMemo, useEffect, useCallback } from "react";
 import { ArrowUpRight, ArrowDownRight, ChevronRight, Plus, X, Loader2, AlertCircle } from "lucide-react";
 import { useTheme } from "../../theme/theme";
 import { fmt } from "../../utils/format";
+import { usePeriod, periodTitle } from "../../lib/PeriodCtx";
 import {
-  isoDate, weekBounds, getPeriodFor, getPrevPeriodFor,
+  isoDate, getPeriodFor,
   fetchIncomeTypes, fetchIncomeSums, fetchIncomeRefs, findRate, insertIncome,
 } from "../../lib/api";
 
 
 // ---------------------------------------------------------------- INCOME
-// Живые данные: дерево видов дохода (income_types), суммы текущей и прошлой
-// недели ФП (incomes), форма ввода операции дохода.
+// Живые данные: дерево видов дохода (income_types), суммы выбранной в шапке
+// недели ФП и предыдущей (incomes), форма ввода операции дохода.
 
-const MONTHS = ["янв", "фев", "мар", "апр", "май", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"];
 const PALETTE = ["#e8911c", "#7bd88f", "#5bd6c9", "#5b8def", "#d6c14a", "#9c6ade", "#e0463b", "#2f9e44", "#d64ad6"];
-
-const periodLabel = (date) => {
-  const { start, end } = weekBounds(date);
-  const d2 = (n) => String(n).padStart(2, "0");
-  return `${d2(start.getDate())}–${d2(end.getDate())} ${MONTHS[end.getMonth()]} ${end.getFullYear()}`;
-};
 
 export function Income() {
   const { C, st, isMobile, profile } = useTheme();
+  const { period, prevPeriod, loading: periodsLoading } = usePeriod();
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [types, setTypes] = useState([]);
-  const [periods, setPeriods] = useState({ cur: null, prev: null });
   const [sums, setSums] = useState({});           // { typeId: { periodId: сумма } }
   const [refs, setRefs] = useState(null);
   const [open, setOpen] = useState(null);         // раскрытые папки; null = ещё не инициализировано
   const [showForm, setShowForm] = useState(false);
 
-  const load = useCallback(async () => {
+  // Неделя — из общего контекста (выбирается в шапке)
+  const periods = useMemo(() => ({ cur: period, prev: prevPeriod }), [period, prevPeriod]);
+
+  const loadStatic = useCallback(async () => {
     setLoadError("");
     try {
-      const today = new Date();
-      const [list, cur, prev, refData] = await Promise.all([
-        fetchIncomeTypes(), getPeriodFor(today), getPrevPeriodFor(today), fetchIncomeRefs(),
-      ]);
-      const sumData = await fetchIncomeSums([cur?.id, prev?.id]);
-      setTypes(list); setPeriods({ cur, prev }); setSums(sumData); setRefs(refData);
+      const [list, refData] = await Promise.all([fetchIncomeTypes(), fetchIncomeRefs()]);
+      setTypes(list); setRefs(refData);
     } catch (e) {
       setLoadError("Не удалось загрузить данные: " + (e?.message || e));
     } finally {
       setLoading(false);
     }
   }, []);
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { loadStatic(); }, [loadStatic]);
+
+  const loadSums = useCallback(async () => {
+    try {
+      setSums(await fetchIncomeSums([period?.id, prevPeriod?.id]));
+    } catch (e) {
+      setLoadError("Не удалось загрузить суммы периода: " + (e?.message || e));
+    }
+  }, [period?.id, prevPeriod?.id]);
+  useEffect(() => { if (!periodsLoading) loadSums(); }, [loadSums, periodsLoading]);
 
   // Дерево из плоского списка; сортировка по коду
   const byParent = useMemo(() => {
@@ -112,7 +114,7 @@ export function Income() {
     );
   };
 
-  if (loading) return <div style={st.empty}><Loader2 size={18} className="spin" /> Загрузка…</div>;
+  if (loading || periodsLoading) return <div style={st.empty}><Loader2 size={18} className="spin" /> Загрузка…</div>;
 
   return (<>
     {loadError && <div style={st.reqError}><AlertCircle size={15} /> {loadError}</div>}
@@ -122,7 +124,7 @@ export function Income() {
       <div style={st.incHeroGlow} />
       <div style={st.incHeroInner}>
         <div>
-          <div style={st.incHeroLabel}>Выручка за период · {periodLabel(new Date())}</div>
+          <div style={st.incHeroLabel}>Выручка за период · {period ? periodTitle(period) : "период не создан"}</div>
           <div style={st.incHeroValue}>{fmt(totals.cur)} <span style={st.incHeroUnit}>TJS</span></div>
           <div style={st.incHeroSub}>
             <Trend cur={totals.cur} prev={totals.prev} big /> к прошлому периоду · было {fmt(totals.prev)}
@@ -190,9 +192,9 @@ export function Income() {
     {showForm && refs && (
       <IncomeForm
         refs={refs} tree={tree} byParent={byParent} locationOf={locationOf}
-        profile={profile} isMobile={isMobile} C={C} st={st}
+        period={period} profile={profile} isMobile={isMobile} C={C} st={st}
         onClose={() => setShowForm(false)}
-        onSaved={() => { setShowForm(false); load(); }}
+        onSaved={() => { setShowForm(false); loadSums(); }}
       />
     )}
   </>);
@@ -209,10 +211,14 @@ const Field = ({ st, label, full, children }) => (
   </div>
 );
 
-function IncomeForm({ refs, tree, byParent, locationOf, profile, isMobile, C, st, onClose, onSaved }) {
+function IncomeForm({ refs, tree, byParent, locationOf, period, profile, isMobile, C, st, onClose, onSaved }) {
   const baseCur = refs.currencies.find((c) => c.is_base) || refs.currencies[0];
+  // Дата по умолчанию: сегодня, если попадает в выбранную неделю, иначе её начало
+  const today = isoDate(new Date());
+  const defDate = period && (today < period.starts_on || today > period.ends_on)
+    ? period.starts_on : today;
   const [f, setF] = useState({
-    typeId: "", amount: "", currencyId: baseCur?.id || "", date: isoDate(new Date()),
+    typeId: "", amount: "", currencyId: baseCur?.id || "", date: defDate,
     accountId: "", payTypeId: "", locationId: "", isReturn: false, comment: "",
   });
   const [busy, setBusy] = useState(false);

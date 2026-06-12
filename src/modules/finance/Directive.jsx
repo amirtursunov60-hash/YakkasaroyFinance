@@ -1,12 +1,12 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { ClipboardList, Calculator, ChevronDown, CalendarDays, Check, RotateCcw, RotateCw, Lock, Unlock, Ban, ArrowRightLeft, Loader2, AlertCircle, CheckCircle2, Plus, X, Trash2 } from "lucide-react";
+import { ClipboardList, Calculator, CalendarDays, Check, RotateCcw, RotateCw, Lock, Unlock, Ban, ArrowRightLeft, Loader2, AlertCircle, CheckCircle2, X } from "lucide-react";
 import { Stat } from "../../components/common";
 import { useTheme } from "../../theme/theme";
 import { fmt } from "../../utils/format";
+import { usePeriod, periodTitle } from "../../lib/PeriodCtx";
 import {
-  weekBounds, isoDate, getPeriodFor, fetchPeriods, fetchFunds, fetchDefaultRules,
+  fetchFunds, fetchDefaultRules,
   fetchPeriodIncome, fetchPeriodDistribution, distributeStage, setPeriodStatus, closePeriod, reopenPeriod, resetDistribution,
-  createPeriod, periodHasData, deletePeriod,
 } from "../../lib/api";
 
 
@@ -16,76 +16,61 @@ import {
 // в фонды через Реестр, зелёное) → «Сброс». Этапы каскадом: база следующего =
 // остаток после предыдущего. Внизу: запрет подачи заявок (статус периода
 // «на планировании»), закрытие периода Директивой, перенос остатка в фонд.
+// Неделя выбирается в шапке приложения (общий PeriodCtx).
 
-const MON = ["янв", "фев", "мар", "апр", "май", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"];
 const STAGES = [
   { key: "revenue",  title: "Выручка",                 fundsTitle: "Фонды выручки" },
   { key: "margin",   title: "Маржинальный доход",      fundsTitle: "Фонды маржинального дохода" },
   { key: "adjusted", title: "Скорректированный доход", fundsTitle: "Фонды скорректированного дохода" },
 ];
-const STATUS_LABEL = { open: "открыт", planning: "на планировании", closed: "закрыт" };
 const ORANGE = "#e8911c";
 
-const periodTitle = (p) => {
-  const s = new Date(p.starts_on + "T00:00:00"), e = new Date(p.ends_on + "T00:00:00");
-  return `${s.getDate()} ${MON[s.getMonth()]} – ${e.getDate()} ${MON[e.getMonth()]} ${e.getFullYear()}`;
-};
 const byFundCode = (fundById) => (a, b) =>
   (fundById[a.fund_id]?.code || "").localeCompare(fundById[b.fund_id]?.code || "", "ru", { numeric: true });
 
 export function Directive() {
   const { C, st, isMobile } = useTheme();
+  const { period, periodId, prevPeriod, loading: periodsLoading, reload: reloadPeriods } = usePeriod();
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
   const [done, setDone] = useState("");
-  const [periods, setPeriods] = useState([]);
   const [funds, setFunds] = useState([]);
   const [rules, setRules] = useState([]);
-  const [periodId, setPeriodId] = useState(null);
   const [income, setIncome] = useState(0);
   const [prevIncome, setPrevIncome] = useState(0);
   const [regRows, setRegRows] = useState([]);     // распределение из Реестра
   const [calculated, setCalculated] = useState({}); // { stage: { fund_id: сумма } }
   const [pcts, setPcts] = useState({});             // правки процентов { ruleId: число }
-  const [pickerOpen, setPickerOpen] = useState(false);
-  const [busy, setBusy] = useState(null);           // 'create'|'block'|'close'|'transfer'|`calc:х`|`appr:х`
+  const [busy, setBusy] = useState(null);           // 'block'|'close'|'transfer'|`calc:х`|`appr:х`
   const [transferOpen, setTransferOpen] = useState(false);
 
-  const period = periods.find((p) => p.id === periodId) || null;
   const isClosed = period?.status === "closed";
   const requestsBlocked = period?.status === "planning";
 
-  // -------- загрузка
-  const loadBase = useCallback(async (keepPeriod) => {
+  // -------- загрузка справочников (фонды, правила схемы)
+  const loadRefs = useCallback(async () => {
     setErr("");
     try {
-      const [ps, fs, rs] = await Promise.all([fetchPeriods(), fetchFunds(), fetchDefaultRules()]);
-      setPeriods(ps);
+      const [fs, rs] = await Promise.all([fetchFunds(), fetchDefaultRules()]);
       setFunds(fs.sort((a, b) => a.code.localeCompare(b.code, "ru", { numeric: true })));
       setRules(rs);
-      if (!keepPeriod) {
-        const curIso = isoDate(weekBounds(new Date()).start);
-        const cur = ps.find((p) => p.starts_on === curIso);
-        setPeriodId((id) => id || cur?.id || ps[0]?.id || null);
-      }
     } catch (e) {
       setErr("Не удалось загрузить данные: " + (e?.message || e));
     } finally {
       setLoading(false);
     }
   }, []);
-  useEffect(() => { loadBase(); }, [loadBase]);
+  useEffect(() => { loadRefs(); }, [loadRefs]);
 
   const reloadPeriodData = useCallback(async () => {
     if (!periodId) { setIncome(0); setPrevIncome(0); setRegRows([]); return; }
-    const prev = periods.find((p) => p.starts_on < (period?.starts_on || "")) || null;
     const [inc, pinc, rows] = await Promise.all([
       fetchPeriodIncome(periodId),
-      prev ? fetchPeriodIncome(prev.id) : Promise.resolve(0),
+      prevPeriod ? fetchPeriodIncome(prevPeriod.id) : Promise.resolve(0),
       fetchPeriodDistribution(periodId),
     ]);
     setIncome(inc); setPrevIncome(pinc); setRegRows(rows);
-  }, [periodId, periods, period]);
+  }, [periodId, prevPeriod]);
 
   useEffect(() => {
     let on = true;
@@ -171,7 +156,7 @@ export function Directive() {
     setBusy(`appr:${sg.key}`); setErr(""); setDone("");
     try {
       await distributeStage(periodId, sg.key, allocations);
-      await Promise.all([reloadPeriodData(), loadBase(true)]);
+      await Promise.all([reloadPeriodData(), loadRefs()]);
       setCalculated((p) => ({ ...p, [sg.key]: {} }));
       setDone(`${sg.title}: распределение одобрено и зачислено в фонды`);
     } catch (e) { setErr(e?.message || String(e)); }
@@ -198,7 +183,7 @@ export function Directive() {
         if (sg.sources?.has(sg.key)) await resetDistribution(periodId, sg.key);
         if (hasRemainder) await resetDistribution(periodId, "remainder");
       }
-      await Promise.all([reloadPeriodData(), loadBase(true)]);
+      await Promise.all([reloadPeriodData(), loadRefs()]);
       setCalculated({});
       setDone(hasLegacy ? "Распределение периода сброшено — можно рассчитать и одобрить заново" : `${sg.title}: одобрение сброшено`);
     } catch (e) { setErr(e?.message || String(e)); }
@@ -210,7 +195,7 @@ export function Directive() {
     setBusy("block"); setErr("");
     try {
       await setPeriodStatus(periodId, requestsBlocked ? "open" : "planning");
-      await loadBase(true);
+      await reloadPeriods(true);
     } catch (e) { setErr(e?.message || String(e)); }
     finally { setBusy(null); }
   };
@@ -224,7 +209,7 @@ export function Directive() {
       setBusy("close");
       try {
         await reopenPeriod(periodId);
-        await Promise.all([loadBase(true), reloadPeriodData()]);
+        await Promise.all([reloadPeriods(true), reloadPeriodData()]);
         setDone("Неделя открыта заново — операции периода разрешены");
       } catch (e) { setErr(e?.message || String(e)); }
       finally { setBusy(null); }
@@ -241,8 +226,8 @@ export function Directive() {
         remainder,
       };
       await closePeriod(periodId, protocol);
-      await Promise.all([loadBase(true), reloadPeriodData()]);
-      setDone("Период закрыт, протокол Директивы сохранён. Следующая неделя создана — выберите её в списке периодов.");
+      await Promise.all([reloadPeriods(true), reloadPeriodData()]);
+      setDone("Период закрыт, протокол Директивы сохранён. Следующая неделя создана — выберите её в шапке.");
     } catch (e) { setErr(e?.message || String(e)); }
     finally { setBusy(null); }
   };
@@ -252,66 +237,14 @@ export function Directive() {
     setBusy("transfer"); setErr(""); setDone("");
     try {
       await distributeStage(periodId, "remainder", [{ fund_id: fundId, amount: Math.round(remainder * 100) / 100 }]);
-      await Promise.all([reloadPeriodData(), loadBase(true)]);
+      await Promise.all([reloadPeriodData(), loadRefs()]);
       setTransferOpen(false);
       setDone(`Остаток ${fmt(remainder)} перенесён в фонд ${fundById[fundId]?.code}`);
     } catch (e) { setErr(e?.message || String(e)); }
     finally { setBusy(null); }
   };
 
-  const addDaysIso = (iso, n) => {
-    const d = new Date(iso + "T00:00:00");
-    d.setDate(d.getDate() + n);
-    return isoDate(d);
-  };
-
-  // «+»: если текущей недели нет — создаёт её, иначе добавляет неделю после последней
-  const addWeek = async () => {
-    if (busy) return;
-    setBusy("create"); setErr(""); setDone("");
-    try {
-      let p;
-      if (!currentExists) {
-        p = await getPeriodFor(new Date(), { create: true });
-      } else {
-        const last = [...periods].sort((a, b) => a.starts_on.localeCompare(b.starts_on)).at(-1);
-        p = await createPeriod(addDaysIso(last.ends_on, 1), addDaysIso(last.ends_on, 7));
-      }
-      if (!p) throw new Error("Нет прав на создание периода");
-      await loadBase(true);
-      setPeriodId(p.id);
-      setDone(`Неделя добавлена: ${periodTitle(p)}`);
-    } catch (e) { setErr(e?.message || String(e)); }
-    finally { setBusy(null); }
-  };
-
-  // Удаление недели. Пока базовые условия: закрытую нельзя, с операциями нельзя.
-  const doDeletePeriod = async (p, e) => {
-    e.stopPropagation();
-    if (busy) return;
-    if (p.status === "closed") { setErr("Закрытую неделю нельзя удалить — сначала откройте её"); return; }
-    if (!window.confirm(`Удалить неделю ${periodTitle(p)}? Удалить можно только неделю без операций.`)) return;
-    setBusy(`del:${p.id}`); setErr(""); setDone("");
-    try {
-      if (await periodHasData(p.id))
-        throw new Error("В этой неделе уже есть операции (доходы, Реестр, заявки или протокол) — такую неделю удалить нельзя");
-      await deletePeriod(p.id);
-      if (p.id === periodId) setPeriodId(null);
-      await loadBase(p.id !== periodId);
-      setDone(`Неделя ${periodTitle(p)} удалена`);
-    } catch (e2) {
-      setErr(e2?.code === "23503"
-        ? "Неделя связана с операциями — удалить нельзя"
-        : (e2?.message || String(e2)));
-    } finally { setBusy(null); }
-  };
-
-  const currentExists = useMemo(
-    () => periods.some((p) => p.starts_on === isoDate(weekBounds(new Date()).start)),
-    [periods],
-  );
-
-  if (loading) return <div style={st.empty}><Loader2 size={18} className="spin" /> Загрузка…</div>;
+  if (loading || periodsLoading) return <div style={st.empty}><Loader2 size={18} className="spin" /> Загрузка…</div>;
 
   return (<>
     <section style={st.hero}>
@@ -320,43 +253,9 @@ export function Directive() {
         <div style={st.heroTop}>
           <div>
             <div style={st.heroLabel}>Директива · недельное распределение ФРС</div>
-            <div style={st.weekPickerWrap}>
-              <button style={st.weekBtn} className="btn" onClick={() => setPickerOpen((v) => !v)}>
-                <CalendarDays size={18} />
-                <span style={st.heroTitle}>{period ? periodTitle(period) : "Период не создан"}</span>
-                <ChevronDown size={16} style={{ transform: pickerOpen ? "rotate(180deg)" : "none", transition: "transform .2s" }} />
-              </button>
-              {pickerOpen && (<>
-                <div style={st.weekOverlay} onClick={() => setPickerOpen(false)} />
-                <div style={st.weekMenu}>
-                  <div style={{ ...st.weekMenuHead, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <span>Периоды ФП</span>
-                    <button style={{ ...st.iconBtn, color: C.green }} className="btn" title="Добавить неделю"
-                      onClick={addWeek} disabled={!!busy}>
-                      {busy === "create" ? <Loader2 size={15} className="spin" /> : <Plus size={15} />}
-                    </button>
-                  </div>
-                  {periods.map((p) => (
-                    <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 2 }}>
-                      <button style={{ ...st.weekOption, flex: 1, ...(p.id === periodId ? st.weekOptionOn : {}) }} className="weekOpt"
-                        onClick={() => { setPeriodId(p.id); setPickerOpen(false); }}>
-                        <span>{periodTitle(p)}</span>
-                        {p.status === "closed"
-                          ? <span style={{ ...st.weekTag, color: C.danger, background: `${C.danger}1a` }}>закрыт</span>
-                          : <span style={st.weekTag}>{STATUS_LABEL[p.status]}</span>}
-                        {p.id === periodId && <Check size={15} color={C.green} />}
-                      </button>
-                      {p.status !== "closed" && (
-                        <button style={{ ...st.iconBtn, color: C.danger, flexShrink: 0 }} className="btn" title="Удалить неделю"
-                          onClick={(e) => doDeletePeriod(p, e)} disabled={!!busy}>
-                          {busy === `del:${p.id}` ? <Loader2 size={14} className="spin" /> : <Trash2 size={14} />}
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                  {!periods.length && <div style={st.empty}>Периодов пока нет</div>}
-                </div>
-              </>)}
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 4 }}>
+              <CalendarDays size={18} color={C.green} />
+              <span style={st.heroTitle}>{period ? periodTitle(period) : "Период не создан — добавьте неделю в шапке"}</span>
             </div>
           </div>
         </div>

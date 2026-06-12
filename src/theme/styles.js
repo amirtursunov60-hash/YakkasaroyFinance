@@ -47,6 +47,9 @@ export const makeStyles = (C) => ({
   heroTitle: { fontSize: 26, fontWeight: 800, letterSpacing: -0.6, whiteSpace: "nowrap" },
   weekPickerWrap: { position: "relative", marginTop: 4, display: "inline-block" },
   weekBtn: { display: "inline-flex", alignItems: "center", gap: 10, background: "rgba(0,0,0,0.3)", border: `1px solid ${C.line}`, color: C.text, cursor: "pointer", padding: "8px 14px", borderRadius: 12, fontFamily: "inherit" },
+  // Селектор недели ФП в шапке (общий для всех разделов)
+  topWeekWrap: { position: "relative", flexShrink: 0 },
+  topWeekBtn: { display: "inline-flex", alignItems: "center", gap: 7, background: C.panel, border: `1px solid ${C.line}`, color: C.text, cursor: "pointer", padding: "7px 11px", borderRadius: 10, fontFamily: "inherit", fontSize: 13, fontWeight: 700, whiteSpace: "nowrap", fontVariantNumeric: "tabular-nums" },
   weekOverlay: { position: "fixed", inset: 0, zIndex: 60 },
   weekMenu: { position: "absolute", top: 50, left: 0, zIndex: 61, width: 260, maxHeight: 320, overflowY: "auto", background: C.panel, border: `1px solid ${C.line}`, borderRadius: 14, padding: 8, boxShadow: `0 16px 40px ${C.shadow}` },
   weekMenuHead: { fontSize: 11, textTransform: "uppercase", letterSpacing: 0.5, color: C.faint, fontWeight: 700, padding: "6px 10px 10px" },

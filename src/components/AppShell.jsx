@@ -21,6 +21,7 @@ import { RestTables } from "../modules/restaurant/RestTables";
 import { StatsModule } from "../modules/stats/StatsModule";
 import { makeCss } from "../theme/css";
 import { useTheme } from "../theme/theme";
+import { PeriodProvider, WeekPicker } from "../lib/PeriodCtx";
 
 
 export function App({ onLogout }) {
@@ -52,6 +53,7 @@ export function App({ onLogout }) {
     setMenuOpen(false);
   };
   return (
+    <PeriodProvider>
     <div style={st.app}>
       <style>{css}</style>
 
@@ -63,6 +65,7 @@ export function App({ onLogout }) {
           <div style={st.logo}><Layers size={18} strokeWidth={2.4} /></div>
           <div style={st.brandTxt}>Яккасарой{!isMobile && <span style={st.brandThin}> финанс</span>}</div>
         </div>
+        <WeekPicker />
         {!isMobile && <div style={st.searchWrap}><Search size={16} color={C.faint} /><input style={st.search} placeholder="Поиск…" /></div>}
         <div style={st.topRight}>
           <button style={st.iconBtn}><Bell size={17} /></button>
@@ -155,5 +158,6 @@ export function App({ onLogout }) {
         </main>
       </div>
     </div>
+    </PeriodProvider>
   );
 }
