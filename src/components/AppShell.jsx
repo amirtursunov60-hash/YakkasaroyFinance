@@ -18,6 +18,7 @@ import { RestMenu } from "../modules/restaurant/RestMenu";
 import { RestOrders } from "../modules/restaurant/RestOrders";
 import { RestStock } from "../modules/restaurant/RestStock";
 import { RestTables } from "../modules/restaurant/RestTables";
+import { StaffModule } from "../modules/staff/StaffModule";
 import { StatsModule } from "../modules/stats/StatsModule";
 import { makeCss } from "../theme/css";
 import { useTheme } from "../theme/theme";
@@ -141,6 +142,8 @@ export function App({ onLogout }) {
           {activeModule === "finance" && active === "reports" && <Reports />}
           {activeModule === "finance" && active === "payroll" && <Payroll />}
           {activeModule === "finance" && !["directive", "income", "control", "expense", "funds", "suppliers", "clients", "reports", "payroll"].includes(active) && <Stub label={navList.find((n) => n.key === active)?.label} />}
+
+          {activeModule === "staff" && <StaffModule view={active} />}
 
           {activeModule === "stats" && <StatsModule view={active} />}
 

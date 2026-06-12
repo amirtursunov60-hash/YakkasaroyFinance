@@ -1,4 +1,4 @@
-import { Wallet, ArrowUpRight, ArrowDownLeft, Layers, FileText, ClipboardList, SlidersHorizontal, Calculator, BarChart3, CalendarDays, List, LayoutGrid, LayoutDashboard, Users, Contact, Network, PiggyBank, FolderKanban, UtensilsCrossed, ConciergeBell, Armchair, Package, Clock, Flame, TrendingUp } from "lucide-react";
+import { Wallet, ArrowUpRight, ArrowDownLeft, Layers, FileText, ClipboardList, SlidersHorizontal, Calculator, BarChart3, CalendarDays, List, LayoutGrid, LayoutDashboard, Users, UserPlus, Contact, Network, PiggyBank, FolderKanban, UtensilsCrossed, ConciergeBell, Armchair, Package, Clock, Flame, TrendingUp } from "lucide-react";
 
 
 
@@ -60,4 +60,9 @@ export const NAV_CRM = [
   { key: "c_bookings", icon: CalendarDays, label: "Брони залов" },
 ];
 
-export const MODULE_NAV = { finance: NAV_FINANCE, restaurant: NAV_RESTAURANT, stats: NAV_STATS, orgchart: NAV_ORG, dashboard: NAV_DASH, crm: NAV_CRM };
+export const NAV_STAFF = [
+  { key: "st_people", icon: Users, label: "Сотрудники" },
+  { key: "st_invites", icon: UserPlus, label: "Приглашения" },
+];
+
+export const MODULE_NAV = { finance: NAV_FINANCE, restaurant: NAV_RESTAURANT, stats: NAV_STATS, orgchart: NAV_ORG, dashboard: NAV_DASH, crm: NAV_CRM, staff: NAV_STAFF };
