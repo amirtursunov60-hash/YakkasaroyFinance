@@ -140,8 +140,8 @@ export function WeekPicker() {
 
   return (
     <div style={st.topWeekWrap}>
-      <button style={st.topWeekBtn} className="btn" onClick={() => { setOpen((v) => !v); setErr(""); }}>
-        <CalendarDays size={15} color={C.green} />
+      <button style={{ ...st.topWeekBtn, ...(isMobile ? { padding: "6px 8px", gap: 5, fontSize: 12 } : {}) }} className="btn" onClick={() => { setOpen((v) => !v); setErr(""); }}>
+        <CalendarDays size={14} color={C.green} />
         <span>{label}</span>
         <ChevronDown size={14} style={{ transform: open ? "rotate(180deg)" : "none", transition: "transform .2s" }} />
       </button>
