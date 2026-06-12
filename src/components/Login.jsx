@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { Layers, Eye, EyeOff, Loader2 } from "lucide-react";
 import { makeCss } from "../theme/css";
 import { useTheme } from "../theme/theme";
-import { signIn } from "../lib/auth";
+import { signIn, signUp } from "../lib/auth";
 
 
 // ============================================================================
@@ -12,23 +12,41 @@ export function Login({ onEnter }) {
   const css = useMemo(() => makeCss(C), [C]);
   const [email, setEmail] = useState("");
   const [pass, setPass] = useState("");
+  const [name, setName] = useState("");
   const [show, setShow] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
+  const [info, setInfo] = useState("");
+  // Приглашение по ссылке: токен сохраняет App.jsx до завершения регистрации
+  const [inviteMode, setInviteMode] = useState(() => !!localStorage.getItem("yk_invite"));
 
   const submit = async () => {
     if (busy) return;
-    setErr("");
+    setErr(""); setInfo("");
     if (!email.trim() || !pass) { setErr("Введите email и пароль"); return; }
+    if (inviteMode && !name.trim()) { setErr("Укажите фамилию и имя"); return; }
     setBusy(true);
     try {
+      if (inviteMode) {
+        localStorage.setItem("yk_invite_name", name.trim());
+        const data = await signUp(email.trim(), pass);
+        if (!data.session) {
+          // включено подтверждение почты — приглашение применится при первом входе
+          setInfo("Мы отправили письмо для подтверждения. Откройте его и войдите — приглашение применится автоматически.");
+          setBusy(false);
+          return;
+        }
+        onEnter(); // сессия есть — App применит приглашение сам
+        return;
+      }
       await signIn(email.trim(), pass);
       onEnter();
     } catch (e) {
       const msg = e?.message || "";
       if (msg.includes("Invalid login credentials")) setErr("Неверный email или пароль");
       else if (msg.includes("Email not confirmed")) setErr("Email не подтверждён");
-      else setErr("Не удалось войти: " + msg);
+      else if (msg.includes("already registered")) setErr("Этот email уже зарегистрирован — войдите со своим паролем");
+      else setErr((inviteMode ? "Не удалось зарегистрироваться: " : "Не удалось войти: ") + msg);
       setBusy(false);
     }
   };
@@ -45,7 +63,15 @@ export function Login({ onEnter }) {
       </header>
       <div style={lg.center}>
         <div style={lg.card}>
-          <div style={lg.title}>Вход в кабинет</div>
+          <div style={lg.title}>{inviteMode ? "Регистрация по приглашению" : "Вход в кабинет"}</div>
+          {inviteMode && (
+            <div style={lg.field}>
+              <label style={lg.label}>Фамилия и имя</label>
+              <input style={lg.input} value={name} onChange={(e) => setName(e.target.value)}
+                placeholder="Иванов Иван" autoFocus
+                onKeyDown={(e) => e.key === "Enter" && submit()} />
+            </div>
+          )}
           <div style={lg.field}>
             <label style={lg.label}>Email</label>
             <input style={lg.input} value={email} onChange={(e) => setEmail(e.target.value)}
@@ -62,9 +88,20 @@ export function Login({ onEnter }) {
             </div>
           </div>
           {err && <div style={lg.error}>{err}</div>}
+          {info && <div style={{ ...lg.error, color: C.green, background: `${C.green}1a`, borderColor: `${C.green}44` }}>{info}</div>}
           <button style={{ ...lg.btn, opacity: busy ? 0.7 : 1 }} className="btn" onClick={submit} disabled={busy}>
-            {busy ? <span className="spin"><Loader2 size={17} /></span> : "Войти"}
+            {busy ? <span className="spin"><Loader2 size={17} /></span> : inviteMode ? "Зарегистрироваться" : "Войти"}
           </button>
+          {inviteMode && (
+            <div style={{ ...lg.note, cursor: "pointer", textDecoration: "underline" }} onClick={() => setInviteMode(false)}>
+              У меня уже есть аккаунт — войти
+            </div>
+          )}
+          {!inviteMode && !!localStorage.getItem("yk_invite") && (
+            <div style={{ ...lg.note, cursor: "pointer", textDecoration: "underline" }} onClick={() => setInviteMode(true)}>
+              Зарегистрироваться по приглашению
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -7,6 +7,13 @@ export async function signIn(email, password) {
   return data;
 }
 
+// Регистрация по приглашению (профиль создаст redeem_invite после входа)
+export async function signUp(email, password) {
+  const { data, error } = await supabase.auth.signUp({ email, password });
+  if (error) throw error;
+  return data;
+}
+
 // Выход
 export async function signOut() {
   await supabase.auth.signOut();

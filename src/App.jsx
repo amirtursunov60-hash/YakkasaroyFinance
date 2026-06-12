@@ -6,6 +6,16 @@ import { makeStyles } from "./theme/styles";
 import { THEMES, ThemeCtx } from "./theme/theme";
 import { supabase } from "./lib/supabase";
 import { getProfile, signOut } from "./lib/auth";
+import { redeemInvite } from "./lib/api";
+
+// Токен приглашения из ссылки (?invite=…) сохраняем до завершения регистрации
+const url = new URL(window.location.href);
+const inviteParam = url.searchParams.get("invite");
+if (inviteParam) {
+  localStorage.setItem("yk_invite", inviteParam);
+  url.searchParams.delete("invite");
+  window.history.replaceState({}, "", url);
+}
 
 
 export default function YakkasaroyFinance() {
@@ -22,6 +32,20 @@ export default function YakkasaroyFinance() {
     let active = true;
 
     const load = async () => {
+      // Приглашение: после первого входа применяем роль/точку/пост из инвайта
+      const token = localStorage.getItem("yk_invite");
+      if (token) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          try {
+            await redeemInvite(token, localStorage.getItem("yk_invite_name"));
+          } catch (e) {
+            console.warn("Приглашение не применено:", e?.message || e);
+          }
+          localStorage.removeItem("yk_invite");
+          localStorage.removeItem("yk_invite_name");
+        }
+      }
       const p = await getProfile();
       if (active) { setProfile(p); setLoading(false); }
     };
