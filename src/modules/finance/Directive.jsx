@@ -5,7 +5,7 @@ import { useTheme } from "../../theme/theme";
 import { fmt } from "../../utils/format";
 import {
   weekBounds, isoDate, getPeriodFor, fetchPeriods, fetchFunds, fetchDefaultRules,
-  fetchPeriodIncome, fetchPeriodDistribution, distributeStage, setPeriodStatus, closePeriod, reopenPeriod,
+  fetchPeriodIncome, fetchPeriodDistribution, distributeStage, setPeriodStatus, closePeriod, reopenPeriod, resetDistribution,
 } from "../../lib/api";
 
 
@@ -172,6 +172,25 @@ export function Directive() {
 
   const doReset = (sg) => setCalculated((p) => ({ ...p, [sg.key]: {} }));
 
+  // Сброс уже одобренного этапа: суммы списываются из фондов (удаление из Реестра).
+  // Старые распределения без метки этапа сбрасываются только целиком.
+  const doResetApproved = async (sg) => {
+    if (busy) return;
+    const hasLegacy = regRows.some((r) => !r.stage);
+    const msg = hasLegacy
+      ? "Это распределение проведено без разбивки по этапам — будет сброшено ВСЁ распределение периода, суммы спишутся из фондов. Продолжить?"
+      : `Сбросить одобренный этап «${sg.title}»? Суммы будут списаны из фондов.`;
+    if (!window.confirm(msg)) return;
+    setBusy(`reset:${sg.key}`); setErr(""); setDone("");
+    try {
+      await resetDistribution(periodId, hasLegacy ? "all" : sg.key);
+      await Promise.all([reloadPeriodData(), loadBase(true)]);
+      setCalculated({});
+      setDone(hasLegacy ? "Распределение периода сброшено — можно рассчитать и одобрить заново" : `${sg.title}: одобрение сброшено`);
+    } catch (e) { setErr(e?.message || String(e)); }
+    finally { setBusy(null); }
+  };
+
   const toggleRequests = async () => {
     if (busy || !period || isClosed) return;
     setBusy("block"); setErr("");
@@ -209,7 +228,7 @@ export function Directive() {
       };
       await closePeriod(periodId, protocol);
       await Promise.all([loadBase(true), reloadPeriodData()]);
-      setDone("Период закрыт, протокол Директивы сохранён");
+      setDone("Период закрыт, протокол Директивы сохранён. Следующая неделя создана — выберите её в списке периодов.");
     } catch (e) { setErr(e?.message || String(e)); }
     finally { setBusy(null); }
   };
@@ -306,7 +325,8 @@ export function Directive() {
     {stagesView.map((sg) => (
       <LevelCard key={sg.key} sg={sg} C={C} st={st} isMobile={isMobile}
         pctOf={pctOf} setPcts={setPcts} busy={busy} locked={isClosed || !period}
-        onCalc={() => doCalc(sg)} onApprove={() => doApprove(sg)} onReset={() => doReset(sg)} />
+        onCalc={() => doCalc(sg)} onApprove={() => doApprove(sg)}
+        onReset={() => doReset(sg)} onResetApproved={() => doResetApproved(sg)} />
     ))}
 
     {/* Итог распределения на ФП */}
@@ -361,9 +381,10 @@ export function Directive() {
 
 
 // ---------------------------------------------------------------- Этап распределения
-function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, onCalc, onApprove, onReset }) {
+function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, onCalc, onApprove, onReset, onResetApproved }) {
   const calcBusy = busy === `calc:${sg.key}`;
   const apprBusy = busy === `appr:${sg.key}`;
+  const resetBusy = busy === `reset:${sg.key}`;
   const editable = !sg.isApproved && !locked;
 
   const CalcBtn = () => (
@@ -377,8 +398,11 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, onCalc, 
       {apprBusy ? <span className="spin"><RotateCw size={15} /></span> : <Check size={15} />} Одобрить
     </button>
   );
+  // Сброс: до одобрения чистит расчёт, после одобрения — списывает из фондов
   const ResetBtn = () => (
-    <button style={st.btnGhost} onClick={onReset} className="btn" disabled={!!busy || !editable}><RotateCcw size={14} /> Сброс</button>
+    <button style={st.btnGhost} onClick={sg.isApproved ? onResetApproved : onReset} className="btn" disabled={!!busy || locked}>
+      {resetBusy ? <span className="spin"><RotateCw size={14} /></span> : <RotateCcw size={14} />} Сброс
+    </button>
   );
 
   const totals = sg.rows.reduce((t, x) => ({

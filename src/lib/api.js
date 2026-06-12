@@ -203,3 +203,11 @@ export async function reopenPeriod(periodId) {
   const { error } = await supabase.rpc("fp_reopen_period", { p_period_id: periodId });
   if (error) throw error;
 }
+
+// Сброс одобренного распределения этапа ('all' — всего периода; миграция 009)
+export async function resetDistribution(periodId, stage) {
+  const { error } = await supabase.rpc("fp_reset_distribution", {
+    p_period_id: periodId, p_stage: stage,
+  });
+  if (error) throw error;
+}
