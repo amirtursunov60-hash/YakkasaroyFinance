@@ -1,70 +1,493 @@
-import { useState } from "react";
-import { Banknote } from "lucide-react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { Banknote, Loader2, AlertCircle, CheckCircle2, Plus, X, Ban, ChevronRight, CalendarDays, PartyPopper } from "lucide-react";
 import { Stat } from "../../components/common";
-import { CLIENT_INVOICES } from "../../data/crm";
 import { useTheme } from "../../theme/theme";
 import { fmt } from "../../utils/format";
+import { usePeriod } from "../../lib/PeriodCtx";
+import {
+  fetchInvoices, fetchInvoicePayments, insertInvoice, cancelInvoice, payInvoice,
+  fetchIncomeTypes, fetchIncomeRefs, fetchCounterparties, createCounterparty, isoDate,
+} from "../../lib/api";
 
+
+// ---------------------------------------------------------------- CLIENTS
+// Живые данные (ТЗ v2 §4.1.7): банкетные счета клиентов с частичными
+// оплатами. Каждая оплата порождает операцию дохода (incomes.invoice_id),
+// триггер сам проводит её в Реестр и на счёт ДС. Бронь будущей даты =
+// счёт со статусом planned; после первой предоплаты становится issued.
+
+const ST_META = {
+  planned:   { label: "бронь",      color: "#9c6ade" },
+  issued:    { label: "выставлен",  color: "#5b8def" },
+  partial:   { label: "предоплата", color: "#e8911c" },   // производный: issued + есть оплаты
+  paid:      { label: "оплачен",    color: "#2f9e44" },
+  cancelled: { label: "отменён",    color: "#e0463b" },
+};
+const FILTERS = [["all", "Все"], ["planned", "Брони"], ["issued", "В работе"], ["paid", "Оплачены"], ["cancelled", "Отменены"]];
 
 export function Clients() {
-  const { C, st } = useTheme();
-  const [rows, setRows] = useState(CLIENT_INVOICES);
-  const statusOf = (r) => (r.paid >= r.amount ? "paid" : r.paid > 0 ? "partial" : "sent");
-  const META = {
-    sent: { label: "Выставлен", color: "#5b8def" },
-    partial: { label: "Предоплата", color: "#e8911c" },
-    paid: { label: "Оплачен полностью", color: C.green },
+  const { C, st, isMobile, profile } = useTheme();
+  const { periodId, loading: periodsLoading } = usePeriod();
+  const isFinAdmin = ["owner", "fin_director"].includes(profile?.role);
+  const canPay = isFinAdmin || ["accountant", "location_manager"].includes(profile?.role);
+  const canSubmit = ["owner", "fin_director", "accountant", "location_manager", "ops_director"].includes(profile?.role);
+
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState("");
+  const [done, setDone] = useState("");
+  const [invoices, setInvoices] = useState([]);
+  const [payments, setPayments] = useState({});
+  const [types, setTypes] = useState([]);
+  const [refs, setRefs] = useState(null);
+  const [counterparties, setCounterparties] = useState([]);
+  const [filter, setFilter] = useState("all");
+  const [expanded, setExpanded] = useState({});
+  const [showForm, setShowForm] = useState(false);
+  const [paying, setPaying] = useState(null);
+  const [busy, setBusy] = useState(null);
+
+  const load = useCallback(async () => {
+    setErr("");
+    try {
+      const [invs, tps, refData, cps] = await Promise.all([
+        fetchInvoices(), fetchIncomeTypes(), fetchIncomeRefs(), fetchCounterparties(),
+      ]);
+      setInvoices(invs); setTypes(tps); setRefs(refData); setCounterparties(cps);
+      setPayments(await fetchInvoicePayments(invs.map((i) => i.id)));
+    } catch (e) {
+      setErr("Не удалось загрузить счета: " + (e?.message || e));
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+  useEffect(() => { load(); }, [load]);
+
+  const paidOf = useCallback((inv) =>
+    (payments[inv.id] || []).reduce((a, p) => a + (p.is_return ? -Number(p.amount) : Number(p.amount)), 0),
+  [payments]);
+
+  // дерево видов дохода → листья для формы
+  const groups = useMemo(() => {
+    const byParent = {};
+    types.forEach((t) => { (byParent[t.parent_id || "root"] ??= []).push(t); });
+    const cmp = (a, b) => (a.code || a.name).localeCompare(b.code || b.name, "ru", { numeric: true });
+    Object.values(byParent).forEach((arr) => arr.sort(cmp));
+    const attach = (t) => ({ ...t, children: (byParent[t.id] || []).map(attach) });
+    const tree = (byParent.root || []).map(attach);
+    return tree.map((root) => {
+      const leaves = [];
+      const walk = (n) => { if (!n.children.length) leaves.push(n); else n.children.forEach(walk); };
+      walk(root);
+      return { root, leaves };
+    }).filter((g) => g.leaves.length);
+  }, [types]);
+
+  const sums = useMemo(() => {
+    const active = invoices.filter((i) => i.status !== "cancelled");
+    const billed = active.reduce((a, i) => a + Number(i.amount), 0);
+    const received = active.reduce((a, i) => a + paidOf(i), 0);
+    return { billed, received, debt: billed - received, inWork: invoices.filter((i) => ["planned", "issued"].includes(i.status)).length };
+  }, [invoices, paidOf]);
+
+  const displayStatus = (inv) => {
+    if (inv.status === "issued" && paidOf(inv) > 0) return "partial";
+    return inv.status;
   };
-  const acceptRest = (id) => setRows((rs) => rs.map((r) => (r.id === id ? { ...r, paid: r.amount } : r)));
-  const sums = {
-    billed: rows.reduce((a, r) => a + r.amount, 0),
-    received: rows.reduce((a, r) => a + r.paid, 0),
+
+  const doCancel = async (inv) => {
+    if (busy) return;
+    if (!window.confirm(`Отменить счёт №${inv.number} (${inv.event_name})?${paidOf(inv) > 0 ? " По счёту уже есть оплаты — они останутся в доходах." : ""}`)) return;
+    setBusy(`cancel:${inv.id}`); setErr(""); setDone("");
+    try {
+      await cancelInvoice(inv.id);
+      await load();
+      setDone(`Счёт №${inv.number} отменён`);
+    } catch (e) { setErr(e?.message || String(e)); }
+    finally { setBusy(null); }
   };
-  const debt = sums.billed - sums.received;
+
+  const doPay = async ({ inv, amount, accountId, payTypeId, date }) => {
+    if (busy) return;
+    setBusy("pay"); setErr(""); setDone("");
+    try {
+      if (!periodId) throw new Error("Нет выбранного периода ФП — добавьте неделю в шапке");
+      await payInvoice({
+        invoiceId: inv.id, amount, cashAccountId: accountId,
+        paymentTypeId: payTypeId, periodId, receivedOn: date,
+      });
+      await load();
+      setPaying(null);
+      setDone(`Оплата ${fmt(amount)} ${inv.currency?.code} принята — операция дохода проведена`);
+    } catch (e) { setErr(e?.message || String(e)); }
+    finally { setBusy(null); }
+  };
+
+  const filtered = invoices.filter((i) => filter === "all" ? true : i.status === filter);
+
+  if (loading || periodsLoading) return <div style={st.empty}><Loader2 size={18} className="spin" /> Загрузка…</div>;
+
   return (<>
     <section style={st.hero}>
       <div style={st.heroGlow} />
       <div style={st.heroContent}>
         <div style={st.heroTop}>
-          <div><div style={st.heroLabel}>Счета клиентам · банкеты и мероприятия</div><div style={st.heroTitle}>Июнь 2026</div></div>
+          <div>
+            <div style={st.heroLabel}>Счета клиентам · банкеты и мероприятия</div>
+            <div style={st.heroTitle}>Банкеты в работе: {sums.inWork}</div>
+          </div>
+          {canSubmit && (
+            <button style={st.btnGreen} className="btn" onClick={() => setShowForm(true)}>
+              <Plus size={15} /> {isMobile ? "Счёт" : "Выставить счёт"}
+            </button>
+          )}
         </div>
         <div style={st.heroStats}>
           <Stat label="Выставлено" value={fmt(sums.billed)} unit="TJS" />
           <Stat label="Получено" value={fmt(sums.received)} unit="TJS" accent />
-          <Stat label="Осталось собрать" value={fmt(debt)} unit="TJS" />
-          <Stat label="Банкетов в работе" value={String(rows.length)} unit="" />
+          <Stat label="Осталось собрать" value={fmt(sums.debt)} unit="TJS" />
+          <Stat label="Счетов" value={String(invoices.length)} unit="" />
         </div>
       </div>
     </section>
-    <div style={st.incList}>
-      {rows.map((r) => {
-        const code = statusOf(r); const m = META[code];
-        const rest = r.amount - r.paid;
-        const pct = Math.min(100, Math.round((r.paid / r.amount) * 100));
-        return (
-          <div key={r.id} style={{ ...st.locCard, padding: "14px 18px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "flex-start", flexWrap: "wrap" }}>
-              <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: 14.5, fontWeight: 700 }}>{r.client}</div>
-                <div style={{ fontSize: 11.5, color: C.faint, marginTop: 3 }}>{r.event} · дата банкета {r.date}</div>
+
+    {err && <div style={{ ...st.reqError, marginBottom: 14 }}><AlertCircle size={15} /> {err}</div>}
+    {done && <div style={{ ...st.reqError, marginBottom: 14, color: C.green, background: `${C.green}1a`, borderColor: `${C.green}44` }}><CheckCircle2 size={15} /> {done}</div>}
+
+    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
+      {FILTERS.map(([key, label]) => (
+        <button key={key} className="btn"
+          style={{
+            ...st.weekTag, cursor: "pointer", border: "none", fontFamily: "inherit", marginLeft: 0,
+            padding: "5px 12px", fontSize: 12,
+            color: filter === key ? C.bg : (ST_META[key]?.color || C.sub),
+            background: filter === key ? (ST_META[key]?.color || C.green) : `${ST_META[key]?.color || C.sub}1a`,
+          }}
+          onClick={() => setFilter(key)}>
+          {label} · {key === "all" ? invoices.length : invoices.filter((i) => i.status === key).length}
+        </button>
+      ))}
+    </div>
+
+    {!filtered.length && (
+      <div style={{ ...st.locCard, ...st.empty }}>
+        {invoices.length ? "Нет счетов с этим статусом" : "Счетов пока нет — выставите первый банкетный счёт кнопкой выше"}
+      </div>
+    )}
+
+    {filtered.map((inv) => {
+      const paid = paidOf(inv);
+      const rest = Number(inv.amount) - paid;
+      const pct = Math.min(100, Math.round((paid / Number(inv.amount)) * 100));
+      const code = displayStatus(inv);
+      const m = ST_META[code];
+      const isExp = !!expanded[inv.id];
+      const pays = payments[inv.id] || [];
+      return (
+        <div key={inv.id} style={{ ...st.locCard, marginBottom: 10, opacity: inv.status === "cancelled" ? 0.6 : 1 }}>
+          <div style={{ ...st.locHead, cursor: "pointer" }} className="locHead"
+            onClick={() => setExpanded((e) => ({ ...e, [inv.id]: !e[inv.id] }))}>
+            <div style={{ ...st.locDot, background: m.color }} />
+            <div style={st.locTitle}>
+              <div style={st.locName}>№{inv.number} · {inv.counterparty?.name || "—"}</div>
+              <div style={st.locCode}>
+                <PartyPopper size={11} style={{ verticalAlign: -1, marginRight: 3 }} />
+                {inv.event_name}
+                {inv.hall ? ` · ${inv.hall}` : ""}
+                {inv.event_on ? ` · ${new Date(inv.event_on + "T00:00:00").toLocaleDateString("ru")}` : ""}
+                {inv.location ? ` · ${inv.location.name}` : ""}
               </div>
-              <div style={{ textAlign: "right" }}>
-                <div style={{ fontSize: 16, fontWeight: 800, fontVariantNumeric: "tabular-nums" }}>{fmt(r.amount)} <span style={st.locUnit}>TJS</span></div>
-                <span style={{ fontSize: 10.5, fontWeight: 700, padding: "3px 9px", borderRadius: 20, color: m.color, background: `${m.color}1a` }}>{m.label}</span>
+              {/* прогресс оплат */}
+              <div style={{ ...st.bar, marginTop: 6, maxWidth: 260 }}>
+                <div style={{ ...st.barFill, width: `${pct}%`, background: pct >= 100 ? C.green : "#e8911c" }} />
               </div>
             </div>
-            <div style={{ ...st.bar, marginTop: 12 }}><div style={{ ...st.barFill, width: `${pct}%`, background: m.color }} /></div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 8, gap: 10, flexWrap: "wrap" }}>
-              <span style={{ fontSize: 12, color: C.sub }}>оплачено {fmt(r.paid)} · {pct}%{rest > 0 ? ` · остаток ${fmt(rest)}` : ""}</span>
-              {rest > 0 && <button style={st.btnGreen} className="btn" onClick={() => acceptRest(r.id)}><Banknote size={14} /> Принять доплату {fmt(rest)}</button>}
+            <div style={st.locRight}>
+              <div style={st.locSum}>{fmt(Number(inv.amount))} <span style={st.locUnit}>{inv.currency?.code}</span></div>
+              <div style={{ fontSize: 11.5, color: rest > 0.009 ? "#e8911c" : C.green, fontWeight: 700 }}>
+                {rest > 0.009 ? `долг ${fmt(rest)}` : "оплачен"}
+              </div>
+              <span style={{ ...st.weekTag, marginLeft: 0, color: m.color, background: `${m.color}1a` }}>{m.label}</span>
             </div>
+            <span style={{ ...st.locChevron, transform: isExp ? "rotate(90deg)" : "none" }}><ChevronRight size={18} /></span>
           </div>
-        );
-      })}
-    </div>
-    <div style={st.vibeNote}>
-      <b style={{ color: C.green }}>Правило банкетов:</b> предоплата фиксирует дату, остаток принимается не позднее дня мероприятия.
-      Дебиторка по банкетам — самые лёгкие деньги к потере, держи её на нуле.
-    </div>
+
+          {isExp && (
+            <div style={st.locBody}>
+              <div style={{ display: "grid", gap: 10, padding: "4px 2px 8px" }}>
+                <div style={{ display: "flex", gap: 16, flexWrap: "wrap", fontSize: 12.5, color: C.sub }}>
+                  <span>Вид дохода: <b style={{ color: C.text }}>{inv.income_type ? `${inv.income_type.code || ""} ${inv.income_type.name}` : "—"}</b></span>
+                  <span>Оплачено: <b style={{ color: C.green }}>{fmt(paid)}</b></span>
+                  <span>Остаток: <b style={{ color: rest > 0.009 ? "#e8911c" : C.green }}>{fmt(rest)}</b></span>
+                </div>
+                {inv.comment && <div style={{ fontSize: 13 }}>{inv.comment}</div>}
+
+                {pays.length > 0 && (
+                  <div style={{ display: "grid", gap: 5 }}>
+                    {pays.map((p) => (
+                      <div key={p.id} style={{ display: "flex", justifyContent: "space-between", gap: 10, fontSize: 12.5, padding: "7px 10px", borderRadius: 8, background: C.panel2, border: `1px solid ${C.line}` }}>
+                        <span style={{ color: C.sub }}>
+                          <CalendarDays size={11} style={{ verticalAlign: -1, marginRight: 4 }} />
+                          {new Date(p.received_on + "T00:00:00").toLocaleDateString("ru")}
+                          {p.cash_account ? ` · ${p.cash_account.name}` : ""}
+                          {p.payment_type ? ` · ${p.payment_type.name}` : ""}
+                          {p.is_return ? " · возврат" : ""}
+                        </span>
+                        <b style={{ color: p.is_return ? C.danger : C.green, fontVariantNumeric: "tabular-nums" }}>
+                          {p.is_return ? "−" : "+"}{fmt(Number(p.amount))}
+                        </b>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  {canPay && !["paid", "cancelled"].includes(inv.status) && (
+                    <button style={st.btnGreen} className="btn" disabled={!!busy} onClick={() => setPaying(inv)}>
+                      <Banknote size={14} /> Принять оплату
+                    </button>
+                  )}
+                  {isFinAdmin && !["cancelled"].includes(inv.status) && (
+                    <button style={{ ...st.btnGhost, color: C.danger }} className="btn" disabled={!!busy} onClick={() => doCancel(inv)}>
+                      {busy === `cancel:${inv.id}` ? <Loader2 size={14} className="spin" /> : <Ban size={14} />} Отменить
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    })}
+
+    {showForm && refs && (
+      <InvoiceForm C={C} st={st} isMobile={isMobile} profile={profile}
+        groups={groups} refs={refs} counterparties={counterparties}
+        onCounterpartiesChanged={async () => setCounterparties(await fetchCounterparties())}
+        onClose={() => setShowForm(false)}
+        onSaved={() => { setShowForm(false); load(); setDone("Счёт выставлен"); }} />
+    )}
+    {paying && refs && (
+      <PayModal C={C} st={st} inv={paying} rest={Number(paying.amount) - paidOf(paying)}
+        accounts={refs.accounts} payTypes={refs.payTypes}
+        busy={busy === "pay"} onClose={() => setPaying(null)} onConfirm={doPay} />
+    )}
   </>);
+}
+
+
+// ---------------------------------------------------------------- Форма счёта
+const Field = ({ st, label, full, children }) => (
+  <div style={{ ...st.reqField, ...(full ? st.mdFull : {}) }}>
+    <span style={st.reqFieldLbl}>{label}</span>
+    {children}
+  </div>
+);
+
+function InvoiceForm({ C, st, isMobile, profile, groups, refs, counterparties, onCounterpartiesChanged, onClose, onSaved }) {
+  const baseCur = refs.currencies.find((c) => c.is_base) || refs.currencies[0];
+  const [f, setF] = useState({
+    counterpartyId: "", eventName: "", hall: "", eventOn: "",
+    locationId: "", typeId: "", amount: "", currencyId: baseCur?.id || "",
+    isPlanned: false, comment: "",
+  });
+  const [newClient, setNewClient] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  const set = (k) => (e) => setF((p) => ({ ...p, [k]: e?.target ? (e.target.type === "checkbox" ? e.target.checked : e.target.value) : e }));
+
+  const addClient = async () => {
+    if (busy || !newClient.trim()) return;
+    setBusy(true); setErr("");
+    try {
+      const cp = await createCounterparty(newClient.trim(), { isSupplier: false });
+      await onCounterpartiesChanged();
+      setF((p) => ({ ...p, counterpartyId: cp.id }));
+      setNewClient("");
+    } catch (e) { setErr(e?.message || String(e)); }
+    finally { setBusy(false); }
+  };
+
+  const submit = async () => {
+    if (busy) return;
+    setErr("");
+    const amount = parseFloat(String(f.amount).replace(",", "."));
+    if (!f.counterpartyId) return setErr("Выберите клиента");
+    if (!f.eventName.trim()) return setErr("Укажите мероприятие (свадьба, юбилей…)");
+    if (!f.locationId) return setErr("Выберите точку");
+    if (!f.typeId) return setErr("Выберите вид дохода — по нему будут проводиться оплаты");
+    if (!amount || amount <= 0) return setErr("Введите сумму больше нуля");
+    setBusy(true);
+    try {
+      await insertInvoice({
+        counterparty_id: f.counterpartyId, event_name: f.eventName.trim(),
+        hall: f.hall.trim() || null, event_on: f.eventOn || null,
+        location_id: f.locationId, income_type_id: f.typeId,
+        amount, currency_id: f.currencyId,
+        status: f.isPlanned ? "planned" : "issued",
+        comment: f.comment.trim() || null, created_by: profile.id,
+      });
+      onSaved();
+    } catch (e) {
+      const msg = e?.message || String(e);
+      setErr(msg.includes("row-level security") ? "Нет прав на выставление счёта по этой точке." : msg);
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div style={st.mdOverlay} onClick={onClose}>
+      <div style={st.mdCard} onClick={(e) => e.stopPropagation()}>
+        <div style={st.mdHead}>
+          <div style={st.mdTitle}>Счёт клиенту · банкет</div>
+          <button style={st.iconBtn} onClick={onClose}><X size={17} /></button>
+        </div>
+
+        <div style={{ ...st.mdGrid, ...(isMobile ? { gridTemplateColumns: "1fr" } : {}) }}>
+          <Field st={st} label="Клиент" full>
+            <select style={st.mdSelect} className="fin" value={f.counterpartyId} onChange={set("counterpartyId")} autoFocus>
+              <option value="">— выберите —</option>
+              {counterparties.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+            <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
+              <input style={{ ...st.mdInput, flex: 1 }} className="fin" placeholder="…или новый клиент"
+                value={newClient} onChange={(e) => setNewClient(e.target.value)} />
+              <button style={{ ...st.btnGhost, whiteSpace: "nowrap" }} className="btn" onClick={addClient} disabled={busy || !newClient.trim()}>
+                <Plus size={14} /> Добавить
+              </button>
+            </div>
+          </Field>
+
+          <Field st={st} label="Мероприятие">
+            <input style={st.mdInput} className="fin" placeholder="Свадьба, юбилей, оши…"
+              value={f.eventName} onChange={set("eventName")} />
+          </Field>
+          <Field st={st} label="Зал">
+            <input style={st.mdInput} className="fin" placeholder="Большой зал…"
+              value={f.hall} onChange={set("hall")} />
+          </Field>
+
+          <Field st={st} label="Дата мероприятия">
+            <input style={st.mdInput} className="fin" type="date" value={f.eventOn} onChange={set("eventOn")} />
+          </Field>
+          <Field st={st} label="Точка">
+            <select style={st.mdSelect} className="fin" value={f.locationId} onChange={set("locationId")}>
+              <option value="">— выберите —</option>
+              {refs.locations.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
+            </select>
+          </Field>
+
+          <Field st={st} label="Вид дохода (для оплат)" full>
+            <select style={st.mdSelect} className="fin" value={f.typeId} onChange={set("typeId")}>
+              <option value="">— выберите —</option>
+              {groups.map((g) => (
+                <optgroup key={g.root.id} label={`${g.root.code || ""} ${g.root.name}`}>
+                  {g.leaves.map((l) => <option key={l.id} value={l.id}>{l.code ? `${l.code} · ` : ""}{l.name}</option>)}
+                </optgroup>
+              ))}
+            </select>
+          </Field>
+
+          <Field st={st} label="Сумма счёта">
+            <input style={st.mdInput} className="fin" inputMode="decimal" placeholder="0.00"
+              value={f.amount} onChange={set("amount")} />
+          </Field>
+          <Field st={st} label="Валюта">
+            <select style={st.mdSelect} className="fin" value={f.currencyId} onChange={set("currencyId")}>
+              {refs.currencies.map((c) => <option key={c.id} value={c.id}>{c.code} — {c.name}</option>)}
+            </select>
+          </Field>
+
+          <Field st={st} label="Комментарий" full>
+            <input style={st.mdInput} className="fin" placeholder="Меню, особые условия…"
+              value={f.comment} onChange={set("comment")} />
+          </Field>
+
+          <label style={{ ...st.mdCheck, ...st.mdFull }}>
+            <input type="checkbox" checked={f.isPlanned} onChange={set("isPlanned")} />
+            Бронь будущей даты (планируемый счёт — станет «выставлен» после первой предоплаты)
+          </label>
+        </div>
+
+        {err && <div style={st.reqError}><AlertCircle size={15} /> {err}</div>}
+
+        <div style={st.mdActions}>
+          <button style={st.btnGhost} className="btn" onClick={onClose}>Отмена</button>
+          <button style={{ ...st.btnGreen, opacity: busy ? 0.7 : 1 }} className="btn" onClick={submit} disabled={busy}>
+            {busy ? <Loader2 size={15} className="spin" /> : <Plus size={15} />} Выставить счёт
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+// ---------------------------------------------------------------- Приём оплаты
+function PayModal({ C, st, inv, rest, accounts, payTypes, busy, onClose, onConfirm }) {
+  const [amount, setAmount] = useState(String(Math.round(rest * 100) / 100));
+  const [accountId, setAccountId] = useState("");
+  const [payTypeId, setPayTypeId] = useState("");
+  const [date, setDate] = useState(isoDate(new Date()));
+  const [err, setErr] = useState("");
+  const accs = accounts.filter((a) => a.currency_id === inv.currency?.id);
+  const a = parseFloat(String(amount).replace(",", ".")) || 0;
+
+  const confirm = () => {
+    setErr("");
+    if (a <= 0) return setErr("Введите сумму больше нуля");
+    if (a > rest + 0.009) return setErr(`Долг по счёту ${fmt(rest)} — нельзя принять больше`);
+    if (!accountId) return setErr(accs.length ? "Выберите счёт ДС — куда пришли деньги" : "Нет счетов ДС в валюте счёта");
+    if (!payTypeId) return setErr("Выберите способ оплаты");
+    onConfirm({ inv, amount: a, accountId, payTypeId, date });
+  };
+
+  return (
+    <div style={st.mdOverlay} onClick={onClose}>
+      <div style={{ ...st.mdCard, width: "min(440px, 100%)" }} onClick={(e) => e.stopPropagation()}>
+        <div style={st.mdHead}>
+          <div style={st.mdTitle}>Оплата · №{inv.number} {inv.counterparty?.name}</div>
+          <button style={st.iconBtn} onClick={onClose}><X size={17} /></button>
+        </div>
+
+        <div style={{ fontSize: 13, color: C.sub, marginBottom: 12 }}>
+          {inv.event_name} · долг <b style={{ color: C.text }}>{fmt(rest)}</b> {inv.currency?.code}
+        </div>
+
+        <div style={{ display: "grid", gap: 10 }}>
+          <div style={st.reqField}>
+            <span style={st.reqFieldLbl}>Сумма (можно частично — предоплата)</span>
+            <input type="number" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)}
+              onWheel={(e) => e.target.blur()} style={{ ...st.numInput, width: "100%" }} autoFocus />
+          </div>
+          <div style={st.reqField}>
+            <span style={st.reqFieldLbl}>Счёт ДС — куда пришли деньги</span>
+            <select style={st.mdSelect} className="fin" value={accountId} onChange={(e) => setAccountId(e.target.value)}>
+              <option value="">{accs.length ? "— выберите —" : "Нет счетов в валюте счёта"}</option>
+              {accs.map((acc) => <option key={acc.id} value={acc.id}>{acc.name}</option>)}
+            </select>
+          </div>
+          <div style={st.reqField}>
+            <span style={st.reqFieldLbl}>Способ оплаты</span>
+            <select style={st.mdSelect} className="fin" value={payTypeId} onChange={(e) => setPayTypeId(e.target.value)}>
+              <option value="">— выберите —</option>
+              {payTypes.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+            </select>
+          </div>
+          <div style={st.reqField}>
+            <span style={st.reqFieldLbl}>Дата поступления</span>
+            <input style={st.mdInput} className="fin" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+          </div>
+        </div>
+
+        {err && <div style={st.reqError}><AlertCircle size={15} /> {err}</div>}
+
+        <div style={st.mdActions}>
+          <button style={st.btnGhost} className="btn" onClick={onClose}>Отмена</button>
+          <button style={{ ...st.btnGreen, opacity: busy ? 0.7 : 1 }} className="btn" onClick={confirm} disabled={busy}>
+            {busy ? <Loader2 size={15} className="spin" /> : <Banknote size={15} />} Принять оплату
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }

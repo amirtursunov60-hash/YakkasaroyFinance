@@ -381,6 +381,57 @@ export async function createCounterparty(name, { isSupplier = true } = {}) {
   return data;
 }
 
+// ---------------------------------------------------------------- Счета клиентов (банкеты)
+export async function fetchInvoices() {
+  const { data, error } = await supabase
+    .from("client_invoices")
+    .select(`id, number, status, amount, event_name, hall, event_on, comment, created_at,
+      counterparty:counterparties(id, name),
+      location:locations(id, name),
+      income_type:income_types(code, name),
+      currency:currencies(id, code, is_base)`)
+    .eq("is_archived", false)
+    .order("created_at", { ascending: false })
+    .limit(200);
+  if (error) throw error;
+  return data;
+}
+
+// Оплаты по счетам — операции дохода с invoice_id: { [invoice_id]: [{...}] }
+export async function fetchInvoicePayments(invoiceIds) {
+  if (!invoiceIds.length) return {};
+  const { data, error } = await supabase
+    .from("incomes")
+    .select("id, invoice_id, amount, is_return, received_on, payment_type:payment_types(name), cash_account:cash_accounts(name)")
+    .in("invoice_id", invoiceIds)
+    .order("received_on", { ascending: false });
+  if (error) throw error;
+  const m = {};
+  for (const r of data) (m[r.invoice_id] ??= []).push(r);
+  return m;
+}
+
+export async function insertInvoice(row) {
+  const { data, error } = await supabase.from("client_invoices").insert(row).select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function cancelInvoice(id) {
+  const { error } = await supabase.from("client_invoices").update({ status: "cancelled" }).eq("id", id);
+  if (error) throw error;
+}
+
+// Приём оплаты: серверная функция создаёт операцию дохода (триггер сам
+// проводит её в Реестр) и обновляет статус счёта
+export async function payInvoice({ invoiceId, amount, cashAccountId, paymentTypeId, periodId, receivedOn }) {
+  const { error } = await supabase.rpc("fp_pay_invoice", {
+    p_invoice_id: invoiceId, p_amount: amount, p_cash_account_id: cashAccountId,
+    p_payment_type_id: paymentTypeId, p_period_id: periodId, p_received_on: receivedOn,
+  });
+  if (error) throw error;
+}
+
 // ---------------------------------------------------------------- Фонды
 export async function createFund({ code, name, kind, isRestricted, locationId, currencyId }) {
   const { data, error } = await supabase
