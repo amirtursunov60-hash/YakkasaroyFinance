@@ -51,6 +51,17 @@ create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
 
+-- Профили для пользователей, созданных до применения этой миграции:
+-- самый ранний из них становится владельцем.
+insert into public.profiles (id, full_name, role)
+select u.id,
+       coalesce(u.raw_user_meta_data ->> 'full_name', ''),
+       case when u.id = (select id from auth.users order by created_at limit 1)
+            then 'owner'::public.user_role
+            else 'employee'::public.user_role end
+from auth.users u
+where not exists (select 1 from public.profiles p where p.id = u.id);
+
 -- Поддержка updated_at
 create or replace function public.set_updated_at()
 returns trigger
