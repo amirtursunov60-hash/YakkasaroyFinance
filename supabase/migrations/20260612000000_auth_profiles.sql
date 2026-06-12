@@ -1,6 +1,6 @@
 -- ============================================================================
 -- Yakkasaroy Management System — схема авторизации (Supabase)
--- Выполнить в SQL Editor панели Supabase (один раз).
+-- Применяется автоматически: npm run db:push (Supabase CLI, см. README).
 -- ============================================================================
 
 -- Роли из ТЗ §2 (значения совпадают с ROLE_LABELS в src/components/AppShell.jsx)
@@ -26,15 +26,23 @@ create table public.profiles (
 
 comment on table public.profiles is 'Профили сотрудников с ролью (ТЗ §2)';
 
--- Автосоздание профиля при регистрации пользователя
+-- Автосоздание профиля при регистрации пользователя.
+-- Самый первый пользователь автоматически становится владельцем —
+-- ручной SQL для назначения администратора не нужен.
 create or replace function public.handle_new_user()
 returns trigger
 language plpgsql
 security definer set search_path = public
 as $$
 begin
-  insert into public.profiles (id, full_name)
-  values (new.id, coalesce(new.raw_user_meta_data ->> 'full_name', ''));
+  insert into public.profiles (id, full_name, role)
+  values (
+    new.id,
+    coalesce(new.raw_user_meta_data ->> 'full_name', ''),
+    case when exists (select 1 from public.profiles)
+         then 'employee'::public.user_role
+         else 'owner'::public.user_role end
+  );
   return new;
 end;
 $$;
@@ -63,6 +71,10 @@ create trigger profiles_updated_at
 -- Менять роль/активность может только владелец или финдиректор.
 -- ============================================================================
 alter table public.profiles enable row level security;
+
+-- Явный доступ для вошедших пользователей (новые проекты Supabase
+-- не выдают GRANT автоматически); строки фильтрует RLS ниже.
+grant select, update on table public.profiles to authenticated;
 
 -- Проверка «является ли текущий пользователь админом» без рекурсии RLS
 create or replace function public.is_admin()
@@ -118,10 +130,6 @@ create trigger profiles_guard_fields
   for each row execute function public.guard_profile_fields();
 
 -- ============================================================================
--- Первый администратор: после регистрации пользователя в Authentication → Users
--- выполните (подставив email):
---
---   update public.profiles
---   set role = 'owner', full_name = 'Имя Фамилия'
---   where id = (select id from auth.users where email = 'owner@example.com');
+-- Роли остальных сотрудников владелец/финдиректор меняют без SQL:
+-- Supabase Studio → Table Editor → profiles → колонка role.
 -- ============================================================================

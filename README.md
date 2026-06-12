@@ -33,15 +33,26 @@ npm run build          # сборка в dist/
 
 ## Настройка Supabase (авторизация)
 
+Ручной SQL не нужен: схема применяется миграциями через Supabase CLI (ставится вместе с `npm install`), состояние проверяется скриптом диагностики.
+
 1. Создайте проект на [supabase.com](https://supabase.com).
-2. В **SQL Editor** выполните скрипт [`supabase/schema.sql`](supabase/schema.sql) — он создаёт таблицу `profiles` (роль, ФИО, телефон, активность), триггер автосоздания профиля при регистрации и RLS-политики.
-3. В **Project Settings → API** скопируйте `Project URL` и `anon public` ключ в `.env`:
+2. В **Project Settings → API** скопируйте `Project URL` и `anon public` ключ в `.env`:
+   ```bash
+   cp .env.example .env   # затем заполнить VITE_SUPABASE_URL и VITE_SUPABASE_KEY
    ```
-   VITE_SUPABASE_URL=https://your-project.supabase.co
-   VITE_SUPABASE_KEY=your-anon-public-key
+3. Примените миграции (понадобятся access token с [supabase.com/dashboard/account/tokens](https://supabase.com/dashboard/account/tokens) и пароль БД проекта):
+   ```bash
+   npx supabase login                       # один раз, по access token
+   npm run db:link -- --project-ref <ref>   # <ref> — id проекта из URL панели
+   npm run db:push                          # применяет supabase/migrations/
    ```
-4. В **Authentication → Users** создайте первого пользователя (кнопка *Add user*, поставьте галочку *Auto Confirm User*).
-5. Назначьте ему роль владельца — SQL-запрос приведён в конце `schema.sql`.
+4. Проверьте, что всё готово:
+   ```bash
+   npm run db:check   # диагностика: .env, доступность проекта, применённость миграций
+   ```
+5. В **Authentication → Users** создайте первого пользователя (*Add user* + галочка *Auto Confirm User*). Самый первый пользователь автоматически становится владельцем (`owner`); роли остальных меняются в **Table Editor → profiles** — тоже без SQL.
+
+Команды БД: `npm run db:push` — применить новые миграции, `npm run db:diff` — сверить схему в облаке с миграциями, `npm run db:check` — диагностика подключения.
 
 Роли (`owner`, `fin_director`, `ops_director`, `location_manager`, `accountant`, `employee`) соответствуют ТЗ §2; подписи — в `ROLE_LABELS` (`src/components/AppShell.jsx`).
 
@@ -50,7 +61,10 @@ npm run build          # сборка в dist/
 ```
 ├── docs/                      # ТЗ и документация
 ├── supabase/
-│   └── schema.sql             # таблица profiles, роли, триггеры, RLS
+│   ├── config.toml            # конфиг Supabase CLI
+│   └── migrations/            # миграции БД (применяются npm run db:push)
+├── scripts/
+│   └── check-supabase.mjs     # диагностика: npm run db:check
 ├── index.html
 ├── vite.config.js
 └── src/
@@ -106,7 +120,7 @@ npm run build          # сборка в dist/
 
 - [x] Прототип всех ключевых экранов (моки)
 - [x] Разбивка монолита на модульную структуру
-- [x] **Supabase Auth**: вход по email/паролю, профили с ролями из ТЗ §2 (`supabase/schema.sql`)
+- [x] **Supabase Auth**: вход по email/паролю, профили с ролями из ТЗ §2, миграции CLI + диагностика (`npm run db:push` / `db:check`)
 - [ ] **Supabase**: схема БД остальных модулей (PostgreSQL), Storage для вложений
 - [ ] API-слой вместо `src/data/` + реальный ввод доходов и заявок
 - [ ] Проведение полной финансовой недели в системе (критерий приёмки этапа 1)
