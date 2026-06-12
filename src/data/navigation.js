@@ -23,6 +23,7 @@ export const NAV_FINANCE = [
   { key: "suppliers", icon: FileText, label: "Счета поставщиков" },
   { key: "clients", icon: ClipboardList, label: "Счета клиентов" },
   { key: "directive", icon: SlidersHorizontal, label: "Директива" },
+  { key: "register", icon: List, label: "Реестр операций" },
   { key: "requests", icon: ClipboardList, label: "Заявки" },
   { key: "obligations", icon: FileText, label: "Обязательства" },
   { key: "payroll", icon: Calculator, label: "Расчёт зарплаты" },

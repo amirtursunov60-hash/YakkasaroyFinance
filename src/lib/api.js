@@ -435,6 +435,27 @@ export async function payInvoice({ invoiceId, amount, cashAccountId, paymentType
   if (error) throw error;
 }
 
+// ---------------------------------------------------------------- Реестр операций
+// Единая лента всех операций ФП (ТЗ §4.1.9) с фильтрами
+export async function fetchRegister({ periodId, opType, fundId, cashAccountId, limit = 200 } = {}) {
+  let q = supabase
+    .from("fp_register")
+    .select(`id, op_type, fund_amount, cash_amount, comment, created_at, period_id,
+      fund:funds(code, name),
+      cash_account:cash_accounts(name),
+      counterparty:counterparties(name),
+      creator:profiles!fp_register_created_by_fkey(full_name)`)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (periodId) q = q.eq("period_id", periodId);
+  if (opType) q = q.eq("op_type", opType);
+  if (fundId) q = q.eq("fund_id", fundId);
+  if (cashAccountId) q = q.eq("cash_account_id", cashAccountId);
+  const { data, error } = await q;
+  if (error) throw error;
+  return data;
+}
+
 // ---------------------------------------------------------------- Отчёты
 // Сырьё для ДДС/P&L/сравнения точек: доходы и выплаты по периодам.
 // Точка расхода берётся из заявки или счёта; ЗП и вне ФП — без точки.
