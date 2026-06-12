@@ -62,18 +62,18 @@ export function App({ onLogout }) {
     <div style={st.app}>
       <style>{css}</style>
 
-      <header style={st.topbar}>
+      <header style={{ ...st.topbar, ...(isMobile ? { gap: 8, padding: "0 10px" } : {}) }}>
         {isMobile && (
           <button style={st.burger} onClick={() => setMenuOpen(true)}><Menu size={20} /></button>
         )}
-        <div style={st.brand}>
-          <div style={st.logo}><Layers size={18} strokeWidth={2.4} /></div>
-          <div style={st.brandTxt}>Яккасарой{!isMobile && <span style={st.brandThin}> финанс</span>}</div>
+        <div style={{ ...st.brand, ...(isMobile ? { gap: 0 } : {}) }}>
+          {!isMobile && <div style={st.logo}><Layers size={18} strokeWidth={2.4} /></div>}
+          <div style={{ ...st.brandTxt, ...(isMobile ? { fontSize: 15.5 } : {}) }}>Яккасарой{!isMobile && <span style={st.brandThin}> финанс</span>}</div>
         </div>
         <WeekPicker />
         <LocationPicker />
         {!isMobile && <GlobalSearch onGo={(m, sec) => { setActiveModule(m); setActive(sec); }} />}
-        <div style={st.topRight}>
+        <div style={{ ...st.topRight, ...(isMobile ? { gap: 6, marginLeft: "auto", flexShrink: 0 } : {}) }}>
           <NotifyBell onGo={(m, sec) => { setActiveModule(m); setActive(sec); }} />
           {!isMobile && <div style={st.user}><div style={st.uName}>{userName}</div><div style={st.uRole}>{userRole}</div></div>}
           <div style={st.profileWrap}>
