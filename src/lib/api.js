@@ -479,6 +479,66 @@ export async function attachmentUrl(path) {
   return data.signedUrl;
 }
 
+// ---------------------------------------------------------------- Схемы по видам дохода (ManaJet)
+// Правила «вид дохода → фонд, этап, %»: своя схема на каждый вид дохода
+// (ТЗ §4.1.3). Сгруппированы по фонду для калькулятора в Директиве.
+export async function fetchIncomeTypeRules() {
+  const { data, error } = await supabase
+    .from("distribution_rules")
+    .select("id, fund_id, stage, percent, fixed_amount, priority, income_type:income_types(id, code, name)")
+    .not("income_type_id", "is", null)
+    .eq("is_archived", false)
+    .order("priority");
+  if (error) throw error;
+  const byFund = {};
+  for (const r of data) (byFund[r.fund_id] ??= []).push(r);
+  return byFund;
+}
+
+export async function addDistributionRule({ fundId, incomeTypeId, stage, percent }) {
+  const { error } = await supabase
+    .from("distribution_rules")
+    .insert({ fund_id: fundId, income_type_id: incomeTypeId, stage, percent });
+  if (error) throw error;
+}
+
+export async function deleteDistributionRule(id) {
+  const { error } = await supabase
+    .from("distribution_rules")
+    .update({ is_archived: true })
+    .eq("id", id);
+  if (error) throw error;
+}
+
+// Доход недели по видам дохода: { [income_type_id]: сумма } (факт для калькулятора)
+export async function fetchIncomeByType(periodId) {
+  if (!periodId) return {};
+  const { data, error } = await supabase
+    .from("incomes")
+    .select("income_type_id, amount_base, is_return")
+    .eq("period_id", periodId);
+  if (error) throw error;
+  const m = {};
+  for (const r of data)
+    m[r.income_type_id] = (m[r.income_type_id] || 0) + (r.is_return ? -r.amount_base : Number(r.amount_base));
+  return m;
+}
+
+// ---------------------------------------------------------------- Папки фондов
+export async function fetchFundFolders() {
+  const { data, error } = await supabase
+    .from("fund_folders").select("id, name, parent_id").order("name");
+  if (error) throw error;
+  return data;
+}
+
+export async function createFundFolder(name) {
+  const { data, error } = await supabase
+    .from("fund_folders").insert({ name }).select().single();
+  if (error) throw error;
+  return data;
+}
+
 // ---------------------------------------------------------------- Скорректированная схема недели
 // Правки процентов в Директиве сохраняются на период (ТЗ §4.1.3)
 export async function fetchPeriodOverrides(periodId) {
@@ -648,10 +708,11 @@ export async function payPayroll(sheetId, cashAccountId, periodId) {
 }
 
 // ---------------------------------------------------------------- Фонды
-export async function createFund({ code, name, kind, isRestricted, locationId, currencyId }) {
+export async function createFund({ code, name, kind, isRestricted, locationId, currencyId, folderId }) {
   const { data, error } = await supabase
     .from("funds")
-    .insert({ code, name, kind, is_restricted: isRestricted, location_id: locationId || null, currency_id: currencyId })
+    .insert({ code, name, kind, is_restricted: isRestricted, location_id: locationId || null,
+      currency_id: currencyId, folder_id: folderId || null })
     .select().single();
   if (error) throw error;
   return data;
@@ -793,7 +854,7 @@ export async function fetchPeriods(limit = 12) {
 export async function fetchFunds() {
   const { data, error } = await supabase
     .from("funds")
-    .select("id, code, name, kind, is_restricted, balance")
+    .select("id, code, name, kind, is_restricted, balance, folder_id")
     .eq("is_archived", false);
   if (error) throw error;
   return data;

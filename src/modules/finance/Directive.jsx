@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { ClipboardList, Calculator, CalendarDays, Check, RotateCcw, RotateCw, Lock, Unlock, Ban, ArrowRightLeft, Loader2, AlertCircle, CheckCircle2, X } from "lucide-react";
+import { ClipboardList, Calculator, CalendarDays, Check, RotateCcw, RotateCw, Lock, Unlock, Ban, ArrowRightLeft, Loader2, AlertCircle, CheckCircle2, X, Folder, FolderOpen, ChevronRight } from "lucide-react";
 import { Stat } from "../../components/common";
 import { useTheme } from "../../theme/theme";
 import { fmt } from "../../utils/format";
@@ -8,6 +8,7 @@ import {
   fetchFunds, fetchDefaultRules,
   fetchPeriodIncome, fetchPeriodDistribution, distributeStage, setPeriodStatus, closePeriod, reopenPeriod, resetDistribution,
   fetchRequests, fetchBills, fetchPeriodOverrides, savePeriodOverrides,
+  fetchIncomeTypeRules, fetchIncomeByType, fetchFundFolders,
 } from "../../lib/api";
 
 
@@ -45,6 +46,10 @@ export function Directive() {
   const [busy, setBusy] = useState(null);           // 'block'|'close'|'transfer'|`calc:х`|`appr:х`
   const [transferOpen, setTransferOpen] = useState(false);
   const [pending, setPending] = useState({ reqs: [], bills: [] }); // к рассмотрению
+  const [fundRules, setFundRules] = useState({});     // правила по видам дохода { fundId: [rules] }
+  const [folders, setFolders] = useState([]);         // папки фондов
+  const [incomeByType, setIncomeByType] = useState({}); // факт дохода недели по видам
+  const [calcFund, setCalcFund] = useState(null);     // { fund, stage } — модал-калькулятор
 
   const isClosed = period?.status === "closed";
   const requestsBlocked = period?.status === "planning";
@@ -53,9 +58,11 @@ export function Directive() {
   const loadRefs = useCallback(async () => {
     setErr("");
     try {
-      const [fs, rs] = await Promise.all([fetchFunds(), fetchDefaultRules()]);
+      const [fs, rs, fr, fl] = await Promise.all([
+        fetchFunds(), fetchDefaultRules(), fetchIncomeTypeRules(), fetchFundFolders(),
+      ]);
       setFunds(fs.sort((a, b) => a.code.localeCompare(b.code, "ru", { numeric: true })));
-      setRules(rs);
+      setRules(rs); setFundRules(fr); setFolders(fl);
     } catch (e) {
       setErr("Не удалось загрузить данные: " + (e?.message || e));
     } finally {
@@ -81,8 +88,11 @@ export function Directive() {
         if (on) {
           await reloadPeriodData();
           // скорректированная схема недели (ТЗ §4.1.3) — сохранённые правки процентов
-          const ov = periodId ? await fetchPeriodOverrides(periodId) : {};
-          setCalculated({}); setPcts(ov); setDone("");
+          const [ov, ibt] = await Promise.all([
+            periodId ? fetchPeriodOverrides(periodId) : {},
+            periodId ? fetchIncomeByType(periodId) : {},
+          ]);
+          setCalculated({}); setPcts(ov); setIncomeByType(ibt); setDone("");
         }
       }
       catch (e) { if (on) setErr("Не удалось загрузить период: " + (e?.message || e)); }
@@ -123,26 +133,38 @@ export function Directive() {
     return { approvedByStage: m, stageSources: src };
   }, [regRows, rules]);
 
-  // -------- этапы каскадом
+  // -------- этапы каскадом. Строки этапа: фонды из схемы по умолчанию +
+  // фонды со своими схемами по видам дохода (ManaJet: дочерние фонды в папках,
+  // у каждого — калькулятор). typeRules у строки включает калькулятор.
   const stagesView = useMemo(() => {
     let base = income;
     return STAGES.map((meta) => {
       const stageRules = rules.filter((r) => r.stage === meta.key).sort(byFundCode(fundById));
       const appr = approvedByStage[meta.key] || {};
-      const isApproved = Object.keys(appr).length > 0;
       const calc = calculated[meta.key] || {};
       const rows = stageRules.map((r) => ({
         rule: r, fund: fundById[r.fund_id],
         calc: calc[r.fund_id] || 0,
         appr: appr[r.fund_id] || 0,
+        typeRules: (fundRules[r.fund_id] || []).filter((x) => x.stage === meta.key),
       }));
+      // фонды только со схемой по видам дохода (без правила по умолчанию)
+      for (const [fundId, frs] of Object.entries(fundRules)) {
+        const stageFrs = frs.filter((x) => x.stage === meta.key);
+        if (!stageFrs.length || rows.some((x) => x.fund?.id === fundId)) continue;
+        const fund = fundById[fundId];
+        if (!fund) continue;
+        rows.push({ rule: null, fund, calc: 0, appr: appr[fundId] || 0, typeRules: stageFrs });
+      }
+      rows.sort((a, b) => (a.fund?.code || "").localeCompare(b.fund?.code || "", "ru", { numeric: true }));
+      const isApproved = rows.some((x) => x.appr > 0);
       const sumCalc = rows.reduce((a, x) => a + x.calc, 0);
       const sumAppr = rows.reduce((a, x) => a + x.appr, 0);
       const view = { ...meta, base, rows, sumCalc, sumAppr, isApproved, sources: stageSources[meta.key] };
-      base -= isApproved ? sumAppr : sumCalc;
+      base -= sumAppr + rows.reduce((a, x) => a + (x.appr > 0 ? 0 : x.calc), 0);
       return view;
     });
-  }, [rules, fundById, income, calculated, approvedByStage, stageSources]);
+  }, [rules, fundRules, fundById, income, calculated, approvedByStage, stageSources]);
 
   const approvedTotal = useMemo(
     () => Object.values(approvedByStage).reduce((a, m) => a + Object.values(m).reduce((s, v) => s + v, 0), 0),
@@ -255,6 +277,19 @@ export function Directive() {
     finally { setBusy(null); }
   };
 
+  // Одобрение фонда из калькулятора по видам дохода
+  const doApproveFund = async (fund, stageKey, amount) => {
+    if (busy) return;
+    setBusy(`calcappr:${fund.id}`); setErr(""); setDone("");
+    try {
+      await distributeStage(periodId, stageKey, [{ fund_id: fund.id, amount }]);
+      await Promise.all([reloadPeriodData(), loadRefs()]);
+      setCalcFund(null);
+      setDone(`${fund.code} ${fund.name}: одобрено ${fmt(amount)} TJS`);
+    } catch (e) { setErr(e?.message || String(e)); }
+    finally { setBusy(null); }
+  };
+
   const doTransfer = async (fundId) => {
     if (busy) return;
     setBusy("transfer"); setErr(""); setDone("");
@@ -303,8 +338,10 @@ export function Directive() {
     {stagesView.map((sg) => (
       <LevelCard key={sg.key} sg={sg} C={C} st={st} isMobile={isMobile}
         pctOf={pctOf} setPcts={setPcts} busy={busy} locked={isClosed || !period}
+        folders={folders}
         onCalc={() => doCalc(sg)} onApprove={() => doApprove(sg)}
-        onReset={() => doReset(sg)} onResetApproved={() => doResetApproved(sg)} />
+        onReset={() => doReset(sg)} onResetApproved={() => doResetApproved(sg)}
+        onOpenCalc={(fund) => setCalcFund({ fund, stage: sg })} />
     ))}
 
     {/* Итог распределения на ФП */}
@@ -370,16 +407,36 @@ export function Directive() {
       <TransferModal C={C} st={st} funds={funds} remainder={remainder}
         busy={busy === "transfer"} onClose={() => setTransferOpen(false)} onTransfer={doTransfer} />
     )}
+    {calcFund && (
+      <FundCalcModal C={C} st={st} fund={calcFund.fund} stage={calcFund.stage}
+        rules={(fundRules[calcFund.fund.id] || []).filter((x) => x.stage === calcFund.stage.key)}
+        incomeByType={incomeByType}
+        approved={(approvedByStage[calcFund.stage.key] || {})[calcFund.fund.id] || 0}
+        busy={busy === `calcappr:${calcFund.fund.id}`} locked={isClosed || !period}
+        onClose={() => setCalcFund(null)}
+        onApprove={(amount) => doApproveFund(calcFund.fund, calcFund.stage.key, amount)} />
+    )}
   </>);
 }
 
 
 // ---------------------------------------------------------------- Этап распределения
-function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, onCalc, onApprove, onReset, onResetApproved }) {
+// Фонды этапа сгруппированы по папкам (fund_folders) — как в ManaJet:
+// папка раскрывается, у фондов со схемой по видам дохода — калькулятор.
+function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders, onCalc, onApprove, onReset, onResetApproved, onOpenCalc }) {
+  const [openFolders, setOpenFolders] = useState({});
   const calcBusy = busy === `calc:${sg.key}`;
   const apprBusy = busy === `appr:${sg.key}`;
   const resetBusy = busy === `reset:${sg.key}`;
   const editable = !sg.isApproved && !locked;
+
+  const folderById = Object.fromEntries(folders.map((f) => [f.id, f]));
+  // группировка: строки без папки + папки со своими строками
+  const flat = sg.rows.filter((x) => !x.fund?.folder_id);
+  const grouped = {};
+  sg.rows.filter((x) => x.fund?.folder_id).forEach((x) => {
+    (grouped[x.fund.folder_id] ??= []).push(x);
+  });
 
   const CalcBtn = () => (
     <button style={st.btnGhost} onClick={onCalc} className="btn" disabled={!!busy || !editable}>
@@ -392,7 +449,6 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, onCalc, 
       {apprBusy ? <span className="spin"><RotateCw size={15} /></span> : <Check size={15} />} Одобрить
     </button>
   );
-  // Сброс: до одобрения чистит расчёт, после одобрения — списывает из фондов
   const ResetBtn = () => (
     <button style={st.btnGhost} onClick={sg.isApproved ? onResetApproved : onReset} className="btn" disabled={!!busy || locked}>
       {resetBusy ? <span className="spin"><RotateCw size={14} /></span> : <RotateCcw size={14} />} Сброс
@@ -402,6 +458,49 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, onCalc, 
   const totals = sg.rows.reduce((t, x) => ({
     avail: t.avail + Number(x.fund?.balance || 0), calc: t.calc + x.calc, appr: t.appr + x.appr,
   }), { avail: 0, calc: 0, appr: 0 });
+
+  const FundRow = ({ x, child }) => {
+    const avail = Number(x.fund?.balance || 0);
+    const barVal = x.appr || x.calc;
+    const barBase = avail > 0 ? avail : (barVal || 1);
+    const fill = barVal > 0 ? Math.min(100, (barVal / barBase) * 100) : 0;
+    const hasTypeRules = x.typeRules?.length > 0;
+    return (
+      <div style={{ ...st.frow, ...(child ? { paddingLeft: 26 } : {}) }} className="frow">
+        <div style={st.fName}>
+          <div style={st.fundTop}>
+            <span style={st.fundCode}>{x.fund?.code}</span><span>{x.fund?.name}</span>
+            {x.fund?.is_restricted && <Lock size={12} color={C.faint} />}
+            {hasTypeRules && (
+              <button style={{ ...st.iconBtn, padding: 3, color: C.green }} className="btn"
+                title="Распределение по видам дохода" disabled={!!busy || locked}
+                onClick={() => onOpenCalc(x.fund)}>
+                <Calculator size={14} />
+              </button>
+            )}
+          </div>
+          <div style={st.bar}><div style={{ ...st.barFill, width: `${fill}%`, background: x.appr ? C.green : ORANGE }} /></div>
+        </div>
+        <div style={st.fPct}>
+          {x.rule ? (editable ? (<>
+            <input style={st.pctInput} className="pctIn" type="number" inputMode="decimal"
+              value={pctOf(x.rule)}
+              onChange={(e) => setPcts((p) => ({ ...p, [x.rule.id]: e.target.value === "" ? 0 : Number(e.target.value) }))}
+              onWheel={(e) => e.target.blur()} />
+            <span style={st.pctSign}>%</span>
+          </>) : (<>{pctOf(x.rule)}<span style={st.pctSign}>%</span></>))
+            : <span style={{ fontSize: 11, color: C.faint }}>по видам дохода</span>}
+        </div>
+        <div style={{ ...st.fNum, fontWeight: 700 }}>{fmt(avail)}</div>
+        <div style={{ ...st.fNum, color: x.calc ? ORANGE : C.faint, fontWeight: x.calc ? 600 : 400 }}>
+          <span className={calcBusy ? "" : x.calc ? "pop" : ""}>{x.rule ? fmt(x.calc) : "—"}</span>
+        </div>
+        <div style={{ ...st.fNum, color: x.appr ? C.green : C.faint, fontWeight: x.appr ? 700 : 400 }}>
+          <span className={x.appr ? "pop" : ""}>{fmt(x.appr)}</span>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div style={st.cardWrap}>
@@ -419,36 +518,30 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, onCalc, 
             <div style={st.fName}>Название</div><div style={st.fPct}>%</div>
             <div style={st.fNum}>Доступно</div><div style={st.fNum}>Рассчитано</div><div style={st.fNum}>Одобрено</div>
           </div>
-          {sg.rows.map((x) => {
-            const avail = Number(x.fund?.balance || 0);
-            const barVal = x.appr || x.calc;
-            const barBase = avail > 0 ? avail : (barVal || 1);
-            const fill = barVal > 0 ? Math.min(100, (barVal / barBase) * 100) : 0;
+          {flat.map((x) => <FundRow key={x.fund?.id || x.rule?.id} x={x} />)}
+          {Object.entries(grouped).map(([fid, rows]) => {
+            const isOpen = !!openFolders[fid];
+            const fsum = rows.reduce((t, x) => ({
+              avail: t.avail + Number(x.fund?.balance || 0), calc: t.calc + x.calc, appr: t.appr + x.appr,
+            }), { avail: 0, calc: 0, appr: 0 });
             return (
-              <div key={x.rule.id} style={st.frow} className="frow">
-                <div style={st.fName}>
-                  <div style={st.fundTop}>
-                    <span style={st.fundCode}>{x.fund?.code}</span><span>{x.fund?.name}</span>
-                    {x.fund?.is_restricted && <Lock size={12} color={C.faint} />}
+              <div key={fid}>
+                <div style={{ ...st.frow, cursor: "pointer", background: C.panel2 }} className="frow"
+                  onClick={() => setOpenFolders((o) => ({ ...o, [fid]: !o[fid] }))}>
+                  <div style={st.fName}>
+                    <div style={st.fundTop}>
+                      {isOpen ? <FolderOpen size={15} color={ORANGE} /> : <Folder size={15} color={ORANGE} />}
+                      <b>{folderById[fid]?.name || "Папка"}</b>
+                      <span style={{ fontSize: 11, color: C.faint }}>· {rows.length} фонд(ов)</span>
+                      <ChevronRight size={14} style={{ transform: isOpen ? "rotate(90deg)" : "none", transition: "transform .2s", color: C.faint }} />
+                    </div>
                   </div>
-                  <div style={st.bar}><div style={{ ...st.barFill, width: `${fill}%`, background: x.appr ? C.green : ORANGE }} /></div>
+                  <div style={st.fPct} />
+                  <div style={{ ...st.fNum, fontWeight: 700 }}>{fmt(fsum.avail)}</div>
+                  <div style={{ ...st.fNum, color: fsum.calc ? ORANGE : C.faint }}>{fmt(fsum.calc)}</div>
+                  <div style={{ ...st.fNum, color: fsum.appr ? C.green : C.faint, fontWeight: fsum.appr ? 700 : 400 }}>{fmt(fsum.appr)}</div>
                 </div>
-                <div style={st.fPct}>
-                  {editable ? (<>
-                    <input style={st.pctInput} className="pctIn" type="number" inputMode="decimal"
-                      value={pctOf(x.rule)}
-                      onChange={(e) => setPcts((p) => ({ ...p, [x.rule.id]: e.target.value === "" ? 0 : Number(e.target.value) }))}
-                      onWheel={(e) => e.target.blur()} />
-                    <span style={st.pctSign}>%</span>
-                  </>) : (<>{pctOf(x.rule)}<span style={st.pctSign}>%</span></>)}
-                </div>
-                <div style={{ ...st.fNum, fontWeight: 700 }}>{fmt(avail)}</div>
-                <div style={{ ...st.fNum, color: x.calc ? ORANGE : C.faint, fontWeight: x.calc ? 600 : 400 }}>
-                  <span className={calcBusy ? "" : x.calc ? "pop" : ""}>{fmt(x.calc)}</span>
-                </div>
-                <div style={{ ...st.fNum, color: x.appr ? C.green : C.faint, fontWeight: x.appr ? 700 : 400 }}>
-                  <span className={x.appr ? "pop" : ""}>{fmt(x.appr)}</span>
-                </div>
+                {isOpen && rows.map((x) => <FundRow key={x.fund?.id} x={x} child />)}
               </div>
             );
           })}
@@ -464,6 +557,84 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, onCalc, 
           {isMobile && <div style={st.mActions}><CalcBtn /><ApproveBtn /><ResetBtn /></div>}
         </>)}
       </section>
+    </div>
+  );
+}
+
+
+// ---------------------------------------------------------------- Калькулятор фонда
+// Модель ManaJet: распределение в фонд по видам дохода с разными процентами.
+// Факт = доход вида за неделю; рассчитано = факт × %; суммы можно поправить.
+function FundCalcModal({ C, st, fund, stage, rules, incomeByType, approved, busy, locked, onClose, onApprove }) {
+  const [vals, setVals] = useState(() => Object.fromEntries(
+    rules.map((r) => {
+      const fact = incomeByType[r.income_type?.id] || 0;
+      const calc = r.percent ? Math.round(fact * Number(r.percent)) / 100 : Number(r.fixed_amount || 0);
+      return [r.id, String(Math.max(0, calc))];
+    })));
+  const num = (v) => parseFloat(String(v).replace(",", ".")) || 0;
+  const total = rules.reduce((a, r) => a + num(vals[r.id]), 0);
+  const factTotal = rules.reduce((a, r) => a + (incomeByType[r.income_type?.id] || 0), 0);
+
+  return (
+    <div style={st.mdOverlay} onClick={onClose}>
+      <div style={{ ...st.mdCard, width: "min(560px, 100%)" }} onClick={(e) => e.stopPropagation()}>
+        <div style={st.mdHead}>
+          <div style={st.mdTitle}>Одобрение · {fund.code} {fund.name}</div>
+          <button style={st.iconBtn} onClick={onClose}><X size={17} /></button>
+        </div>
+        <div style={{ fontSize: 12, color: C.sub, marginBottom: 10 }}>
+          Этап «{stage.title}» · своя схема по видам дохода
+          {approved > 0 && <b style={{ color: C.green }}> · уже одобрено {fmt(approved)}</b>}
+        </div>
+
+        <div style={{ ...st.frow, ...st.frowHead, gridTemplateColumns: "1fr 90px 56px 90px 100px" }}>
+          <div style={st.fName}>Вид дохода</div>
+          <div style={st.fNum}>Факт</div>
+          <div style={st.fPct}>%</div>
+          <div style={st.fNum}>Рассчитано</div>
+          <div style={st.fNum}>Одобрить</div>
+        </div>
+        <div style={{ maxHeight: 360, overflowY: "auto" }}>
+          {rules.map((r) => {
+            const fact = incomeByType[r.income_type?.id] || 0;
+            const calc = r.percent ? Math.round(fact * Number(r.percent)) / 100 : Number(r.fixed_amount || 0);
+            return (
+              <div key={r.id} style={{ ...st.frow, gridTemplateColumns: "1fr 90px 56px 90px 100px", alignItems: "center" }} className="frow">
+                <div style={{ ...st.fName, fontSize: 12.5 }}>
+                  <span style={st.fundCode}>{r.income_type?.code}</span> {r.income_type?.name}
+                </div>
+                <div style={{ ...st.fNum, fontSize: 12.5 }}>{fmt(fact)}</div>
+                <div style={{ ...st.fPct, fontSize: 12 }}>{r.percent ? `${Number(r.percent)}%` : "фикс"}</div>
+                <div style={{ ...st.fNum, fontSize: 12.5, color: calc ? ORANGE : C.faint }}>{fmt(calc)}</div>
+                <div style={{ textAlign: "right" }}>
+                  <input type="number" inputMode="decimal" value={vals[r.id]}
+                    onChange={(e) => setVals((p) => ({ ...p, [r.id]: e.target.value }))}
+                    onWheel={(e) => e.target.blur()}
+                    style={{ ...st.pctInput, width: 90, padding: "6px 8px", fontSize: 12.5 }} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <div style={{ ...st.frow, ...st.frowTotal, gridTemplateColumns: "1fr 90px 56px 90px 100px" }}>
+          <div style={st.fName}><b>Итого</b></div>
+          <div style={{ ...st.fNum, fontWeight: 700 }}>{fmt(factTotal)}</div>
+          <div style={st.fPct} />
+          <div style={st.fNum} />
+          <div style={{ ...st.fNum, fontWeight: 800, color: C.green }}>{fmt(total)}</div>
+        </div>
+
+        <div style={st.mdActions}>
+          <button style={st.btnGhost} className="btn" onClick={onClose}>Отмена</button>
+          <button style={{ ...st.btnGreen, opacity: busy ? 0.7 : 1 }} className="btn"
+            disabled={busy || locked || total <= 0 || approved > 0}
+            title={approved > 0 ? "Фонд уже одобрен на этом этапе — сбросьте этап для повтора" : ""}
+            onClick={() => onApprove(Math.round(total * 100) / 100)}>
+            {busy ? <Loader2 size={15} className="spin" /> : <Check size={15} />} Одобрить {fmt(total)}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
