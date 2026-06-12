@@ -4,7 +4,7 @@
 
 Два способа:
 
-1. **Через Claude Code (Supabase MCP)** — основной. В корне репозитория есть `.mcp.json` с официальным Supabase MCP-сервером; ему нужны переменные окружения `SUPABASE_ACCESS_TOKEN` (Dashboard → Account Settings → Access Tokens) и `SUPABASE_PROJECT_REF` (Project Settings → General → Reference ID), заданные в настройках окружения Claude Code. С ними Claude применяет миграции и выполняет диагностический SQL сам.
+1. **Через Claude Code (Supabase MCP)** — основной. В корне репозитория есть `.mcp.json` с официальным Supabase MCP-сервером (https://mcp.supabase.com, авторизация через вход в Supabase — OAuth, токены не хранятся). После авторизации Claude применяет миграции (`apply_migration`) и выполняет диагностический SQL (`execute_sql`) сам. Внимание: параметр `read_only=true` в URL отключает запись — для применения миграций его быть не должно.
 2. **Вручную**: Dashboard → SQL Editor → вставить содержимое файла → Run. По порядку номеров, каждый файл один раз (повторный запуск безопасен — файлы идемпотентны).
 
 ## Текущее состояние
