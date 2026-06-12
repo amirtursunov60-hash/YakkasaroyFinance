@@ -32,6 +32,8 @@ export const makeCss = (C) => `
   .pmi:hover{background:${C.menuHover};}
   .weekOpt:hover{background:${C.menuHover};}
   input::placeholder{color:${C.faint};}
+  .fin:focus{border-color:${C.green};}
+  input[type=date]{color-scheme:${C.scheme};}
   input[type=checkbox]{accent-color:${C.green};width:15px;height:15px;cursor:pointer;}
   @media (max-width: 880px){
     .fpActions{flex-direction:column;align-items:stretch;}
