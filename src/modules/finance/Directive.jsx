@@ -180,7 +180,9 @@ export function Directive() {
     setTimeout(() => {
       setCalculated((p) => ({
         ...p,
-        [sg.key]: Object.fromEntries(sg.rows.map((x) => [x.rule.fund_id, Math.round(sg.base * pctOf(x.rule)) / 100])),
+        [sg.key]: Object.fromEntries(sg.rows
+          .filter((x) => x.rule)   // фонды «по видам дохода» одобряются калькулятором
+          .map((x) => [x.rule.fund_id, Math.round(sg.base * pctOf(x.rule)) / 100])),
       }));
       setBusy(null);
     }, 400);
@@ -197,7 +199,7 @@ export function Directive() {
       // правки процентов этого этапа сохраняем как скорректированную схему недели
       try {
         const changed = sg.rows
-          .filter((x) => pctOf(x.rule) !== Number(x.rule.percent ?? 0))
+          .filter((x) => x.rule && pctOf(x.rule) !== Number(x.rule.percent ?? 0))
           .map((x) => ({ ruleId: x.rule.id, percent: pctOf(x.rule) }));
         await savePeriodOverrides(periodId, changed);
       } catch { /* не критично для одобрения */ }
