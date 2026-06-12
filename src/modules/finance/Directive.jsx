@@ -7,6 +7,7 @@ import { usePeriod, periodTitle } from "../../lib/PeriodCtx";
 import {
   fetchFunds, fetchDefaultRules,
   fetchPeriodIncome, fetchPeriodDistribution, distributeStage, setPeriodStatus, closePeriod, reopenPeriod, resetDistribution,
+  fetchRequests, fetchBills,
 } from "../../lib/api";
 
 
@@ -43,6 +44,7 @@ export function Directive() {
   const [pcts, setPcts] = useState({});             // правки процентов { ruleId: число }
   const [busy, setBusy] = useState(null);           // 'block'|'close'|'transfer'|`calc:х`|`appr:х`
   const [transferOpen, setTransferOpen] = useState(false);
+  const [pending, setPending] = useState({ reqs: [], bills: [] }); // к рассмотрению
 
   const isClosed = period?.status === "closed";
   const requestsBlocked = period?.status === "planning";
@@ -77,6 +79,13 @@ export function Directive() {
     (async () => {
       try { if (on) { await reloadPeriodData(); setCalculated({}); setPcts({}); setDone(""); } }
       catch (e) { if (on) setErr("Не удалось загрузить период: " + (e?.message || e)); }
+      try {
+        const [reqs, bills] = await Promise.all([fetchRequests(periodId), fetchBills(periodId)]);
+        if (on) setPending({
+          reqs: reqs.filter((r) => ["submitted", "planning"].includes(r.status)),
+          bills: bills.filter((b) => ["submitted", "planning"].includes(b.status)),
+        });
+      } catch { /* сводка заявок не критична для Директивы */ }
     })();
     return () => { on = false; };
   }, [periodId]);                                   // eslint-disable-line react-hooks/exhaustive-deps
@@ -321,10 +330,26 @@ export function Directive() {
         <span style={st.reqSectionSub}>Финкомитет одобряет или отклоняет</span>
         {requestsBlocked && <span style={st.reqBlockedTag}><Lock size={12} /> Подача закрыта</span>}
       </div>
-      <div style={{ ...st.locCard, ...st.empty }}>
-        Заявок пока нет. Подача заявок (от поста, в формате ЗРС) появится в Личном кабинете —
-        после этого они будут рассматриваться здесь.
-      </div>
+      {pending.reqs.length === 0 && pending.bills.length === 0 ? (
+        <div style={{ ...st.locCard, ...st.empty }}>
+          К рассмотрению ничего нет. Заявки подаются в «Расходах», счета — в «Счетах поставщиков»;
+          одобрение и оплата — в разделе «Заявки».
+        </div>
+      ) : (
+        <div style={{ ...st.locCard, padding: "14px 18px" }}>
+          <div style={{ display: "flex", gap: 18, flexWrap: "wrap", fontSize: 13.5 }}>
+            {pending.bills.length > 0 && (
+              <span>Счета поставщиков (приоритет): <b style={{ color: ORANGE }}>{pending.bills.length}</b> на <b>{fmt(pending.bills.reduce((a, b) => a + Number(b.amount), 0))}</b> TJS</span>
+            )}
+            {pending.reqs.length > 0 && (
+              <span>Заявки от постов: <b style={{ color: ORANGE }}>{pending.reqs.length}</b> на <b>{fmt(pending.reqs.reduce((a, r) => a + Number(r.planned_amount), 0))}</b> TJS</span>
+            )}
+          </div>
+          <div style={{ fontSize: 12, color: C.faint, marginTop: 6 }}>
+            Рассмотрение и оплата — в разделе «Заявки» (меню Финансовое планирование).
+          </div>
+        </div>
+      )}
     </section>
 
     {transferOpen && (
