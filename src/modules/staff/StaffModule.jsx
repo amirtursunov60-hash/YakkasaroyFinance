@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { Users, UserPlus, Loader2, AlertCircle, CheckCircle2, X, Plus, Copy, Trash2, ChevronRight, MapPin, Network } from "lucide-react";
 import { useTheme } from "../../theme/theme";
+import { avatarColor } from "../../utils/format";
 import {
   fetchEmployees, updateProfile, fetchAllPositions, assignPosition, unassignPosition,
   setLocationAccess, fetchIncomeRefs,
@@ -109,7 +110,7 @@ function PeopleView({ C, st, isMobile, isFinAdmin, people, positions, locations,
         <div key={p.id} style={{ ...st.locCard, marginBottom: 10, opacity: p.is_active ? 1 : 0.55 }}>
           <div style={{ ...st.locHead, cursor: "pointer" }} className="locHead"
             onClick={() => setExpanded((e) => ({ ...e, [p.id]: !e[p.id] }))}>
-            <div style={{ ...st.avatar, flexShrink: 0 }}>{initials}</div>
+            <div style={{ ...st.avatar, flexShrink: 0, background: `${avatarColor(p.full_name)}26`, color: avatarColor(p.full_name) }}>{initials}</div>
             <div style={st.locTitle}>
               <div style={st.locName}>{p.full_name}{!p.is_active && " · деактивирован"}</div>
               <div style={st.locCode}>

@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { X, Menu, User2, Settings, LogOut, Sun, Moon } from "lucide-react";
 import { Stub } from "./common";
 import { MODULES, MODULE_NAV } from "../data/navigation";
+import { avatarColor } from "../utils/format";
 import { CrmModule } from "../modules/crm/CrmModule";
 import { DashModule } from "../modules/dashboard/DashModule";
 import { Clients } from "../modules/finance/Clients";
@@ -78,7 +79,7 @@ export function App({ onLogout }) {
           <NotifyBell onGo={(m, sec) => { setActiveModule(m); setActive(sec); }} />
           {!isMobile && <div style={st.user}><div style={st.uName}>{userName}</div><div style={st.uRole}>{userRole}</div></div>}
           <div style={st.profileWrap}>
-            <div style={st.avatar} className="ava" onClick={() => setProfileOpen((o) => !o)}>{initials}</div>
+            <div style={{ ...st.avatar, background: `${avatarColor(userName)}26`, color: avatarColor(userName) }} className="ava" onClick={() => setProfileOpen((o) => !o)}>{initials}</div>
             {profileOpen && (
               <>
                 <div style={st.profileOverlay} onClick={() => setProfileOpen(false)} />
