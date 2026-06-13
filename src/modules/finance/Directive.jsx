@@ -174,24 +174,44 @@ export function Directive() {
   const fundsTotal = useMemo(() => funds.reduce((a, f) => a + Number(f.balance || 0), 0), [funds]);
 
   // -------- действия
-  const doCalc = (sg) => {
+  // Рассчитать выбранные галочками фонды (или все, если ничего не отмечено).
+  // Фонд с обычным правилом: база × %. Фонд со схемой по видам дохода (ФРС):
+  // Σ (факт дохода вида × %) — считается автоматически (пункт 3).
+  const doCalc = (sg, checkedIds) => {
+    const set = checkedIds && checkedIds.length ? new Set(checkedIds) : null;
     setBusy(`calc:${sg.key}`);
-    // лёгкая задержка, чтобы анимация расчёта читалась, как в прототипе
     setTimeout(() => {
-      setCalculated((p) => ({
-        ...p,
-        [sg.key]: Object.fromEntries(sg.rows
-          .filter((x) => x.rule)   // фонды «по видам дохода» одобряются калькулятором
-          .map((x) => [x.rule.fund_id, Math.round(sg.base * pctOf(x.rule)) / 100])),
-      }));
+      setCalculated((p) => {
+        const stageCalc = { ...(p[sg.key] || {}) };
+        sg.rows.forEach((x) => {
+          if (!x.fund) return;
+          if (set && !set.has(x.fund.id)) return;
+          if (x.appr > 0) return; // уже одобренные не пересчитываем
+          let amount = 0;
+          if (x.rule) {
+            amount = Math.round(sg.base * pctOf(x.rule)) / 100;
+          } else if (x.typeRules?.length) {
+            amount = x.typeRules.reduce((a, r) => {
+              const fact = incomeByType[r.income_type?.id] || 0;
+              return a + (r.percent != null ? fact * Number(r.percent) / 100 : Number(r.fixed_amount || 0));
+            }, 0);
+            amount = Math.round(amount * 100) / 100;
+          }
+          stageCalc[x.fund.id] = amount;
+        });
+        return { ...p, [sg.key]: stageCalc };
+      });
       setBusy(null);
-    }, 400);
+    }, 300);
   };
 
   const doApprove = async (sg) => {
     if (busy) return;
     const calc = calculated[sg.key] || {};
-    const allocations = Object.entries(calc).filter(([, v]) => v > 0).map(([fund_id, amount]) => ({ fund_id, amount }));
+    // одобряем только рассчитанные и ещё не одобренные фонды
+    const allocations = sg.rows
+      .filter((x) => x.fund && (calc[x.fund.id] || 0) > 0 && !(x.appr > 0))
+      .map((x) => ({ fund_id: x.fund.id, amount: calc[x.fund.id] }));
     if (!allocations.length) { setErr(`${sg.title}: сначала нажмите «Рассчитать»`); return; }
     setBusy(`appr:${sg.key}`); setErr(""); setDone("");
     try {
@@ -204,7 +224,7 @@ export function Directive() {
         await savePeriodOverrides(periodId, changed);
       } catch { /* не критично для одобрения */ }
       await Promise.all([reloadPeriodData(), loadRefs()]);
-      setCalculated((p) => ({ ...p, [sg.key]: {} }));
+      // «Рассчитано» НЕ очищаем — суммы остаются видны рядом с «Одобрено» (пункт 1)
       setDone(`${sg.title}: распределение одобрено и зачислено в фонды`);
     } catch (e) { setErr(e?.message || String(e)); }
     finally { setBusy(null); }
@@ -341,7 +361,7 @@ export function Directive() {
       <LevelCard key={sg.key} sg={sg} C={C} st={st} isMobile={isMobile}
         pctOf={pctOf} setPcts={setPcts} busy={busy} locked={isClosed || !period}
         folders={folders}
-        onCalc={() => doCalc(sg)} onApprove={() => doApprove(sg)}
+        onCalc={(ids) => doCalc(sg, ids)} onApprove={() => doApprove(sg)}
         onReset={() => doReset(sg)} onResetApproved={() => doResetApproved(sg)}
         onOpenCalc={(fund) => setCalcFund({ fund, stage: sg })} />
     ))}
@@ -423,34 +443,48 @@ export function Directive() {
 
 
 // ---------------------------------------------------------------- Этап распределения
-// Фонды этапа сгруппированы по папкам (fund_folders) — как в ManaJet:
-// папка раскрывается, у фондов со схемой по видам дохода — калькулятор.
+// Фонды этапа сгруппированы по папкам (fund_folders) — как в ManaJet.
+// Слева у каждого фонда галочка: отмеченные фонды считаются при «Рассчитать»
+// (если не отмечено ничего — считаются все). Уже одобренные не пересчитываются.
 function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders, onCalc, onApprove, onReset, onResetApproved, onOpenCalc }) {
   const [openFolders, setOpenFolders] = useState({});
+  const [checked, setChecked] = useState(() => new Set());
   const calcBusy = busy === `calc:${sg.key}`;
   const apprBusy = busy === `appr:${sg.key}`;
   const resetBusy = busy === `reset:${sg.key}`;
-  const editable = !sg.isApproved && !locked;
 
   const folderById = Object.fromEntries(folders.map((f) => [f.id, f]));
-  // группировка: строки без папки + папки со своими строками
   const flat = sg.rows.filter((x) => !x.fund?.folder_id);
   const grouped = {};
   sg.rows.filter((x) => x.fund?.folder_id).forEach((x) => {
     (grouped[x.fund.folder_id] ??= []).push(x);
   });
 
+  // фонды, доступные для выбора галочкой (ещё не одобренные)
+  const selectable = sg.rows.filter((x) => x.fund && !(x.appr > 0)).map((x) => x.fund.id);
+  const allChecked = selectable.length > 0 && selectable.every((id) => checked.has(id));
+  const toggleOne = (id) => setChecked((s) => {
+    const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n;
+  });
+  const toggleAll = () => setChecked(allChecked ? new Set() : new Set(selectable));
+  const hasApprovable = sg.rows.some((x) => x.calc > 0 && !(x.appr > 0));
+
+  const cbStyle = { width: 15, height: 15, accentColor: C.green, marginRight: 7, flexShrink: 0, cursor: "pointer" };
+
   const CalcBtn = () => (
-    <button style={st.btnGhost} onClick={onCalc} className="btn" disabled={!!busy || !editable}>
+    <button style={st.btnGhost} onClick={() => onCalc([...checked])} className="btn" disabled={!!busy || locked}>
       {calcBusy ? <span className="spin"><RotateCw size={15} /></span> : <Calculator size={15} />} Рассчитать
     </button>
   );
-  const ApproveBtn = () => (
-    <button style={{ ...st.btnGreen, opacity: editable ? (busy ? 0.7 : 1) : 0.35, cursor: editable ? "pointer" : "not-allowed" }}
-      onClick={onApprove} className="btn" disabled={!!busy || !editable}>
-      {apprBusy ? <span className="spin"><RotateCw size={15} /></span> : <Check size={15} />} Одобрить
-    </button>
-  );
+  const ApproveBtn = () => {
+    const ok = !locked && hasApprovable;
+    return (
+      <button style={{ ...st.btnGreen, opacity: ok ? (busy ? 0.7 : 1) : 0.35, cursor: ok ? "pointer" : "not-allowed" }}
+        onClick={onApprove} className="btn" disabled={!!busy || !ok}>
+        {apprBusy ? <span className="spin"><RotateCw size={15} /></span> : <Check size={15} />} Одобрить
+      </button>
+    );
+  };
   const ResetBtn = () => (
     <button style={st.btnGhost} onClick={sg.isApproved ? onResetApproved : onReset} className="btn" disabled={!!busy || locked}>
       {resetBusy ? <span className="spin"><RotateCw size={14} /></span> : <RotateCcw size={14} />} Сброс
@@ -467,10 +501,13 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
     const barBase = avail > 0 ? avail : (barVal || 1);
     const fill = barVal > 0 ? Math.min(100, (barVal / barBase) * 100) : 0;
     const hasTypeRules = x.typeRules?.length > 0;
+    const rowEditable = !locked && !(x.appr > 0);
     return (
-      <div style={{ ...st.frow, ...(child ? { paddingLeft: 26 } : {}) }} className="frow">
+      <div style={{ ...st.frow, ...(child ? { paddingLeft: 14 } : {}) }} className="frow">
         <div style={st.fName}>
           <div style={st.fundTop}>
+            <input type="checkbox" style={cbStyle} checked={checked.has(x.fund.id)}
+              disabled={!rowEditable} onChange={() => toggleOne(x.fund.id)} />
             <span style={st.fundCode}>{x.fund?.code}</span><span>{x.fund?.name}</span>
             {x.fund?.is_restricted && <Lock size={12} color={C.faint} />}
             {hasTypeRules && (
@@ -484,18 +521,18 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
           <div style={st.bar}><div style={{ ...st.barFill, width: `${fill}%`, background: x.appr ? C.green : ORANGE }} /></div>
         </div>
         <div style={st.fPct}>
-          {x.rule ? (editable ? (<>
+          {x.rule ? (rowEditable ? (<>
             <input style={st.pctInput} className="pctIn" type="number" inputMode="decimal"
               value={pctOf(x.rule)}
               onChange={(e) => setPcts((p) => ({ ...p, [x.rule.id]: e.target.value === "" ? 0 : Number(e.target.value) }))}
               onWheel={(e) => e.target.blur()} />
             <span style={st.pctSign}>%</span>
           </>) : (<>{pctOf(x.rule)}<span style={st.pctSign}>%</span></>))
-            : <span style={{ fontSize: 11, color: C.faint }}>по видам дохода</span>}
+            : <span style={{ fontSize: 11, color: C.faint }}>по видам</span>}
         </div>
         <div style={{ ...st.fNum, fontWeight: 700 }}>{fmt(avail)}</div>
         <div style={{ ...st.fNum, color: x.calc ? ORANGE : C.faint, fontWeight: x.calc ? 600 : 400 }}>
-          <span className={calcBusy ? "" : x.calc ? "pop" : ""}>{x.rule ? fmt(x.calc) : "—"}</span>
+          <span className={calcBusy ? "" : x.calc ? "pop" : ""}>{fmt(x.calc)}</span>
         </div>
         <div style={{ ...st.fNum, color: x.appr ? C.green : C.faint, fontWeight: x.appr ? 700 : 400 }}>
           <span className={x.appr ? "pop" : ""}>{fmt(x.appr)}</span>
@@ -517,7 +554,14 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
         </div>
         {sg.rows.length === 0 ? <div style={st.empty}>Фонды этого этапа не настроены</div> : (<>
           <div style={{ ...st.frow, ...st.frowHead }}>
-            <div style={st.fName}>Название</div><div style={st.fPct}>%</div>
+            <div style={st.fName}>
+              <div style={st.fundTop}>
+                <input type="checkbox" style={cbStyle} checked={allChecked}
+                  disabled={locked || !selectable.length} onChange={toggleAll} />
+                Название
+              </div>
+            </div>
+            <div style={st.fPct}>%</div>
             <div style={st.fNum}>Доступно</div><div style={st.fNum}>Рассчитано</div><div style={st.fNum}>Одобрено</div>
           </div>
           {flat.map((x) => <FundRow key={x.fund?.id || x.rule?.id} x={x} />)}

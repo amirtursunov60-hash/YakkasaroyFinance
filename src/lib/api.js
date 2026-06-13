@@ -495,6 +495,20 @@ export async function fetchIncomeTypeRules() {
   return byFund;
 }
 
+// Правила, сгруппированные по виду дохода (для настройки схемы в «Доходах»):
+// { [income_type_id]: [{ id, fund_id, stage, percent, fund:{code,name} }] }
+export async function fetchRulesByIncomeType() {
+  const { data, error } = await supabase
+    .from("distribution_rules")
+    .select("id, fund_id, income_type_id, stage, percent, fixed_amount, fund:funds(code, name)")
+    .not("income_type_id", "is", null)
+    .eq("is_archived", false);
+  if (error) throw error;
+  const m = {};
+  for (const r of data) (m[r.income_type_id] ??= []).push(r);
+  return m;
+}
+
 export async function addDistributionRule({ fundId, incomeTypeId, stage, percent }) {
   const { error } = await supabase
     .from("distribution_rules")

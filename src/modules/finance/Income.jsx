@@ -1,11 +1,12 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { ArrowUpRight, ArrowDownRight, ChevronRight, Plus, X, Loader2, AlertCircle } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, ChevronRight, Plus, X, Loader2, AlertCircle, Calculator, Trash2 } from "lucide-react";
 import { useTheme } from "../../theme/theme";
 import { fmt } from "../../utils/format";
 import { usePeriod, periodTitle } from "../../lib/PeriodCtx";
 import {
   isoDate, getPeriodFor,
   fetchIncomeTypes, fetchIncomeSums, fetchIncomeRefs, findRate, insertIncome,
+  fetchRulesByIncomeType, fetchFunds, addDistributionRule, deleteDistributionRule,
 } from "../../lib/api";
 
 
@@ -25,6 +26,10 @@ export function Income() {
   const [refs, setRefs] = useState(null);
   const [open, setOpen] = useState(null);         // раскрытые папки; null = ещё не инициализировано
   const [showForm, setShowForm] = useState(false);
+  const isFinAdmin = ["owner", "fin_director"].includes(profile?.role);
+  const [rulesByType, setRulesByType] = useState({}); // схемы распределения по видам дохода
+  const [funds, setFunds] = useState([]);
+  const [schemeType, setSchemeType] = useState(null); // вид дохода для модала «Схема»
 
   // Неделя — из общего контекста (выбирается в шапке)
   const periods = useMemo(() => ({ cur: period, prev: prevPeriod }), [period, prevPeriod]);
@@ -32,15 +37,24 @@ export function Income() {
   const loadStatic = useCallback(async () => {
     setLoadError("");
     try {
-      const [list, refData] = await Promise.all([fetchIncomeTypes(), fetchIncomeRefs()]);
-      setTypes(list); setRefs(refData);
+      const [list, refData, rbt, fs] = await Promise.all([
+        fetchIncomeTypes(), fetchIncomeRefs(),
+        isFinAdmin ? fetchRulesByIncomeType() : Promise.resolve({}),
+        isFinAdmin ? fetchFunds() : Promise.resolve([]),
+      ]);
+      setTypes(list); setRefs(refData); setRulesByType(rbt);
+      setFunds(fs.sort((a, b) => a.code.localeCompare(b.code, "ru", { numeric: true })));
     } catch (e) {
       setLoadError("Не удалось загрузить данные: " + (e?.message || e));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [isFinAdmin]);
   useEffect(() => { loadStatic(); }, [loadStatic]);
+
+  const reloadRules = useCallback(async () => {
+    if (isFinAdmin) setRulesByType(await fetchRulesByIncomeType());
+  }, [isFinAdmin]);
 
   const loadSums = useCallback(async () => {
     try {
@@ -159,6 +173,12 @@ export function Income() {
                 <div style={st.locSum}>{fmt(r.cur)} <span style={st.locUnit}>TJS</span></div>
                 <Trend cur={r.cur} prev={r.prev} />
               </div>
+              {isFinAdmin && (
+                <button style={{ ...st.iconBtn, padding: 4, color: (rulesByType[loc.id]?.length ? C.green : C.faint), flexShrink: 0 }} className="btn"
+                  title="Схема распределения по фондам" onClick={(e) => { e.stopPropagation(); setSchemeType(loc); }}>
+                  <Calculator size={16} />
+                </button>
+              )}
               {hasChildren && <span style={{ ...st.locChevron, transform: isOpen ? "rotate(90deg)" : "none" }}><ChevronRight size={18} /></span>}
             </div>
 
@@ -176,6 +196,12 @@ export function Income() {
                       <div style={st.itemName}>
                         <span style={st.itemCode}>{c.code}</span>
                         <span>{c.name}</span>
+                        {isFinAdmin && (
+                          <button style={{ ...st.iconBtn, padding: 3, color: (rulesByType[c.id]?.length ? C.green : C.faint) }} className="btn"
+                            title="Схема распределения по фондам" onClick={() => setSchemeType(c)}>
+                            <Calculator size={14} />
+                          </button>
+                        )}
                       </div>
                       <div style={st.itemPrev}>{fmt(rc.prev)}</div>
                       <div style={{ ...st.itemCur, color: rc.cur ? C.green : C.faint }}>{fmt(rc.cur)}</div>
@@ -197,7 +223,92 @@ export function Income() {
         onSaved={() => { setShowForm(false); loadSums(); }}
       />
     )}
+    {schemeType && (
+      <SchemeModal C={C} st={st} type={schemeType}
+        rules={rulesByType[schemeType.id] || []} funds={funds}
+        onChanged={reloadRules} onClose={() => setSchemeType(null)} />
+    )}
   </>);
+}
+
+// ---------------------------------------------------------------- Схема распределения вида дохода
+// Свои проценты: «этот доход → какому фонду сколько %» (ФРС, ТЗ §4.1.3).
+// Используется калькулятором Директивы для автоматического расчёта.
+const STAGE_OPTS = [["revenue", "Выручка"], ["margin", "Маржинальный"], ["adjusted", "Скорректированный"]];
+
+function SchemeModal({ C, st, type, rules, funds, onChanged, onClose }) {
+  const [f, setF] = useState({ fundId: "", stage: "margin", percent: "" });
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+
+  const add = async () => {
+    if (busy) return;
+    setErr("");
+    const pct = parseFloat(String(f.percent).replace(",", "."));
+    if (!f.fundId) return setErr("Выберите фонд");
+    if (!pct || pct <= 0 || pct > 100) return setErr("Процент: от 0 до 100");
+    setBusy(true);
+    try {
+      await addDistributionRule({ fundId: f.fundId, incomeTypeId: type.id, stage: f.stage, percent: pct });
+      await onChanged();
+      setF((p) => ({ ...p, fundId: "", percent: "" }));
+    } catch (e) { setErr(e?.message || String(e)); }
+    finally { setBusy(false); }
+  };
+  const del = async (r) => {
+    if (busy) return;
+    setBusy(true); setErr("");
+    try { await deleteDistributionRule(r.id); await onChanged(); }
+    catch (e) { setErr(e?.message || String(e)); }
+    finally { setBusy(false); }
+  };
+
+  return (
+    <div style={st.mdOverlay} onClick={onClose}>
+      <div style={{ ...st.mdCard, width: "min(560px, 100%)" }} onClick={(e) => e.stopPropagation()}>
+        <div style={st.mdHead}>
+          <div style={st.mdTitle}>Схема · {type.code ? `${type.code} ` : ""}{type.name}</div>
+          <button style={st.iconBtn} onClick={onClose}><X size={17} /></button>
+        </div>
+        <div style={{ fontSize: 12, color: C.sub, marginBottom: 10 }}>
+          Сколько процентов от этого дохода в какой фонд — Директива посчитает суммы автоматически.
+        </div>
+
+        {!rules.length && <div style={{ ...st.empty, padding: 14 }}>Правил пока нет — добавьте первое ниже</div>}
+        <div style={{ display: "grid", gap: 5, maxHeight: 300, overflowY: "auto", marginBottom: 12 }}>
+          {rules.map((r) => (
+            <div key={r.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", borderRadius: 9, background: C.panel2, border: `1px solid ${C.line}`, fontSize: 12.5 }}>
+              <span style={st.itemCode}>{r.fund?.code}</span>
+              <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.fund?.name}</span>
+              <span style={{ ...st.weekTag, marginLeft: 0 }}>{STAGE_OPTS.find(([k]) => k === r.stage)?.[1]}</span>
+              <b>{r.percent ? `${Number(r.percent)}%` : fmt(Number(r.fixed_amount))}</b>
+              <button style={{ ...st.iconBtn, color: C.danger, padding: 4 }} className="btn" disabled={busy} onClick={() => del(r)}>
+                <Trash2 size={13} />
+              </button>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ display: "grid", gap: 8, borderTop: `1px solid ${C.line}`, paddingTop: 12 }}>
+          <select style={st.mdSelect} className="fin" value={f.fundId} onChange={(e) => setF((p) => ({ ...p, fundId: e.target.value }))}>
+            <option value="">— фонд —</option>
+            {funds.map((fd) => <option key={fd.id} value={fd.id}>{fd.code} — {fd.name}</option>)}
+          </select>
+          <div style={{ display: "flex", gap: 8 }}>
+            <select style={{ ...st.mdSelect, flex: 1 }} className="fin" value={f.stage} onChange={(e) => setF((p) => ({ ...p, stage: e.target.value }))}>
+              {STAGE_OPTS.map(([k, l]) => <option key={k} value={k}>{l}</option>)}
+            </select>
+            <input style={{ ...st.mdInput, width: 90 }} className="fin" inputMode="decimal" placeholder="%"
+              value={f.percent} onChange={(e) => setF((p) => ({ ...p, percent: e.target.value }))} />
+            <button style={{ ...st.btnGreen, whiteSpace: "nowrap", opacity: busy ? 0.7 : 1 }} className="btn" onClick={add} disabled={busy}>
+              {busy ? <Loader2 size={14} className="spin" /> : <Plus size={14} />} Добавить
+            </button>
+          </div>
+        </div>
+        {err && <div style={st.reqError}><AlertCircle size={15} /> {err}</div>}
+      </div>
+    </div>
+  );
 }
 
 
