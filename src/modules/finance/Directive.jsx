@@ -485,6 +485,9 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
     : "150px 58px 46px minmax(104px,1fr) 132px 132px";
   const frow6 = { ...st.frow, gridTemplateColumns: GRID6,
     minWidth: isMobile ? "max-content" : 760, ...(isMobile ? { padding: "12px 8px" } : {}) };
+  // На телефоне число «Доступно» прижимаем влево, к калькулятору (убираем пустой
+  // провал в середине). Крупная сумма растёт вправо и не налезает на калькулятор.
+  const availCol = isMobile ? { textAlign: "left", paddingLeft: 12, paddingRight: 0 } : {};
 
   const CalcBtn = () => (
     <button style={st.btnGhost} onClick={() => onCalc([...checked])} className="btn" disabled={!!busy || locked}>
@@ -543,7 +546,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
             <Calculator size={15} />
           </button>
         </div>
-        <div style={{ ...st.fNum, fontWeight: 700 }}>{fmt(avail)}</div>
+        <div style={{ ...st.fNum, fontWeight: 700, ...availCol }}>{fmt(avail)}</div>
         <div style={{ ...st.fNum, color: x.calc ? C.warning : C.faint, fontWeight: x.calc ? 600 : 400 }}>
           <span className={calcBusy ? "" : x.calc ? "pop" : ""}>{fmt(x.calc)}</span>
         </div>
@@ -576,7 +579,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
             </div>
             <div style={st.fPct}>%</div>
             <div />
-            <div style={st.fNum}>Доступно</div>
+            <div style={{ ...st.fNum, ...availCol }}>Доступно</div>
             <div style={st.fNum}>Рассчитано</div><div style={st.fNum}>Одобрено</div>
           </div>
           {flat.map((x) => <FundRow key={x.fund?.id || x.rule?.id} x={x} />)}
@@ -599,7 +602,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
                   </div>
                   <div style={st.fPct} />
                   <div />
-                  <div style={{ ...st.fNum, fontWeight: 700 }}>{fmt(fsum.avail)}</div>
+                  <div style={{ ...st.fNum, fontWeight: 700, ...availCol }}>{fmt(fsum.avail)}</div>
                   <div style={{ ...st.fNum, color: fsum.calc ? C.warning : C.faint }}>{fmt(fsum.calc)}</div>
                   <div style={{ ...st.fNum, color: fsum.appr ? C.green : C.faint, fontWeight: fsum.appr ? 700 : 400 }}>{fmt(fsum.appr)}</div>
                 </div>
@@ -613,7 +616,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
             )}
             <div style={st.fPct} />
             <div />
-            <div style={{ ...st.fNum, fontWeight: 700 }}>{fmt(totals.avail)}</div>
+            <div style={{ ...st.fNum, fontWeight: 700, ...availCol }}>{fmt(totals.avail)}</div>
             <div style={{ ...st.fNum, fontWeight: 700, color: totals.calc ? C.warning : C.faint }}>{fmt(totals.calc)}</div>
             <div style={{ ...st.fNum, fontWeight: 700, color: C.green }}>{fmt(totals.appr)}</div>
           </div>
