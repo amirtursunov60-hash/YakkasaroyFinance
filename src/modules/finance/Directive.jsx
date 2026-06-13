@@ -474,10 +474,10 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
   // На телефоне первые 4 колонки (название, %, калькулятор, «Доступно»)
   // помещаются в экран; «Рассчитано» и «Одобрено» — правее, со скроллом.
   const GRID6 = isMobile
-    ? "112px 38px 36px 90px 116px 116px"
+    ? "128px 44px 40px 112px 124px 124px"
     : "150px 58px 46px minmax(104px,1fr) 132px 132px";
   const frow6 = { ...st.frow, gridTemplateColumns: GRID6,
-    minWidth: isMobile ? 508 : 760, ...(isMobile ? { padding: "12px 9px" } : {}) };
+    minWidth: isMobile ? 572 : 760, ...(isMobile ? { padding: "12px 8px" } : {}) };
 
   const CalcBtn = () => (
     <button style={st.btnGhost} onClick={() => onCalc([...checked])} className="btn" disabled={!!busy || locked}>
