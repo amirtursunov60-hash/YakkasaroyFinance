@@ -471,7 +471,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
 
   const cbStyle = { width: 15, height: 15, accentColor: C.green, marginRight: 7, flexShrink: 0, cursor: "pointer" };
   // 6 колонок: добавлена правая колонка под калькулятор схемы по видам дохода
-  const GRID6 = "150px 70px minmax(110px,1fr) 140px 140px 48px";
+  const GRID6 = "150px 58px 46px minmax(104px,1fr) 132px 132px";
   const frow6 = { ...st.frow, gridTemplateColumns: GRID6, minWidth: 760 };
 
   const CalcBtn = () => (
@@ -516,15 +516,18 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
           </div>
           <div style={st.bar}><div style={{ ...st.barFill, width: `${fill}%`, background: x.appr ? C.green : ORANGE }} /></div>
         </div>
-        <div style={{ ...st.fPct, paddingLeft: 12 }}>
-          {x.rule ? (rowEditable ? (<>
-            <input style={st.pctInput} className="pctIn" type="number" inputMode="decimal"
-              value={pctOf(x.rule)}
-              onChange={(e) => setPcts((p) => ({ ...p, [x.rule.id]: e.target.value === "" ? 0 : Number(e.target.value) }))}
-              onWheel={(e) => e.target.blur()} />
-            <span style={st.pctSign}>%</span>
-          </>) : (<>{pctOf(x.rule)}<span style={st.pctSign}>%</span></>))
+        <div style={st.fPct}>
+          {x.rule ? <>{pctOf(x.rule)}<span style={st.pctSign}>%</span></>
             : <span style={{ fontSize: 11, color: C.faint }}>по видам</span>}
+        </div>
+        <div style={{ display: "flex", justifyContent: "center", alignSelf: "start" }}>
+          <button style={{ ...st.iconBtn, padding: 4, color: hasTypeRules ? C.green : C.faint,
+              opacity: hasTypeRules ? 1 : 0.4, cursor: hasTypeRules ? "pointer" : "default" }}
+            className="btn" disabled={!hasTypeRules || !!busy || locked}
+            title={hasTypeRules ? "Распределение по видам дохода (настраивается в «Доходах»)" : "Схема по видам дохода не настроена — задайте её в разделе «Доходы»"}
+            onClick={() => hasTypeRules && onOpenCalc(x.fund)}>
+            <Calculator size={15} />
+          </button>
         </div>
         <div style={{ ...st.fNum, fontWeight: 700 }}>{fmt(avail)}</div>
         <div style={{ ...st.fNum, color: x.calc ? ORANGE : C.faint, fontWeight: x.calc ? 600 : 400 }}>
@@ -532,15 +535,6 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
         </div>
         <div style={{ ...st.fNum, color: x.appr ? C.green : C.faint, fontWeight: x.appr ? 700 : 400 }}>
           <span className={x.appr ? "pop" : ""}>{fmt(x.appr)}</span>
-        </div>
-        <div style={{ display: "flex", justifyContent: "center", alignSelf: "start" }}>
-          <button style={{ ...st.iconBtn, padding: 4, color: hasTypeRules ? C.green : C.faint,
-              opacity: hasTypeRules ? 1 : 0.4, cursor: hasTypeRules ? "pointer" : "default" }}
-            className="btn" disabled={!hasTypeRules || !!busy || locked}
-            title={hasTypeRules ? "Распределение по видам дохода" : "Схема по видам дохода не настроена — задайте её в разделе «Доходы»"}
-            onClick={() => hasTypeRules && onOpenCalc(x.fund)}>
-            <Calculator size={15} />
-          </button>
         </div>
       </div>
     );
@@ -566,9 +560,9 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
                 Название
               </div>
             </div>
-            <div style={{ ...st.fPct, paddingLeft: 12 }}>%</div>
-            <div style={st.fNum}>Доступно</div><div style={st.fNum}>Рассчитано</div><div style={st.fNum}>Одобрено</div>
+            <div style={st.fPct}>%</div>
             <div />
+            <div style={st.fNum}>Доступно</div><div style={st.fNum}>Рассчитано</div><div style={st.fNum}>Одобрено</div>
           </div>
           {flat.map((x) => <FundRow key={x.fund?.id || x.rule?.id} x={x} />)}
           {Object.entries(grouped).map(([fid, rows]) => {
@@ -589,10 +583,10 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
                     </div>
                   </div>
                   <div style={st.fPct} />
+                  <div />
                   <div style={{ ...st.fNum, fontWeight: 700 }}>{fmt(fsum.avail)}</div>
                   <div style={{ ...st.fNum, color: fsum.calc ? ORANGE : C.faint }}>{fmt(fsum.calc)}</div>
                   <div style={{ ...st.fNum, color: fsum.appr ? C.green : C.faint, fontWeight: fsum.appr ? 700 : 400 }}>{fmt(fsum.appr)}</div>
-                  <div />
                 </div>
                 {isOpen && rows.map((x) => <FundRow key={x.fund?.id} x={x} child />)}
               </div>
@@ -603,10 +597,10 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
               <div style={st.fName}><div style={st.actions}><CalcBtn /><ApproveBtn /><ResetBtn /></div></div>
             )}
             <div style={st.fPct} />
+            <div />
             <div style={{ ...st.fNum, fontWeight: 700 }}>{fmt(totals.avail)}</div>
             <div style={{ ...st.fNum, fontWeight: 700, color: totals.calc ? ORANGE : C.faint }}>{fmt(totals.calc)}</div>
             <div style={{ ...st.fNum, fontWeight: 700, color: C.green }}>{fmt(totals.appr)}</div>
-            <div />
           </div>
           {isMobile && <div style={st.mActions}><CalcBtn /><ApproveBtn /><ResetBtn /></div>}
         </>)}
