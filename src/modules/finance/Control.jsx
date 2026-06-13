@@ -137,7 +137,8 @@ export function Control() {
         <div style={st.heroStats}>
           <Stat label="Расчёт системы (Реестр)" value={fmt(totals.calc)} unit="TJS" accent />
           <Stat label="Факт (введено)" value={anyEntered ? fmt(totals.fact) : "—"} unit={anyEntered ? "TJS" : ""} />
-          <Stat label="Расхождение" value={diffTotal === null ? "—" : fmt(diffTotal)} unit={diffTotal === null ? "" : "TJS"} />
+          <Stat label="Расхождение" value={diffTotal === null ? "—" : fmt(diffTotal)} unit={diffTotal === null ? "" : "TJS"}
+            tone={diffTotal === null ? undefined : Math.abs(diffTotal) < 0.01 ? "success" : "danger"} />
           <Stat label="Сверено счетов" value={`${Object.keys(recons).length} / ${shownAccounts.length}`} unit="" />
         </div>
       </div>

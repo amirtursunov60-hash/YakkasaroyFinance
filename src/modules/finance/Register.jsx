@@ -112,7 +112,7 @@ export function Register() {
           <Stat label="Операций" value={String(rows.length)} unit={rows.length === 200 ? "последние 200" : ""} />
           <Stat label="Поступления (+)" value={fmt(sums.inflow)} unit="TJS" />
           <Stat label="Списания (−)" value={fmt(sums.outflow)} unit="TJS" />
-          <Stat label="Нетто" value={fmt(sums.net)} unit="TJS" accent />
+          <Stat label="Нетто" value={fmt(sums.net)} unit="TJS" tone={sums.net < -0.01 ? "danger" : "success"} />
         </div>
       </div>
     </section>

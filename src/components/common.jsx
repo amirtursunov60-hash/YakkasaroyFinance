@@ -9,5 +9,13 @@ export function Stub({ label }) {
 
 export function FolderIcon({ color = "#e8911c" }) { return <svg width="16" height="16" viewBox="0 0 24 24" fill={color} style={{ flexShrink: 0 }}><path d="M10 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>; }
 
-export function Stat({ label, value, unit, accent }) {
-  const { C, st } = useTheme(); return <div><div style={st.statLabel}>{label}</div><div style={{ ...st.statValue, color: accent ? C.green : C.text }}>{value} <span style={st.statUnit}>{unit}</span></div></div>; }
+// tone: "danger" | "warning" | "success" — для сводных значений со знаком/здоровьем
+// (дефицит, расхождение, нетто). accent — устаревший «зелёный акцент», = tone:"success".
+export function Stat({ label, value, unit, accent, tone }) {
+  const { C, st } = useTheme();
+  const color = tone === "danger" ? C.danger
+    : tone === "warning" ? C.warning
+    : (tone === "success" || accent) ? C.green
+    : C.text;
+  return <div><div style={st.statLabel}>{label}</div><div style={{ ...st.statValue, color }}>{value} <span style={st.statUnit}>{unit}</span></div></div>;
+}
