@@ -277,7 +277,7 @@ function SchemeModal({ C, st, type, rules, funds, onChanged, onClose }) {
         {!rules.length && <div style={{ ...st.empty, padding: 14 }}>Правил пока нет — добавьте первое ниже</div>}
         <div style={{ display: "grid", gap: 5, maxHeight: 300, overflowY: "auto", marginBottom: 12 }}>
           {rules.map((r) => (
-            <div key={r.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", borderRadius: 9, background: C.panel2, border: `1px solid ${C.line}`, fontSize: 12.5 }}>
+            <div key={r.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", borderRadius: 8, background: C.panel2, border: `1px solid ${C.line}`, fontSize: 12.5 }}>
               <span style={st.itemCode}>{r.fund?.code}</span>
               <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.fund?.name}</span>
               <span style={{ ...st.weekTag, marginLeft: 0 }}>{STAGE_OPTS.find(([k]) => k === r.stage)?.[1]}</span>

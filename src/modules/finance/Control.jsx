@@ -370,7 +370,7 @@ function StatementModal({ C, st, statement, period, onAllTime, onClose }) {
             return (
               <div key={r.id} style={{
                 display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10,
-                padding: "9px 12px", borderRadius: 10, background: offPlan ? `${C.danger}14` : C.panel2 || C.bg,
+                padding: "9px 12px", borderRadius: 12, background: offPlan ? `${C.danger}14` : C.panel2 || C.bg,
                 border: `1px solid ${offPlan ? `${C.danger}44` : C.line}`,
               }}>
                 <div style={{ minWidth: 0 }}>

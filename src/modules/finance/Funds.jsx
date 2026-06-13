@@ -368,7 +368,7 @@ function FundStatementModal({ C, st, statement, period, onAllTime, onClose }) {
             return (
               <div key={r.id} style={{
                 display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10,
-                padding: "9px 12px", borderRadius: 10, background: C.panel2, border: `1px solid ${C.line}`,
+                padding: "9px 12px", borderRadius: 12, background: C.panel2, border: `1px solid ${C.line}`,
               }}>
                 <div style={{ minWidth: 0 }}>
                   <div style={{ fontSize: 13, fontWeight: 600 }}>{OP_LABELS[r.op_type] || r.op_type}</div>

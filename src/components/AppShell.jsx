@@ -68,7 +68,7 @@ export function App({ onLogout }) {
         )}
         <div style={{ ...st.brand, ...(isMobile ? { gap: 7 } : {}) }}>
           <img src="/icons/icon-192.png" alt="Яккасарой"
-            style={{ width: isMobile ? 38 : 40, height: isMobile ? 38 : 40, borderRadius: 10, flexShrink: 0 }} />
+            style={{ width: isMobile ? 38 : 40, height: isMobile ? 38 : 40, borderRadius: 12, flexShrink: 0 }} />
           <div style={{ ...st.brandTxt, ...(isMobile ? { fontSize: 16.5 } : {}) }}>Яккасарой{!isMobile && <span style={st.brandThin}> финанс</span>}</div>
         </div>
         <WeekPicker />

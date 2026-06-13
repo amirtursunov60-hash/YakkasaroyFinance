@@ -178,8 +178,8 @@ export function Reports() {
     {tab === "dds" && (<>
       <section style={{ ...st.fpCard, marginTop: 0 }}>
         <div style={{ display: "flex", gap: 16, marginBottom: 10, flexWrap: "wrap" }}>
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, color: C.sub }}><span style={{ width: 10, height: 10, borderRadius: 3, background: C.green }} /> Поступления</span>
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, color: C.sub }}><span style={{ width: 10, height: 10, borderRadius: 3, background: C.danger }} /> Выплаты</span>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, color: C.sub }}><span style={{ width: 10, height: 10, borderRadius: 4, background: C.green }} /> Поступления</span>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, color: C.sub }}><span style={{ width: 10, height: 10, borderRadius: 4, background: C.danger }} /> Выплаты</span>
           <span style={{ fontSize: 12, color: C.faint }}>· TJS по неделям ФП</span>
         </div>
         {byWeek.some((w) => w.inc || w.exp) ? (<>
