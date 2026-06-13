@@ -470,18 +470,18 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
 
   const cbStyle = { width: 15, height: 15, accentColor: C.green, marginRight: 7, flexShrink: 0, cursor: "pointer" };
   // Шесть колонок. На телефоне видимую часть экрана занимают первые четыре —
-  // Название · % · калькулятор · Доступно. Ширины «Название» (166px), % и
-  // калькулятора фиксированы (как было раньше — колонку названия не растягиваем),
-  // а «Доступно» тянется к правому краю с комфортным полем справа (~29px от
-  // края экрана): calc(100vw − 286px), где 286 = отступы слева до сетки
-  // (main моб. 8 + рамка карточки 1 + паддинг строки 8 = 17) + Название (166) +
-  // % (42) + калькулятор (32) + поле справа (29). Константа завязана на боковой
-  // паддинг main на телефоне (8px) — при его изменении пересчитать здесь.
-  // На поле справа заходит пустой левый край колонки «Рассчитано» (число в ней
-  // прижато вправо) — визуально это и есть отступ.
+  // Название · % · калькулятор · Доступно. «Название» расширено до 190px, чтобы
+  // имена фондов помещались в одну строку (самые длинные — с многоточием), а
+  // калькулятор сдвигается ближе к числу (меньше пустого провала в середине).
+  // «Доступно» тянется к правому краю с полем ~12px: calc(100vw − 293px), где
+  // 293 = левый стек (main моб. 8 + рамка 1 + паддинг строки 8 = 17) + Название
+  // (190) + % (42) + калькулятор (32) + поле справа (12). Колонка «Доступно»
+  // при этом ~100px — туда помещается семизначная сумма (до миллиона), не
+  // налезая на калькулятор. Константа завязана на main-паддинг телефона (8px)
+  // и ширину «Название» — при их изменении пересчитать здесь.
   // minWidth:max-content держит ленту шире экрана (иначе прокрутки не будет).
   const GRID6 = isMobile
-    ? "166px 42px 32px calc(100vw - 286px) 120px 120px"
+    ? "190px 42px 32px calc(100vw - 293px) 120px 120px"
     : "150px 58px 46px minmax(104px,1fr) 132px 132px";
   const frow6 = { ...st.frow, gridTemplateColumns: GRID6,
     minWidth: isMobile ? "max-content" : 760, ...(isMobile ? { padding: "12px 8px" } : {}) };
@@ -520,10 +520,11 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
     return (
       <div style={{ ...frow6, ...(child ? { paddingLeft: 14 } : {}) }} className="frow">
         <div style={st.fName}>
-          <div style={st.fundTop}>
+          <div style={{ ...st.fundTop, minWidth: 0 }}>
             <input type="checkbox" style={cbStyle} checked={checked.has(x.fund.id)}
               disabled={!rowEditable} onChange={() => toggleOne(x.fund.id)} />
-            <span style={st.fundCode}>{x.fund?.code}</span><span>{x.fund?.name}</span>
+            <span style={st.fundCode}>{x.fund?.code}</span>
+            <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>{x.fund?.name}</span>
             {x.fund?.is_restricted && <Lock size={12} color={C.faint} />}
           </div>
           <div style={st.bar}><div style={{ ...st.barFill, width: `${fill}%`, background: x.appr ? C.green : C.warning }} /></div>
