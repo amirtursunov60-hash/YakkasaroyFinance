@@ -372,7 +372,7 @@ export function Directive() {
         <div style={st.fpRow}><span style={st.fpLabel}>Распределено по фондам (Реестр)</span><span style={st.fpVal}>{fmt(approvedTotal)}</span></div>
         <div style={{ ...st.fpRow, ...st.fpRemainder }}>
           <span style={st.fpLabelBold}>Остаток нераспределённого</span>
-          <span style={{ ...st.fpValBold, color: C.green }}>{fmt(remainder)}</span>
+          <span style={{ ...st.fpValBold, color: remainder < -0.01 ? C.danger : C.green }}>{fmt(remainder)}</span>
         </div>
       </div>
       <div style={st.fpActions} className="fpActions">
