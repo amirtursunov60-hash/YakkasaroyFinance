@@ -470,15 +470,19 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
   const hasApprovable = sg.rows.some((x) => x.calc > 0 && !(x.appr > 0));
 
   const cbStyle = { width: 15, height: 15, accentColor: C.green, marginRight: 7, flexShrink: 0, cursor: "pointer" };
-  // Шесть колонок. На телефоне в экран помещаются первые четыре —
-  // Название · % · калькулятор · Доступно — и заполняют его ширину; а
-  // «Рассчитано» и «Одобрено» уходят за правый край и открываются
-  // горизонтальной прокруткой вправо (minWidth держит ленту шире экрана).
+  // Шесть колонок. На телефоне видимую часть экрана занимают ровно первые
+  // четыре — Название · % · калькулятор · Доступно. Ширина колонки названия —
+  // calc(100vw − 236px), где 236 = отступы слева до сетки (main 16 + рамка
+  // карточки 1 + паддинг строки 8 = 25) + правый край (16 + 1 = 17) + % (42)
+  // + калькулятор (32) + Доступно (120). Поэтому «Доступно» заканчивается ровно
+  // у правого края на любом телефоне, а «Рассчитано» и «Одобрено» уходят за край
+  // и открываются прокруткой вправо. minWidth:max-content держит ленту шире
+  // экрана (иначе прокрутки не будет).
   const GRID6 = isMobile
-    ? "minmax(0,1fr) 42px 32px 120px 120px 120px"
+    ? "calc(100vw - 236px) 42px 32px 120px 120px 120px"
     : "150px 58px 46px minmax(104px,1fr) 132px 132px";
   const frow6 = { ...st.frow, gridTemplateColumns: GRID6,
-    minWidth: isMobile ? 600 : 760, ...(isMobile ? { padding: "12px 8px" } : {}) };
+    minWidth: isMobile ? "max-content" : 760, ...(isMobile ? { padding: "12px 8px" } : {}) };
 
   const CalcBtn = () => (
     <button style={st.btnGhost} onClick={() => onCalc([...checked])} className="btn" disabled={!!busy || locked}>
@@ -559,7 +563,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
           <span style={st.subHeadAppr}>Одобрено: <b style={{ color: C.green }}>{fmt(totals.appr)}</b></span>
         </div>
         {sg.rows.length === 0 ? <div style={st.empty}>Фонды этого этапа не настроены</div> : (<>
-          <div style={{ ...frow6, ...st.frowHead, ...(isMobile ? { padding: "11px 9px" } : {}) }}>
+          <div style={{ ...frow6, ...st.frowHead, ...(isMobile ? { padding: "11px 8px" } : {}) }}>
             <div style={st.fName}>
               <div style={st.fundTop}>
                 <input type="checkbox" style={cbStyle} checked={allChecked}
