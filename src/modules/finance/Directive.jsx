@@ -471,8 +471,13 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
 
   const cbStyle = { width: 15, height: 15, accentColor: C.green, marginRight: 7, flexShrink: 0, cursor: "pointer" };
   // 6 колонок: добавлена правая колонка под калькулятор схемы по видам дохода
-  const GRID6 = "150px 58px 46px minmax(104px,1fr) 132px 132px";
-  const frow6 = { ...st.frow, gridTemplateColumns: GRID6, minWidth: 760 };
+  // На телефоне первые 4 колонки (название, %, калькулятор, «Доступно»)
+  // помещаются в экран; «Рассчитано» и «Одобрено» — правее, со скроллом.
+  const GRID6 = isMobile
+    ? "112px 38px 36px 90px 116px 116px"
+    : "150px 58px 46px minmax(104px,1fr) 132px 132px";
+  const frow6 = { ...st.frow, gridTemplateColumns: GRID6,
+    minWidth: isMobile ? 508 : 760, ...(isMobile ? { padding: "12px 9px" } : {}) };
 
   const CalcBtn = () => (
     <button style={st.btnGhost} onClick={() => onCalc([...checked])} className="btn" disabled={!!busy || locked}>
@@ -552,7 +557,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
           <span style={st.subHeadAppr}>Одобрено: <b style={{ color: C.green }}>{fmt(totals.appr)}</b></span>
         </div>
         {sg.rows.length === 0 ? <div style={st.empty}>Фонды этого этапа не настроены</div> : (<>
-          <div style={{ ...frow6, ...st.frowHead }}>
+          <div style={{ ...frow6, ...st.frowHead, ...(isMobile ? { padding: "11px 9px" } : {}) }}>
             <div style={st.fName}>
               <div style={st.fundTop}>
                 <input type="checkbox" style={cbStyle} checked={allChecked}
