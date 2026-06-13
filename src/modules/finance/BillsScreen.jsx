@@ -18,18 +18,19 @@ import {
 //  - obligation «Обязательства» — оборудование, услуги, ремонт.
 // Повторяющиеся счета дублируются кнопкой «Повторить». Оплата — fp_pay_bill.
 
-const ST_META = {
-  submitted: { label: "подан",            color: "#5b8def" },
-  planning:  { label: "на планировании",  color: "#9c6ade" },
-  approved:  { label: "одобрен",          color: "#e8911c" },
-  rejected:  { label: "отклонён",         color: "#e0463b" },
-  paid:      { label: "оплачен",          color: "#2f9e44" },
-};
 const FILTERS = [["all", "Все"], ["submitted", "Поданы"], ["approved", "Одобрены"], ["paid", "Оплачены"], ["rejected", "Отклонены"]];
 const shortPeriod = (p) => p ? `${p.starts_on.slice(8, 10)}.${p.starts_on.slice(5, 7)}–${p.ends_on.slice(8, 10)}.${p.ends_on.slice(5, 7)}` : null;
 
 export function BillsScreen({ kind, ui }) {
   const { C, st, isMobile, profile } = useTheme();
+  // Статусы счёта — семантические токены; «на планировании» — категориальный акцент.
+  const ST_META = {
+    submitted: { label: "подан",            color: C.info },
+    planning:  { label: "на планировании",  color: "#9c6ade" },
+    approved:  { label: "одобрен",          color: C.warning },
+    rejected:  { label: "отклонён",         color: C.danger },
+    paid:      { label: "оплачен",          color: C.success },
+  };
   const { period, periodId, loading: periodsLoading, locationId: ctxLocationId } = usePeriod();
   const isFinAdmin = ["owner", "fin_director"].includes(profile?.role);
   const canPay = isFinAdmin || profile?.role === "accountant";

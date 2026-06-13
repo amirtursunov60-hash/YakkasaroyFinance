@@ -161,7 +161,7 @@ export function CrmModule({ view }) {
 
   // ============ БАЗА КЛИЕНТОВ ============
   if (view === "c_clients") {
-    const TAG_COLOR = { VIP: "#e8911c", "Повторный": "#5bd6c9", "Новый": "#5b8def" };
+    const TAG_COLOR = { VIP: C.warning, "Повторный": "#5bd6c9", "Новый": C.info };
     const q = query.trim().toLowerCase();
     const shown = CRM_CLIENTS.filter((c) => !q || c.name.toLowerCase().includes(q) || c.phone.includes(q));
     const totalLtv = CRM_CLIENTS.reduce((a, c) => a + c.total, 0);
@@ -210,8 +210,8 @@ export function CrmModule({ view }) {
   // ============ БРОНИ ЗАЛОВ ============
   const B_META = {
     confirmed: { label: "Подтверждена", color: C.green },
-    prepaid: { label: "Предоплата", color: "#e8911c" },
-    hold: { label: "Ожидает решения", color: "#5b8def" },
+    prepaid: { label: "Предоплата", color: C.warning },
+    hold: { label: "Ожидает решения", color: C.info },
     free: { label: "Свободно", color: C.faint },
   };
   const busyCount = BOOKINGS_SEED.flatMap((d) => d.items).filter((i) => i.status !== "free").length;

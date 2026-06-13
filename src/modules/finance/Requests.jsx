@@ -18,16 +18,16 @@ import {
 // сгруппированы по отделениям оргсхемы (отделение берётся от поста
 // заявителя). Действия те же, что в Расходах/Счетах — общие API-функции.
 
-const ST_META = {
-  submitted: { label: "подана",           color: "#e8911c" },
-  planning:  { label: "на планировании",  color: "#5b8def" },
-  approved:  { label: "одобрена",         color: "#7bd88f" },
-  rejected:  { label: "отклонена",        color: "#e0463b" },
-  paid:      { label: "оплачена",         color: "#2f9e44" },
-};
-
 export function Requests() {
   const { C, st, isMobile, profile } = useTheme();
+  // Статусы заявок — цвета из семантических токенов темы (работают в обеих темах).
+  const ST_META = {
+    submitted: { label: "подана",           color: C.warning },
+    planning:  { label: "на планировании",  color: C.info },
+    approved:  { label: "одобрена",         color: C.successSoft },
+    rejected:  { label: "отклонена",        color: C.danger },
+    paid:      { label: "оплачена",         color: C.success },
+  };
   const { period, periodId, loading: periodsLoading, locationId: ctxLocationId } = usePeriod();
   const isFinAdmin = ["owner", "fin_director"].includes(profile?.role);
   const canPay = isFinAdmin || profile?.role === "accountant";

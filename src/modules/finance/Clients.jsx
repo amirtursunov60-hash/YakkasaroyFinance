@@ -16,17 +16,18 @@ import {
 // триггер сам проводит её в Реестр и на счёт ДС. Бронь будущей даты =
 // счёт со статусом planned; после первой предоплаты становится issued.
 
-const ST_META = {
-  planned:   { label: "бронь",      color: "#9c6ade" },
-  issued:    { label: "выставлен",  color: "#5b8def" },
-  partial:   { label: "предоплата", color: "#e8911c" },   // производный: issued + есть оплаты
-  paid:      { label: "оплачен",    color: "#2f9e44" },
-  cancelled: { label: "отменён",    color: "#e0463b" },
-};
 const FILTERS = [["all", "Все"], ["planned", "Брони"], ["issued", "В работе"], ["paid", "Оплачены"], ["cancelled", "Отменены"]];
 
 export function Clients() {
   const { C, st, isMobile, profile } = useTheme();
+  // Статусы счёта клиента — семантические токены; «бронь» — категориальный акцент.
+  const ST_META = {
+    planned:   { label: "бронь",      color: "#9c6ade" },
+    issued:    { label: "выставлен",  color: C.info },
+    partial:   { label: "предоплата", color: C.warning },   // производный: issued + есть оплаты
+    paid:      { label: "оплачен",    color: C.success },
+    cancelled: { label: "отменён",    color: C.danger },
+  };
   const { periodId, loading: periodsLoading, locationId: ctxLocationId } = usePeriod();
   const isFinAdmin = ["owner", "fin_director"].includes(profile?.role);
   const canPay = isFinAdmin || ["accountant", "location_manager"].includes(profile?.role);
@@ -198,12 +199,12 @@ export function Clients() {
               </div>
               {/* прогресс оплат */}
               <div style={{ ...st.bar, marginTop: 6, maxWidth: 260 }}>
-                <div style={{ ...st.barFill, width: `${pct}%`, background: pct >= 100 ? C.green : "#e8911c" }} />
+                <div style={{ ...st.barFill, width: `${pct}%`, background: pct >= 100 ? C.green : C.warning }} />
               </div>
             </div>
             <div style={st.locRight}>
               <div style={st.locSum}>{fmt(Number(inv.amount))} <span style={st.locUnit}>{inv.currency?.code}</span></div>
-              <div style={{ fontSize: 11.5, color: rest > 0.009 ? "#e8911c" : C.green, fontWeight: 700 }}>
+              <div style={{ fontSize: 11.5, color: rest > 0.009 ? C.warning : C.green, fontWeight: 700 }}>
                 {rest > 0.009 ? `долг ${fmt(rest)}` : "оплачен"}
               </div>
               <span style={{ ...st.weekTag, marginLeft: 0, color: m.color, background: `${m.color}1a` }}>{m.label}</span>
@@ -217,7 +218,7 @@ export function Clients() {
                 <div style={{ display: "flex", gap: 16, flexWrap: "wrap", fontSize: 12.5, color: C.sub }}>
                   <span>Вид дохода: <b style={{ color: C.text }}>{inv.income_type ? `${inv.income_type.code || ""} ${inv.income_type.name}` : "—"}</b></span>
                   <span>Оплачено: <b style={{ color: C.green }}>{fmt(paid)}</b></span>
-                  <span>Остаток: <b style={{ color: rest > 0.009 ? "#e8911c" : C.green }}>{fmt(rest)}</b></span>
+                  <span>Остаток: <b style={{ color: rest > 0.009 ? C.warning : C.green }}>{fmt(rest)}</b></span>
                 </div>
                 {inv.comment && <div style={{ fontSize: 13 }}>{inv.comment}</div>}
 

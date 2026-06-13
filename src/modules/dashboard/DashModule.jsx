@@ -41,11 +41,11 @@ export function DashModule({ view }) {
   };
 
   const T_META = {
-    new: { label: "Новая", color: "#5b8def", next: "Взять в работу", nextStatus: "progress" },
-    progress: { label: "В работе", color: "#e8911c", next: "Завершить", nextStatus: "done" },
+    new: { label: "Новая", color: C.info, next: "Взять в работу", nextStatus: "progress" },
+    progress: { label: "В работе", color: C.warning, next: "Завершить", nextStatus: "done" },
     done: { label: "Выполнена", color: C.green, next: null },
   };
-  const P_META = { high: { label: "срочно", color: C.danger }, mid: { label: "обычный", color: "#e8911c" }, low: { label: "низкий", color: C.faint } };
+  const P_META = { high: { label: "срочно", color: C.danger }, mid: { label: "обычный", color: C.warning }, low: { label: "низкий", color: C.faint } };
   const advanceTask = (id) => setTasks((ts) => ts.map((t) => (t.id === id && T_META[t.status].nextStatus ? { ...t, status: T_META[t.status].nextStatus } : t)));
   const addTask = () => {
     const title = tForm.title.trim(); if (!title) return;
@@ -276,7 +276,7 @@ export function DashModule({ view }) {
                 </div>
                 <div style={{ textAlign: "right", flexShrink: 0 }}>
                   <div style={{ fontSize: 13.5, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>{fmt(r.amount)}</div>
-                  <div style={{ fontSize: 10.5, color: "#e8911c", fontWeight: 700 }}>{r.status}</div>
+                  <div style={{ fontSize: 10.5, color: C.warning, fontWeight: 700 }}>{r.status}</div>
                 </div>
               </div>
             ))}

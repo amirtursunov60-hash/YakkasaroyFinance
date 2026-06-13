@@ -20,14 +20,14 @@ import {
 // Аванс и удержания в строке. Черновик → Утверждена (финдиректор) →
 // Выплачена (fp_pay_payroll: списание из ФД3 и счёта ДС через Реестр).
 
-const SHEET_ST = {
-  submitted: { label: "черновик",   color: "#e8911c" },
-  approved:  { label: "утверждена", color: "#7bd88f" },
-  paid:      { label: "выплачена",  color: "#2f9e44" },
-};
-
 export function Payroll() {
   const { C, st, isMobile, profile } = useTheme();
+  // Статусы ведомости ЗП — семантические токены темы.
+  const SHEET_ST = {
+    submitted: { label: "черновик",   color: C.warning },
+    approved:  { label: "утверждена", color: C.successSoft },
+    paid:      { label: "выплачена",  color: C.success },
+  };
   const { period, periodId, loading: periodsLoading } = usePeriod();
   const isFinAdmin = ["owner", "fin_director"].includes(profile?.role);
   const canEdit = isFinAdmin || profile?.role === "accountant";
@@ -360,7 +360,7 @@ export function Payroll() {
             <div />
             {!isMobile && <div style={{ ...st.fNum, fontWeight: 700 }}>{totalEff.toFixed(1)}</div>}
             {!isMobile && <div style={{ ...st.fNum, fontWeight: 700 }}>{fmt(totals.accrued)}</div>}
-            {!isMobile && <div style={{ ...st.fNum, fontWeight: 700, color: ORANGE_SAFE }}>{fmt(totals.advance)}</div>}
+            {!isMobile && <div style={{ ...st.fNum, fontWeight: 700, color: C.warning }}>{fmt(totals.advance)}</div>}
             {!isMobile && <div style={{ ...st.fNum, fontWeight: 700, color: C.danger }}>{fmt(totals.deduction)}</div>}
             <div style={{ ...st.fNum, fontWeight: 800, color: C.green, fontSize: 16 }}>{fmt(totals.payout)}</div>
             {!isMobile && <div />}
@@ -391,8 +391,6 @@ export function Payroll() {
     )}
   </>);
 }
-
-const ORANGE_SAFE = "#e8911c";
 
 // ---------------------------------------------------------------- Выплата
 function PayModal({ C, st, total, accounts, busy, onClose, onConfirm }) {

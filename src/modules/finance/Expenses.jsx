@@ -19,17 +19,18 @@ import {
 // fp_pay_request (Реестр + статус атомарно).
 
 const PALETTE = ["#e0463b", "#e8911c", "#9c6ade", "#5b8def", "#5bd6c9", "#d6c14a", "#7bd88f", "#d64ad6", "#2f9e44"];
-const ST_META = {
-  submitted: { label: "подана",           color: "#e8911c" },
-  planning:  { label: "на планировании",  color: "#5b8def" },
-  approved:  { label: "одобрена",         color: "#7bd88f" },
-  rejected:  { label: "отклонена",        color: "#e0463b" },
-  paid:      { label: "оплачена",         color: "#2f9e44" },
-};
 const FILTERS = [["all", "Все"], ["submitted", "Поданы"], ["planning", "Планирование"], ["approved", "Одобрены"], ["paid", "Оплачены"], ["rejected", "Отклонены"]];
 
 export function Expenses() {
   const { C, st, isMobile, profile } = useTheme();
+  // Статусы заявок — цвета из семантических токенов темы.
+  const ST_META = {
+    submitted: { label: "подана",           color: C.warning },
+    planning:  { label: "на планировании",  color: C.info },
+    approved:  { label: "одобрена",         color: C.successSoft },
+    rejected:  { label: "отклонена",        color: C.danger },
+    paid:      { label: "оплачена",         color: C.success },
+  };
   const { period, prevPeriod, periodId, loading: periodsLoading, locationId: ctxLocationId } = usePeriod();
   const isFinAdmin = ["owner", "fin_director"].includes(profile?.role);
   const canPay = isFinAdmin || profile?.role === "accountant";

@@ -25,7 +25,6 @@ const STAGES = [
   { key: "margin",   title: "Маржинальный доход",      fundsTitle: "Фонды маржинального дохода" },
   { key: "adjusted", title: "Скорректированный доход", fundsTitle: "Фонды скорректированного дохода" },
 ];
-const ORANGE = "#e8911c";
 
 const byFundCode = (fundById) => (a, b) =>
   (fundById[a.fund_id]?.code || "").localeCompare(fundById[b.fund_id]?.code || "", "ru", { numeric: true });
@@ -412,10 +411,10 @@ export function Directive() {
         <div style={{ ...st.locCard, padding: "14px 18px" }}>
           <div style={{ display: "flex", gap: 18, flexWrap: "wrap", fontSize: 13.5 }}>
             {pending.bills.length > 0 && (
-              <span>Счета поставщиков (приоритет): <b style={{ color: ORANGE }}>{pending.bills.length}</b> на <b>{fmt(pending.bills.reduce((a, b) => a + Number(b.amount), 0))}</b> TJS</span>
+              <span>Счета поставщиков (приоритет): <b style={{ color: C.warning }}>{pending.bills.length}</b> на <b>{fmt(pending.bills.reduce((a, b) => a + Number(b.amount), 0))}</b> TJS</span>
             )}
             {pending.reqs.length > 0 && (
-              <span>Заявки от постов: <b style={{ color: ORANGE }}>{pending.reqs.length}</b> на <b>{fmt(pending.reqs.reduce((a, r) => a + Number(r.planned_amount), 0))}</b> TJS</span>
+              <span>Заявки от постов: <b style={{ color: C.warning }}>{pending.reqs.length}</b> на <b>{fmt(pending.reqs.reduce((a, r) => a + Number(r.planned_amount), 0))}</b> TJS</span>
             )}
           </div>
           <div style={{ fontSize: 12, color: C.faint, marginTop: 6 }}>
@@ -525,7 +524,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
             <span style={st.fundCode}>{x.fund?.code}</span><span>{x.fund?.name}</span>
             {x.fund?.is_restricted && <Lock size={12} color={C.faint} />}
           </div>
-          <div style={st.bar}><div style={{ ...st.barFill, width: `${fill}%`, background: x.appr ? C.green : ORANGE }} /></div>
+          <div style={st.bar}><div style={{ ...st.barFill, width: `${fill}%`, background: x.appr ? C.green : C.warning }} /></div>
         </div>
         <div style={st.fPct}>
           {x.rule ? <>{pctOf(x.rule)}<span style={st.pctSign}>%</span></>
@@ -542,7 +541,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
           </button>
         </div>
         <div style={{ ...st.fNum, fontWeight: 700 }}>{fmt(avail)}</div>
-        <div style={{ ...st.fNum, color: x.calc ? ORANGE : C.faint, fontWeight: x.calc ? 600 : 400 }}>
+        <div style={{ ...st.fNum, color: x.calc ? C.warning : C.faint, fontWeight: x.calc ? 600 : 400 }}>
           <span className={calcBusy ? "" : x.calc ? "pop" : ""}>{fmt(x.calc)}</span>
         </div>
         <div style={{ ...st.fNum, color: x.appr ? C.green : C.faint, fontWeight: x.appr ? 700 : 400 }}>
@@ -589,7 +588,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
                   onClick={() => setOpenFolders((o) => ({ ...o, [fid]: !o[fid] }))}>
                   <div style={st.fName}>
                     <div style={st.fundTop}>
-                      {isOpen ? <FolderOpen size={15} color={ORANGE} /> : <Folder size={15} color={ORANGE} />}
+                      {isOpen ? <FolderOpen size={15} color={C.warning} /> : <Folder size={15} color={C.warning} />}
                       <b>{folderById[fid]?.name || "Папка"}</b>
                       <span style={{ fontSize: 11, color: C.faint }}>· {rows.length} фонд(ов)</span>
                       <ChevronRight size={14} style={{ transform: isOpen ? "rotate(90deg)" : "none", transition: "transform .2s", color: C.faint }} />
@@ -598,7 +597,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
                   <div style={st.fPct} />
                   <div />
                   <div style={{ ...st.fNum, fontWeight: 700 }}>{fmt(fsum.avail)}</div>
-                  <div style={{ ...st.fNum, color: fsum.calc ? ORANGE : C.faint }}>{fmt(fsum.calc)}</div>
+                  <div style={{ ...st.fNum, color: fsum.calc ? C.warning : C.faint }}>{fmt(fsum.calc)}</div>
                   <div style={{ ...st.fNum, color: fsum.appr ? C.green : C.faint, fontWeight: fsum.appr ? 700 : 400 }}>{fmt(fsum.appr)}</div>
                 </div>
                 {isOpen && rows.map((x) => <FundRow key={x.fund?.id} x={x} child />)}
@@ -612,7 +611,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
             <div style={st.fPct} />
             <div />
             <div style={{ ...st.fNum, fontWeight: 700 }}>{fmt(totals.avail)}</div>
-            <div style={{ ...st.fNum, fontWeight: 700, color: totals.calc ? ORANGE : C.faint }}>{fmt(totals.calc)}</div>
+            <div style={{ ...st.fNum, fontWeight: 700, color: totals.calc ? C.warning : C.faint }}>{fmt(totals.calc)}</div>
             <div style={{ ...st.fNum, fontWeight: 700, color: C.green }}>{fmt(totals.appr)}</div>
           </div>
           {isMobile && <div style={st.mActions}><CalcBtn /><ApproveBtn /><ResetBtn /></div>}
@@ -667,7 +666,7 @@ function FundCalcModal({ C, st, fund, stage, rules, incomeByType, approved, busy
                 </div>
                 <div style={{ ...st.fNum, fontSize: 12.5 }}>{fmt(fact)}</div>
                 <div style={{ ...st.fPct, fontSize: 12 }}>{r.percent ? `${Number(r.percent)}%` : "фикс"}</div>
-                <div style={{ ...st.fNum, fontSize: 12.5, color: calc ? ORANGE : C.faint }}>{fmt(calc)}</div>
+                <div style={{ ...st.fNum, fontSize: 12.5, color: calc ? C.warning : C.faint }}>{fmt(calc)}</div>
                 <div style={{ textAlign: "right" }}>
                   <input type="number" inputMode="decimal" value={vals[r.id]}
                     onChange={(e) => setVals((p) => ({ ...p, [r.id]: e.target.value }))}

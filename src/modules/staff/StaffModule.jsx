@@ -226,7 +226,7 @@ function InvitesView({ C, st, isMobile, profile, canInvite, invites, positions, 
   const status = (inv) => {
     if (inv.used_at) return { label: `использовано · ${inv.used_profile?.full_name || ""}`, color: C.green };
     if (new Date(inv.expires_at) < new Date()) return { label: "истекло", color: C.danger };
-    return { label: `до ${new Date(inv.expires_at).toLocaleDateString("ru")}`, color: "#e8911c" };
+    return { label: `до ${new Date(inv.expires_at).toLocaleDateString("ru")}`, color: C.warning };
   };
 
   if (!canInvite) {

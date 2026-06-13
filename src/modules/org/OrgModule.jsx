@@ -14,7 +14,7 @@ export function OrgModule({ view }) {
 
   const HAT_META = {
     done: { label: "Изучена", color: C.green },
-    learning: { label: "В обучении", color: "#e8911c" },
+    learning: { label: "В обучении", color: C.warning },
     none: { label: "Нет шляпы", color: C.danger },
   };
   const cycleHat = (id) => setHats((m) => ({ ...m, [id]: m[id] === "none" ? "learning" : m[id] === "learning" ? "done" : "none" }));
