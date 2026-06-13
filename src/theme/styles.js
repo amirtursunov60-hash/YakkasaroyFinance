@@ -113,14 +113,15 @@ export const makeStyles = (C) => ({
   mTotal: { margin: "12px 12px 0", padding: "6px 16px 12px", background: C.panel2, borderRadius: 14 },
   mActions: { display: "flex", flexWrap: "wrap", gap: 8, padding: "14px 12px 16px" },
 
-  // ---- Доходы (современный вид) ----
-  incHero: { position: "relative", overflow: "hidden", background: C.panel, border: `1px solid ${C.line}`, borderRadius: 20, padding: "26px 26px", marginBottom: 18 },
-  incHeroGlow: { position: "absolute", top: -120, right: -80, width: 320, height: 320, background: `radial-gradient(circle, ${C.green}22 0%, transparent 70%)`, pointerEvents: "none" },
+  // ---- Шапка-«герой» с крупным числом (Доходы/Расходы/дашборд) ----
+  // Та же градиентная оболочка, что и st.hero — общий визуальный паттерн.
+  incHero: { position: "relative", overflow: "hidden", background: C.heroGrad, border: `1px solid ${C.line}`, borderRadius: 22, padding: "24px 28px", marginBottom: 22 },
+  incHeroGlow: { position: "absolute", left: "8%", bottom: "-70%", width: "60%", height: "200%", background: "radial-gradient(circle, rgba(31,214,95,0.55) 0%, rgba(31,214,95,0.12) 45%, rgba(31,214,95,0) 65%)", filter: "blur(14px)", pointerEvents: "none" },
   incHeroInner: { position: "relative", display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 16, flexWrap: "wrap" },
-  incHeroLabel: { fontSize: 12.5, color: C.sub, letterSpacing: 0.3, marginBottom: 10 },
+  incHeroLabel: { fontSize: 12.5, color: C.heroLabel, letterSpacing: 0.3, marginBottom: 10 },
   incHeroValue: { fontSize: 38, fontWeight: 800, letterSpacing: -0.5, lineHeight: 1, fontVariantNumeric: "tabular-nums" },
-  incHeroUnit: { fontSize: 16, fontWeight: 600, color: C.sub },
-  incHeroSub: { display: "flex", alignItems: "center", gap: 8, marginTop: 12, fontSize: 12.5, color: C.sub, flexWrap: "wrap" },
+  incHeroUnit: { fontSize: 16, fontWeight: 600, color: C.heroStat },
+  incHeroSub: { display: "flex", alignItems: "center", gap: 8, marginTop: 12, fontSize: 12.5, color: C.heroStat, flexWrap: "wrap" },
   incList: { display: "flex", flexDirection: "column", gap: 12 },
   locCard: { background: C.panel, border: `1px solid ${C.line}`, borderRadius: 16, overflow: "hidden" },
   locHead: { display: "flex", alignItems: "center", gap: 14, padding: "16px 18px", cursor: "pointer", userSelect: "none", transition: "background .15s" },
