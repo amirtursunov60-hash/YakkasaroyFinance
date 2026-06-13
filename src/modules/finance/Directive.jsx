@@ -470,14 +470,16 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
   const hasApprovable = sg.rows.some((x) => x.calc > 0 && !(x.appr > 0));
 
   const cbStyle = { width: 15, height: 15, accentColor: C.green, marginRight: 7, flexShrink: 0, cursor: "pointer" };
-  // 6 колонок: добавлена правая колонка под калькулятор схемы по видам дохода
-  // На телефоне первые 4 колонки (название, %, калькулятор, «Доступно»)
-  // помещаются в экран; «Рассчитано» и «Одобрено» — правее, со скроллом.
+  // Десктоп — 6 колонок (последняя пара «Рассчитано/Одобрено» + «Доступно» = баланс
+  // фонда). На телефоне колонку «Доступно» прячем (баланс виден полоской под
+  // названием), и ровно пять колонок — Название · % · калькулятор · Рассчитано ·
+  // Одобрено — помещаются в экран целиком: без горизонтального скролла и без
+  // «выглядывающих» половинок колонок.
   const GRID6 = isMobile
-    ? "128px 44px 40px 112px 124px 124px"
+    ? "minmax(0,1fr) 42px 30px 74px 74px"
     : "150px 58px 46px minmax(104px,1fr) 132px 132px";
   const frow6 = { ...st.frow, gridTemplateColumns: GRID6,
-    minWidth: isMobile ? 572 : 760, ...(isMobile ? { padding: "12px 8px" } : {}) };
+    minWidth: isMobile ? 0 : 760, ...(isMobile ? { padding: "12px 8px" } : {}) };
 
   const CalcBtn = () => (
     <button style={st.btnGhost} onClick={() => onCalc([...checked])} className="btn" disabled={!!busy || locked}>
@@ -523,10 +525,11 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
         </div>
         <div style={st.fPct}>
           {x.rule ? <>{pctOf(x.rule)}<span style={st.pctSign}>%</span></>
-            : <span style={{ fontSize: 11, color: C.faint }}>по видам</span>}
+            : <span style={{ fontSize: 11, color: C.faint }}>{isMobile ? "—" : "по видам"}</span>}
         </div>
-        <div style={{ display: "flex", justifyContent: "center", alignSelf: "start" }}>
-          <button style={{ ...st.iconBtn, padding: 4, color: hasTypeRules ? C.green : C.faint,
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "flex-start", alignSelf: "start" }}>
+          <button style={{ ...st.iconBtn, width: 26, height: 26, borderRadius: 8, padding: 0,
+              color: hasTypeRules ? C.green : C.faint,
               opacity: hasTypeRules ? 1 : 0.4, cursor: hasTypeRules ? "pointer" : "default" }}
             className="btn" disabled={!hasTypeRules || !!busy || locked}
             title={hasTypeRules ? "Распределение по видам дохода (настраивается в «Доходах»)" : "Схема по видам дохода не настроена — задайте её в разделе «Доходы»"}
@@ -534,7 +537,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
             <Calculator size={15} />
           </button>
         </div>
-        <div style={{ ...st.fNum, fontWeight: 700 }}>{fmt(avail)}</div>
+        {!isMobile && <div style={{ ...st.fNum, fontWeight: 700 }}>{fmt(avail)}</div>}
         <div style={{ ...st.fNum, color: x.calc ? ORANGE : C.faint, fontWeight: x.calc ? 600 : 400 }}>
           <span className={calcBusy ? "" : x.calc ? "pop" : ""}>{fmt(x.calc)}</span>
         </div>
@@ -567,7 +570,8 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
             </div>
             <div style={st.fPct}>%</div>
             <div />
-            <div style={st.fNum}>Доступно</div><div style={st.fNum}>Рассчитано</div><div style={st.fNum}>Одобрено</div>
+            {!isMobile && <div style={st.fNum}>Доступно</div>}
+            <div style={st.fNum}>Рассчитано</div><div style={st.fNum}>Одобрено</div>
           </div>
           {flat.map((x) => <FundRow key={x.fund?.id || x.rule?.id} x={x} />)}
           {Object.entries(grouped).map(([fid, rows]) => {
@@ -589,7 +593,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
                   </div>
                   <div style={st.fPct} />
                   <div />
-                  <div style={{ ...st.fNum, fontWeight: 700 }}>{fmt(fsum.avail)}</div>
+                  {!isMobile && <div style={{ ...st.fNum, fontWeight: 700 }}>{fmt(fsum.avail)}</div>}
                   <div style={{ ...st.fNum, color: fsum.calc ? ORANGE : C.faint }}>{fmt(fsum.calc)}</div>
                   <div style={{ ...st.fNum, color: fsum.appr ? C.green : C.faint, fontWeight: fsum.appr ? 700 : 400 }}>{fmt(fsum.appr)}</div>
                 </div>
@@ -603,7 +607,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
             )}
             <div style={st.fPct} />
             <div />
-            <div style={{ ...st.fNum, fontWeight: 700 }}>{fmt(totals.avail)}</div>
+            {!isMobile && <div style={{ ...st.fNum, fontWeight: 700 }}>{fmt(totals.avail)}</div>}
             <div style={{ ...st.fNum, fontWeight: 700, color: totals.calc ? ORANGE : C.faint }}>{fmt(totals.calc)}</div>
             <div style={{ ...st.fNum, fontWeight: 700, color: C.green }}>{fmt(totals.appr)}</div>
           </div>
