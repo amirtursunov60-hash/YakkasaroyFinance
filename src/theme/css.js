@@ -35,6 +35,11 @@ export const makeCss = (C) => `
   .fin:focus{border-color:${C.green};}
   input[type=date]{color-scheme:${C.scheme};}
   input[type=checkbox]{accent-color:${C.green};width:15px;height:15px;cursor:pointer;}
+  /* Единое фокус-кольцо для навигации с клавиатуры (доступность).
+     !important перебивает инлайновые outline:none на инпутах/селектах. */
+  button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{
+    outline:2px solid ${C.green}!important;outline-offset:2px;border-radius:4px;
+  }
   @media (max-width: 880px){
     .fpActions{flex-direction:column;align-items:stretch;}
     .fpActions .fpBtn{justify-content:center;width:100%;}
