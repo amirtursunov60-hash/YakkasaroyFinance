@@ -80,7 +80,7 @@ export default function YakkasaroyFinance() {
         <div style={{ minHeight: "100vh", background: C.bg, color: C.text,
           display: "grid", placeItems: "center", fontFamily: "'Inter',system-ui,sans-serif", padding: 20 }}>
           <div style={{ maxWidth: 420, textAlign: "center", background: C.panel,
-            border: `1px solid ${C.line}`, borderRadius: 18, padding: "28px 24px" }}>
+            border: `1px solid ${C.line}`, borderRadius: 20, padding: "28px 24px" }}>
             <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 10 }}>Профиль не найден</div>
             <div style={{ fontSize: 13.5, color: C.sub, lineHeight: 1.6, marginBottom: 18 }}>
               Вы вошли в аккаунт, но он не привязан к компании «Яккасарой».

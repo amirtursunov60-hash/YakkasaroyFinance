@@ -57,7 +57,7 @@ export function Login({ onEnter }) {
       <div style={lg.glow} />
       <header style={lg.top}>
         <div style={st.brand}>
-          <img src="/icons/icon-192.png" alt="Яккасарой" style={{ width: 36, height: 36, borderRadius: 10 }} />
+          <img src="/icons/icon-192.png" alt="Яккасарой" style={{ width: 36, height: 36, borderRadius: 12 }} />
           <div style={st.brandTxt}>Яккасарой<span style={st.brandThin}> финанс</span></div>
         </div>
       </header>
@@ -114,7 +114,7 @@ export const makeLg = (C) => ({
   glow: { position: "absolute", inset: 0, background: "radial-gradient(120% 80% at 50% 120%, rgba(31,214,95,0.35) 0%, rgba(20,120,180,0.18) 35%, rgba(14,16,17,0) 70%)", pointerEvents: "none" },
   top: { position: "relative", height: 72, display: "flex", alignItems: "center", padding: "0 28px", borderBottom: `1px solid ${C.line}`, background: "rgba(14,16,17,0.6)" },
   center: { position: "relative", display: "flex", justifyContent: "center", alignItems: "center", minHeight: "calc(100vh - 72px)", padding: 20 },
-  card: { width: "100%", maxWidth: 400, background: C.panel, border: `1px solid ${C.line}`, borderRadius: 22, padding: "30px 26px", boxShadow: "0 20px 60px rgba(0,0,0,0.5)" },
+  card: { width: "100%", maxWidth: 400, background: C.panel, border: `1px solid ${C.line}`, borderRadius: 20, padding: "30px 26px", boxShadow: "0 20px 60px rgba(0,0,0,0.5)" },
   title: { fontSize: 22, fontWeight: 800, textAlign: "center", marginBottom: 24 },
   field: { background: C.bg, border: `1px solid ${C.line}`, borderRadius: 12, padding: "10px 14px", marginBottom: 14 },
   label: { display: "block", fontSize: 11, color: C.sub, marginBottom: 4 },
@@ -122,6 +122,6 @@ export const makeLg = (C) => ({
   passWrap: { display: "flex", alignItems: "center", gap: 10 },
   eye: { color: C.sub, cursor: "pointer", display: "flex", flexShrink: 0 },
   btn: { width: "100%", background: C.green, color: "#04130a", border: "none", padding: "14px", borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", marginTop: 6, display: "flex", alignItems: "center", justifyContent: "center", minHeight: 50 },
-  error: { fontSize: 13, color: C.danger, background: `${C.danger}1a`, border: `1px solid ${C.danger}44`, borderRadius: 10, padding: "10px 12px", marginBottom: 12, textAlign: "center" },
+  error: { fontSize: 13, color: C.danger, background: `${C.danger}1a`, border: `1px solid ${C.danger}44`, borderRadius: 12, padding: "10px 12px", marginBottom: 12, textAlign: "center" },
   note: { fontSize: 11, color: C.faint, textAlign: "center", marginTop: 16, lineHeight: 1.5 },
 });
