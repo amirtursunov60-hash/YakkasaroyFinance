@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Yakkasaroy Management System — веб-приложение управления сетью ресторанов и туйхон «Яккасарой» (Душанбе · Худжанд · Панджакент) по технологии Hubbard Management System (ХМС): финансовое планирование по фондам, статистики с состояниями, 7-отделенческая оргсхема, CRM банкетов. **Актуальное ТЗ — `docs/ТЗ_Yakkasaroy_Management_System_v2.md`** (v2.0, полная переработка по модели API ManaJet; v1.0 рядом — только история). Обзор модулей и дорожная карта — `README.md`.
 
-**Текущая стадия**: интерактивный прототип. Авторизация уже реальная (Supabase Auth, `src/lib/`), но все данные модулей — моки в памяти (`src/data/`). Целевая архитектура по ТЗ v2: Supabase целиком (PostgreSQL + RLS, Auth, Storage, Edge Functions, Realtime), модель данных — по сущностям ManaJet (таблица соответствия в ТЗ v2 §2). Следующий шаг — схема БД и замена `src/data/` на API-слой.
+**Текущая стадия**: финансовый контур уже на реальном Supabase — модули `finance/*` и `staff` ходят в БД через API-слой `src/lib/api.js` (PostgreSQL + RLS, Auth). Остальные модули (`crm`, `dashboard`, `org`, `stats`, `restaurant`) пока на моках в памяти (`src/data/`) и переводятся на API по мере готовности. Целевая архитектура по ТЗ v2: Supabase целиком (PostgreSQL + RLS, Auth, Storage, Edge Functions, Realtime), модель данных — по сущностям ManaJet (таблица соответствия в ТЗ v2 §2). Следующий шаг — перевод оставшихся модулей на API-слой.
 
 ## Команды
 
@@ -36,21 +36,29 @@ npm run preview    # просмотр сборки
 ```
 src/
 ├── App.jsx                # корень: тема, сессия Supabase, логин ⇄ приложение
-├── lib/                   # supabase.js (клиент), auth.js (signIn/signOut/getProfile)
+├── lib/                   # supabase.js (клиент), auth.js (signIn/signOut/getProfile),
+│                          # api.js (API-слой над Supabase для finance/staff),
+│                          # PeriodCtx.jsx (контекст недели ФП чт–ср + выбранной точки)
 ├── theme/                 # ВСЁ оформление здесь, см. «Стиль» ниже
-│   ├── theme.js           # THEMES (dark/light палитры C), ThemeCtx, useTheme
-│   ├── styles.js          # makeStyles(C) → объект st со всеми inline-стилями
-│   └── css.js             # makeCss(C) → строка глобального CSS (hover, анимации)
-├── data/                  # МОКИ всех модулей; заменяются API-слоем при переходе на Supabase
-├── components/            # AppShell (каркас+роутинг), Login, common (Stat, Stub), charts/ (свои SVG)
+│   ├── theme.js           # THEMES (dark/light палитры C + семантические токены info/warning/
+│   │                      # success/successSoft), ThemeCtx, useTheme
+│   ├── styles.js          # makeStyles(C) → объект st со всеми inline-стилями (радиусы 4/8/12/16/20)
+│   └── css.js             # makeCss(C) → строка глобального CSS (hover, фокус-кольца, анимации)
+├── data/                  # МОКИ модулей без API (crm, dashboard, org, stats, restaurant);
+│                          # finance и staff уже ходят в Supabase через lib/api.js
+├── components/            # AppShell (каркас+навигация), Login, common (Stat, Stub, FolderIcon),
+│                          # TopWidgets (GlobalSearch, NotifyBell), AttachmentsBlock, charts/ (свои SVG)
 ├── modules/
-│   ├── finance/           # ядро: Directive, Income, Expenses, Funds, Control,
-│   │                      # Suppliers, Clients, Payroll, Reports — отдельные файлы-экраны
-│   ├── stats|org|dashboard|crm/  # один файл на модуль, разделы через проп view
-│   └── restaurant/        # RestOrders, RestTables, RestMenu, RestStock
+│   ├── finance/           # ядро на Supabase: Directive, Income, Expenses, Funds, Control, Register
+│   │                      # (Реестр), Requests (финкомитет), Suppliers + Obligations (обёртки над
+│   │                      # BillsScreen — счета), Clients, Payroll, Reports — файлы-экраны
+│   ├── staff/             # StaffModule — сотрудники, посты оргсхемы, права, приглашения (Supabase)
+│   ├── stats|org|dashboard|crm/  # один файл на модуль, разделы через проп view (пока моки)
+│   └── restaurant/        # RestOrders, RestTables, RestMenu, RestStock (моки, дизайн-референс)
 ├── hooks/useIsMobile.js
-└── utils/                 # format.js (fmt — деньги), funds.js (нормализация кодов фондов
-                           # «ФД4» → «FD4»), stats.js (calcState — состояния ХМС, weekLabels)
+└── utils/                 # format.js (fmt — деньги, avatarColor — цвет аватара по имени),
+                           # funds.js (нормализация кодов фондов «ФД4» → «FD4»),
+                           # stats.js (calcState — состояния ХМС, weekLabels)
 ```
 
 Компоненты получают всё через `useTheme()`: `{ C, st, theme, setTheme, lang, setLang, isMobile, profile }`. Роли пользователя: `owner`, `fin_director`, `ops_director`, `location_manager`, `accountant`, `employee` (метки — в `AppShell.jsx`, права — в ТЗ v2 §3; реализация прав — RLS-политики Supabase).
