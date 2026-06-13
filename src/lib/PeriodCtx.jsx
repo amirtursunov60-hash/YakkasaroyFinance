@@ -204,7 +204,7 @@ export function LocationPicker() {
   return (
     <div style={st.topWeekWrap}>
       <button style={st.topWeekBtn} className="btn" onClick={() => setOpen((v) => !v)}>
-        <MapPin size={15} color={location ? "#e8911c" : C.green} />
+        <MapPin size={15} color={location ? C.warning : C.green} />
         {!isMobile && <span>{label}</span>}
         <ChevronDown size={14} style={{ transform: open ? "rotate(180deg)" : "none", transition: "transform .2s" }} />
       </button>

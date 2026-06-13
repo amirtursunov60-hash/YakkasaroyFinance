@@ -15,6 +15,10 @@ export const THEMES = {
     navHover: "#121915", heroGrad: "linear-gradient(135deg,#0a2e26 0%,#0c3a2c 30%,#0e2820 60%,#0e1011 100%)",
     heroLabel: "#bfe8d2", heroStat: "#9fc7b3", barBg: "#1a2620", danger: "#ff6b5e",
     blueLink: "#9fc4ff", menuHover: "#1a1f20", shadow: "rgba(0,0,0,0.5)",
+    // Семантические цвета статусов (единые для всех модулей):
+    // info — новое/на планировании, warning — ожидание/в работе,
+    // success — финальный успех (оплачено), successSoft — промежуточный успех (одобрено).
+    info: "#5b8def", warning: "#e8911c", success: "#2f9e44", successSoft: "#7bd88f",
   },
   light: {
     scheme: "light",
@@ -24,6 +28,8 @@ export const THEMES = {
     navHover: "#eef2f0", heroGrad: "linear-gradient(135deg,#d6f5e4 0%,#c3ecd9 35%,#e8f5ef 70%,#ffffff 100%)",
     heroLabel: "#2c7a52", heroStat: "#3d8a62", barBg: "#dfeae4", danger: "#e0463b",
     blueLink: "#2563c9", menuHover: "#eef2f0", shadow: "rgba(0,0,0,0.15)",
+    // Семантические цвета статусов — затемнены под светлый фон для контраста.
+    info: "#2f6fdb", warning: "#c47d10", success: "#2f9e44", successSoft: "#3d9e5f",
   },
 };
 

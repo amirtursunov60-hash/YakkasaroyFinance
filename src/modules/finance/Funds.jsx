@@ -131,8 +131,8 @@ export function Funds() {
   const selStyle = { ...st.reqSelect, minWidth: isMobile ? "100%" : 200 };
   const typeBadge = (kind) => ({
     fontSize: 10.5, fontWeight: 700, padding: "3px 9px", borderRadius: 20, whiteSpace: "nowrap",
-    color: kind === "working" ? C.green : "#5b8def",
-    background: kind === "working" ? `${C.green}1a` : "#5b8def1a",
+    color: kind === "working" ? C.green : C.info,
+    background: kind === "working" ? `${C.green}1a` : `${C.info}1a`,
   });
   const GRID = isMobile ? "1fr 120px" : "1fr 190px 130px 150px 90px";
 
@@ -232,7 +232,7 @@ export function Funds() {
             onClick={() => setOpenFolders((o) => ({ ...o, [f.__folder]: !o[f.__folder] }))}>
             <div style={st.fName}>
               <div style={st.fundTop}>
-                {openFolders[f.__folder] ? <FolderOpen size={15} color="#e8911c" /> : <Folder size={15} color="#e8911c" />}
+                {openFolders[f.__folder] ? <FolderOpen size={15} color={C.warning} /> : <Folder size={15} color={C.warning} />}
                 <b>{folders.find((x) => x.id === f.__folder)?.name || "Папка"}</b>
                 <span style={{ fontSize: 11, color: C.faint }}>· {f.children.length} фонд(ов)</span>
                 <ChevronRight size={14} style={{ transform: openFolders[f.__folder] ? "rotate(90deg)" : "none", transition: "transform .2s", color: C.faint }} />
@@ -296,7 +296,7 @@ export function Funds() {
         const isLoan = op.opType === "fund_loan";
         const isReturn = op.opType === "fund_loan_return";
         const outstanding = isLoan ? op.amount - op.returned : 0;
-        const badgeColor = isLoan ? "#e8911c" : isReturn ? "#5b8def" : C.green;
+        const badgeColor = isLoan ? C.warning : isReturn ? C.info : C.green;
         return (
           <div key={op.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 4px", borderBottom: `1px solid ${C.line}`, flexWrap: "wrap" }}>
             <span style={{ fontSize: 11.5, color: C.faint, flexShrink: 0, width: 86 }}>
