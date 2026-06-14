@@ -207,6 +207,10 @@ export const makeStyles = (C) => ({
   reqBlockedTag: { display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11.5, fontWeight: 700, color: C.danger, background: `${C.danger}1a`, padding: "4px 10px", borderRadius: 20 },
 
   // ---- Итог ФП ----
+  // Тулбар Директивы (авто-распределение + сравнение с прошлой неделей)
+  dirToolbar: { display: "flex", alignItems: "center", gap: 10, marginBottom: 16, flexWrap: "wrap" },
+  dirToggleOn: { background: C.green, color: "#04130a", borderColor: "transparent" },
+  mSelectAll: { display: "flex", alignItems: "center", gap: 9, padding: "12px 16px 2px" },
   fpCard: { background: C.panel, border: `1px solid ${C.glassBorder}`, borderRadius: 20, padding: "20px 22px", marginTop: 18, boxShadow: `inset 0 1px 0 ${C.glassHi}, 0 8px 24px ${C.shadow}`, backdropFilter: "blur(20px) saturate(160%)", WebkitBackdropFilter: "blur(20px) saturate(160%)" },
   fpRows: { display: "flex", flexDirection: "column" },
   fpRow: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", gap: 16 },

@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { ClipboardList, Calculator, CalendarDays, Check, RotateCcw, RotateCw, Lock, Unlock, Ban, ArrowRightLeft, Loader2, AlertCircle, CheckCircle2, X, Folder, FolderOpen, ChevronRight } from "lucide-react";
+import { ClipboardList, Calculator, CalendarDays, Check, RotateCcw, RotateCw, Lock, Unlock, Ban, ArrowRightLeft, Loader2, AlertCircle, CheckCircle2, X, Folder, FolderOpen, ChevronRight, Zap, Scale, TrendingUp, TrendingDown } from "lucide-react";
 import { Stat } from "../../components/common";
 import { useTheme } from "../../theme/theme";
 import { fmt } from "../../utils/format";
@@ -40,6 +40,8 @@ export function Directive() {
   const [income, setIncome] = useState(0);
   const [prevIncome, setPrevIncome] = useState(0);
   const [regRows, setRegRows] = useState([]);     // распределение из Реестра
+  const [prevDist, setPrevDist] = useState([]);   // распределение прошлой недели (для сравнения)
+  const [compare, setCompare] = useState(false);  // режим сравнения с прошлой неделей
   const [calculated, setCalculated] = useState({}); // { stage: { fund_id: сумма } }
   const [pcts, setPcts] = useState({});             // правки процентов { ruleId: число }
   const [busy, setBusy] = useState(null);           // 'block'|'close'|'transfer'|`calc:х`|`appr:х`
@@ -71,13 +73,14 @@ export function Directive() {
   useEffect(() => { loadRefs(); }, [loadRefs]);
 
   const reloadPeriodData = useCallback(async () => {
-    if (!periodId) { setIncome(0); setPrevIncome(0); setRegRows([]); return; }
-    const [inc, pinc, rows] = await Promise.all([
+    if (!periodId) { setIncome(0); setPrevIncome(0); setRegRows([]); setPrevDist([]); return; }
+    const [inc, pinc, rows, prows] = await Promise.all([
       fetchPeriodIncome(periodId),
       prevPeriod ? fetchPeriodIncome(prevPeriod.id) : Promise.resolve(0),
       fetchPeriodDistribution(periodId),
+      prevPeriod ? fetchPeriodDistribution(prevPeriod.id) : Promise.resolve([]),
     ]);
-    setIncome(inc); setPrevIncome(pinc); setRegRows(rows);
+    setIncome(inc); setPrevIncome(pinc); setRegRows(rows); setPrevDist(prows);
   }, [periodId, prevPeriod]);
 
   useEffect(() => {
@@ -108,6 +111,15 @@ export function Directive() {
 
   const fundById = useMemo(() => Object.fromEntries(funds.map((f) => [f.id, f])), [funds]);
   const pctOf = (r) => (pcts[r.id] !== undefined ? pcts[r.id] : Number(r.percent ?? 0));
+
+  // Одобрено прошлой недели по фондам (все этапы) — для колонки сравнения
+  const prevByFund = useMemo(() => {
+    const m = {};
+    prevDist.forEach((r) => { m[r.fund_id] = (m[r.fund_id] || 0) + r.amount; });
+    return m;
+  }, [prevDist]);
+  const prevTotal = useMemo(() => Object.values(prevByFund).reduce((a, v) => a + v, 0), [prevByFund]);
+  const canCompare = !!prevPeriod;
 
   // -------- одобренное по этапам из Реестра.
   // Перенесённые остатки (stage:remainder) и легаси-строки без этапа показываем
@@ -171,6 +183,11 @@ export function Directive() {
   );
   const remainder = income - approvedTotal;
   const fundsTotal = useMemo(() => funds.reduce((a, f) => a + Number(f.balance || 0), 0), [funds]);
+  // есть ли что одобрять для авто-распределения (фонд этапа без одобрения и с базой)
+  const hasUnapproved = useMemo(
+    () => income > 0 && stagesView.some((sg) => sg.base > 0.01 && sg.rows.some((x) => x.fund && !(x.appr > 0))),
+    [stagesView, income],
+  );
 
   // -------- действия
   // Рассчитать выбранные галочками фонды (или все, если ничего не отмечено).
@@ -230,6 +247,58 @@ export function Directive() {
   };
 
   const doReset = (sg) => setCalculated((p) => ({ ...p, [sg.key]: {} }));
+
+  // Аллокации этапа для авто-распределения: фонд × % от базы (или Σ по видам
+  // дохода для ФРС-фондов). Уже одобренные на этом этапе фонды пропускаются.
+  const computeStageAllocations = (stageKey, base) => {
+    const apprMap = approvedByStage[stageKey] || {};
+    const out = [];
+    const seen = new Set();
+    rules.filter((r) => r.stage === stageKey).forEach((r) => {
+      const fund = fundById[r.fund_id];
+      if (!fund || seen.has(fund.id)) return;
+      seen.add(fund.id);
+      if (apprMap[fund.id] > 0) return;
+      const amount = Math.round(base * pctOf(r)) / 100;
+      if (amount > 0) out.push({ fund_id: fund.id, amount });
+    });
+    for (const [fundId, frs] of Object.entries(fundRules)) {
+      const stageFrs = frs.filter((x) => x.stage === stageKey);
+      if (!stageFrs.length || seen.has(fundId) || apprMap[fundId] > 0) continue;
+      const amount = Math.round(stageFrs.reduce((a, r) => {
+        const fact = incomeByType[r.income_type?.id] || 0;
+        return a + (r.percent != null ? fact * Number(r.percent) / 100 : Number(r.fixed_amount || 0));
+      }, 0) * 100) / 100;
+      if (amount > 0) { out.push({ fund_id: fundId, amount }); seen.add(fundId); }
+    }
+    return out;
+  };
+
+  // Авто-распределение всех трёх этапов одним действием: каскадом, как вручную
+  // (база следующего этапа = остаток после предыдущего). Уже одобренное не трогаем.
+  const doAutoAll = async () => {
+    if (busy || !period || isClosed) return;
+    if (!window.confirm("Рассчитать и одобрить все этапы по схеме недели? Суммы будут зачислены в фонды через Реестр.")) return;
+    setBusy("auto"); setErr(""); setDone("");
+    try {
+      let base = income;
+      let anyNew = false;
+      for (const meta of STAGES) {
+        const apprMap = approvedByStage[meta.key] || {};
+        const apprSum = Object.values(apprMap).reduce((a, v) => a + v, 0);
+        const allocations = computeStageAllocations(meta.key, base);
+        const newSum = allocations.reduce((a, x) => a + x.amount, 0);
+        if (allocations.length) { await distributeStage(periodId, meta.key, allocations); anyNew = true; }
+        base -= apprSum + newSum;
+      }
+      await Promise.all([reloadPeriodData(), loadRefs()]);
+      setCalculated({});
+      setDone(anyNew
+        ? "Все этапы рассчитаны и одобрены — суммы зачислены в фонды"
+        : "Все этапы уже одобрены — распределять нечего");
+    } catch (e) { setErr(e?.message || String(e)); }
+    finally { setBusy(null); }
+  };
 
   // Сброс уже одобренного этапа: суммы списываются из фондов (удаление из Реестра).
   // Если в этап попал перенесённый остаток (stage:remainder) — сбрасывается и он.
@@ -356,10 +425,28 @@ export function Directive() {
       </div>
     )}
 
+    {rules.length > 0 && period && (
+      <div style={st.dirToolbar} className="dirToolbar">
+        <button style={{ ...st.btnGreen, opacity: busy === "auto" ? 0.7 : 1 }} className="btn"
+          onClick={doAutoAll} disabled={!!busy || isClosed || !hasUnapproved}
+          title={isClosed ? "Период закрыт" : hasUnapproved ? "Рассчитать и одобрить все этапы по схеме недели" : "Все этапы уже одобрены"}>
+          {busy === "auto" ? <Loader2 size={15} className="spin" /> : <Zap size={15} />}
+          {isMobile ? " Одобрить всё" : " Рассчитать и одобрить всё"}
+        </button>
+        {canCompare && (
+          <button style={{ ...st.btnGhost, ...(compare ? st.dirToggleOn : {}) }} className="btn"
+            onClick={() => setCompare((v) => !v)}
+            title="Показать суммы фондов за прошлую неделю и динамику">
+            <Scale size={15} /> {compare ? "Скрыть сравнение" : "Сравнить с прошлой неделей"}
+          </button>
+        )}
+      </div>
+    )}
+
     {stagesView.map((sg) => (
       <LevelCard key={sg.key} sg={sg} C={C} st={st} isMobile={isMobile}
         pctOf={pctOf} setPcts={setPcts} busy={busy} locked={isClosed || !period}
-        folders={folders}
+        folders={folders} compare={compare && canCompare} prevByFund={prevByFund}
         onCalc={(ids) => doCalc(sg, ids)} onApprove={() => doApprove(sg)}
         onReset={() => doReset(sg)} onResetApproved={() => doResetApproved(sg)}
         onOpenCalc={(fund) => setCalcFund({ fund, stage: sg })} />
@@ -370,6 +457,15 @@ export function Directive() {
       <div style={st.fpRows}>
         <div style={st.fpRow}><span style={st.fpLabelBold}>Сумма к распределению на ФП</span><span style={st.fpValBold}>{fmt(income)}</span></div>
         <div style={st.fpRow}><span style={st.fpLabel}>Распределено по фондам (Реестр)</span><span style={st.fpVal}>{fmt(approvedTotal)}</span></div>
+        {compare && canCompare && (
+          <div style={st.fpRow}>
+            <span style={st.fpLabel}>Прошлая неделя · доход / распределено</span>
+            <span style={st.fpVal}>
+              {fmt(prevIncome)} / {fmt(prevTotal)}
+              <Delta C={C} delta={approvedTotal - prevTotal} />
+            </span>
+          </div>
+        )}
         <div style={{ ...st.fpRow, ...st.fpRemainder }}>
           <span style={st.fpLabelBold}>Остаток нераспределённого</span>
           <span style={{ ...st.fpValBold, color: remainder < -0.01 ? C.danger : C.green }}>{fmt(remainder)}</span>
@@ -441,11 +537,27 @@ export function Directive() {
 }
 
 
+// ---------------------------------------------------------------- Дельта неделя-к-неделе
+// Стрелка с разницей сумм относительно прошлой недели (зелёный рост / красный спад).
+function Delta({ C, delta, small }) {
+  if (Math.abs(delta) < 0.01) return <span style={{ marginLeft: 6, fontSize: small ? 10 : 11, color: C.faint }}>=</span>;
+  const up = delta > 0;
+  return (
+    <span style={{ marginLeft: 6, fontSize: small ? 10 : 11, fontWeight: 700, color: up ? C.green : C.danger,
+      whiteSpace: "nowrap", display: "inline-flex", alignItems: "center", gap: 1, verticalAlign: "middle" }}>
+      {up ? <TrendingUp size={small ? 11 : 12} /> : <TrendingDown size={small ? 11 : 12} />}
+      {up ? "+" : "−"}{fmt(Math.abs(delta))}
+    </span>
+  );
+}
+
+
 // ---------------------------------------------------------------- Этап распределения
 // Фонды этапа сгруппированы по папкам (fund_folders) — как в ManaJet.
 // Слева у каждого фонда галочка: отмеченные фонды считаются при «Рассчитать»
 // (если не отмечено ничего — считаются все). Уже одобренные не пересчитываются.
-function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders, onCalc, onApprove, onReset, onResetApproved, onOpenCalc }) {
+// На телефоне строки таблицы превращаются в карточки (без горизонтального скролла).
+function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders, compare, prevByFund, onCalc, onApprove, onReset, onResetApproved, onOpenCalc }) {
   const [openFolders, setOpenFolders] = useState({});
   const [checked, setChecked] = useState(() => new Set());
   const calcBusy = busy === `calc:${sg.key}`;
@@ -467,24 +579,16 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
   });
   const toggleAll = () => setChecked(allChecked ? new Set() : new Set(selectable));
   const hasApprovable = sg.rows.some((x) => x.calc > 0 && !(x.appr > 0));
+  const showPrev = compare && !!prevByFund;
+  const prevOf = (id) => (prevByFund?.[id] || 0);
 
   const cbStyle = { width: 15, height: 15, accentColor: C.green, marginRight: 7, flexShrink: 0, cursor: "pointer" };
-  // Шесть колонок. На телефоне видимую часть экрана занимают первые четыре —
-  // Название · % · калькулятор · Доступно. «Название» расширено до 190px, чтобы
-  // имена фондов помещались в одну строку (самые длинные — с многоточием), а
-  // калькулятор сдвигается ближе к числу (меньше пустого провала в середине).
-  // «Доступно» тянется к правому краю с полем ~12px: calc(100vw − 293px), где
-  // 293 = левый стек (main моб. 8 + рамка 1 + паддинг строки 8 = 17) + Название
-  // (190) + % (42) + калькулятор (32) + поле справа (12). Колонка «Доступно»
-  // при этом ~100px — туда помещается семизначная сумма (до миллиона), не
-  // налезая на калькулятор. Константа завязана на main-паддинг телефона (8px)
-  // и ширину «Название» — при их изменении пересчитать здесь.
-  // minWidth:max-content держит ленту шире экрана (иначе прокрутки не будет).
-  const GRID6 = isMobile
-    ? "190px 42px 32px calc(100vw - 293px) 120px 120px"
-    : "150px 58px 46px minmax(104px,1fr) 132px 132px";
-  const frow6 = { ...st.frow, gridTemplateColumns: GRID6,
-    minWidth: isMobile ? "max-content" : 760, ...(isMobile ? { padding: "12px 8px" } : {}) };
+  // Десктоп: шесть колонок (Название · % · калькулятор · Доступно · Рассчитано ·
+  // Одобрено). Колонка «Одобрено» при включённом сравнении дополняется строкой
+  // «пр. …» с дельтой к прошлой неделе. На телефоне таблица не используется —
+  // строки рендерятся карточками (см. ветку isMobile ниже).
+  const GRID6 = "150px 58px 46px minmax(104px,1fr) 132px 132px";
+  const frow6 = { ...st.frow, gridTemplateColumns: GRID6, minWidth: 760 };
 
   const CalcBtn = () => (
     <button style={st.btnGhost} onClick={() => onCalc([...checked])} className="btn" disabled={!!busy || locked}>
@@ -508,8 +612,10 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
 
   const totals = sg.rows.reduce((t, x) => ({
     avail: t.avail + Number(x.fund?.balance || 0), calc: t.calc + x.calc, appr: t.appr + x.appr,
-  }), { avail: 0, calc: 0, appr: 0 });
+    prev: t.prev + prevOf(x.fund?.id),
+  }), { avail: 0, calc: 0, appr: 0, prev: 0 });
 
+  // ---- Десктоп: строка-фонд таблицы ----
   const FundRow = ({ x, child }) => {
     const avail = Number(x.fund?.balance || 0);
     const barVal = x.appr || x.calc;
@@ -517,6 +623,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
     const fill = barVal > 0 ? Math.min(100, (barVal / barBase) * 100) : 0;
     const hasTypeRules = x.typeRules?.length > 0;
     const rowEditable = !locked && !(x.appr > 0);
+    const prev = prevOf(x.fund?.id);
     return (
       <div style={{ ...frow6, ...(child ? { paddingLeft: 14 } : {}) }} className="frow">
         <div style={st.fName}>
@@ -531,7 +638,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
         </div>
         <div style={st.fPct}>
           {x.rule ? <>{pctOf(x.rule)}<span style={st.pctSign}>%</span></>
-            : <span style={{ fontSize: 11, color: C.faint }}>{isMobile ? "—" : "по видам"}</span>}
+            : <span style={{ fontSize: 11, color: C.faint }}>по видам</span>}
         </div>
         <div style={{ display: "flex", justifyContent: "center", alignItems: "flex-start", alignSelf: "start" }}>
           <button style={{ ...st.iconBtn, width: 26, height: 26, borderRadius: 8, padding: 0,
@@ -549,13 +656,89 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
         </div>
         <div style={{ ...st.fNum, color: x.appr ? C.green : C.faint, fontWeight: x.appr ? 700 : 400 }}>
           <span className={x.appr ? "pop" : ""}>{fmt(x.appr)}</span>
+          {showPrev && (prev > 0 || x.appr > 0) && (
+            <div style={{ fontSize: 10.5, fontWeight: 500, color: C.faint, marginTop: 2 }}>
+              пр. {fmt(prev)}<Delta C={C} delta={x.appr - prev} small />
+            </div>
+          )}
         </div>
       </div>
     );
   };
 
+  // ---- Мобайл: карточка-фонд ----
+  const FundCardM = ({ x, child }) => {
+    const avail = Number(x.fund?.balance || 0);
+    const barVal = x.appr || x.calc;
+    const barBase = avail > 0 ? avail : (barVal || 1);
+    const fill = barVal > 0 ? Math.min(100, (barVal / barBase) * 100) : 0;
+    const hasTypeRules = x.typeRules?.length > 0;
+    const rowEditable = !locked && !(x.appr > 0);
+    const prev = prevOf(x.fund?.id);
+    return (
+      <div style={{ ...st.mCard, ...(child ? { marginLeft: 20 } : {}) }}>
+        <div style={st.mTop}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+            <input type="checkbox" style={{ ...cbStyle, marginRight: 0 }} checked={checked.has(x.fund.id)}
+              disabled={!rowEditable} onChange={() => toggleOne(x.fund.id)} />
+            <div style={{ display: "flex", alignItems: "baseline", gap: 6, minWidth: 0 }}>
+              <span style={st.fundCode}>{x.fund?.code}</span>
+              <span style={{ ...st.mName, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{x.fund?.name}</span>
+              {x.fund?.is_restricted && <Lock size={11} color={C.faint} />}
+            </div>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+            <span style={st.mPct}>{x.rule ? `${pctOf(x.rule)}%` : "по видам"}</span>
+            {hasTypeRules && (
+              <button style={{ ...st.iconBtn, width: 28, height: 28, borderRadius: 8, padding: 0, color: C.green }}
+                className="btn" disabled={!!busy || locked}
+                title="Распределение по видам дохода" onClick={() => onOpenCalc(x.fund)}>
+                <Calculator size={15} />
+              </button>
+            )}
+          </div>
+        </div>
+        <div style={{ ...st.bar, maxWidth: "100%", marginBottom: 4 }}>
+          <div style={{ ...st.barFill, width: `${fill}%`, background: x.appr ? C.green : C.warning }} />
+        </div>
+        <div style={st.mRow}><span style={st.mLabel}>Доступно</span><span style={{ ...st.mVal, fontWeight: 700 }}>{fmt(avail)}</span></div>
+        <div style={st.mRow}><span style={st.mLabel}>Рассчитано</span><span style={{ ...st.mVal, color: x.calc ? C.warning : C.faint }}>{fmt(x.calc)}</span></div>
+        <div style={st.mRow}><span style={st.mLabel}>Одобрено</span><span style={{ ...st.mVal, color: x.appr ? C.green : C.faint, fontWeight: x.appr ? 700 : 400 }}>{fmt(x.appr)}</span></div>
+        {showPrev && (prev > 0 || x.appr > 0) && (
+          <div style={st.mRow}><span style={st.mLabel}>Прошлая неделя</span>
+            <span style={st.mVal}>{fmt(prev)}<Delta C={C} delta={x.appr - prev} small /></span></div>
+        )}
+      </div>
+    );
+  };
+
+  // ---- Мобайл: карточка-папка (сворачиваемая) ----
+  const FolderCardM = ({ fid, rows }) => {
+    const isOpen = !!openFolders[fid];
+    const fsum = rows.reduce((t, x) => ({
+      avail: t.avail + Number(x.fund?.balance || 0), calc: t.calc + x.calc, appr: t.appr + x.appr,
+    }), { avail: 0, calc: 0, appr: 0 });
+    return (
+      <div>
+        <div style={{ ...st.mCard, cursor: "pointer" }} onClick={() => setOpenFolders((o) => ({ ...o, [fid]: !o[fid] }))}>
+          <div style={st.mTop}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+              {isOpen ? <FolderOpen size={16} color={C.warning} /> : <Folder size={16} color={C.warning} />}
+              <b style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{folderById[fid]?.name || "Папка"}</b>
+              <span style={{ fontSize: 11, color: C.faint, flexShrink: 0 }}>· {rows.length}</span>
+            </div>
+            <ChevronRight size={16} style={{ transform: isOpen ? "rotate(90deg)" : "none", transition: "transform .2s", color: C.faint, flexShrink: 0 }} />
+          </div>
+          <div style={st.mRow}><span style={st.mLabel}>Доступно</span><span style={{ ...st.mVal, fontWeight: 700 }}>{fmt(fsum.avail)}</span></div>
+          <div style={st.mRow}><span style={st.mLabel}>Одобрено</span><span style={{ ...st.mVal, color: fsum.appr ? C.green : C.faint, fontWeight: fsum.appr ? 700 : 400 }}>{fmt(fsum.appr)}</span></div>
+        </div>
+        {isOpen && rows.map((x) => <FundCardM key={x.fund?.id} x={x} child />)}
+      </div>
+    );
+  };
+
   return (
-    <div style={st.cardWrap}>
+    <div style={isMobile ? { marginBottom: 18 } : st.cardWrap}>
       <section style={st.card}>
         <div style={st.cardHead}>
           <div style={st.cardTitle}>{sg.title}</div>
@@ -565,8 +748,25 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
           <span style={st.subHeadTitle}>{sg.fundsTitle}</span>
           <span style={st.subHeadAppr}>Одобрено: <b style={{ color: C.green }}>{fmt(totals.appr)}</b></span>
         </div>
-        {sg.rows.length === 0 ? <div style={st.empty}>Фонды этого этапа не настроены</div> : (<>
-          <div style={{ ...frow6, ...st.frowHead, ...(isMobile ? { padding: "11px 8px" } : {}) }}>
+        {sg.rows.length === 0 ? <div style={st.empty}>Фонды этого этапа не настроены</div> : isMobile ? (<>
+          <div style={st.mSelectAll}>
+            <input type="checkbox" style={{ ...cbStyle, marginRight: 0 }} checked={allChecked}
+              disabled={locked || !selectable.length} onChange={toggleAll} />
+            <span style={{ fontSize: 12.5, color: C.sub }}>Выбрать все фонды</span>
+          </div>
+          {flat.map((x) => <FundCardM key={x.fund?.id || x.rule?.id} x={x} />)}
+          {Object.entries(grouped).map(([fid, rows]) => <FolderCardM key={fid} fid={fid} rows={rows} />)}
+          <div style={st.mTotal}>
+            <div style={st.mRow}><span style={{ ...st.mLabel, fontWeight: 700, color: C.text }}>Итого доступно</span><span style={{ ...st.mVal, fontWeight: 700 }}>{fmt(totals.avail)}</span></div>
+            <div style={st.mRow}><span style={st.mLabel}>Рассчитано</span><span style={{ ...st.mVal, fontWeight: 700, color: totals.calc ? C.warning : C.faint }}>{fmt(totals.calc)}</span></div>
+            <div style={st.mRow}><span style={st.mLabel}>Одобрено</span><span style={{ ...st.mVal, fontWeight: 700, color: C.green }}>{fmt(totals.appr)}</span></div>
+            {showPrev && (totals.prev > 0 || totals.appr > 0) && (
+              <div style={st.mRow}><span style={st.mLabel}>Прошлая неделя</span><span style={st.mVal}>{fmt(totals.prev)}<Delta C={C} delta={totals.appr - totals.prev} small /></span></div>
+            )}
+          </div>
+          <div style={st.mActions}><CalcBtn /><ApproveBtn /><ResetBtn /></div>
+        </>) : (<>
+          <div style={{ ...frow6, ...st.frowHead }}>
             <div style={st.fName}>
               <div style={st.fundTop}>
                 <input type="checkbox" style={cbStyle} checked={allChecked}
@@ -608,16 +808,20 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
             );
           })}
           <div style={{ ...frow6, ...st.frowTotal }}>
-            {isMobile ? <div style={st.fName}><b>Итого</b></div> : (
-              <div style={st.fName}><div style={st.actions}><CalcBtn /><ApproveBtn /><ResetBtn /></div></div>
-            )}
+            <div style={st.fName}><div style={st.actions}><CalcBtn /><ApproveBtn /><ResetBtn /></div></div>
             <div style={st.fPct} />
             <div />
             <div style={{ ...st.fNum, fontWeight: 700 }}>{fmt(totals.avail)}</div>
             <div style={{ ...st.fNum, fontWeight: 700, color: totals.calc ? C.warning : C.faint }}>{fmt(totals.calc)}</div>
-            <div style={{ ...st.fNum, fontWeight: 700, color: C.green }}>{fmt(totals.appr)}</div>
+            <div style={{ ...st.fNum, fontWeight: 700, color: C.green }}>
+              {fmt(totals.appr)}
+              {showPrev && (totals.prev > 0 || totals.appr > 0) && (
+                <div style={{ fontSize: 10.5, fontWeight: 500, color: C.faint, marginTop: 2 }}>
+                  пр. {fmt(totals.prev)}<Delta C={C} delta={totals.appr - totals.prev} small />
+                </div>
+              )}
+            </div>
           </div>
-          {isMobile && <div style={st.mActions}><CalcBtn /><ApproveBtn /><ResetBtn /></div>}
         </>)}
       </section>
     </div>
