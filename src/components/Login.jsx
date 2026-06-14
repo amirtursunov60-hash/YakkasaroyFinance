@@ -116,7 +116,7 @@ export const makeLg = (C) => ({
   center: { position: "relative", display: "flex", justifyContent: "center", alignItems: "center", minHeight: "calc(100vh - 72px)", padding: 20 },
   card: { width: "100%", maxWidth: 400, background: C.panel, border: `1px solid ${C.line}`, borderRadius: 20, padding: "30px 26px", boxShadow: "0 20px 60px rgba(0,0,0,0.5)" },
   title: { fontSize: 22, fontWeight: 800, textAlign: "center", marginBottom: 24 },
-  field: { background: C.bg, border: `1px solid ${C.line}`, borderRadius: 12, padding: "10px 14px", marginBottom: 14 },
+  field: { background: C.inputBg, border: `1px solid ${C.line}`, borderRadius: 12, padding: "10px 14px", marginBottom: 14 },
   label: { display: "block", fontSize: 11, color: C.sub, marginBottom: 4 },
   input: { width: "100%", background: "transparent", border: "none", outline: "none", color: C.text, fontSize: 15, fontFamily: "inherit" },
   passWrap: { display: "flex", alignItems: "center", gap: 10 },

@@ -268,7 +268,7 @@ export function Expenses() {
             style={{
               ...st.weekTag, cursor: "pointer", border: "none", fontFamily: "inherit", marginLeft: 0,
               padding: "5px 12px", fontSize: 12,
-              color: filter === key ? C.bg : (ST_META[key]?.color || C.sub),
+              color: filter === key ? "#04130a" : (ST_META[key]?.color || C.sub),
               background: filter === key ? (ST_META[key]?.color || C.green) : `${ST_META[key]?.color || C.sub}1a`,
             }}
             onClick={() => setFilter(key)}>
