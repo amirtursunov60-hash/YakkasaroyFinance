@@ -2,13 +2,15 @@
 export const makeCss = (C) => `
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
   *{box-sizing:border-box;}
-  body{background:${C.bg};}
+  body{background:${C.pageGrad};background-attachment:fixed;}
   .nav:hover{background:${C.navHover};}
   .mod:hover{color:${C.text};}
   .frow:hover{background:${C.rowHover};}
   .trow{border-top:1px solid ${C.line};}
   .trow:hover{background:${C.rowHover};}
   .locHead:hover{background:${C.rowHover};}
+  .locCard,.ordCard,.tableCard{transition:transform .25s cubic-bezier(.22,.61,.36,1), box-shadow .25s ease;}
+  @media (hover:hover){ .ordCard:hover,.tableCard:hover{transform:translateY(-3px);} }
   input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
   .pctIn:focus,.amtIn:focus{border-color:${C.green};}
   .itemRow:hover{background:${C.rowHover};}
@@ -17,8 +19,18 @@ export const makeCss = (C) => `
   .exp:hover{color:${C.text};}
   .mb:hover{filter:brightness(1.3);}
   .btn:hover{filter:brightness(1.08);}
-  .btn:active{transform:scale(0.95);}
+  .glassG:hover{filter:none !important;}
+  .glassG{will-change:transform;}
+  .btn:not(.glass):active{transform:scale(0.95);}
   .btn{transition:transform .08s ease, filter .15s ease;}
+  /* Liquid Glass кнопки: грань, свечение, живое нажатие */
+  .glass{position:relative;overflow:hidden;transition:transform .12s cubic-bezier(.34,1.56,.64,1), box-shadow .2s ease, filter .2s ease !important;}
+  .glass::after{content:"";position:absolute;left:0;right:0;bottom:-70%;height:90%;background:radial-gradient(ellipse at center, rgba(255,255,255,0.5) 0%, transparent 70%);opacity:0;transition:opacity .25s ease;pointer-events:none;}
+  .glass:hover{filter:brightness(1.06);}
+  .glass:active{transform:translateY(2px) scale(0.96) !important;box-shadow:inset 0 3px 8px rgba(0,0,0,0.25) !important;}
+  .glass:active::after{opacity:1;}
+  .glassG{transition:transform .1s ease !important;}
+  .glassG:active{transform:translateY(1px) scale(0.97) !important;}
   .reqAct{transition:transform .1s ease, background .15s ease, color .15s ease;}
   .reqActB:active{transform:scale(0.88);}
   @keyframes spin{to{transform:rotate(360deg);}}
@@ -31,12 +43,20 @@ export const makeCss = (C) => `
   .ava:hover{filter:brightness(1.1);}
   .pmi:hover{background:${C.menuHover};}
   .weekOpt:hover{background:${C.menuHover};}
+  .capItem:hover{background:${C.menuHover};}
   input::placeholder{color:${C.faint};}
   .fin:focus{border-color:${C.green};}
   input[type=date]{color-scheme:${C.scheme};}
   input[type=checkbox]{accent-color:${C.green};width:15px;height:15px;cursor:pointer;}
-  /* Единое фокус-кольцо для навигации с клавиатуры (доступность).
-     !important перебивает инлайновые outline:none на инпутах/селектах. */
+  svg.lucide, svg[class*="lucide"]{stroke-width:1.75px;}
+  /* Анимация появления контента при смене раздела */
+  @keyframes contentIn{0%{opacity:0;transform:translateY(10px);}100%{opacity:1;transform:translateY(0);}}
+  main{animation:contentIn .45s cubic-bezier(.22,.61,.36,1);}
+  /* Раскрытие капсулы профиля из аватара */
+  @keyframes capsuleGrow{0%{opacity:0;transform:scale(0.12);}55%{opacity:1;}100%{opacity:1;transform:scale(1);}}
+  .capsuleIn{animation:capsuleGrow .38s cubic-bezier(.34,1.35,.5,1);}
+  @media (prefers-reduced-motion: reduce){ main{animation:none;} .pop,.spin,.flashRow,.capsuleIn{animation:none;} }
+  /* Единое фокус-кольцо для навигации с клавиатуры (доступность) */
   button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{
     outline:2px solid ${C.green}!important;outline-offset:2px;border-radius:4px;
   }
