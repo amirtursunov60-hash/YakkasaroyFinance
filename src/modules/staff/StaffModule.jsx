@@ -182,7 +182,7 @@ function PeopleView({ C, st, isMobile, isFinAdmin, people, positions, locations,
                           style={{
                             ...st.weekTag, marginLeft: 0, border: "none", fontFamily: "inherit",
                             cursor: isFinAdmin ? "pointer" : "default", padding: "5px 12px",
-                            color: on ? C.bg : C.sub, background: on ? C.green : `${C.sub}1a`,
+                            color: on ? "#04130a" : C.sub, background: on ? C.green : `${C.sub}1a`,
                           }}
                           onClick={() => isFinAdmin && act(`loc:${p.id}:${l.id}`,
                             () => setLocationAccess(p.id, l.id, !on),
