@@ -49,6 +49,8 @@ export const makeCss = (C) => `
   input[type=date]{color-scheme:${C.scheme};}
   input[type=checkbox]{accent-color:${C.green};width:15px;height:15px;cursor:pointer;}
   svg.lucide, svg[class*="lucide"]{stroke-width:1.75px;}
+  /* Плотная поверхность данных: моноширинные цифры, выравнивание по правому краю */
+  .denseNum{font-family:${C.mono};font-variant-numeric:tabular-nums;letter-spacing:-0.01em;}
   /* Анимация появления контента при смене раздела */
   @keyframes contentIn{0%{opacity:0;transform:translateY(10px);}100%{opacity:1;transform:translateY(0);}}
   main{animation:contentIn .45s cubic-bezier(.22,.61,.36,1);}

@@ -22,6 +22,9 @@ export const THEMES = {
     heroLabel: "#c8e6d6", heroStat: "#a8c4d4", barBg: "rgba(255,255,255,0.10)", danger: "#ff6b5e",
     blueLink: "#7fb4ff", menuHover: "rgba(255,255,255,0.07)", shadow: "rgba(0,0,0,0.45)",
     solid: "#141a24", solid2: "#1b2330",
+    // Liquid Glass: моноширинный шрифт для цифр, усиленное стекло оверлеев, glow-акцент
+    mono: 'ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace',
+    glassStrong: "rgba(26, 32, 42, 0.72)", glow: "rgba(61,220,132,0.55)",
     // Семантические цвета статусов (единые для всех модулей)
     info: "#5b8def", warning: "#e8911c", success: "#2f9e44", successSoft: "#7bd88f",
   },
@@ -37,6 +40,9 @@ export const THEMES = {
     heroLabel: "#1a6e46", heroStat: "#2a6f7d", barBg: "rgba(15,40,70,0.12)", danger: "#dc3b30",
     blueLink: "#1565e0", menuHover: "rgba(255,255,255,0.55)", shadow: "rgba(31,55,90,0.16)",
     solid: "#ffffff", solid2: "#eef3f9",
+    // Liquid Glass: моноширинный шрифт для цифр, усиленное стекло оверлеев, glow-акцент
+    mono: 'ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace',
+    glassStrong: "rgba(255, 255, 255, 0.78)", glow: "rgba(10,165,82,0.4)",
     // Семантические цвета статусов — затемнены под светлый фон для контраста
     info: "#2f6fdb", warning: "#c47d10", success: "#2f9e44", successSoft: "#3d9e5f",
   },
