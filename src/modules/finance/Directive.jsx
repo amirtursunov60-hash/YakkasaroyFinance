@@ -556,7 +556,6 @@ function Delta({ C, delta, small }) {
 // Фонды этапа сгруппированы по папкам (fund_folders) — как в ManaJet.
 // Слева у каждого фонда галочка: отмеченные фонды считаются при «Рассчитать»
 // (если не отмечено ничего — считаются все). Уже одобренные не пересчитываются.
-// На телефоне строки таблицы превращаются в карточки (без горизонтального скролла).
 function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders, compare, prevByFund, onCalc, onApprove, onReset, onResetApproved, onOpenCalc }) {
   const [openFolders, setOpenFolders] = useState({});
   const [checked, setChecked] = useState(() => new Set());
@@ -583,12 +582,15 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
   const prevOf = (id) => (prevByFund?.[id] || 0);
 
   const cbStyle = { width: 15, height: 15, accentColor: C.green, marginRight: 7, flexShrink: 0, cursor: "pointer" };
-  // Десктоп: шесть колонок (Название · % · калькулятор · Доступно · Рассчитано ·
-  // Одобрено). Колонка «Одобрено» при включённом сравнении дополняется строкой
-  // «пр. …» с дельтой к прошлой неделе. На телефоне таблица не используется —
-  // строки рендерятся карточками (см. ветку isMobile ниже).
-  const GRID6 = "150px 58px 46px minmax(104px,1fr) 132px 132px";
-  const frow6 = { ...st.frow, gridTemplateColumns: GRID6, minWidth: 760 };
+  // Шесть колонок. На телефоне первые четыре (Название · % · калькулятор · Доступно)
+  // видны сразу, остальные (Рассчитано · Одобрено) — за горизонтальным скроллом.
+  // minWidth:max-content держит ленту шире экрана (иначе прокрутки не будет).
+  // Колонка «Одобрено» при включённом сравнении дополняется строкой «пр. …» с дельтой.
+  const GRID6 = isMobile
+    ? "190px 42px 32px calc(100vw - 293px) 120px 120px"
+    : "150px 58px 46px minmax(104px,1fr) 132px 132px";
+  const frow6 = { ...st.frow, gridTemplateColumns: GRID6,
+    minWidth: isMobile ? "max-content" : 760, ...(isMobile ? { padding: "12px 8px" } : {}) };
 
   const CalcBtn = () => (
     <button style={st.btnGhost} onClick={() => onCalc([...checked])} className="btn" disabled={!!busy || locked}>
@@ -615,7 +617,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
     prev: t.prev + prevOf(x.fund?.id),
   }), { avail: 0, calc: 0, appr: 0, prev: 0 });
 
-  // ---- Десктоп: строка-фонд таблицы ----
+  // Строка-фонд таблицы (единая для десктопа и телефона; на телефоне — со скроллом)
   const FundRow = ({ x, child }) => {
     const avail = Number(x.fund?.balance || 0);
     const barVal = x.appr || x.calc;
@@ -638,7 +640,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
         </div>
         <div style={st.fPct}>
           {x.rule ? <>{pctOf(x.rule)}<span style={st.pctSign}>%</span></>
-            : <span style={{ fontSize: 11, color: C.faint }}>по видам</span>}
+            : <span style={{ fontSize: 11, color: C.faint }}>{isMobile ? "—" : "по видам"}</span>}
         </div>
         <div style={{ display: "flex", justifyContent: "center", alignItems: "flex-start", alignSelf: "start" }}>
           <button style={{ ...st.iconBtn, width: 26, height: 26, borderRadius: 8, padding: 0,
@@ -650,11 +652,11 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
             <Calculator size={15} />
           </button>
         </div>
-        <div style={{ ...st.fNum, fontWeight: 700 }}>{fmt(avail)}</div>
-        <div style={{ ...st.fNum, color: x.calc ? C.warning : C.faint, fontWeight: x.calc ? 600 : 400 }}>
+        <div className="denseNum" style={{ ...st.fNum, fontWeight: 700 }}>{fmt(avail)}</div>
+        <div className="denseNum" style={{ ...st.fNum, color: x.calc ? C.warning : C.faint, fontWeight: x.calc ? 600 : 400 }}>
           <span className={calcBusy ? "" : x.calc ? "pop" : ""}>{fmt(x.calc)}</span>
         </div>
-        <div style={{ ...st.fNum, color: x.appr ? C.green : C.faint, fontWeight: x.appr ? 700 : 400 }}>
+        <div className="denseNum" style={{ ...st.fNum, color: x.appr ? C.green : C.faint, fontWeight: x.appr ? 700 : 400 }}>
           <span className={x.appr ? "pop" : ""}>{fmt(x.appr)}</span>
           {showPrev && (prev > 0 || x.appr > 0) && (
             <div style={{ fontSize: 10.5, fontWeight: 500, color: C.faint, marginTop: 2 }}>
@@ -666,107 +668,19 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
     );
   };
 
-  // ---- Мобайл: карточка-фонд ----
-  const FundCardM = ({ x, child }) => {
-    const avail = Number(x.fund?.balance || 0);
-    const barVal = x.appr || x.calc;
-    const barBase = avail > 0 ? avail : (barVal || 1);
-    const fill = barVal > 0 ? Math.min(100, (barVal / barBase) * 100) : 0;
-    const hasTypeRules = x.typeRules?.length > 0;
-    const rowEditable = !locked && !(x.appr > 0);
-    const prev = prevOf(x.fund?.id);
-    return (
-      <div style={{ ...st.mCard, ...(child ? { marginLeft: 20 } : {}) }}>
-        <div style={st.mTop}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
-            <input type="checkbox" style={{ ...cbStyle, marginRight: 0 }} checked={checked.has(x.fund.id)}
-              disabled={!rowEditable} onChange={() => toggleOne(x.fund.id)} />
-            <div style={{ display: "flex", alignItems: "baseline", gap: 6, minWidth: 0 }}>
-              <span style={st.fundCode}>{x.fund?.code}</span>
-              <span style={{ ...st.mName, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{x.fund?.name}</span>
-              {x.fund?.is_restricted && <Lock size={11} color={C.faint} />}
-            </div>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-            <span style={st.mPct}>{x.rule ? `${pctOf(x.rule)}%` : "по видам"}</span>
-            {hasTypeRules && (
-              <button style={{ ...st.iconBtn, width: 28, height: 28, borderRadius: 8, padding: 0, color: C.green }}
-                className="btn" disabled={!!busy || locked}
-                title="Распределение по видам дохода" onClick={() => onOpenCalc(x.fund)}>
-                <Calculator size={15} />
-              </button>
-            )}
-          </div>
-        </div>
-        <div style={{ ...st.bar, maxWidth: "100%", marginBottom: 4 }}>
-          <div style={{ ...st.barFill, width: `${fill}%`, background: x.appr ? C.green : C.warning }} />
-        </div>
-        <div style={st.mRow}><span style={st.mLabel}>Доступно</span><span style={{ ...st.mVal, fontWeight: 700 }}>{fmt(avail)}</span></div>
-        <div style={st.mRow}><span style={st.mLabel}>Рассчитано</span><span style={{ ...st.mVal, color: x.calc ? C.warning : C.faint }}>{fmt(x.calc)}</span></div>
-        <div style={st.mRow}><span style={st.mLabel}>Одобрено</span><span style={{ ...st.mVal, color: x.appr ? C.green : C.faint, fontWeight: x.appr ? 700 : 400 }}>{fmt(x.appr)}</span></div>
-        {showPrev && (prev > 0 || x.appr > 0) && (
-          <div style={st.mRow}><span style={st.mLabel}>Прошлая неделя</span>
-            <span style={st.mVal}>{fmt(prev)}<Delta C={C} delta={x.appr - prev} small /></span></div>
-        )}
-      </div>
-    );
-  };
-
-  // ---- Мобайл: карточка-папка (сворачиваемая) ----
-  const FolderCardM = ({ fid, rows }) => {
-    const isOpen = !!openFolders[fid];
-    const fsum = rows.reduce((t, x) => ({
-      avail: t.avail + Number(x.fund?.balance || 0), calc: t.calc + x.calc, appr: t.appr + x.appr,
-    }), { avail: 0, calc: 0, appr: 0 });
-    return (
-      <div>
-        <div style={{ ...st.mCard, cursor: "pointer" }} onClick={() => setOpenFolders((o) => ({ ...o, [fid]: !o[fid] }))}>
-          <div style={st.mTop}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
-              {isOpen ? <FolderOpen size={16} color={C.warning} /> : <Folder size={16} color={C.warning} />}
-              <b style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{folderById[fid]?.name || "Папка"}</b>
-              <span style={{ fontSize: 11, color: C.faint, flexShrink: 0 }}>· {rows.length}</span>
-            </div>
-            <ChevronRight size={16} style={{ transform: isOpen ? "rotate(90deg)" : "none", transition: "transform .2s", color: C.faint, flexShrink: 0 }} />
-          </div>
-          <div style={st.mRow}><span style={st.mLabel}>Доступно</span><span style={{ ...st.mVal, fontWeight: 700 }}>{fmt(fsum.avail)}</span></div>
-          <div style={st.mRow}><span style={st.mLabel}>Одобрено</span><span style={{ ...st.mVal, color: fsum.appr ? C.green : C.faint, fontWeight: fsum.appr ? 700 : 400 }}>{fmt(fsum.appr)}</span></div>
-        </div>
-        {isOpen && rows.map((x) => <FundCardM key={x.fund?.id} x={x} child />)}
-      </div>
-    );
-  };
-
   return (
-    <div style={isMobile ? { marginBottom: 18 } : st.cardWrap}>
+    <div style={st.cardWrap}>
       <section style={st.card}>
         <div style={st.cardHead}>
           <div style={st.cardTitle}>{sg.title}</div>
-          <div style={st.cardTotal}>{fmt(sg.base)} <span style={st.unit}>TJS</span></div>
+          <div className="denseNum" style={st.cardTotal}>{fmt(sg.base)} <span style={st.unit}>TJS</span></div>
         </div>
         <div style={st.subHead}>
           <span style={st.subHeadTitle}>{sg.fundsTitle}</span>
-          <span style={st.subHeadAppr}>Одобрено: <b style={{ color: C.green }}>{fmt(totals.appr)}</b></span>
+          <span style={st.subHeadAppr}>Одобрено: <b className="denseNum" style={{ color: C.green }}>{fmt(totals.appr)}</b></span>
         </div>
-        {sg.rows.length === 0 ? <div style={st.empty}>Фонды этого этапа не настроены</div> : isMobile ? (<>
-          <div style={st.mSelectAll}>
-            <input type="checkbox" style={{ ...cbStyle, marginRight: 0 }} checked={allChecked}
-              disabled={locked || !selectable.length} onChange={toggleAll} />
-            <span style={{ fontSize: 12.5, color: C.sub }}>Выбрать все фонды</span>
-          </div>
-          {flat.map((x) => <FundCardM key={x.fund?.id || x.rule?.id} x={x} />)}
-          {Object.entries(grouped).map(([fid, rows]) => <FolderCardM key={fid} fid={fid} rows={rows} />)}
-          <div style={st.mTotal}>
-            <div style={st.mRow}><span style={{ ...st.mLabel, fontWeight: 700, color: C.text }}>Итого доступно</span><span style={{ ...st.mVal, fontWeight: 700 }}>{fmt(totals.avail)}</span></div>
-            <div style={st.mRow}><span style={st.mLabel}>Рассчитано</span><span style={{ ...st.mVal, fontWeight: 700, color: totals.calc ? C.warning : C.faint }}>{fmt(totals.calc)}</span></div>
-            <div style={st.mRow}><span style={st.mLabel}>Одобрено</span><span style={{ ...st.mVal, fontWeight: 700, color: C.green }}>{fmt(totals.appr)}</span></div>
-            {showPrev && (totals.prev > 0 || totals.appr > 0) && (
-              <div style={st.mRow}><span style={st.mLabel}>Прошлая неделя</span><span style={st.mVal}>{fmt(totals.prev)}<Delta C={C} delta={totals.appr - totals.prev} small /></span></div>
-            )}
-          </div>
-          <div style={st.mActions}><CalcBtn /><ApproveBtn /><ResetBtn /></div>
-        </>) : (<>
-          <div style={{ ...frow6, ...st.frowHead }}>
+        {sg.rows.length === 0 ? <div style={st.empty}>Фонды этого этапа не настроены</div> : (<>
+          <div style={{ ...frow6, ...st.frowHead, ...(isMobile ? { padding: "11px 8px" } : {}) }}>
             <div style={st.fName}>
               <div style={st.fundTop}>
                 <input type="checkbox" style={cbStyle} checked={allChecked}
@@ -799,21 +713,23 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
                   </div>
                   <div style={st.fPct} />
                   <div />
-                  <div style={{ ...st.fNum, fontWeight: 700 }}>{fmt(fsum.avail)}</div>
-                  <div style={{ ...st.fNum, color: fsum.calc ? C.warning : C.faint }}>{fmt(fsum.calc)}</div>
-                  <div style={{ ...st.fNum, color: fsum.appr ? C.green : C.faint, fontWeight: fsum.appr ? 700 : 400 }}>{fmt(fsum.appr)}</div>
+                  <div className="denseNum" style={{ ...st.fNum, fontWeight: 700 }}>{fmt(fsum.avail)}</div>
+                  <div className="denseNum" style={{ ...st.fNum, color: fsum.calc ? C.warning : C.faint }}>{fmt(fsum.calc)}</div>
+                  <div className="denseNum" style={{ ...st.fNum, color: fsum.appr ? C.green : C.faint, fontWeight: fsum.appr ? 700 : 400 }}>{fmt(fsum.appr)}</div>
                 </div>
                 {isOpen && rows.map((x) => <FundRow key={x.fund?.id} x={x} child />)}
               </div>
             );
           })}
           <div style={{ ...frow6, ...st.frowTotal }}>
-            <div style={st.fName}><div style={st.actions}><CalcBtn /><ApproveBtn /><ResetBtn /></div></div>
+            {isMobile ? <div style={st.fName}><b>Итого</b></div> : (
+              <div style={st.fName}><div style={st.actions}><CalcBtn /><ApproveBtn /><ResetBtn /></div></div>
+            )}
             <div style={st.fPct} />
             <div />
-            <div style={{ ...st.fNum, fontWeight: 700 }}>{fmt(totals.avail)}</div>
-            <div style={{ ...st.fNum, fontWeight: 700, color: totals.calc ? C.warning : C.faint }}>{fmt(totals.calc)}</div>
-            <div style={{ ...st.fNum, fontWeight: 700, color: C.green }}>
+            <div className="denseNum" style={{ ...st.fNum, fontWeight: 700 }}>{fmt(totals.avail)}</div>
+            <div className="denseNum" style={{ ...st.fNum, fontWeight: 700, color: totals.calc ? C.warning : C.faint }}>{fmt(totals.calc)}</div>
+            <div className="denseNum" style={{ ...st.fNum, fontWeight: 700, color: C.green }}>
               {fmt(totals.appr)}
               {showPrev && (totals.prev > 0 || totals.appr > 0) && (
                 <div style={{ fontSize: 10.5, fontWeight: 500, color: C.faint, marginTop: 2 }}>
@@ -822,6 +738,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
               )}
             </div>
           </div>
+          {isMobile && <div style={st.mActions}><CalcBtn /><ApproveBtn /><ResetBtn /></div>}
         </>)}
       </section>
     </div>
