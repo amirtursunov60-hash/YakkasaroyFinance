@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { ClipboardList, Calculator, CalendarDays, Check, RotateCcw, RotateCw, Lock, Unlock, Ban, ArrowRightLeft, Loader2, AlertCircle, CheckCircle2, Folder, FolderOpen, ChevronRight, Zap, Scale, TrendingUp, TrendingDown } from "lucide-react";
-import { GlassCard, KpiTile, DenseSurface, GlassButton, GlassModal } from "../../components/glass";
+import { ClipboardList, Calculator, CalendarDays, Check, RotateCcw, RotateCw, Lock, Unlock, Ban, ArrowRightLeft, Loader2, AlertCircle, CheckCircle2, X, Folder, FolderOpen, ChevronRight, Zap, Scale, TrendingUp, TrendingDown } from "lucide-react";
+import { Stat } from "../../components/common";
 import { useTheme } from "../../theme/theme";
 import { fmt } from "../../utils/format";
 import { usePeriod, periodTitle } from "../../lib/PeriodCtx";
@@ -395,21 +395,26 @@ export function Directive() {
   if (loading || periodsLoading) return <div style={st.empty}><Loader2 size={18} className="spin" /> Загрузка…</div>;
 
   return (<>
-    <GlassCard glow pad={isMobile ? "20px 18px" : "24px 28px"} radius={24} style={{ marginBottom: 18 }}>
-      <div style={{ marginBottom: 20 }}>
-        <div style={st.heroLabel}>Директива · недельное распределение ФРС</div>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 5 }}>
-          <CalendarDays size={18} color={C.green} />
-          <span style={{ ...st.heroTitle, whiteSpace: "normal" }}>{period ? periodTitle(period) : "Период не создан — добавьте неделю в шапке"}</span>
+    <section style={st.hero}>
+      <div style={st.heroGlow} />
+      <div style={st.heroContent}>
+        <div style={st.heroTop}>
+          <div>
+            <div style={st.heroLabel}>Директива · недельное распределение ФРС</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 4 }}>
+              <CalendarDays size={18} color={C.green} />
+              <span style={st.heroTitle}>{period ? periodTitle(period) : "Период не создан — добавьте неделю в шапке"}</span>
+            </div>
+          </div>
+        </div>
+        <div style={st.heroStats}>
+          <Stat label="Доход на этой неделе" value={fmt(income)} unit="TJS" />
+          <Stat label="Доступно во всех фондах" value={fmt(fundsTotal)} unit="TJS" accent />
+          <Stat label="Доход за прошлую неделю" value={fmt(prevIncome)} unit="TJS" />
+          <Stat label="Одобрено распределение" value={fmt(approvedTotal)} unit="TJS" />
         </div>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(auto-fit, minmax(170px, 1fr))", gap: 12 }}>
-        <KpiTile label="Доход на этой неделе" value={fmt(income)} unit="TJS" />
-        <KpiTile label="Доступно во всех фондах" value={fmt(fundsTotal)} unit="TJS" accent />
-        <KpiTile label="Доход за прошлую неделю" value={fmt(prevIncome)} unit="TJS" />
-        <KpiTile label="Одобрено распределение" value={fmt(approvedTotal)} unit="TJS" />
-      </div>
-    </GlassCard>
+    </section>
 
     {err && <div style={{ ...st.reqError, marginBottom: 14 }}><AlertCircle size={15} /> {err}</div>}
     {done && <div style={{ ...st.reqError, marginBottom: 14, color: C.green, background: `${C.green}1a`, borderColor: `${C.green}44` }}><CheckCircle2 size={15} /> {done}</div>}
@@ -422,17 +427,18 @@ export function Directive() {
 
     {rules.length > 0 && period && (
       <div style={st.dirToolbar} className="dirToolbar">
-        <GlassButton variant="primary" onClick={doAutoAll} busy={busy === "auto"}
-          disabled={!!busy || isClosed || !hasUnapproved}
+        <button style={{ ...st.btnGreen, opacity: busy === "auto" ? 0.7 : 1 }} className="btn"
+          onClick={doAutoAll} disabled={!!busy || isClosed || !hasUnapproved}
           title={isClosed ? "Период закрыт" : hasUnapproved ? "Рассчитать и одобрить все этапы по схеме недели" : "Все этапы уже одобрены"}>
           {busy === "auto" ? <Loader2 size={15} className="spin" /> : <Zap size={15} />}
-          {isMobile ? "Одобрить всё" : "Рассчитать и одобрить всё"}
-        </GlassButton>
+          {isMobile ? " Одобрить всё" : " Рассчитать и одобрить всё"}
+        </button>
         {canCompare && (
-          <GlassButton variant="toggle" active={compare} onClick={() => setCompare((v) => !v)}
+          <button style={{ ...st.btnGhost, ...(compare ? st.dirToggleOn : {}) }} className="btn"
+            onClick={() => setCompare((v) => !v)}
             title="Показать суммы фондов за прошлую неделю и динамику">
             <Scale size={15} /> {compare ? "Скрыть сравнение" : "Сравнить с прошлой неделей"}
-          </GlassButton>
+          </button>
         )}
       </div>
     )}
@@ -447,14 +453,14 @@ export function Directive() {
     ))}
 
     {/* Итог распределения на ФП */}
-    <GlassCard pad={isMobile ? "18px 18px" : "20px 22px"} radius={22} style={{ marginTop: 18 }}>
+    <section style={st.fpCard}>
       <div style={st.fpRows}>
-        <div style={st.fpRow}><span style={st.fpLabelBold}>Сумма к распределению на ФП</span><span className="denseNum" style={st.fpValBold}>{fmt(income)}</span></div>
-        <div style={st.fpRow}><span style={st.fpLabel}>Распределено по фондам (Реестр)</span><span className="denseNum" style={st.fpVal}>{fmt(approvedTotal)}</span></div>
+        <div style={st.fpRow}><span style={st.fpLabelBold}>Сумма к распределению на ФП</span><span style={st.fpValBold}>{fmt(income)}</span></div>
+        <div style={st.fpRow}><span style={st.fpLabel}>Распределено по фондам (Реестр)</span><span style={st.fpVal}>{fmt(approvedTotal)}</span></div>
         {compare && canCompare && (
           <div style={st.fpRow}>
             <span style={st.fpLabel}>Прошлая неделя · доход / распределено</span>
-            <span className="denseNum" style={st.fpVal}>
+            <span style={st.fpVal}>
               {fmt(prevIncome)} / {fmt(prevTotal)}
               <Delta C={C} delta={approvedTotal - prevTotal} />
             </span>
@@ -462,27 +468,27 @@ export function Directive() {
         )}
         <div style={{ ...st.fpRow, ...st.fpRemainder }}>
           <span style={st.fpLabelBold}>Остаток нераспределённого</span>
-          <span className="denseNum" style={{ ...st.fpValBold, color: remainder < -0.01 ? C.danger : C.green }}>{fmt(remainder)}</span>
+          <span style={{ ...st.fpValBold, color: remainder < -0.01 ? C.danger : C.green }}>{fmt(remainder)}</span>
         </div>
       </div>
       <div style={st.fpActions} className="fpActions">
-        <GlassButton variant={requestsBlocked ? "danger" : "ghost"} onClick={toggleRequests}
-          busy={busy === "block"} disabled={!!busy || isClosed || !period}>
+        <button style={{ ...st.fpBtn, ...(requestsBlocked ? st.fpBtnDanger : st.fpBtnGhost), opacity: busy === "block" ? 0.7 : 1 }}
+          className="btn fpBtn" onClick={toggleRequests} disabled={busy || isClosed || !period}>
           {busy === "block" ? <Loader2 size={15} className="spin" />
             : requestsBlocked ? <Lock size={15} /> : <Ban size={15} />}
-          {requestsBlocked ? "Подача заявок запрещена" : "Запретить подачу заявок"}
-        </GlassButton>
-        <GlassButton variant={isClosed ? "danger" : "primary"} onClick={doToggleClose}
-          busy={busy === "close"} disabled={!!busy || !period}>
+          {requestsBlocked ? " Подача заявок запрещена" : " Запретить подачу заявок"}
+        </button>
+        <button style={{ ...st.fpBtn, ...(isClosed ? st.fpBtnDanger : st.fpBtnPrimary), opacity: busy === "close" ? 0.7 : 1 }}
+          className="btn fpBtn" onClick={doToggleClose} disabled={busy || !period}>
           {busy === "close" ? <Loader2 size={15} className="spin" /> : isClosed ? <Unlock size={15} /> : <Lock size={15} />}
-          {isClosed ? "Открыть неделю" : "Закрыть период ФП"}
-        </GlassButton>
-        <GlassButton variant="ghost" onClick={() => setTransferOpen(true)}
-          disabled={!!busy || isClosed || !period || remainder <= 0}>
+          {isClosed ? " Открыть неделю" : " Закрыть период ФП"}
+        </button>
+        <button style={{ ...st.fpBtn, ...st.fpBtnGhost }} className="btn fpBtn"
+          onClick={() => setTransferOpen(true)} disabled={busy || isClosed || !period || remainder <= 0}>
           <ArrowRightLeft size={15} /> Перенести остатки в фонд
-        </GlassButton>
+        </button>
       </div>
-    </GlassCard>
+    </section>
 
     {/* Заявки — появятся после реализации подачи в Личном кабинете */}
     <section style={st.reqSection}>
@@ -577,8 +583,6 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
   const prevOf = (id) => (prevByFund?.[id] || 0);
 
   const cbStyle = { width: 15, height: 15, accentColor: C.green, marginRight: 7, flexShrink: 0, cursor: "pointer" };
-  // Мобайл: строка-данные на плотной поверхности (DenseSurface), не стекло
-  const mItem = { padding: "13px 14px", borderTop: `1px solid ${C.line}` };
   // Десктоп: шесть колонок (Название · % · калькулятор · Доступно · Рассчитано ·
   // Одобрено). Колонка «Одобрено» при включённом сравнении дополняется строкой
   // «пр. …» с дельтой к прошлой неделе. На телефоне таблица не используется —
@@ -587,20 +591,23 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
   const frow6 = { ...st.frow, gridTemplateColumns: GRID6, minWidth: 760 };
 
   const CalcBtn = () => (
-    <GlassButton variant="ghost" full={isMobile} onClick={() => onCalc([...checked])} disabled={!!busy || locked}>
+    <button style={st.btnGhost} onClick={() => onCalc([...checked])} className="btn" disabled={!!busy || locked}>
       {calcBusy ? <span className="spin"><RotateCw size={15} /></span> : <Calculator size={15} />} Рассчитать
-    </GlassButton>
+    </button>
   );
-  const ApproveBtn = () => (
-    <GlassButton variant="primary" full={isMobile} onClick={onApprove} busy={apprBusy}
-      disabled={!!busy || locked || !hasApprovable}>
-      {apprBusy ? <span className="spin"><RotateCw size={15} /></span> : <Check size={15} />} Одобрить
-    </GlassButton>
-  );
+  const ApproveBtn = () => {
+    const ok = !locked && hasApprovable;
+    return (
+      <button style={{ ...st.btnGreen, opacity: ok ? (busy ? 0.7 : 1) : 0.35, cursor: ok ? "pointer" : "not-allowed" }}
+        onClick={onApprove} className="btn" disabled={!!busy || !ok}>
+        {apprBusy ? <span className="spin"><RotateCw size={15} /></span> : <Check size={15} />} Одобрить
+      </button>
+    );
+  };
   const ResetBtn = () => (
-    <GlassButton variant="ghost" full={isMobile} onClick={sg.isApproved ? onResetApproved : onReset} disabled={!!busy || locked}>
+    <button style={st.btnGhost} onClick={sg.isApproved ? onResetApproved : onReset} className="btn" disabled={!!busy || locked}>
       {resetBusy ? <span className="spin"><RotateCw size={14} /></span> : <RotateCcw size={14} />} Сброс
-    </GlassButton>
+    </button>
   );
 
   const totals = sg.rows.reduce((t, x) => ({
@@ -643,11 +650,11 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
             <Calculator size={15} />
           </button>
         </div>
-        <div className="denseNum" style={{ ...st.fNum, fontWeight: 700 }}>{fmt(avail)}</div>
-        <div className="denseNum" style={{ ...st.fNum, color: x.calc ? C.warning : C.faint, fontWeight: x.calc ? 600 : 400 }}>
+        <div style={{ ...st.fNum, fontWeight: 700 }}>{fmt(avail)}</div>
+        <div style={{ ...st.fNum, color: x.calc ? C.warning : C.faint, fontWeight: x.calc ? 600 : 400 }}>
           <span className={calcBusy ? "" : x.calc ? "pop" : ""}>{fmt(x.calc)}</span>
         </div>
-        <div className="denseNum" style={{ ...st.fNum, color: x.appr ? C.green : C.faint, fontWeight: x.appr ? 700 : 400 }}>
+        <div style={{ ...st.fNum, color: x.appr ? C.green : C.faint, fontWeight: x.appr ? 700 : 400 }}>
           <span className={x.appr ? "pop" : ""}>{fmt(x.appr)}</span>
           {showPrev && (prev > 0 || x.appr > 0) && (
             <div style={{ fontSize: 10.5, fontWeight: 500, color: C.faint, marginTop: 2 }}>
@@ -669,7 +676,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
     const rowEditable = !locked && !(x.appr > 0);
     const prev = prevOf(x.fund?.id);
     return (
-      <div style={{ ...mItem, ...(child ? { paddingLeft: 28, background: C.rowChild } : {}) }}>
+      <div style={{ ...st.mCard, ...(child ? { marginLeft: 20 } : {}) }}>
         <div style={st.mTop}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
             <input type="checkbox" style={{ ...cbStyle, marginRight: 0 }} checked={checked.has(x.fund.id)}
@@ -694,12 +701,12 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
         <div style={{ ...st.bar, maxWidth: "100%", marginBottom: 4 }}>
           <div style={{ ...st.barFill, width: `${fill}%`, background: x.appr ? C.green : C.warning }} />
         </div>
-        <div style={st.mRow}><span style={st.mLabel}>Доступно</span><span className="denseNum" style={{ ...st.mVal, fontWeight: 700 }}>{fmt(avail)}</span></div>
-        <div style={st.mRow}><span style={st.mLabel}>Рассчитано</span><span className="denseNum" style={{ ...st.mVal, color: x.calc ? C.warning : C.faint }}>{fmt(x.calc)}</span></div>
-        <div style={st.mRow}><span style={st.mLabel}>Одобрено</span><span className="denseNum" style={{ ...st.mVal, color: x.appr ? C.green : C.faint, fontWeight: x.appr ? 700 : 400 }}>{fmt(x.appr)}</span></div>
+        <div style={st.mRow}><span style={st.mLabel}>Доступно</span><span style={{ ...st.mVal, fontWeight: 700 }}>{fmt(avail)}</span></div>
+        <div style={st.mRow}><span style={st.mLabel}>Рассчитано</span><span style={{ ...st.mVal, color: x.calc ? C.warning : C.faint }}>{fmt(x.calc)}</span></div>
+        <div style={st.mRow}><span style={st.mLabel}>Одобрено</span><span style={{ ...st.mVal, color: x.appr ? C.green : C.faint, fontWeight: x.appr ? 700 : 400 }}>{fmt(x.appr)}</span></div>
         {showPrev && (prev > 0 || x.appr > 0) && (
           <div style={st.mRow}><span style={st.mLabel}>Прошлая неделя</span>
-            <span className="denseNum" style={st.mVal}>{fmt(prev)}<Delta C={C} delta={x.appr - prev} small /></span></div>
+            <span style={st.mVal}>{fmt(prev)}<Delta C={C} delta={x.appr - prev} small /></span></div>
         )}
       </div>
     );
@@ -713,7 +720,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
     }), { avail: 0, calc: 0, appr: 0 });
     return (
       <div>
-        <div style={{ ...mItem, cursor: "pointer", background: C.panel2 }} onClick={() => setOpenFolders((o) => ({ ...o, [fid]: !o[fid] }))}>
+        <div style={{ ...st.mCard, cursor: "pointer" }} onClick={() => setOpenFolders((o) => ({ ...o, [fid]: !o[fid] }))}>
           <div style={st.mTop}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
               {isOpen ? <FolderOpen size={16} color={C.warning} /> : <Folder size={16} color={C.warning} />}
@@ -722,32 +729,26 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
             </div>
             <ChevronRight size={16} style={{ transform: isOpen ? "rotate(90deg)" : "none", transition: "transform .2s", color: C.faint, flexShrink: 0 }} />
           </div>
-          <div style={st.mRow}><span style={st.mLabel}>Доступно</span><span className="denseNum" style={{ ...st.mVal, fontWeight: 700 }}>{fmt(fsum.avail)}</span></div>
-          <div style={st.mRow}><span style={st.mLabel}>Одобрено</span><span className="denseNum" style={{ ...st.mVal, color: fsum.appr ? C.green : C.faint, fontWeight: fsum.appr ? 700 : 400 }}>{fmt(fsum.appr)}</span></div>
+          <div style={st.mRow}><span style={st.mLabel}>Доступно</span><span style={{ ...st.mVal, fontWeight: 700 }}>{fmt(fsum.avail)}</span></div>
+          <div style={st.mRow}><span style={st.mLabel}>Одобрено</span><span style={{ ...st.mVal, color: fsum.appr ? C.green : C.faint, fontWeight: fsum.appr ? 700 : 400 }}>{fmt(fsum.appr)}</span></div>
         </div>
         {isOpen && rows.map((x) => <FundCardM key={x.fund?.id} x={x} child />)}
       </div>
     );
   };
 
-  const actionBar = (
-    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", padding: isMobile ? "12px" : "14px 16px 16px" }}>
-      <CalcBtn /><ApproveBtn /><ResetBtn />
-    </div>
-  );
-
   return (
-    <GlassCard radius={22} pad={0} style={{ marginBottom: 18 }}>
-      <div style={st.cardHead}>
-        <div style={st.cardTitle}>{sg.title}</div>
-        <div className="denseNum" style={st.cardTotal}>{fmt(sg.base)} <span style={st.unit}>TJS</span></div>
-      </div>
-      <div style={st.subHead}>
-        <span style={st.subHeadTitle}>{sg.fundsTitle}</span>
-        <span style={st.subHeadAppr}>Одобрено: <b className="denseNum" style={{ color: C.green }}>{fmt(totals.appr)}</b></span>
-      </div>
-      {sg.rows.length === 0 ? <div style={st.empty}>Фонды этого этапа не настроены</div> : isMobile ? (<>
-        <DenseSurface style={{ margin: "0 12px" }}>
+    <div style={isMobile ? { marginBottom: 18 } : st.cardWrap}>
+      <section style={st.card}>
+        <div style={st.cardHead}>
+          <div style={st.cardTitle}>{sg.title}</div>
+          <div style={st.cardTotal}>{fmt(sg.base)} <span style={st.unit}>TJS</span></div>
+        </div>
+        <div style={st.subHead}>
+          <span style={st.subHeadTitle}>{sg.fundsTitle}</span>
+          <span style={st.subHeadAppr}>Одобрено: <b style={{ color: C.green }}>{fmt(totals.appr)}</b></span>
+        </div>
+        {sg.rows.length === 0 ? <div style={st.empty}>Фонды этого этапа не настроены</div> : isMobile ? (<>
           <div style={st.mSelectAll}>
             <input type="checkbox" style={{ ...cbStyle, marginRight: 0 }} checked={allChecked}
               disabled={locked || !selectable.length} onChange={toggleAll} />
@@ -755,18 +756,16 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
           </div>
           {flat.map((x) => <FundCardM key={x.fund?.id || x.rule?.id} x={x} />)}
           {Object.entries(grouped).map(([fid, rows]) => <FolderCardM key={fid} fid={fid} rows={rows} />)}
-          <div style={{ ...mItem, background: C.panel2 }}>
-            <div style={st.mRow}><span style={{ ...st.mLabel, fontWeight: 700, color: C.text }}>Итого доступно</span><span className="denseNum" style={{ ...st.mVal, fontWeight: 700 }}>{fmt(totals.avail)}</span></div>
-            <div style={st.mRow}><span style={st.mLabel}>Рассчитано</span><span className="denseNum" style={{ ...st.mVal, fontWeight: 700, color: totals.calc ? C.warning : C.faint }}>{fmt(totals.calc)}</span></div>
-            <div style={st.mRow}><span style={st.mLabel}>Одобрено</span><span className="denseNum" style={{ ...st.mVal, fontWeight: 700, color: C.green }}>{fmt(totals.appr)}</span></div>
+          <div style={st.mTotal}>
+            <div style={st.mRow}><span style={{ ...st.mLabel, fontWeight: 700, color: C.text }}>Итого доступно</span><span style={{ ...st.mVal, fontWeight: 700 }}>{fmt(totals.avail)}</span></div>
+            <div style={st.mRow}><span style={st.mLabel}>Рассчитано</span><span style={{ ...st.mVal, fontWeight: 700, color: totals.calc ? C.warning : C.faint }}>{fmt(totals.calc)}</span></div>
+            <div style={st.mRow}><span style={st.mLabel}>Одобрено</span><span style={{ ...st.mVal, fontWeight: 700, color: C.green }}>{fmt(totals.appr)}</span></div>
             {showPrev && (totals.prev > 0 || totals.appr > 0) && (
-              <div style={st.mRow}><span style={st.mLabel}>Прошлая неделя</span><span className="denseNum" style={st.mVal}>{fmt(totals.prev)}<Delta C={C} delta={totals.appr - totals.prev} small /></span></div>
+              <div style={st.mRow}><span style={st.mLabel}>Прошлая неделя</span><span style={st.mVal}>{fmt(totals.prev)}<Delta C={C} delta={totals.appr - totals.prev} small /></span></div>
             )}
           </div>
-        </DenseSurface>
-        {actionBar}
-      </>) : (<>
-        <DenseSurface style={{ margin: "0 16px", overflowX: "auto" }}>
+          <div style={st.mActions}><CalcBtn /><ApproveBtn /><ResetBtn /></div>
+        </>) : (<>
           <div style={{ ...frow6, ...st.frowHead }}>
             <div style={st.fName}>
               <div style={st.fundTop}>
@@ -800,21 +799,21 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
                   </div>
                   <div style={st.fPct} />
                   <div />
-                  <div className="denseNum" style={{ ...st.fNum, fontWeight: 700 }}>{fmt(fsum.avail)}</div>
-                  <div className="denseNum" style={{ ...st.fNum, color: fsum.calc ? C.warning : C.faint }}>{fmt(fsum.calc)}</div>
-                  <div className="denseNum" style={{ ...st.fNum, color: fsum.appr ? C.green : C.faint, fontWeight: fsum.appr ? 700 : 400 }}>{fmt(fsum.appr)}</div>
+                  <div style={{ ...st.fNum, fontWeight: 700 }}>{fmt(fsum.avail)}</div>
+                  <div style={{ ...st.fNum, color: fsum.calc ? C.warning : C.faint }}>{fmt(fsum.calc)}</div>
+                  <div style={{ ...st.fNum, color: fsum.appr ? C.green : C.faint, fontWeight: fsum.appr ? 700 : 400 }}>{fmt(fsum.appr)}</div>
                 </div>
                 {isOpen && rows.map((x) => <FundRow key={x.fund?.id} x={x} child />)}
               </div>
             );
           })}
           <div style={{ ...frow6, ...st.frowTotal }}>
-            <div style={st.fName}><b style={{ alignSelf: "center" }}>Итого</b></div>
+            <div style={st.fName}><div style={st.actions}><CalcBtn /><ApproveBtn /><ResetBtn /></div></div>
             <div style={st.fPct} />
             <div />
-            <div className="denseNum" style={{ ...st.fNum, fontWeight: 700 }}>{fmt(totals.avail)}</div>
-            <div className="denseNum" style={{ ...st.fNum, fontWeight: 700, color: totals.calc ? C.warning : C.faint }}>{fmt(totals.calc)}</div>
-            <div className="denseNum" style={{ ...st.fNum, fontWeight: 700, color: C.green }}>
+            <div style={{ ...st.fNum, fontWeight: 700 }}>{fmt(totals.avail)}</div>
+            <div style={{ ...st.fNum, fontWeight: 700, color: totals.calc ? C.warning : C.faint }}>{fmt(totals.calc)}</div>
+            <div style={{ ...st.fNum, fontWeight: 700, color: C.green }}>
               {fmt(totals.appr)}
               {showPrev && (totals.prev > 0 || totals.appr > 0) && (
                 <div style={{ fontSize: 10.5, fontWeight: 500, color: C.faint, marginTop: 2 }}>
@@ -823,10 +822,9 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
               )}
             </div>
           </div>
-        </DenseSurface>
-        {actionBar}
-      </>)}
-    </GlassCard>
+        </>)}
+      </section>
+    </div>
   );
 }
 
@@ -846,19 +844,17 @@ function FundCalcModal({ C, st, fund, stage, rules, incomeByType, approved, busy
   const factTotal = rules.reduce((a, r) => a + (incomeByType[r.income_type?.id] || 0), 0);
 
   return (
-    <GlassModal width={560} onClose={onClose}
-      title={`Одобрение · ${fund.code} ${fund.name}`}
-      subtitle={<>Этап «{stage.title}» · своя схема по видам дохода
-        {approved > 0 && <b style={{ color: C.green }}> · уже одобрено {fmt(approved)}</b>}</>}
-      footer={<>
-        <GlassButton variant="ghost" onClick={onClose}>Отмена</GlassButton>
-        <GlassButton variant="primary" busy={busy} disabled={busy || locked || total <= 0 || approved > 0}
-          title={approved > 0 ? "Фонд уже одобрен на этом этапе — сбросьте этап для повтора" : ""}
-          onClick={() => onApprove(Math.round(total * 100) / 100)}>
-          {busy ? <Loader2 size={15} className="spin" /> : <Check size={15} />} Одобрить {fmt(total)}
-        </GlassButton>
-      </>}>
-      <DenseSurface>
+    <div style={st.mdOverlay} onClick={onClose}>
+      <div style={{ ...st.mdCard, width: "min(560px, 100%)" }} onClick={(e) => e.stopPropagation()}>
+        <div style={st.mdHead}>
+          <div style={st.mdTitle}>Одобрение · {fund.code} {fund.name}</div>
+          <button style={st.iconBtn} onClick={onClose}><X size={17} /></button>
+        </div>
+        <div style={{ fontSize: 12, color: C.sub, marginBottom: 10 }}>
+          Этап «{stage.title}» · своя схема по видам дохода
+          {approved > 0 && <b style={{ color: C.green }}> · уже одобрено {fmt(approved)}</b>}
+        </div>
+
         <div style={{ ...st.frow, ...st.frowHead, gridTemplateColumns: "1fr 90px 56px 90px 100px" }}>
           <div style={st.fName}>Вид дохода</div>
           <div style={st.fNum}>Факт</div>
@@ -875,14 +871,14 @@ function FundCalcModal({ C, st, fund, stage, rules, incomeByType, approved, busy
                 <div style={{ ...st.fName, fontSize: 12.5 }}>
                   <span style={st.fundCode}>{r.income_type?.code}</span> {r.income_type?.name}
                 </div>
-                <div className="denseNum" style={{ ...st.fNum, fontSize: 12.5 }}>{fmt(fact)}</div>
+                <div style={{ ...st.fNum, fontSize: 12.5 }}>{fmt(fact)}</div>
                 <div style={{ ...st.fPct, fontSize: 12 }}>{r.percent ? `${Number(r.percent)}%` : "фикс"}</div>
-                <div className="denseNum" style={{ ...st.fNum, fontSize: 12.5, color: calc ? C.warning : C.faint }}>{fmt(calc)}</div>
+                <div style={{ ...st.fNum, fontSize: 12.5, color: calc ? C.warning : C.faint }}>{fmt(calc)}</div>
                 <div style={{ textAlign: "right" }}>
                   <input type="number" inputMode="decimal" value={vals[r.id]}
                     onChange={(e) => setVals((p) => ({ ...p, [r.id]: e.target.value }))}
                     onWheel={(e) => e.target.blur()}
-                    className="denseNum" style={{ ...st.pctInput, width: 90, padding: "6px 8px", fontSize: 12.5 }} />
+                    style={{ ...st.pctInput, width: 90, padding: "6px 8px", fontSize: 12.5 }} />
                 </div>
               </div>
             );
@@ -890,13 +886,23 @@ function FundCalcModal({ C, st, fund, stage, rules, incomeByType, approved, busy
         </div>
         <div style={{ ...st.frow, ...st.frowTotal, gridTemplateColumns: "1fr 90px 56px 90px 100px" }}>
           <div style={st.fName}><b>Итого</b></div>
-          <div className="denseNum" style={{ ...st.fNum, fontWeight: 700 }}>{fmt(factTotal)}</div>
+          <div style={{ ...st.fNum, fontWeight: 700 }}>{fmt(factTotal)}</div>
           <div style={st.fPct} />
           <div style={st.fNum} />
-          <div className="denseNum" style={{ ...st.fNum, fontWeight: 800, color: C.green }}>{fmt(total)}</div>
+          <div style={{ ...st.fNum, fontWeight: 800, color: C.green }}>{fmt(total)}</div>
         </div>
-      </DenseSurface>
-    </GlassModal>
+
+        <div style={st.mdActions}>
+          <button style={st.btnGhost} className="btn" onClick={onClose}>Отмена</button>
+          <button style={{ ...st.btnGreen, opacity: busy ? 0.7 : 1 }} className="btn"
+            disabled={busy || locked || total <= 0 || approved > 0}
+            title={approved > 0 ? "Фонд уже одобрен на этом этапе — сбросьте этап для повтора" : ""}
+            onClick={() => onApprove(Math.round(total * 100) / 100)}>
+            {busy ? <Loader2 size={15} className="spin" /> : <Check size={15} />} Одобрить {fmt(total)}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -905,25 +911,32 @@ function FundCalcModal({ C, st, fund, stage, rules, incomeByType, approved, busy
 function TransferModal({ C, st, funds, remainder, busy, onClose, onTransfer }) {
   const [fundId, setFundId] = useState(funds.find((f) => f.code === "FD6")?.id || funds[0]?.id || "");
   return (
-    <GlassModal width={420} onClose={onClose} title="Перенести остаток в фонд"
-      footer={<>
-        <GlassButton variant="ghost" onClick={onClose}>Отмена</GlassButton>
-        <GlassButton variant="primary" busy={busy} onClick={() => onTransfer(fundId)} disabled={busy || !fundId}>
-          {busy ? <Loader2 size={15} className="spin" /> : <ArrowRightLeft size={15} />} Перенести
-        </GlassButton>
-      </>}>
-      <div style={{ ...st.reqField, marginBottom: 12 }}>
-        <span style={st.reqFieldLbl}>Сумма остатка</span>
-        <div className="denseNum" style={{ fontSize: 22, fontWeight: 800 }}>
-          {fmt(remainder)} <span style={st.locUnit}>TJS</span>
+    <div style={st.mdOverlay} onClick={onClose}>
+      <div style={{ ...st.mdCard, width: "min(420px, 100%)" }} onClick={(e) => e.stopPropagation()}>
+        <div style={st.mdHead}>
+          <div style={st.mdTitle}>Перенести остаток в фонд</div>
+          <button style={st.iconBtn} onClick={onClose}><X size={17} /></button>
+        </div>
+        <div style={{ ...st.reqField, marginBottom: 12 }}>
+          <span style={st.reqFieldLbl}>Сумма остатка</span>
+          <div style={{ fontSize: 22, fontWeight: 800, fontVariantNumeric: "tabular-nums" }}>
+            {fmt(remainder)} <span style={st.locUnit}>TJS</span>
+          </div>
+        </div>
+        <div style={st.reqField}>
+          <span style={st.reqFieldLbl}>Фонд-получатель</span>
+          <select style={st.mdSelect} className="fin" value={fundId} onChange={(e) => setFundId(e.target.value)}>
+            {funds.map((f) => <option key={f.id} value={f.id}>{f.code} — {f.name}</option>)}
+          </select>
+        </div>
+        <div style={st.mdActions}>
+          <button style={st.btnGhost} className="btn" onClick={onClose}>Отмена</button>
+          <button style={{ ...st.btnGreen, opacity: busy ? 0.7 : 1 }} className="btn"
+            onClick={() => onTransfer(fundId)} disabled={busy || !fundId}>
+            {busy ? <Loader2 size={15} className="spin" /> : <ArrowRightLeft size={15} />} Перенести
+          </button>
         </div>
       </div>
-      <div style={st.reqField}>
-        <span style={st.reqFieldLbl}>Фонд-получатель</span>
-        <select style={st.mdSelect} className="fin" value={fundId} onChange={(e) => setFundId(e.target.value)}>
-          {funds.map((f) => <option key={f.id} value={f.id}>{f.code} — {f.name}</option>)}
-        </select>
-      </div>
-    </GlassModal>
+    </div>
   );
 }
