@@ -187,7 +187,7 @@ export function BillsScreen({ kind, ui }) {
     </div>
 
     {!filtered.length && (
-      <div style={{ ...st.locCard, ...st.empty }}>
+      <div style={{ ...st.dataCard, ...st.empty }}>
         {bills.length ? "Нет счетов с этим статусом" : ui.emptyText}
       </div>
     )}
@@ -198,7 +198,7 @@ export function BillsScreen({ kind, ui }) {
       const today = new Date().toISOString().slice(0, 10);
       const isOverdue = b.due_on && b.due_on < today && !["paid", "rejected"].includes(b.status);
       return (
-        <div key={b.id} style={{ ...st.locCard, marginBottom: 10 }}>
+        <div key={b.id} style={{ ...st.dataCard, marginBottom: 10 }}>
           <div style={{ ...st.locHead, cursor: "pointer" }} className="locHead"
             onClick={() => setExpanded((e) => ({ ...e, [b.id]: !e[b.id] }))}>
             <div style={{ ...st.locDot, background: isOverdue ? C.danger : m.color }} />

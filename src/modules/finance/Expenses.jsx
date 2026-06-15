@@ -205,7 +205,7 @@ export function Expenses() {
 
     {/* Дерево статей РД */}
     {!tree.length && (
-      <div style={{ ...st.locCard, ...st.empty }}>
+      <div style={{ ...st.dataCard, ...st.empty }}>
         Справочник статей расходов пуст. Примените сид-миграцию из supabase/migrations (см. supabase/README.md).
       </div>
     )}
@@ -215,7 +215,7 @@ export function Expenses() {
         const hasChildren = cat.children.length > 0;
         const r = rolled[cat.id] || { cur: 0, prev: 0 };
         return (
-          <div key={cat.id} style={st.locCard}>
+          <div key={cat.id} style={st.dataCard}>
             <div style={st.locHead} className="locHead" onClick={() => hasChildren && setOpen((o) => ({ ...o, [cat.id]: !o?.[cat.id] }))}>
               <div style={{ ...st.locDot, background: PALETTE[i % PALETTE.length] }} />
               <div style={st.locTitle}>
@@ -278,7 +278,7 @@ export function Expenses() {
       </div>
 
       {!filtered.length && (
-        <div style={{ ...st.locCard, ...st.empty }}>
+        <div style={{ ...st.dataCard, ...st.empty }}>
           {requests.length ? "Нет заявок с этим статусом" : "Заявок на этой неделе пока нет — подайте первую кнопкой выше"}
         </div>
       )}
@@ -287,7 +287,7 @@ export function Expenses() {
         const m = ST_META[req.status] || {};
         const isExp = !!expanded[req.id];
         return (
-          <div key={req.id} style={{ ...st.locCard, marginBottom: 10 }}>
+          <div key={req.id} style={{ ...st.dataCard, marginBottom: 10 }}>
             <div style={{ ...st.locHead, cursor: "pointer" }} className="locHead"
               onClick={() => setExpanded((e) => ({ ...e, [req.id]: !e[req.id] }))}>
               <div style={{ ...st.locDot, background: m.color }} />

@@ -152,7 +152,7 @@ export function Income() {
 
     {/* Дерево видов дохода */}
     {!tree.length && !loadError && (
-      <div style={{ ...st.locCard, ...st.empty }}>
+      <div style={{ ...st.dataCard, ...st.empty }}>
         Справочник видов дохода пуст. Примените сид-миграцию из supabase/migrations (см. supabase/README.md).
       </div>
     )}
@@ -162,7 +162,7 @@ export function Income() {
         const hasChildren = loc.children.length > 0;
         const r = rolled[loc.id] || { cur: 0, prev: 0 };
         return (
-          <div key={loc.id} style={st.locCard}>
+          <div key={loc.id} style={st.dataCard}>
             <div style={st.locHead} className="locHead" onClick={() => hasChildren && setOpen((o) => ({ ...o, [loc.id]: !o?.[loc.id] }))}>
               <div style={{ ...st.locDot, background: PALETTE[i % PALETTE.length] }} />
               <div style={st.locTitle}>
