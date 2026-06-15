@@ -1,6 +1,14 @@
+// Состояния статистик ХМС (Приложение А ТЗ v2)
+export type StatState =
+  | "nonexistence" // Несуществование
+  | "power"        // Власть
+  | "affluence"    // Изобилие
+  | "normal"       // Норма
+  | "emergency"    // Чрезвычайное положение
+  | "danger";      // Опасность
 
 // Автоопределение состояния по тренду последних 4 недель
-export function calcState(values, invert) {
+export function calcState(values: number[] | null | undefined, invert?: boolean): StatState {
   if (!values || values.length < 4) return "nonexistence";
   const v = invert ? values.map((x) => -x) : values.slice();
   const last = v.slice(-4);
@@ -16,8 +24,8 @@ export function calcState(values, invert) {
 }
 
 
-export function weekLabels(n) {
-  const out = [];
+export function weekLabels(n: number): string[] {
+  const out: string[] = [];
   const end = new Date(2026, 5, 10);
   for (let i = n - 1; i >= 0; i--) {
     const d = new Date(end); d.setDate(end.getDate() - i * 7);

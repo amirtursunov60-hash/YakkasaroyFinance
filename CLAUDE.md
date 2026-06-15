@@ -21,9 +21,10 @@ npm test           # Vitest — прогон тестов один раз
 npm run test:watch # Vitest в watch-режиме
 npm run lint       # ESLint (flat-config eslint.config.js)
 npm run lint:fix   # ESLint с авто-исправлением
+npm run typecheck  # tsc --noEmit — проверка типов (.ts-файлы)
 ```
 
-Тесты — Vitest (`*.test.js` рядом с кодом, пока покрыта чистая доменная логика в `src/utils/`). Линтер — ESLint 9 (flat-config): ошибки хуков и необъявленные имена как `error`, стилевое (неиспользуемые переменные и т.п.) — `warning`, сборку не блокирует. Стек: React 18 + Vite 6 + lucide-react + @supabase/supabase-js. Без TypeScript, без Tailwind, без роутера, без библиотек графиков.
+Тесты — Vitest (`*.test.js` рядом с кодом, пока покрыта чистая доменная логика в `src/utils/`). Линтер — ESLint 9 (flat-config): ошибки хуков и необъявленные имена как `error`, стилевое (неиспользуемые переменные и т.п.) — `warning`, сборку не блокирует. **TypeScript внедряется постепенно** (`tsconfig.json`, `checkJs: false`, `noEmit` — сборку делает Vite, типы проверяет `tsc`): на `.ts` переведены чистые утилиты `src/utils/*`, остальной код пока `.js/.jsx`; новые чистые модули писать на `.ts`. ESLint пока не парсит `.ts` (для них проверка — `npm run typecheck`). Стек: React 18 + Vite 6 + lucide-react + @supabase/supabase-js. Без Tailwind, без роутера, без библиотек графиков.
 
 Для входа в приложение нужны переменные окружения `VITE_SUPABASE_URL` и `VITE_SUPABASE_KEY` (файл `.env` — в gitignore).
 
@@ -62,9 +63,9 @@ src/
 │   ├── stats|org|dashboard|crm/  # один файл на модуль, разделы через проп view (пока моки)
 │   └── restaurant/        # RestOrders, RestTables, RestMenu, RestStock (моки, дизайн-референс)
 ├── hooks/useIsMobile.js
-└── utils/                 # format.js (fmt — деньги, avatarColor — цвет аватара по имени),
-                           # funds.js (нормализация кодов фондов «ФД4» → «FD4»),
-                           # stats.js (calcState — состояния ХМС, weekLabels)
+└── utils/                 # format.ts (fmt — деньги, avatarColor — цвет аватара по имени),
+                           # funds.ts (нормализация кодов фондов «ФД4» → «FD4»),
+                           # stats.ts (calcState — состояния ХМС, weekLabels)
 ```
 
 Компоненты получают всё через `useTheme()`: `{ C, st, theme, setTheme, lang, setLang, isMobile, profile }`. Роли пользователя: `owner`, `fin_director`, `ops_director`, `location_manager`, `accountant`, `employee` (метки — в `AppShell.jsx`, права — в ТЗ v2 §3; реализация прав — RLS-политики Supabase).
@@ -104,4 +105,4 @@ src/
   - Модалы — ширина `min(Xpx, 100%)`; формы на телефоне в одну колонку.
   - Ничего не должно вылезать за правый край и обрезаться (проверять правый блок шапки, аватар, чипы).
   - После любой UI-правки мысленно (или прогоном) проверять обе ветки — десктоп и `isMobile` — и доводить мобильный вид сразу, не дожидаясь замечаний «отодвинь/сократи».
-- Денежные суммы форматировать через `fmt` из `src/utils/format.js`; основная валюта — TJS (сомони).
+- Денежные суммы форматировать через `fmt` из `src/utils/format.ts`; основная валюта — TJS (сомони).

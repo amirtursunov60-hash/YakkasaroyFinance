@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { fundKeyFromSource, fundKey } from "./funds.js";
+import { fundKeyFromSource, fundKey } from "./funds";
 
 // Нормализация кодов фондов «ФД4» → «FD4» — основа привязки доходов к фондам.
 describe("fundKeyFromSource", () => {

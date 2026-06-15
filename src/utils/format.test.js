@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { fmt, avatarColor } from "./format.js";
+import { fmt, avatarColor } from "./format";
 
 // Денежные суммы: две цифры после запятой, разделитель тысяч (ru-RU).
 describe("fmt", () => {

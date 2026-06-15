@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { calcState, weekLabels } from "./stats.js";
+import { calcState, weekLabels } from "./stats";
 
 // Состояния ХМС по тренду последних 4 недель (Власть/Изобилие/Норма/ЧП/Опасность).
 // Несуществование — когда данных меньше 4 недель.
