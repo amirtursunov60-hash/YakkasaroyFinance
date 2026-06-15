@@ -713,13 +713,21 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
               <div key={fid}>
                 {isMobile ? (
                   <div className="frow" onClick={() => setOpenFolders((o) => ({ ...o, [fid]: !o[fid] }))}
-                    style={{ display: "flex", alignItems: "center", gap: 8, padding: "11px 12px", cursor: "pointer",
-                      background: C.panel2, borderTop: `1px solid ${C.line}` }}>
-                    {isOpen ? <FolderOpen size={15} color={C.warning} /> : <Folder size={15} color={C.warning} />}
-                    <b style={{ flex: 1, minWidth: 0 }}>{folderById[fid]?.name || "Папка"}</b>
-                    <span style={{ fontSize: 11, color: C.faint }}>{rows.length} фонд.</span>
-                    <span className="denseNum" style={{ fontWeight: 700, color: fsum.appr ? C.green : C.faint }}>{fmt(fsum.appr)}</span>
-                    <ChevronRight size={14} style={{ transform: isOpen ? "rotate(90deg)" : "none", transition: "transform .2s", color: C.faint }} />
+                    style={{ display: "flex", alignItems: "center", gap: 11, padding: "12px 12px", cursor: "pointer",
+                      borderTop: `1px solid ${C.line}`, background: isOpen ? `${C.warning}12` : "transparent" }}>
+                    <div style={{ width: 32, height: 32, borderRadius: 10, display: "grid", placeItems: "center",
+                      background: `${C.warning}22`, color: C.warning, flexShrink: 0 }}>
+                      {isOpen ? <FolderOpen size={17} /> : <Folder size={17} />}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 700, fontSize: 13.5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {folderById[fid]?.name || "Папка"}
+                      </div>
+                      <div style={{ fontSize: 10.5, color: C.faint, marginTop: 1 }}>
+                        {rows.length} фонд(ов) · одобрено <span className="denseNum" style={{ color: fsum.appr ? C.green : C.faint, fontWeight: 600 }}>{fmt(fsum.appr)}</span>
+                      </div>
+                    </div>
+                    <ChevronRight size={18} style={{ transform: isOpen ? "rotate(90deg)" : "none", transition: "transform .2s", color: C.faint, flexShrink: 0 }} />
                   </div>
                 ) : (
                   <div style={{ ...frow6, cursor: "pointer", background: C.panel2 }} className="frow"
