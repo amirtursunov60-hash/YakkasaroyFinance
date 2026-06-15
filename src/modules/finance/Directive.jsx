@@ -547,23 +547,25 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
   const GRID = "150px 58px 46px minmax(104px,1fr) 132px 132px";
   const frow6 = { ...st.frow, gridTemplateColumns: GRID, minWidth: 760 };
 
-  const CalcBtn = () => (
-    <button style={st.btnGhost} onClick={() => onCalc([...checked])} className="btn" disabled={!!busy || locked}>
+  // Три кнопки действий. eq — одинаковая ширина (для мобильного ряда mActions).
+  const btnEq = { flex: 1, justifyContent: "center", minWidth: 0, padding: "11px 10px" };
+  const CalcBtn = ({ eq }) => (
+    <button style={{ ...st.btnGhost, ...(eq ? btnEq : {}) }} onClick={() => onCalc([...checked])} className="btn" disabled={!!busy || locked}>
       {calcBusy ? <span className="spin"><RotateCw size={15} /></span> : <Calculator size={15} />} Рассчитать
     </button>
   );
-  const ApproveBtn = () => {
+  const ApproveBtn = ({ eq }) => {
     // загорается при наличии рассчитанного ИЛИ когда отмечены галочки (сам рассчитает)
     const ok = !locked && (hasApprovable || checked.size > 0);
     return (
-      <button style={{ ...st.btnGreen, opacity: ok ? (busy ? 0.7 : 1) : 0.35, cursor: ok ? "pointer" : "not-allowed" }}
+      <button style={{ ...st.btnGreen, ...(eq ? btnEq : {}), opacity: ok ? (busy ? 0.7 : 1) : 0.35, cursor: ok ? "pointer" : "not-allowed" }}
         onClick={() => onApprove([...checked])} className="btn" disabled={!!busy || !ok}>
         {apprBusy ? <span className="spin"><RotateCw size={15} /></span> : <Check size={15} />} Одобрить
       </button>
     );
   };
-  const ResetBtn = () => (
-    <button style={st.btnGhost} onClick={sg.isApproved ? onResetApproved : onReset} className="btn" disabled={!!busy || locked}>
+  const ResetBtn = ({ eq }) => (
+    <button style={{ ...st.btnGhost, ...(eq ? btnEq : {}) }} onClick={sg.isApproved ? onResetApproved : onReset} className="btn" disabled={!!busy || locked}>
       {resetBusy ? <span className="spin"><RotateCw size={14} /></span> : <RotateCcw size={14} />} Сброс
     </button>
   );
@@ -828,7 +830,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
               </div>
             </div>
           )}
-          {isMobile && <div style={st.mActions}><CalcBtn /><ApproveBtn /><ResetBtn /></div>}
+          {isMobile && <div style={st.mActions}><CalcBtn eq /><ApproveBtn eq /><ResetBtn eq /></div>}
         </>))}
       </section>
     </div>
