@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { ClipboardList, FileText, Check, Ban, Banknote, Loader2, AlertCircle, CheckCircle2, ChevronRight, X, Network } from "lucide-react";
 import { Stat } from "../../components/common";
 import { useTheme } from "../../theme/theme";
+import { useScrollLock } from "../../hooks/useScrollLock";
 import { fmt } from "../../utils/format";
 import { usePeriod, periodTitle } from "../../lib/PeriodCtx";
 import { AttachmentsBlock } from "../../components/AttachmentsBlock";
@@ -282,6 +283,7 @@ const CswRow = ({ C, label, text }) => (
 
 // ---------------------------------------------------------------- Одобрение / отклонение / оплата
 function DecideModal({ C, st, decide, funds, accounts, busy, onClose, onConfirm }) {
+  useScrollLock();
   const { item, itemKind, action } = decide;
   const [fundId, setFundId] = useState(item.fund?.id || "");
   const [reason, setReason] = useState("");

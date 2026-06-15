@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { ArrowUpRight, ArrowDownRight, ChevronRight, Plus, X, Loader2, AlertCircle, CheckCircle2, ClipboardList, Check, Ban, Banknote, FileText } from "lucide-react";
 import { useTheme } from "../../theme/theme";
+import { useScrollLock } from "../../hooks/useScrollLock";
 import { fmt } from "../../utils/format";
 import { usePeriod, periodTitle } from "../../lib/PeriodCtx";
 import { AttachmentsBlock } from "../../components/AttachmentsBlock";
@@ -390,6 +391,7 @@ const Field = ({ st, label, full, children }) => (
 );
 
 function RequestForm({ C, st, isMobile, profile, tree, refs, funds, counterparties, myPositions, divisions, onPositionsChanged, onClose, onSaved }) {
+  useScrollLock();
   const baseCur = refs.currencies.find((c) => c.is_base) || refs.currencies[0];
   const [f, setF] = useState({
     positionId: myPositions[0]?.id || "", typeId: "", locationId: "",
@@ -576,6 +578,7 @@ function RequestForm({ C, st, isMobile, profile, tree, refs, funds, counterparti
 
 // ---------------------------------------------------------------- Одобрение / отклонение / оплата
 function DecideModal({ C, st, decide, funds, accounts, busy, onClose, onConfirm }) {
+  useScrollLock();
   const { req, action } = decide;
   const [fundId, setFundId] = useState(req.fund?.id || "");
   const [reason, setReason] = useState("");

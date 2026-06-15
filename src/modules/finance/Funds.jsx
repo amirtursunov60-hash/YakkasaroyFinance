@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { RotateCcw, Ban, ArrowRightLeft, Clock, Lock, Loader2, AlertCircle, CheckCircle2, Plus, X, List, Folder, FolderOpen, ChevronRight } from "lucide-react";
 import { Stat } from "../../components/common";
 import { useTheme } from "../../theme/theme";
+import { useScrollLock } from "../../hooks/useScrollLock";
 import { fmt } from "../../utils/format";
 import { usePeriod, periodTitle } from "../../lib/PeriodCtx";
 import {
@@ -345,6 +346,7 @@ export function Funds() {
 
 // ---------------------------------------------------------------- Выписка по фонду
 function FundStatementModal({ C, st, statement, period, onAllTime, onClose }) {
+  useScrollLock();
   const { fund, rows, allTime } = statement;
   return (
     <div style={st.mdOverlay} onClick={onClose}>
@@ -392,6 +394,7 @@ function FundStatementModal({ C, st, statement, period, onAllTime, onClose }) {
 
 // ---------------------------------------------------------------- Возврат займа
 function ReturnModal({ C, st, op, nameOf, busy, onClose, onConfirm }) {
+  useScrollLock();
   const outstanding = op.amount - op.returned;
   const [val, setVal] = useState(String(outstanding));
   const a = parseFloat(String(val).replace(",", ".")) || 0;
@@ -425,6 +428,7 @@ function ReturnModal({ C, st, op, nameOf, busy, onClose, onConfirm }) {
 
 // ---------------------------------------------------------------- Новый фонд
 function AddFundModal({ C, st, refs, folders, onClose, onSaved }) {
+  useScrollLock();
   const baseCur = refs.currencies.find((c) => c.is_base) || refs.currencies[0];
   const [f, setF] = useState({ code: "", name: "", kind: "working", isRestricted: false, locationId: "", folderId: "" });
   const [newFolder, setNewFolder] = useState("");
