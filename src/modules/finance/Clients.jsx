@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { Banknote, Loader2, AlertCircle, CheckCircle2, Plus, X, Ban, ChevronRight, CalendarDays, PartyPopper } from "lucide-react";
 import { Stat } from "../../components/common";
 import { useTheme } from "../../theme/theme";
+import { useScrollLock } from "../../hooks/useScrollLock";
 import { fmt } from "../../utils/format";
 import { usePeriod } from "../../lib/PeriodCtx";
 import {
@@ -285,6 +286,7 @@ const Field = ({ st, label, full, children }) => (
 );
 
 function InvoiceForm({ C, st, isMobile, profile, groups, refs, counterparties, onCounterpartiesChanged, onClose, onSaved }) {
+  useScrollLock();
   const baseCur = refs.currencies.find((c) => c.is_base) || refs.currencies[0];
   const [f, setF] = useState({
     counterpartyId: "", eventName: "", hall: "", eventOn: "",
@@ -425,6 +427,7 @@ function InvoiceForm({ C, st, isMobile, profile, groups, refs, counterparties, o
 
 // ---------------------------------------------------------------- Приём оплаты
 function PayModal({ C, st, inv, rest, accounts, payTypes, busy, onClose, onConfirm }) {
+  useScrollLock();
   const [amount, setAmount] = useState(String(Math.round(rest * 100) / 100));
   const [accountId, setAccountId] = useState("");
   const [payTypeId, setPayTypeId] = useState("");

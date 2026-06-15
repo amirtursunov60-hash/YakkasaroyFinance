@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { ArrowUpRight, ArrowDownRight, ChevronRight, Plus, X, Loader2, AlertCircle, Calculator, Trash2 } from "lucide-react";
 import { useTheme } from "../../theme/theme";
+import { useScrollLock } from "../../hooks/useScrollLock";
 import { fmt } from "../../utils/format";
 import { usePeriod, periodTitle } from "../../lib/PeriodCtx";
 import {
@@ -237,6 +238,7 @@ export function Income() {
 const STAGE_OPTS = [["revenue", "Выручка"], ["margin", "Маржинальный"], ["adjusted", "Скорректированный"]];
 
 function SchemeModal({ C, st, type, rules, funds, onChanged, onClose }) {
+  useScrollLock();
   const [f, setF] = useState({ fundId: "", stage: "margin", percent: "" });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
@@ -323,6 +325,7 @@ const Field = ({ st, label, full, children }) => (
 );
 
 function IncomeForm({ refs, tree, byParent, locationOf, period, ctxLocationId, profile, isMobile, C, st, onClose, onSaved }) {
+  useScrollLock();
   const baseCur = refs.currencies.find((c) => c.is_base) || refs.currencies[0];
   // Дата по умолчанию: сегодня, если попадает в выбранную неделю, иначе её начало
   const today = isoDate(new Date());

@@ -4,6 +4,7 @@ import { Stat } from "../../components/common";
 import { STATE_COEF } from "../../data/payroll";
 import { STAT_STATES } from "../../data/stats";
 import { useTheme } from "../../theme/theme";
+import { useScrollLock } from "../../hooks/useScrollLock";
 import { fmt } from "../../utils/format";
 import { usePeriod, periodTitle } from "../../lib/PeriodCtx";
 import {
@@ -394,6 +395,7 @@ export function Payroll() {
 
 // ---------------------------------------------------------------- Выплата
 function PayModal({ C, st, total, accounts, busy, onClose, onConfirm }) {
+  useScrollLock();
   const [accountId, setAccountId] = useState("");
   return (
     <div style={st.mdOverlay} onClick={onClose}>

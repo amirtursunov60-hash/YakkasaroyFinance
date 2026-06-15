@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { Check, Banknote, AlertTriangle, Loader2, AlertCircle, CheckCircle2, Plus, X, Ban, ChevronRight, Repeat, FileText } from "lucide-react";
 import { Stat } from "../../components/common";
 import { useTheme } from "../../theme/theme";
+import { useScrollLock } from "../../hooks/useScrollLock";
 import { fmt } from "../../utils/format";
 import { usePeriod, periodTitle } from "../../lib/PeriodCtx";
 import { AttachmentsBlock } from "../../components/AttachmentsBlock";
@@ -288,6 +289,7 @@ const Field = ({ st, label, full, children }) => (
 );
 
 function BillForm({ C, st, isMobile, profile, kind, ui, groups, refs, funds, counterparties, prefill, onCounterpartiesChanged, onClose, onSaved }) {
+  useScrollLock();
   const baseCur = refs.currencies.find((c) => c.is_base) || refs.currencies[0];
   const today = new Date().toISOString().slice(0, 10);
   const [f, setF] = useState({
@@ -437,6 +439,7 @@ function BillForm({ C, st, isMobile, profile, kind, ui, groups, refs, funds, cou
 
 // ---------------------------------------------------------------- Одобрение / отклонение / оплата
 function BillDecideModal({ C, st, decide, funds, accounts, busy, onClose, onConfirm }) {
+  useScrollLock();
   const { bill, action } = decide;
   const [fundId, setFundId] = useState(bill.fund?.id || "");
   const [reason, setReason] = useState("");
