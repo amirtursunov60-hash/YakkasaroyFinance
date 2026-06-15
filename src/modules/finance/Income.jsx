@@ -188,24 +188,52 @@ export function Income() {
 
             {isOpen && hasChildren && (
               <div style={st.locBody}>
-                <div style={st.itemHeadRow}>
-                  <span />
-                  <div style={st.itemHeadCell}>Было</div>
-                  <div style={st.itemHeadCell}>Стало</div>
-                </div>
+                {!isMobile && (
+                  <div style={st.itemHeadRow}>
+                    <span />
+                    <div style={st.itemHeadCell}>Было</div>
+                    <div style={st.itemHeadCell}>Стало</div>
+                  </div>
+                )}
                 {loc.children.map((c) => {
                   const rc = rolled[c.id] || { cur: 0, prev: 0 };
+                  const hasScheme = rulesByType[c.id]?.length;
+                  const calcBtn = isFinAdmin ? (
+                    <button style={{ width: 30, height: 30, borderRadius: 9, display: "grid", placeItems: "center", flexShrink: 0,
+                        border: `1px solid ${hasScheme ? C.green : C.line}`, background: hasScheme ? `${C.green}1a` : "transparent",
+                        color: hasScheme ? C.green : C.faint, cursor: "pointer" }}
+                      className="btn" title="Схема распределения по фондам" onClick={(e) => { e.stopPropagation(); setSchemeType(c); }}>
+                      <Calculator size={15} />
+                    </button>
+                  ) : null;
+
+                  if (isMobile) {
+                    return (
+                      <div key={c.id} style={{ padding: "11px 0", borderTop: `1px solid ${C.line}` }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                          <span style={st.itemCode}>{c.code}</span>
+                          <span style={{ fontWeight: 600, fontSize: 13, flex: 1, minWidth: 0 }}>{c.name}</span>
+                          {calcBtn}
+                        </div>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                          <div>
+                            <div style={{ fontSize: 10, color: C.faint }}>Было</div>
+                            <div className="denseNum" style={{ fontSize: 13, fontWeight: 600 }}>{fmt(rc.prev)}</div>
+                          </div>
+                          <div>
+                            <div style={{ fontSize: 10, color: C.faint }}>Стало</div>
+                            <div className="denseNum" style={{ fontSize: 13, fontWeight: 700, color: rc.cur ? C.money : C.faint }}>{fmt(rc.cur)}</div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
                   return (
                     <div key={c.id} style={st.itemRow} className="itemRow">
                       <div style={st.itemName}>
                         <span style={st.itemCode}>{c.code}</span>
                         <span>{c.name}</span>
-                        {isFinAdmin && (
-                          <button style={{ ...st.iconBtn, padding: 3, color: (rulesByType[c.id]?.length ? C.green : C.faint) }} className="btn"
-                            title="Схема распределения по фондам" onClick={() => setSchemeType(c)}>
-                            <Calculator size={14} />
-                          </button>
-                        )}
+                        {calcBtn}
                       </div>
                       <div style={st.itemPrev}>{fmt(rc.prev)}</div>
                       <div style={{ ...st.itemCur, color: rc.cur ? C.money : C.faint }}>{fmt(rc.cur)}</div>
