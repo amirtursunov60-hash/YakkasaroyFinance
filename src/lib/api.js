@@ -462,7 +462,7 @@ export async function cashTransfer(fromId, toId, amount, periodId, comment) {
 // ---------------------------------------------------------------- Вложения
 // kind: 'request' | 'bill'; файл кладём в Storage, ссылку — в таблицу
 export async function uploadAttachment(kind, parentId, file, uploadedBy) {
-  const safe = file.name.replace(/[^\wа-яА-ЯёЁ.\-]+/gu, "_").slice(-80);
+  const safe = file.name.replace(/[^\wа-яА-ЯёЁ.-]+/gu, "_").slice(-80);
   const path = `${kind}s/${parentId}/${Date.now()}_${safe}`;
   const up = await supabase.storage.from("attachments").upload(path, file);
   if (up.error) throw up.error;

@@ -19,9 +19,11 @@ npm run build      # сборка в dist/
 npm run preview    # просмотр сборки
 npm test           # Vitest — прогон тестов один раз
 npm run test:watch # Vitest в watch-режиме
+npm run lint       # ESLint (flat-config eslint.config.js)
+npm run lint:fix   # ESLint с авто-исправлением
 ```
 
-Линтера в проекте нет. Тесты — Vitest (`*.test.js` рядом с кодом, пока покрыта чистая доменная логика в `src/utils/`). Стек: React 18 + Vite 6 + lucide-react + @supabase/supabase-js. Без TypeScript, без Tailwind, без роутера, без библиотек графиков.
+Тесты — Vitest (`*.test.js` рядом с кодом, пока покрыта чистая доменная логика в `src/utils/`). Линтер — ESLint 9 (flat-config): ошибки хуков и необъявленные имена как `error`, стилевое (неиспользуемые переменные и т.п.) — `warning`, сборку не блокирует. Стек: React 18 + Vite 6 + lucide-react + @supabase/supabase-js. Без TypeScript, без Tailwind, без роутера, без библиотек графиков.
 
 Для входа в приложение нужны переменные окружения `VITE_SUPABASE_URL` и `VITE_SUPABASE_KEY` (файл `.env` — в gitignore).
 
