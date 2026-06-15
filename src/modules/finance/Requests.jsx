@@ -163,7 +163,7 @@ export function Requests() {
       <div style={{ ...st.locCard, marginBottom: 8 }}>
         <div style={{ ...st.locHead, cursor: "pointer" }} className="locHead"
           onClick={() => setExpanded((e) => ({ ...e, [key]: !e[key] }))}>
-          <div style={{ ...st.locDot, background: m.color }} />
+          <div style={{ width: 34, height: 34, borderRadius: 10, display: "grid", placeItems: "center", flexShrink: 0, background: `${m.color}22`, color: m.color }}><ClipboardList size={17} /></div>
           <div style={st.locTitle}>
             <div style={st.locName}>
               №{item.number} · {itemKind === "bill"
