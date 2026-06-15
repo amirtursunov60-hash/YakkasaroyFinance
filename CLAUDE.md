@@ -24,7 +24,7 @@ npm run lint:fix   # ESLint с авто-исправлением
 npm run typecheck  # tsc --noEmit — проверка типов (.ts-файлы)
 ```
 
-Тесты — Vitest (`*.test.js` рядом с кодом, пока покрыта чистая доменная логика в `src/utils/`). Линтер — ESLint 9 (flat-config): ошибки хуков и необъявленные имена как `error`, стилевое (неиспользуемые переменные и т.п.) — `warning`, сборку не блокирует. **TypeScript внедряется постепенно** (`tsconfig.json`, `checkJs: false`, `noEmit` — сборку делает Vite, типы проверяет `tsc`): на `.ts` переведены чистые утилиты `src/utils/*`, остальной код пока `.js/.jsx`; новые чистые модули писать на `.ts`. ESLint пока не парсит `.ts` (для них проверка — `npm run typecheck`). Стек: React 18 + Vite 6 + lucide-react + @supabase/supabase-js. Без Tailwind, без роутера, без библиотек графиков.
+Тесты — Vitest (`*.test.js` рядом с кодом, пока покрыта чистая доменная логика в `src/utils/`). Линтер — ESLint 9 (flat-config): ошибки хуков и необъявленные имена как `error`, стилевое (неиспользуемые переменные и т.п.) — `warning`, сборку не блокирует. **TypeScript внедряется постепенно** (`tsconfig.json`, `checkJs: false`, `noEmit` — сборку делает Vite, типы проверяет `tsc`): на `.ts` переведены чистые утилиты `src/utils/*`, остальной код пока `.js/.jsx`; новые чистые модули писать на `.ts`. ESLint парсит и `.ts/.tsx` (через typescript-eslint), типы дополнительно проверяет `npm run typecheck`. Стек: React 18 + Vite 6 + lucide-react + @supabase/supabase-js. Без Tailwind, без роутера, без библиотек графиков.
 
 Для входа в приложение нужны переменные окружения `VITE_SUPABASE_URL` и `VITE_SUPABASE_KEY` (файл `.env` — в gitignore).
 

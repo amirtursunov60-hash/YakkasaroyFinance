@@ -2,14 +2,19 @@ import js from "@eslint/js";
 import react from "eslint-plugin-react";
 import reactHooks from "eslint-plugin-react-hooks";
 import globals from "globals";
+import tseslint from "typescript-eslint";
 
 // Прагматичный конфиг: ловим реальные ошибки (необъявленные имена, нарушения
 // правил хуков), а стилевое держим как предупреждения, чтобы не блокировать сборку.
+// .ts/.tsx разбираются парсером typescript-eslint.
 export default [
   { ignores: ["dist/**", "node_modules/**"] },
   js.configs.recommended,
+  // typescript-eslint только для .ts/.tsx, чтобы не трогать существующий .jsx-код
+  ...tseslint.configs.recommended.map((c) => ({ ...c, files: ["**/*.{ts,tsx}"] })),
+  // Общие правила React для всех исходников
   {
-    files: ["**/*.{js,jsx}"],
+    files: ["**/*.{js,jsx,ts,tsx}"],
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: "module",
@@ -27,7 +32,20 @@ export default [
       // Правила хуков — главное ради чего нужен линтер
       "react-hooks/rules-of-hooks": "error",
       "react-hooks/exhaustive-deps": "warn",
+    },
+  },
+  // JS/JSX: базовое no-unused-vars как предупреждение
+  {
+    files: ["**/*.{js,jsx}"],
+    rules: {
       "no-unused-vars": ["warn", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],
+    },
+  },
+  // TS/TSX: версия правила из typescript-eslint, тоже предупреждение
+  {
+    files: ["**/*.{ts,tsx}"],
+    rules: {
+      "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],
     },
   },
   {
