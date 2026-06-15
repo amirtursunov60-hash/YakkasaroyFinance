@@ -1,9 +1,11 @@
 
 // ---------------------------------------------------------------- DIRECTIVE
 // нормализация кода фонда: "ФД4 — Налог Яккасарой" -> "FD4", "ФД9/1" -> "FD9/1"
-export function fundKeyFromSource(src) {
+export function fundKeyFromSource(src: string): string {
   const m = src.replace(/Ф\s*Д/i, "ФД").match(/Ф?Д?\s*([0-9]+(?:\/[0-9]+)?)/i);
   return m ? "FD" + m[1] : src;
 }
 
-export function fundKey(code) { return code.replace(/\s/g, ""); }
+export function fundKey(code: string): string {
+  return code.replace(/\s/g, "");
+}
