@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { ArrowUpRight, ArrowDownRight, ChevronRight, Plus, X, Loader2, AlertCircle, CheckCircle2, ClipboardList, Check, Ban, Banknote, FileText } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, ChevronRight, Plus, X, Loader2, AlertCircle, CheckCircle2, ClipboardList, Check, Ban, Banknote, FileText, Receipt } from "lucide-react";
 import { useTheme } from "../../theme/theme";
 import { useScrollLock } from "../../hooks/useScrollLock";
 import { fmt } from "../../utils/format";
@@ -218,7 +218,7 @@ export function Expenses() {
         return (
           <div key={cat.id} style={st.dataCard}>
             <div style={st.locHead} className="locHead" onClick={() => hasChildren && setOpen((o) => ({ ...o, [cat.id]: !o?.[cat.id] }))}>
-              <div style={{ ...st.locDot, background: PALETTE[i % PALETTE.length] }} />
+              <div style={{ width: 34, height: 34, borderRadius: 10, display: "grid", placeItems: "center", flexShrink: 0, background: `${PALETTE[i % PALETTE.length]}22`, color: PALETTE[i % PALETTE.length] }}><Receipt size={18} /></div>
               <div style={st.locTitle}>
                 <div style={st.locName}>{cat.name}</div>
                 <div style={st.locCode}>{cat.code}{hasChildren ? ` · ${cat.children.length} статей` : ""}</div>
