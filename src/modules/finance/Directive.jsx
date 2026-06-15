@@ -687,7 +687,11 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
         </div>
         <div style={st.subHead}>
           <span style={st.subHeadTitle}>{sg.fundsTitle}</span>
-          <span style={st.subHeadAppr}>Одобрено: <b className="denseNum" style={{ color: C.green }}>{fmt(totals.appr)}</b></span>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, padding: "10px 16px 12px", borderBottom: collapsed ? "none" : `1px solid ${C.line}` }}>
+          <MiniVal label="Доступно" value={fmt(totals.avail)} bold />
+          <MiniVal label="Рассчитано" value={fmt(totals.calc)} color={totals.calc ? C.warning : C.faint} bold />
+          <MiniVal label="Одобрено" value={fmt(totals.appr)} color={totals.appr ? C.green : C.faint} bold />
         </div>
         {!collapsed && (sg.rows.length === 0 ? <div style={st.empty}>Фонды этого этапа не настроены</div> : (<>
           {isMobile ? (
