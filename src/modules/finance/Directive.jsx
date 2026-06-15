@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { ClipboardList, Calculator, CalendarDays, Check, RotateCcw, RotateCw, Lock, Unlock, Ban, ArrowRightLeft, Loader2, AlertCircle, CheckCircle2, X, Layers, ChevronRight, Scale, TrendingUp, TrendingDown } from "lucide-react";
+import { ClipboardList, Calculator, CalendarDays, Check, RotateCcw, RotateCw, Lock, Unlock, Ban, ArrowRightLeft, Loader2, AlertCircle, CheckCircle2, X, Landmark, ChevronRight, Scale, TrendingUp, TrendingDown } from "lucide-react";
 import { Stat } from "../../components/common";
 import { useTheme } from "../../theme/theme";
 import { fmt } from "../../utils/format";
@@ -717,7 +717,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
                       borderTop: `1px solid ${C.line}`, background: isOpen ? `${C.info}12` : "transparent" }}>
                     <div style={{ width: 32, height: 32, borderRadius: 10, display: "grid", placeItems: "center",
                       background: `${C.info}22`, color: C.info, flexShrink: 0 }}>
-                      <Layers size={17} />
+                      <Landmark size={16} />
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontWeight: 700, fontSize: 13.5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -734,7 +734,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
                     onClick={() => setOpenFolders((o) => ({ ...o, [fid]: !o[fid] }))}>
                     <div style={st.fName}>
                       <div style={st.fundTop}>
-                        <Layers size={15} color={C.info} />
+                        <Landmark size={15} color={C.info} />
                         <b>{folderById[fid]?.name || "Группа"}</b>
                         <span style={{ fontSize: 11, color: C.faint }}>· {rows.length} фонд(ов)</span>
                         <ChevronRight size={14} style={{ transform: isOpen ? "rotate(90deg)" : "none", transition: "transform .2s", color: C.faint }} />
