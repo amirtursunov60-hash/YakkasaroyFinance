@@ -502,7 +502,6 @@ function Delta({ C, delta, small }) {
 function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders, compare, prevByFund, onCalc, onApprove, onReset, onResetApproved, onOpenCalc }) {
   const [openFolders, setOpenFolders] = useState({});
   const [checked, setChecked] = useState(() => new Set());
-  const [expandCols, setExpandCols] = useState(false); // телефон: показать колонки Рассчитано/Одобрено
   const calcBusy = busy === `calc:${sg.key}`;
   const apprBusy = busy === `appr:${sg.key}`;
   const resetBusy = busy === `reset:${sg.key}`;
@@ -530,14 +529,12 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
   // горизонтального скролла: по умолчанию (режим "base") — Название · % ·
   // калькулятор · Доступно; кнопкой-стрелкой переключаемся в режим "results" —
   // Название · Рассчитано · Одобрено. Так две колонки «открываются» одной кнопкой.
-  const mode = !isMobile ? "full" : expandCols ? "results" : "base";
-  const showBase = mode !== "results";     // %, калькулятор, Доступно
-  const showResults = mode !== "base";     // Рассчитано, Одобрено
-  const GRID = mode === "full" ? "150px 58px 46px minmax(104px,1fr) 132px 132px"
-    : mode === "base" ? "minmax(120px,1fr) 38px 30px minmax(96px,1fr)"
-    : "minmax(108px,1fr) 1fr 1fr";
-  const frow6 = { ...st.frow, gridTemplateColumns: GRID,
-    minWidth: isMobile ? 0 : 760, ...(isMobile ? { padding: "12px 10px" } : {}) };
+  // Десктоп — полная таблица; на телефоне строки фондов рендерятся карточками
+  // (см. ветку isMobile в FundRow), поэтому колонок всегда полный набор.
+  const showBase = true;     // %, калькулятор, Доступно
+  const showResults = true;  // Рассчитано, Одобрено
+  const GRID = "150px 58px 46px minmax(104px,1fr) 132px 132px";
+  const frow6 = { ...st.frow, gridTemplateColumns: GRID, minWidth: 760 };
 
   const CalcBtn = () => (
     <button style={st.btnGhost} onClick={() => onCalc([...checked])} className="btn" disabled={!!busy || locked}>
@@ -564,7 +561,16 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
     prev: t.prev + prevOf(x.fund?.id),
   }), { avail: 0, calc: 0, appr: 0, prev: 0 });
 
-  // Строка-фонд таблицы (единая для десктопа и телефона; на телефоне — со скроллом)
+  // Подпись-значение для мобильной карточки фонда
+  const MiniVal = ({ label, value, color, bold }) => (
+    <div style={{ minWidth: 0 }}>
+      <div style={{ fontSize: 10, color: C.faint, marginBottom: 2 }}>{label}</div>
+      <div className="denseNum" style={{ fontSize: 13, fontWeight: bold ? 800 : 600, color: color || C.text, whiteSpace: "nowrap" }}>{value}</div>
+    </div>
+  );
+
+  // Фонд: на десктопе — строка таблицы, на телефоне — карточка (название без
+  // обрезки в заголовке, под ним бар и три значения Доступно/Рассчитано/Одобрено)
   const FundRow = ({ x, child }) => {
     const avail = Number(x.fund?.balance || 0);
     const barVal = x.appr || x.calc;
@@ -573,6 +579,44 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
     const hasTypeRules = x.typeRules?.length > 0;
     const rowEditable = !locked && !(x.appr > 0);
     const prev = prevOf(x.fund?.id);
+
+    if (isMobile) {
+      return (
+        <div className="frow" style={{ padding: "12px 12px", borderTop: `1px solid ${C.line}`,
+          background: x.appr > 0 ? `${C.green}0d` : "transparent", ...(child ? { paddingLeft: 22 } : {}) }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <input type="checkbox" style={cbStyle} checked={checked.has(x.fund.id)}
+              disabled={!rowEditable} onChange={() => toggleOne(x.fund.id)} />
+            <span style={st.fundCode}>{x.fund?.code}</span>
+            <span style={{ fontWeight: 700, fontSize: 13.5, flex: 1, minWidth: 0 }}>{x.fund?.name}</span>
+            {x.fund?.is_restricted && <Lock size={12} color={C.faint} />}
+            {hasTypeRules ? (
+              <button style={{ ...st.iconBtn, width: 30, height: 30, borderRadius: 9, padding: 0, color: C.green, flexShrink: 0 }}
+                className="btn" disabled={!!busy || locked} title="Распределение по видам дохода (настраивается в «Доходах»)"
+                onClick={() => onOpenCalc(x.fund)}><Calculator size={16} /></button>
+            ) : (!x.typeRules?.length && x.rule ? (
+              <span style={{ fontSize: 13, fontWeight: 800, color: C.sub, flexShrink: 0 }}>{pctOf(x.rule)}%</span>
+            ) : null)}
+          </div>
+          <div style={{ ...st.bar, maxWidth: "100%", marginTop: 9 }}>
+            <div style={{ ...st.barFill, width: `${fill}%`, background: x.appr ? C.green : C.warning }} />
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginTop: 10 }}>
+            <MiniVal label="Доступно" value={fmt(avail)} bold />
+            <MiniVal label="Рассчитано" value={fmt(x.calc)} color={x.calc ? C.warning : C.faint} />
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: 10, color: C.faint, marginBottom: 2 }}>Одобрено</div>
+              <div className="denseNum" style={{ fontSize: 13, fontWeight: 800, color: x.appr ? C.green : C.faint, whiteSpace: "nowrap" }}>{fmt(x.appr)}</div>
+              {showPrev && (prev > 0 || x.appr > 0) && (
+                <div style={{ fontSize: 10, fontWeight: 500, color: C.faint, marginTop: 1 }}>
+                  пр. {fmt(prev)}<Delta C={C} delta={x.appr - prev} small />
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    }
     return (
       <div style={{ ...frow6, ...(child ? { paddingLeft: 14 } : {}) }} className="frow">
         <div style={st.fName}>
@@ -636,32 +680,29 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
           <span style={st.subHeadAppr}>Одобрено: <b className="denseNum" style={{ color: C.green }}>{fmt(totals.appr)}</b></span>
         </div>
         {sg.rows.length === 0 ? <div style={st.empty}>Фонды этого этапа не настроены</div> : (<>
-          {isMobile && (
-            <div style={{ display: "flex", justifyContent: "flex-end", padding: "10px 10px 0" }}>
-              <button className="btn" onClick={() => setExpandCols((v) => !v)}
-                title={expandCols ? "Показать «Доступно»" : "Показать колонки «Рассчитано» и «Одобрено»"}
-                style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 600,
-                  color: C.green, background: C.panel2, border: `1px solid ${C.line}`, borderRadius: 10,
-                  padding: "9px 12px", cursor: "pointer", fontFamily: "inherit", minHeight: 38 }}>
-                {expandCols ? "Доступно" : "Рассчитано · Одобрено"}
-                <ChevronRight size={15} style={{ transform: expandCols ? "rotate(180deg)" : "none", transition: "transform .2s" }} />
-              </button>
+          {isMobile ? (
+            <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "11px 12px",
+              borderTop: `1px solid ${C.line}`, color: C.sub, fontSize: 12, fontWeight: 600 }}>
+              <input type="checkbox" style={cbStyle} checked={allChecked}
+                disabled={locked || !selectable.length} onChange={toggleAll} />
+              Выбрать все фонды этапа
+            </div>
+          ) : (
+            <div style={{ ...frow6, ...st.frowHead }}>
+              <div style={st.fName}>
+                <div style={st.fundTop}>
+                  <input type="checkbox" style={cbStyle} checked={allChecked}
+                    disabled={locked || !selectable.length} onChange={toggleAll} />
+                  Название
+                </div>
+              </div>
+              <div style={st.fPct}>%</div>
+              <div />
+              <div style={st.fNum}>Доступно</div>
+              <div style={st.fNum}>Рассчитано</div>
+              <div style={st.fNum}>Одобрено</div>
             </div>
           )}
-          <div style={{ ...frow6, ...st.frowHead, ...(isMobile ? { padding: "11px 10px" } : {}) }}>
-            <div style={st.fName}>
-              <div style={st.fundTop}>
-                <input type="checkbox" style={cbStyle} checked={allChecked}
-                  disabled={locked || !selectable.length} onChange={toggleAll} />
-                Название
-              </div>
-            </div>
-            {showBase && <div style={st.fPct}>%</div>}
-            {showBase && <div />}
-            {showBase && <div style={st.fNum}>Доступно</div>}
-            {showResults && <div style={st.fNum}>Рассчитано</div>}
-            {showResults && <div style={st.fNum}>Одобрено</div>}
-          </div>
           {flat.map((x) => <FundRow key={x.fund?.id || x.rule?.id} x={x} />)}
           {Object.entries(grouped).map(([fid, rows]) => {
             const isOpen = !!openFolders[fid];
@@ -670,35 +711,62 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
             }), { avail: 0, calc: 0, appr: 0 });
             return (
               <div key={fid}>
-                <div style={{ ...frow6, cursor: "pointer", background: C.panel2 }} className="frow"
-                  onClick={() => setOpenFolders((o) => ({ ...o, [fid]: !o[fid] }))}>
-                  <div style={st.fName}>
-                    <div style={st.fundTop}>
-                      {isOpen ? <FolderOpen size={15} color={C.warning} /> : <Folder size={15} color={C.warning} />}
-                      <b>{folderById[fid]?.name || "Папка"}</b>
-                      <span style={{ fontSize: 11, color: C.faint }}>· {rows.length} фонд(ов)</span>
-                      <ChevronRight size={14} style={{ transform: isOpen ? "rotate(90deg)" : "none", transition: "transform .2s", color: C.faint }} />
-                    </div>
+                {isMobile ? (
+                  <div className="frow" onClick={() => setOpenFolders((o) => ({ ...o, [fid]: !o[fid] }))}
+                    style={{ display: "flex", alignItems: "center", gap: 8, padding: "11px 12px", cursor: "pointer",
+                      background: C.panel2, borderTop: `1px solid ${C.line}` }}>
+                    {isOpen ? <FolderOpen size={15} color={C.warning} /> : <Folder size={15} color={C.warning} />}
+                    <b style={{ flex: 1, minWidth: 0 }}>{folderById[fid]?.name || "Папка"}</b>
+                    <span style={{ fontSize: 11, color: C.faint }}>{rows.length} фонд.</span>
+                    <span className="denseNum" style={{ fontWeight: 700, color: fsum.appr ? C.green : C.faint }}>{fmt(fsum.appr)}</span>
+                    <ChevronRight size={14} style={{ transform: isOpen ? "rotate(90deg)" : "none", transition: "transform .2s", color: C.faint }} />
                   </div>
-                  {showBase && <div style={st.fPct} />}
-                  {showBase && <div />}
-                  {showBase && <div className="denseNum" style={{ ...st.fNum, fontWeight: 700 }}>{fmt(fsum.avail)}</div>}
-                  {showResults && <div className="denseNum" style={{ ...st.fNum, color: fsum.calc ? C.warning : C.faint }}>{fmt(fsum.calc)}</div>}
-                  {showResults && <div className="denseNum" style={{ ...st.fNum, color: fsum.appr ? C.green : C.faint, fontWeight: fsum.appr ? 700 : 400 }}>{fmt(fsum.appr)}</div>}
-                </div>
+                ) : (
+                  <div style={{ ...frow6, cursor: "pointer", background: C.panel2 }} className="frow"
+                    onClick={() => setOpenFolders((o) => ({ ...o, [fid]: !o[fid] }))}>
+                    <div style={st.fName}>
+                      <div style={st.fundTop}>
+                        {isOpen ? <FolderOpen size={15} color={C.warning} /> : <Folder size={15} color={C.warning} />}
+                        <b>{folderById[fid]?.name || "Папка"}</b>
+                        <span style={{ fontSize: 11, color: C.faint }}>· {rows.length} фонд(ов)</span>
+                        <ChevronRight size={14} style={{ transform: isOpen ? "rotate(90deg)" : "none", transition: "transform .2s", color: C.faint }} />
+                      </div>
+                    </div>
+                    <div style={st.fPct} />
+                    <div />
+                    <div className="denseNum" style={{ ...st.fNum, fontWeight: 700 }}>{fmt(fsum.avail)}</div>
+                    <div className="denseNum" style={{ ...st.fNum, color: fsum.calc ? C.warning : C.faint }}>{fmt(fsum.calc)}</div>
+                    <div className="denseNum" style={{ ...st.fNum, color: fsum.appr ? C.green : C.faint, fontWeight: fsum.appr ? 700 : 400 }}>{fmt(fsum.appr)}</div>
+                  </div>
+                )}
                 {isOpen && rows.map((x) => <FundRow key={x.fund?.id} x={x} child />)}
               </div>
             );
           })}
-          <div style={{ ...frow6, ...st.frowTotal }}>
-            {isMobile ? <div style={st.fName}><b>Итого</b></div> : (
+          {isMobile ? (
+            <div style={{ ...st.frowTotal, padding: "12px 12px", borderTop: `1px solid ${C.line}` }}>
+              <div style={{ fontSize: 12, fontWeight: 800, marginBottom: 8 }}>Итого по этапу</div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+                <MiniVal label="Доступно" value={fmt(totals.avail)} bold />
+                <MiniVal label="Рассчитано" value={fmt(totals.calc)} color={totals.calc ? C.warning : C.faint} bold />
+                <div>
+                  <div style={{ fontSize: 10, color: C.faint, marginBottom: 2 }}>Одобрено</div>
+                  <div className="denseNum" style={{ fontSize: 13, fontWeight: 800, color: C.green }}>{fmt(totals.appr)}</div>
+                  {showPrev && (totals.prev > 0 || totals.appr > 0) && (
+                    <div style={{ fontSize: 10, fontWeight: 500, color: C.faint, marginTop: 1 }}>
+                      пр. {fmt(totals.prev)}<Delta C={C} delta={totals.appr - totals.prev} small />
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div style={{ ...frow6, ...st.frowTotal }}>
               <div style={st.fName}><div style={st.actions}><CalcBtn /><ApproveBtn /><ResetBtn /></div></div>
-            )}
-            {showBase && <div style={st.fPct} />}
-            {showBase && <div />}
-            {showBase && <div className="denseNum" style={{ ...st.fNum, fontWeight: 700 }}>{fmt(totals.avail)}</div>}
-            {showResults && <div className="denseNum" style={{ ...st.fNum, fontWeight: 700, color: totals.calc ? C.warning : C.faint }}>{fmt(totals.calc)}</div>}
-            {showResults && (
+              <div style={st.fPct} />
+              <div />
+              <div className="denseNum" style={{ ...st.fNum, fontWeight: 700 }}>{fmt(totals.avail)}</div>
+              <div className="denseNum" style={{ ...st.fNum, fontWeight: 700, color: totals.calc ? C.warning : C.faint }}>{fmt(totals.calc)}</div>
               <div className="denseNum" style={{ ...st.fNum, fontWeight: 700, color: C.green }}>
                 {fmt(totals.appr)}
                 {showPrev && (totals.prev > 0 || totals.appr > 0) && (
@@ -707,8 +775,8 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
                   </div>
                 )}
               </div>
-            )}
-          </div>
+            </div>
+          )}
           {isMobile && <div style={st.mActions}><CalcBtn /><ApproveBtn /><ResetBtn /></div>}
         </>)}
       </section>
