@@ -390,6 +390,7 @@ export function Directive() {
       <LevelCard key={sg.key} sg={sg} C={C} st={st} isMobile={isMobile}
         pctOf={pctOf} setPcts={setPcts} busy={busy} locked={isClosed || !period}
         folders={folders} compare={compare && canCompare} prevByFund={prevByFund}
+        stageFact={typeStageBase[sg.key] || {}}
         onCalc={(ids) => doCalc(sg, ids)} onApprove={() => doApprove(sg)}
         onReset={() => doReset(sg)} onResetApproved={() => doResetApproved(sg)}
         onOpenCalc={(fund) => setCalcFund({ fund, stage: sg })} />
@@ -499,7 +500,7 @@ function Delta({ C, delta, small }) {
 // Фонды этапа сгруппированы по папкам (fund_folders) — как в ManaJet.
 // Слева у каждого фонда галочка: отмеченные фонды считаются при «Рассчитать»
 // (если не отмечено ничего — считаются все). Уже одобренные не пересчитываются.
-function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders, compare, prevByFund, onCalc, onApprove, onReset, onResetApproved, onOpenCalc }) {
+function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders, compare, prevByFund, stageFact, onCalc, onApprove, onReset, onResetApproved, onOpenCalc }) {
   const [openFolders, setOpenFolders] = useState({});
   const [checked, setChecked] = useState(() => new Set());
   const calcBusy = busy === `calc:${sg.key}`;
@@ -523,6 +524,16 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
   const hasApprovable = sg.rows.some((x) => x.calc > 0 && !(x.appr > 0));
   const showPrev = compare && !!prevByFund;
   const prevOf = (id) => (prevByFund?.[id] || 0);
+
+  // Эффективный % фонда от базы этапа: обычный фонд — его правило; фонд «по видам»
+  // — доля рассчитанной по каскаду суммы в базе этапа (число, а не «по видам»).
+  const pctOfRow = (x) => {
+    if (x.typeRules?.length) {
+      if (!(sg.base > 0)) return 0;
+      return Math.round((calcTypeRulesAmount(x.typeRules, stageFact) / sg.base) * 1000) / 10;
+    }
+    return x.rule ? Number(pctOf(x.rule)) : 0;
+  };
 
   const cbStyle = { width: 15, height: 15, accentColor: C.green, marginRight: 7, flexShrink: 0, cursor: "pointer" };
   // Колонки. На десктопе видны все шесть. На телефоне всё помещается в экран без
@@ -590,13 +601,12 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
             <span style={st.fundCode}>{x.fund?.code}</span>
             <span style={{ fontWeight: 700, fontSize: 13.5, flex: 1, minWidth: 0 }}>{x.fund?.name}</span>
             {x.fund?.is_restricted && <Lock size={12} color={C.faint} />}
-            {hasTypeRules ? (
+            <span style={{ fontSize: 13, fontWeight: 800, color: C.sub, flexShrink: 0 }}>{pctOfRow(x)}%</span>
+            {hasTypeRules && (
               <button style={{ ...st.iconBtn, width: 30, height: 30, borderRadius: 9, padding: 0, color: C.green, flexShrink: 0 }}
                 className="btn" disabled={!!busy || locked} title="Распределение по видам дохода (настраивается в «Доходах»)"
                 onClick={() => onOpenCalc(x.fund)}><Calculator size={16} /></button>
-            ) : (!x.typeRules?.length && x.rule ? (
-              <span style={{ fontSize: 13, fontWeight: 800, color: C.sub, flexShrink: 0 }}>{pctOf(x.rule)}%</span>
-            ) : null)}
+            )}
           </div>
           <div style={{ ...st.bar, maxWidth: "100%", marginTop: 9 }}>
             <div style={{ ...st.barFill, width: `${fill}%`, background: x.appr ? C.green : C.warning }} />
@@ -630,11 +640,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
           <div style={st.bar}><div style={{ ...st.barFill, width: `${fill}%`, background: x.appr ? C.green : C.warning }} /></div>
         </div>
         {showBase && (
-          <div style={st.fPct}>
-            {!x.typeRules?.length && x.rule
-              ? <>{pctOf(x.rule)}<span style={st.pctSign}>%</span></>
-              : <span style={{ fontSize: 11, color: C.faint }}>{isMobile ? "—" : "по видам"}</span>}
-          </div>
+          <div style={st.fPct}>{pctOfRow(x)}<span style={st.pctSign}>%</span></div>
         )}
         {showBase && (
           <div style={{ display: "flex", justifyContent: "center", alignItems: "flex-start", alignSelf: "start" }}>
@@ -708,11 +714,11 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
             const isOpen = !!openFolders[fid];
             const fsum = rows.reduce((t, x) => ({
               avail: t.avail + Number(x.fund?.balance || 0), calc: t.calc + x.calc, appr: t.appr + x.appr,
-              pct: t.pct + (!x.typeRules?.length && x.rule ? Number(pctOf(x.rule)) : 0),
+              pct: t.pct + pctOfRow(x),
             }), { avail: 0, calc: 0, appr: 0, pct: 0 });
+            const gPct = Math.round(fsum.pct * 10) / 10;   // суммарный % группы (число)
             const gBarVal = fsum.appr || fsum.calc;
             const gFill = gBarVal > 0 ? Math.min(100, (gBarVal / (fsum.avail > 0 ? fsum.avail : gBarVal)) * 100) : 0;
-            const gByTypes = rows.some((x) => x.typeRules?.length);   // в группе есть фонды «по видам»
             // Выбор всех фондов группы галочкой (только ещё не одобренные)
             const gSel = rows.filter((x) => x.fund && !(x.appr > 0)).map((x) => x.fund.id);
             const gChecked = gSel.length > 0 && gSel.every((id) => checked.has(id));
@@ -722,9 +728,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
               else gSel.forEach((id) => n.add(id));
               return n;
             });
-            const PctTag = () => (fsum.pct > 0
-              ? <>{fsum.pct}<span style={st.pctSign}>%</span></>
-              : (gByTypes ? <span style={{ fontSize: 11, color: C.faint }}>по видам</span> : null));
+            const PctTag = () => (<>{gPct}<span style={st.pctSign}>%</span></>);
             return (
               <div key={fid}>
                 {isMobile ? (
@@ -745,7 +749,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
                         </div>
                         <div style={{ fontSize: 10.5, color: C.faint, marginTop: 1 }}>{rows.length} фонд(ов)</div>
                       </div>
-                      {(fsum.pct > 0 || gByTypes) && <span style={{ fontSize: 13, fontWeight: 800, color: C.sub, flexShrink: 0 }}><PctTag /></span>}
+                      <span style={{ fontSize: 13, fontWeight: 800, color: C.sub, flexShrink: 0 }}><PctTag /></span>
                       <ChevronRight size={18} style={{ transform: isOpen ? "rotate(90deg)" : "none", transition: "transform .2s", color: C.faint, flexShrink: 0 }} />
                     </div>
                     <div style={{ ...st.bar, maxWidth: "100%", marginTop: 9 }}>
