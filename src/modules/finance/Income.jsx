@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { ArrowUpRight, ArrowDownRight, ChevronRight, Plus, X, Loader2, AlertCircle, Calculator, Trash2 } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, ChevronRight, Plus, X, Loader2, AlertCircle, Calculator, Trash2, Store } from "lucide-react";
 import { useTheme } from "../../theme/theme";
 import { useScrollLock } from "../../hooks/useScrollLock";
 import { fmt } from "../../utils/format";
@@ -165,7 +165,10 @@ export function Income() {
         return (
           <div key={loc.id} style={st.dataCard}>
             <div style={st.locHead} className="locHead" onClick={() => hasChildren && setOpen((o) => ({ ...o, [loc.id]: !o?.[loc.id] }))}>
-              <div style={{ ...st.locDot, background: PALETTE[i % PALETTE.length] }} />
+              <div style={{ width: 34, height: 34, borderRadius: 10, display: "grid", placeItems: "center", flexShrink: 0,
+                background: `${PALETTE[i % PALETTE.length]}22`, color: PALETTE[i % PALETTE.length] }}>
+                <Store size={18} />
+              </div>
               <div style={st.locTitle}>
                 <div style={st.locName}>{loc.name}</div>
                 <div style={st.locCode}>{loc.code}{hasChildren ? ` · ${loc.children.length} статей` : ""}</div>
@@ -296,8 +299,8 @@ function SchemeModal({ C, st, type, rules, funds, onChanged, onClose }) {
             <option value="">— фонд —</option>
             {funds.map((fd) => <option key={fd.id} value={fd.id}>{fd.code} — {fd.name}</option>)}
           </select>
-          <div style={{ display: "flex", gap: 8 }}>
-            <select style={{ ...st.mdSelect, flex: 1 }} className="fin" value={f.stage} onChange={(e) => setF((p) => ({ ...p, stage: e.target.value }))}>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <select style={{ ...st.mdSelect, flex: 1, minWidth: 120 }} className="fin" value={f.stage} onChange={(e) => setF((p) => ({ ...p, stage: e.target.value }))}>
               {STAGE_OPTS.map(([k, l]) => <option key={k} value={k}>{l}</option>)}
             </select>
             <input style={{ ...st.mdInput, width: 90 }} className="fin" inputMode="decimal" placeholder="%"
