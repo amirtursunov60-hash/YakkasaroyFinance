@@ -209,7 +209,7 @@ export function Income() {
 
                   if (isMobile) {
                     return (
-                      <div key={c.id} style={{ padding: "11px 0", borderTop: `1px solid ${C.line}` }}>
+                      <div key={c.id} style={{ padding: "11px 18px", borderTop: `1px solid ${C.line}` }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
                           <span style={st.itemCode}>{c.code}</span>
                           <span style={{ fontWeight: 600, fontSize: 13, flex: 1, minWidth: 0 }}>{c.name}</span>
