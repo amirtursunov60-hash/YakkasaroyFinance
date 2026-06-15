@@ -35,6 +35,11 @@
 | `20260615184000_ledger_concurrency_guards.sql` | **применён** | инварианты конкурентности леджера: fp_pay_request блокирует строку заявки `for update` + условный перевод статуса (защита от двойной оплаты), fp_distribute_stage блокирует строку периода `for update` (сериализация одобрения этапа), частичный UNIQUE-индекс `fp_register(request_id) where op_type='request_payment'` |
 | `20260615185500_ledger_hardening_audit_reconcile.sql` | **применён** | доводка леджера: триггер `fp_register_no_update` (леджер неизменяем — UPDATE запрещён), функция `fp_reconcile_balances()` (сверка SUM(fp_register) = баланс фонда/счёта), аудит `fp_periods` и `directives` (переоткрытие/закрытие периода теперь пишутся в `audit_log`) |
 | `20260615190000_fix_register_no_update_search_path.sql` | **применён** | фикс advisors `function_search_path_mutable`: зафиксирован `search_path = public` у `trg_register_no_update` |
+| `20260615193000_enable_pgtap_testing.sql` | **применён** | включение pgTAP для модульного тестирования БД; тесты инвариантов леджера — в `supabase/tests/` |
+
+## Тесты БД (pgTAP)
+
+`supabase/tests/ledger_invariants_test.sql` — pgTAP-набор на инварианты леджера (существование Реестра/функций, триггеры неизменяемости/овердрафта/блокировки периода, unique-индекс против двойной оплаты, отсутствие UPDATE-политики на `fp_register`, аудит reopen/close, сверка `SUM(fp_register)` = баланс). Запуск: `supabase test db` (на ветке/staging) или `pg_prove`. Структурная + read-only часть (15 проверок) безопасна на любой среде, включая прод; поведенческие тесты с фикстурами (овердрафт/двойная оплата/закрытый период) — секция TODO в файле, запускать на ветке/staging.
 
 Файлы 001–002 оставлены как история применённого; выполнять их повторно не нужно. Прежние `003_finance.sql`/`004_seed.sql` к базе не применились (откатились с ошибкой) и заменены.
 
