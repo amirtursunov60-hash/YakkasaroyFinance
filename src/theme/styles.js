@@ -158,7 +158,7 @@ export const makeStyles = (C) => ({
 
   // ---- Модальная форма ----
   mdOverlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 70, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 },
-  mdCard: { width: "min(560px, 100%)", maxHeight: "92vh", overflowY: "auto", background: C.panel, border: `1px solid ${C.line}`, borderRadius: 20, padding: "20px 22px 18px", boxShadow: `0 24px 60px ${C.shadow}` },
+  mdCard: { width: "min(560px, 100%)", maxHeight: "92vh", overflowY: "auto", background: C.solid, border: `1px solid ${C.glassBorder}`, borderRadius: 20, padding: "20px 22px 18px", boxShadow: `0 24px 60px ${C.shadow}` },
   mdHead: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, gap: 10 },
   mdTitle: { fontSize: 17, fontWeight: 800 },
   mdGrid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 },
