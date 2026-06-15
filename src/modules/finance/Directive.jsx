@@ -503,6 +503,7 @@ function Delta({ C, delta, small }) {
 function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders, compare, prevByFund, stageFact, onCalc, onApprove, onReset, onResetApproved, onOpenCalc }) {
   const [openFolders, setOpenFolders] = useState({});
   const [checked, setChecked] = useState(() => new Set());
+  const [collapsed, setCollapsed] = useState(false); // свернут ли этап целиком
   const calcBusy = busy === `calc:${sg.key}`;
   const apprBusy = busy === `appr:${sg.key}`;
   const resetBusy = busy === `reset:${sg.key}`;
@@ -677,15 +678,18 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
   return (
     <div style={st.cardWrap}>
       <section style={st.card}>
-        <div style={st.cardHead}>
-          <div style={st.cardTitle}>{sg.title}</div>
+        <div style={{ ...st.cardHead, cursor: "pointer" }} onClick={() => setCollapsed((c) => !c)}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+            <ChevronRight size={18} style={{ transform: collapsed ? "none" : "rotate(90deg)", transition: "transform .2s", color: C.sub, flexShrink: 0 }} />
+            <div style={st.cardTitle}>{sg.title}</div>
+          </div>
           <div className="denseNum" style={st.cardTotal}>{fmt(sg.base)} <span style={st.unit}>TJS</span></div>
         </div>
         <div style={st.subHead}>
           <span style={st.subHeadTitle}>{sg.fundsTitle}</span>
           <span style={st.subHeadAppr}>Одобрено: <b className="denseNum" style={{ color: C.green }}>{fmt(totals.appr)}</b></span>
         </div>
-        {sg.rows.length === 0 ? <div style={st.empty}>Фонды этого этапа не настроены</div> : (<>
+        {!collapsed && (sg.rows.length === 0 ? <div style={st.empty}>Фонды этого этапа не настроены</div> : (<>
           {isMobile ? (
             <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "11px 12px",
               borderTop: `1px solid ${C.line}`, color: C.sub, fontSize: 12, fontWeight: 600 }}>
@@ -821,7 +825,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
             </div>
           )}
           {isMobile && <div style={st.mActions}><CalcBtn /><ApproveBtn /><ResetBtn /></div>}
-        </>)}
+        </>))}
       </section>
     </div>
   );
