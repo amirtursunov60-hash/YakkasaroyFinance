@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { fmt, avatarColor } from "./format";
+import { fmt, fmtShort, avatarColor } from "./format";
 
 // Денежные суммы: две цифры после запятой, разделитель тысяч (ru-RU).
 describe("fmt", () => {
@@ -19,6 +19,32 @@ describe("fmt", () => {
 
   it("отрицательные суммы", () => {
     expect(fmt(-50)).toBe("-50,00");
+  });
+});
+
+// Сокращённый формат для дашбордов: порядок величины, а не точность.
+describe("fmtShort", () => {
+  it("до тысячи — как есть", () => {
+    expect(fmtShort(0)).toBe("0");
+    expect(fmtShort(999)).toBe("999");
+  });
+
+  it("тысячи → «тыс»", () => {
+    expect(fmtShort(81000)).toBe("81 тыс");
+    expect(fmtShort(1500)).toBe("1,5 тыс");
+  });
+
+  it("миллионы → «млн»", () => {
+    expect(fmtShort(1000000)).toBe("1 млн");
+    expect(fmtShort(1342000)).toBe("1,34 млн");
+  });
+
+  it("миллиарды → «млрд»", () => {
+    expect(fmtShort(2500000000)).toBe("2,5 млрд");
+  });
+
+  it("отрицательные значения", () => {
+    expect(fmtShort(-1500000)).toBe("-1,5 млн");
   });
 });
 
