@@ -198,43 +198,43 @@ export function Directive() {
   // Рассчитать выбранные галочками фонды (или все, если ничего не отмечено).
   // Фонд с обычным правилом: база × %. Фонд со схемой по видам дохода (ФРС):
   // Σ (факт дохода вида × %) — считается автоматически (пункт 3).
-  const doCalc = (sg, checkedIds) => {
+  // Расчёт сумм этапа для выбранных фондов (или всех, если не отмечены):
+  // обычный фонд — база × %; фонд «по видам» — Σ остаток вида × % (каскад).
+  const computeStageAmounts = (sg, checkedIds) => {
     const set = checkedIds && checkedIds.length ? new Set(checkedIds) : null;
+    const out = {};
+    sg.rows.forEach((x) => {
+      if (!x.fund) return;
+      if (set && !set.has(x.fund.id)) return;
+      if (x.appr > 0) return; // уже одобренные не пересчитываем
+      let amount = 0;
+      if (x.typeRules?.length) amount = calcTypeRulesAmount(x.typeRules, typeStageBase[sg.key] || {});
+      else if (x.rule) amount = Math.round(sg.base * pctOf(x.rule)) / 100;
+      out[x.fund.id] = amount;
+    });
+    return out;
+  };
+
+  const doCalc = (sg, checkedIds) => {
     setBusy(`calc:${sg.key}`);
     setTimeout(() => {
-      setCalculated((p) => {
-        const stageCalc = { ...(p[sg.key] || {}) };
-        sg.rows.forEach((x) => {
-          if (!x.fund) return;
-          if (set && !set.has(x.fund.id)) return;
-          if (x.appr > 0) return; // уже одобренные не пересчитываем
-          let amount = 0;
-          if (x.typeRules?.length) {
-            // фонд со схемой по видам дохода (калькулятор): Σ (остаток вида на этапе × %)
-            amount = calcTypeRulesAmount(x.typeRules, typeStageBase[sg.key] || {});
-          } else if (x.rule) {
-            // фонд без калькулятора: плоский процент от базы этапа
-            amount = Math.round(sg.base * pctOf(x.rule)) / 100;
-          }
-          stageCalc[x.fund.id] = amount;
-        });
-        return { ...p, [sg.key]: stageCalc };
-      });
+      setCalculated((p) => ({ ...p, [sg.key]: { ...(p[sg.key] || {}), ...computeStageAmounts(sg, checkedIds) } }));
       setBusy(null);
     }, 300);
   };
 
-  const doApprove = async (sg) => {
+  // «Одобрить» сразу рассчитывает и одобряет (отдельный «Рассчитать» не обязателен).
+  const doApprove = async (sg, checkedIds) => {
     if (busy) return;
-    const calc = calculated[sg.key] || {};
-    // одобряем только рассчитанные и ещё не одобренные фонды
-    const allocations = sg.rows
-      .filter((x) => x.fund && (calc[x.fund.id] || 0) > 0 && !(x.appr > 0))
-      .map((x) => ({ fund_id: x.fund.id, amount: calc[x.fund.id] }));
-    if (!allocations.length) { setErr(`${sg.title}: сначала нажмите «Рассчитать»`); return; }
+    const amounts = computeStageAmounts(sg, checkedIds);
+    const allocations = Object.entries(amounts)
+      .filter(([, amt]) => amt > 0)
+      .map(([fund_id, amount]) => ({ fund_id, amount }));
+    if (!allocations.length) { setErr(`${sg.title}: нет фондов для одобрения`); return; }
     setBusy(`appr:${sg.key}`); setErr(""); setDone("");
     try {
       await distributeStage(periodId, sg.key, allocations);
+      setCalculated((p) => ({ ...p, [sg.key]: { ...(p[sg.key] || {}), ...amounts } }));
       // правки процентов этого этапа сохраняем как скорректированную схему недели
       try {
         const changed = sg.rows
@@ -243,8 +243,7 @@ export function Directive() {
         await savePeriodOverrides(periodId, changed);
       } catch { /* не критично для одобрения */ }
       await Promise.all([reloadPeriodData(), loadRefs()]);
-      // «Рассчитано» НЕ очищаем — суммы остаются видны рядом с «Одобрено» (пункт 1)
-      setDone(`${sg.title}: распределение одобрено и зачислено в фонды`);
+      setDone(`${sg.title}: распределение рассчитано и одобрено`);
     } catch (e) { setErr(e?.message || String(e)); }
     finally { setBusy(null); }
   };
@@ -391,7 +390,7 @@ export function Directive() {
         pctOf={pctOf} setPcts={setPcts} busy={busy} locked={isClosed || !period}
         folders={folders} compare={compare && canCompare} prevByFund={prevByFund}
         stageFact={typeStageBase[sg.key] || {}}
-        onCalc={(ids) => doCalc(sg, ids)} onApprove={() => doApprove(sg)}
+        onCalc={(ids) => doCalc(sg, ids)} onApprove={(ids) => doApprove(sg, ids)}
         onReset={() => doReset(sg)} onResetApproved={() => doResetApproved(sg)}
         onOpenCalc={(fund) => setCalcFund({ fund, stage: sg })} />
     ))}
@@ -554,10 +553,11 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
     </button>
   );
   const ApproveBtn = () => {
-    const ok = !locked && hasApprovable;
+    // загорается при наличии рассчитанного ИЛИ когда отмечены галочки (сам рассчитает)
+    const ok = !locked && (hasApprovable || checked.size > 0);
     return (
       <button style={{ ...st.btnGreen, opacity: ok ? (busy ? 0.7 : 1) : 0.35, cursor: ok ? "pointer" : "not-allowed" }}
-        onClick={onApprove} className="btn" disabled={!!busy || !ok}>
+        onClick={() => onApprove([...checked])} className="btn" disabled={!!busy || !ok}>
         {apprBusy ? <span className="spin"><RotateCw size={15} /></span> : <Check size={15} />} Одобрить
       </button>
     );
