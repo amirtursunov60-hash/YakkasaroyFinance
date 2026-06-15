@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { RotateCcw, Ban, ArrowRightLeft, Clock, Lock, Loader2, AlertCircle, CheckCircle2, Plus, X, List, Folder, FolderOpen, ChevronRight } from "lucide-react";
+import { RotateCcw, Ban, ArrowRightLeft, Clock, Lock, Loader2, AlertCircle, CheckCircle2, Plus, X, List, Folder, FolderOpen, ChevronRight , Coins} from "lucide-react";
 import { Stat } from "../../components/common";
 import { useTheme } from "../../theme/theme";
 import { useScrollLock } from "../../hooks/useScrollLock";
@@ -248,6 +248,7 @@ export function Funds() {
           <div key={f.id} style={{ ...st.frow, gridTemplateColumns: GRID, ...(f.__child ? { paddingLeft: 26 } : {}) }} className="frow">
             <div style={st.fName}>
               <div style={st.fundTop}>
+                <Coins size={14} color={C.money} style={{ flexShrink: 0 }} />
                 <span style={st.fundCode}>{f.code}</span>
                 <span>{f.name}</span>
                 {f.is_restricted && <Lock size={12} color={C.faint} />}
