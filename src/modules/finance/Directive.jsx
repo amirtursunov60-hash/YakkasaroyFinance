@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { ClipboardList, Calculator, CalendarDays, Check, RotateCcw, RotateCw, Lock, Unlock, Ban, ArrowRightLeft, Loader2, AlertCircle, CheckCircle2, X, Folder, FolderOpen, ChevronRight, Scale, TrendingUp, TrendingDown } from "lucide-react";
+import { ClipboardList, Calculator, CalendarDays, Check, RotateCcw, RotateCw, Lock, Unlock, Ban, ArrowRightLeft, Loader2, AlertCircle, CheckCircle2, X, Layers, ChevronRight, Scale, TrendingUp, TrendingDown } from "lucide-react";
 import { Stat } from "../../components/common";
 import { useTheme } from "../../theme/theme";
 import { fmt } from "../../utils/format";
@@ -714,14 +714,14 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
                 {isMobile ? (
                   <div className="frow" onClick={() => setOpenFolders((o) => ({ ...o, [fid]: !o[fid] }))}
                     style={{ display: "flex", alignItems: "center", gap: 11, padding: "12px 12px", cursor: "pointer",
-                      borderTop: `1px solid ${C.line}`, background: isOpen ? `${C.warning}12` : "transparent" }}>
+                      borderTop: `1px solid ${C.line}`, background: isOpen ? `${C.info}12` : "transparent" }}>
                     <div style={{ width: 32, height: 32, borderRadius: 10, display: "grid", placeItems: "center",
-                      background: `${C.warning}22`, color: C.warning, flexShrink: 0 }}>
-                      {isOpen ? <FolderOpen size={17} /> : <Folder size={17} />}
+                      background: `${C.info}22`, color: C.info, flexShrink: 0 }}>
+                      <Layers size={17} />
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontWeight: 700, fontSize: 13.5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {folderById[fid]?.name || "Папка"}
+                        {folderById[fid]?.name || "Группа"}
                       </div>
                       <div style={{ fontSize: 10.5, color: C.faint, marginTop: 1 }}>
                         {rows.length} фонд(ов) · одобрено <span className="denseNum" style={{ color: fsum.appr ? C.green : C.faint, fontWeight: 600 }}>{fmt(fsum.appr)}</span>
@@ -734,8 +734,8 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
                     onClick={() => setOpenFolders((o) => ({ ...o, [fid]: !o[fid] }))}>
                     <div style={st.fName}>
                       <div style={st.fundTop}>
-                        {isOpen ? <FolderOpen size={15} color={C.warning} /> : <Folder size={15} color={C.warning} />}
-                        <b>{folderById[fid]?.name || "Папка"}</b>
+                        <Layers size={15} color={C.info} />
+                        <b>{folderById[fid]?.name || "Группа"}</b>
                         <span style={{ fontSize: 11, color: C.faint }}>· {rows.length} фонд(ов)</span>
                         <ChevronRight size={14} style={{ transform: isOpen ? "rotate(90deg)" : "none", transition: "transform .2s", color: C.faint }} />
                       </div>
