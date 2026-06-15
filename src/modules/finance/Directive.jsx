@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, useCallback } from "react";
 import { ClipboardList, Calculator, CalendarDays, Check, RotateCcw, RotateCw, Lock, Unlock, Ban, ArrowRightLeft, Loader2, AlertCircle, CheckCircle2, X, Landmark, ChevronRight, Scale, TrendingUp, TrendingDown } from "lucide-react";
 import { Stat } from "../../components/common";
 import { useTheme } from "../../theme/theme";
+import { useScrollLock } from "../../hooks/useScrollLock";
 import { fmt } from "../../utils/format";
 import { cascadeTypeStageBase, calcTypeRulesAmount } from "../../lib/distribution";
 import { usePeriod, periodTitle } from "../../lib/PeriodCtx";
@@ -842,6 +843,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
 // Модель ManaJet: распределение в фонд по видам дохода с разными процентами.
 // Факт = доход вида за неделю; рассчитано = факт × %; суммы можно поправить.
 function FundCalcModal({ C, st, isMobile, fund, stage, rules, incomeByType, approved, busy, locked, onClose, onApprove }) {
+  useScrollLock();
   const [vals, setVals] = useState(() => Object.fromEntries(
     rules.map((r) => {
       const fact = incomeByType[r.income_type?.id] || 0;
@@ -955,6 +957,7 @@ function FundCalcModal({ C, st, isMobile, fund, stage, rules, incomeByType, appr
 
 // ---------------------------------------------------------------- Перенос остатка в фонд
 function TransferModal({ C, st, funds, remainder, busy, onClose, onTransfer }) {
+  useScrollLock();
   const [fundId, setFundId] = useState(funds.find((f) => f.code === "FD6")?.id || funds[0]?.id || "");
   return (
     <div style={st.mdOverlay} onClick={onClose}>
