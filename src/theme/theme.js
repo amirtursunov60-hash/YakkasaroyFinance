@@ -34,11 +34,13 @@ export const THEMES = {
     scheme: "light",
     pageGrad: "linear-gradient(160deg, #d4e4fb 0%, #cfe0f3 18%, #d2efe0 46%, #e0ecfa 74%, #e6f0fb 100%)",
     bg: "transparent",
-    panel: "rgba(255, 255, 255, 0.55)", panel2: "rgba(255,255,255,0.45)", line: "rgba(15,40,70,0.12)",
+    // Контраст усилен (дизайн-ревью): графитовые подписи вместо светло-серых,
+    // заметнее бордеры и зебра — плотные данные читаются без «мыла».
+    panel: "rgba(255, 255, 255, 0.55)", panel2: "rgba(255,255,255,0.45)", line: "rgba(15,40,70,0.16)",
     glassBorder: "rgba(255,255,255,0.85)", glassHi: "rgba(255,255,255,0.95)",
-    green: "#0aa552", greenSoft: "#0aa552", text: "#0b1722", sub: "#52606b", faint: "#94a0aa",
+    green: "#0aa552", greenSoft: "#0aa552", text: "#0b1722", sub: "#45525e", faint: "#717c87",
     money: "#0a8f48", // деньги (приход/рост) — чуть глубже брендового зелёного
-    inputBg: "rgba(255,255,255,0.65)", rowChild: "rgba(0,0,0,0.015)", rowHover: "rgba(255,255,255,0.6)",
+    inputBg: "rgba(255,255,255,0.65)", rowChild: "rgba(15,40,70,0.035)", rowHover: "rgba(255,255,255,0.6)",
     navHover: "rgba(255,255,255,0.5)", heroGrad: "linear-gradient(135deg, rgba(10,165,82,0.18) 0%, rgba(40,120,210,0.14) 50%, rgba(255,255,255,0.35) 100%)",
     heroLabel: "#1a6e46", heroStat: "#2a6f7d", barBg: "rgba(15,40,70,0.12)", danger: "#dc3b30",
     blueLink: "#1565e0", menuHover: "rgba(255,255,255,0.55)", shadow: "rgba(31,55,90,0.16)",
