@@ -17,9 +17,11 @@ npm install
 npm run dev        # Vite dev-сервер, http://localhost:5173
 npm run build      # сборка в dist/
 npm run preview    # просмотр сборки
+npm test           # Vitest — прогон тестов один раз
+npm run test:watch # Vitest в watch-режиме
 ```
 
-Тестов и линтера в проекте нет. Стек: React 18 + Vite 6 + lucide-react + @supabase/supabase-js. Без TypeScript, без Tailwind, без роутера, без библиотек графиков.
+Линтера в проекте нет. Тесты — Vitest (`*.test.js` рядом с кодом, пока покрыта чистая доменная логика в `src/utils/`). Стек: React 18 + Vite 6 + lucide-react + @supabase/supabase-js. Без TypeScript, без Tailwind, без роутера, без библиотек графиков.
 
 Для входа в приложение нужны переменные окружения `VITE_SUPABASE_URL` и `VITE_SUPABASE_KEY` (файл `.env` — в gitignore).
 
