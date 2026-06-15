@@ -468,7 +468,7 @@ export function Directive() {
         busy={busy === "transfer"} onClose={() => setTransferOpen(false)} onTransfer={doTransfer} />
     )}
     {calcFund && (
-      <FundCalcModal C={C} st={st} fund={calcFund.fund} stage={calcFund.stage}
+      <FundCalcModal C={C} st={st} isMobile={isMobile} fund={calcFund.fund} stage={calcFund.stage}
         rules={(fundRules[calcFund.fund.id] || []).filter((x) => x.stage === calcFund.stage.key)}
         incomeByType={typeStageBase[calcFund.stage.key] || {}}
         approved={(approvedByStage[calcFund.stage.key] || {})[calcFund.fund.id] || 0}
@@ -841,7 +841,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
 // ---------------------------------------------------------------- Калькулятор фонда
 // Модель ManaJet: распределение в фонд по видам дохода с разными процентами.
 // Факт = доход вида за неделю; рассчитано = факт × %; суммы можно поправить.
-function FundCalcModal({ C, st, fund, stage, rules, incomeByType, approved, busy, locked, onClose, onApprove }) {
+function FundCalcModal({ C, st, isMobile, fund, stage, rules, incomeByType, approved, busy, locked, onClose, onApprove }) {
   const [vals, setVals] = useState(() => Object.fromEntries(
     rules.map((r) => {
       const fact = incomeByType[r.income_type?.id] || 0;
@@ -864,17 +864,47 @@ function FundCalcModal({ C, st, fund, stage, rules, incomeByType, approved, busy
           {approved > 0 && <b style={{ color: C.green }}> · уже одобрено {fmt(approved)}</b>}
         </div>
 
-        <div style={{ ...st.frow, ...st.frowHead, gridTemplateColumns: "1fr 90px 56px 90px 100px" }}>
-          <div style={st.fName}>Вид дохода</div>
-          <div style={st.fNum}>Факт</div>
-          <div style={st.fPct}>%</div>
-          <div style={st.fNum}>Рассчитано</div>
-          <div style={st.fNum}>Одобрить</div>
-        </div>
-        <div style={{ maxHeight: 360, overflowY: "auto" }}>
+        {!isMobile && (
+          <div style={{ ...st.frow, ...st.frowHead, gridTemplateColumns: "1fr 90px 56px 90px 100px" }}>
+            <div style={st.fName}>Вид дохода</div>
+            <div style={st.fNum}>Факт</div>
+            <div style={st.fPct}>%</div>
+            <div style={st.fNum}>Рассчитано</div>
+            <div style={st.fNum}>Одобрить</div>
+          </div>
+        )}
+        <div style={{ maxHeight: isMobile ? "none" : 360, overflowY: "auto" }}>
           {rules.map((r) => {
             const fact = incomeByType[r.income_type?.id] || 0;
             const calc = r.percent ? Math.round(fact * Number(r.percent)) / 100 : Number(r.fixed_amount || 0);
+            if (isMobile) {
+              return (
+                <div key={r.id} style={{ padding: "12px 0", borderTop: `1px solid ${C.line}` }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                    <span style={st.fundCode}>{r.income_type?.code}</span>
+                    <span style={{ fontWeight: 700, fontSize: 13, flex: 1, minWidth: 0 }}>{r.income_type?.name}</span>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: C.sub }}>{r.percent ? `${Number(r.percent)}%` : "фикс"}</span>
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                    <div>
+                      <div style={{ fontSize: 10, color: C.faint }}>Факт</div>
+                      <div className="denseNum" style={{ fontSize: 13, fontWeight: 600 }}>{fmt(fact)}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 10, color: C.faint }}>Рассчитано</div>
+                      <div className="denseNum" style={{ fontSize: 13, fontWeight: 600, color: calc ? C.warning : C.faint }}>{fmt(calc)}</div>
+                    </div>
+                  </div>
+                  <div style={{ marginTop: 8 }}>
+                    <div style={{ fontSize: 10, color: C.faint, marginBottom: 3 }}>Одобрить</div>
+                    <input type="number" inputMode="decimal" value={vals[r.id]}
+                      onChange={(e) => setVals((p) => ({ ...p, [r.id]: e.target.value }))}
+                      onWheel={(e) => e.target.blur()}
+                      style={{ ...st.pctInput, width: "100%", padding: "10px 12px", fontSize: 14, textAlign: "left" }} />
+                  </div>
+                </div>
+              );
+            }
             return (
               <div key={r.id} style={{ ...st.frow, gridTemplateColumns: "1fr 90px 56px 90px 100px", alignItems: "center" }} className="frow">
                 <div style={{ ...st.fName, fontSize: 12.5 }}>
@@ -893,13 +923,20 @@ function FundCalcModal({ C, st, fund, stage, rules, incomeByType, approved, busy
             );
           })}
         </div>
-        <div style={{ ...st.frow, ...st.frowTotal, gridTemplateColumns: "1fr 90px 56px 90px 100px" }}>
-          <div style={st.fName}><b>Итого</b></div>
-          <div style={{ ...st.fNum, fontWeight: 700 }}>{fmt(factTotal)}</div>
-          <div style={st.fPct} />
-          <div style={st.fNum} />
-          <div style={{ ...st.fNum, fontWeight: 800, color: C.green }}>{fmt(total)}</div>
-        </div>
+        {isMobile ? (
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 6, paddingTop: 12, borderTop: `1px solid ${C.line}` }}>
+            <b style={{ fontSize: 13 }}>Итого одобрить</b>
+            <b className="denseNum" style={{ fontSize: 16, color: C.green }}>{fmt(total)}</b>
+          </div>
+        ) : (
+          <div style={{ ...st.frow, ...st.frowTotal, gridTemplateColumns: "1fr 90px 56px 90px 100px" }}>
+            <div style={st.fName}><b>Итого</b></div>
+            <div style={{ ...st.fNum, fontWeight: 700 }}>{fmt(factTotal)}</div>
+            <div style={st.fPct} />
+            <div style={st.fNum} />
+            <div style={{ ...st.fNum, fontWeight: 800, color: C.green }}>{fmt(total)}</div>
+          </div>
+        )}
 
         <div style={st.mdActions}>
           <button style={st.btnGhost} className="btn" onClick={onClose}>Отмена</button>
