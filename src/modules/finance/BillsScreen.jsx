@@ -202,7 +202,7 @@ export function BillsScreen({ kind, ui }) {
         <div key={b.id} style={{ ...st.dataCard, marginBottom: 10 }}>
           <div style={{ ...st.locHead, cursor: "pointer" }} className="locHead"
             onClick={() => setExpanded((e) => ({ ...e, [b.id]: !e[b.id] }))}>
-            <div style={{ ...st.locDot, background: isOverdue ? C.danger : m.color }} />
+            <div style={{ width: 34, height: 34, borderRadius: 10, display: "grid", placeItems: "center", flexShrink: 0, background: `${(isOverdue ? C.danger : m.color)}22`, color: isOverdue ? C.danger : m.color }}><FileText size={17} /></div>
             <div style={st.locTitle}>
               <div style={st.locName}>
                 №{b.number} · {b.counterparty?.name || "—"}
