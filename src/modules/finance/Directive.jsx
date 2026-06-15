@@ -708,26 +708,38 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
             const isOpen = !!openFolders[fid];
             const fsum = rows.reduce((t, x) => ({
               avail: t.avail + Number(x.fund?.balance || 0), calc: t.calc + x.calc, appr: t.appr + x.appr,
-            }), { avail: 0, calc: 0, appr: 0 });
+              pct: t.pct + (!x.typeRules?.length && x.rule ? Number(pctOf(x.rule)) : 0),
+            }), { avail: 0, calc: 0, appr: 0, pct: 0 });
+            const gBarVal = fsum.appr || fsum.calc;
+            const gFill = gBarVal > 0 ? Math.min(100, (gBarVal / (fsum.avail > 0 ? fsum.avail : gBarVal)) * 100) : 0;
             return (
               <div key={fid}>
                 {isMobile ? (
                   <div className="frow" onClick={() => setOpenFolders((o) => ({ ...o, [fid]: !o[fid] }))}
-                    style={{ display: "flex", alignItems: "center", gap: 11, padding: "12px 12px", cursor: "pointer",
-                      borderTop: `1px solid ${C.line}`, background: isOpen ? `${C.info}12` : "transparent" }}>
-                    <div style={{ width: 32, height: 32, borderRadius: 10, display: "grid", placeItems: "center",
-                      background: `${C.info}22`, color: C.info, flexShrink: 0 }}>
-                      <Landmark size={16} />
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: 700, fontSize: 13.5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {folderById[fid]?.name || "Группа"}
+                    style={{ padding: "12px 12px", cursor: "pointer", borderTop: `1px solid ${C.line}`,
+                      background: isOpen ? `${C.info}12` : `${C.info}08` }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <div style={{ width: 30, height: 30, borderRadius: 9, display: "grid", placeItems: "center",
+                        background: `${C.info}22`, color: C.info, flexShrink: 0 }}>
+                        <Landmark size={16} />
                       </div>
-                      <div style={{ fontSize: 10.5, color: C.faint, marginTop: 1 }}>
-                        {rows.length} фонд(ов) · одобрено <span className="denseNum" style={{ color: fsum.appr ? C.green : C.faint, fontWeight: 600 }}>{fmt(fsum.appr)}</span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontWeight: 800, fontSize: 13.5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {folderById[fid]?.name || "Группа"}
+                        </div>
+                        <div style={{ fontSize: 10.5, color: C.faint, marginTop: 1 }}>{rows.length} фонд(ов)</div>
                       </div>
+                      {fsum.pct > 0 && <span style={{ fontSize: 13, fontWeight: 800, color: C.sub, flexShrink: 0 }}>{fsum.pct}%</span>}
+                      <ChevronRight size={18} style={{ transform: isOpen ? "rotate(90deg)" : "none", transition: "transform .2s", color: C.faint, flexShrink: 0 }} />
                     </div>
-                    <ChevronRight size={18} style={{ transform: isOpen ? "rotate(90deg)" : "none", transition: "transform .2s", color: C.faint, flexShrink: 0 }} />
+                    <div style={{ ...st.bar, maxWidth: "100%", marginTop: 9 }}>
+                      <div style={{ ...st.barFill, width: `${gFill}%`, background: fsum.appr ? C.green : C.warning }} />
+                    </div>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginTop: 10 }}>
+                      <MiniVal label="Доступно" value={fmt(fsum.avail)} bold />
+                      <MiniVal label="Рассчитано" value={fmt(fsum.calc)} color={fsum.calc ? C.warning : C.faint} bold />
+                      <MiniVal label="Одобрено" value={fmt(fsum.appr)} color={fsum.appr ? C.green : C.faint} bold />
+                    </div>
                   </div>
                 ) : (
                   <div style={{ ...frow6, cursor: "pointer", background: C.panel2 }} className="frow"
@@ -740,7 +752,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
                         <ChevronRight size={14} style={{ transform: isOpen ? "rotate(90deg)" : "none", transition: "transform .2s", color: C.faint }} />
                       </div>
                     </div>
-                    <div style={st.fPct} />
+                    <div style={st.fPct}>{fsum.pct > 0 ? <>{fsum.pct}<span style={st.pctSign}>%</span></> : null}</div>
                     <div />
                     <div className="denseNum" style={{ ...st.fNum, fontWeight: 700 }}>{fmt(fsum.avail)}</div>
                     <div className="denseNum" style={{ ...st.fNum, color: fsum.calc ? C.warning : C.faint }}>{fmt(fsum.calc)}</div>
