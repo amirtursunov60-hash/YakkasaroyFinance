@@ -199,14 +199,16 @@ export function Directive() {
           if (set && !set.has(x.fund.id)) return;
           if (x.appr > 0) return; // уже одобренные не пересчитываем
           let amount = 0;
-          if (x.rule) {
-            amount = Math.round(sg.base * pctOf(x.rule)) / 100;
-          } else if (x.typeRules?.length) {
+          if (x.typeRules?.length) {
+            // фонд со схемой по видам дохода (калькулятор): Σ (факт дохода вида × %)
             amount = x.typeRules.reduce((a, r) => {
               const fact = incomeByType[r.income_type?.id] || 0;
               return a + (r.percent != null ? fact * Number(r.percent) / 100 : Number(r.fixed_amount || 0));
             }, 0);
             amount = Math.round(amount * 100) / 100;
+          } else if (x.rule) {
+            // фонд без калькулятора: плоский процент от базы этапа
+            amount = Math.round(sg.base * pctOf(x.rule)) / 100;
           }
           stageCalc[x.fund.id] = amount;
         });
@@ -579,7 +581,8 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
         </div>
         {showBase && (
           <div style={st.fPct}>
-            {x.rule ? <>{pctOf(x.rule)}<span style={st.pctSign}>%</span></>
+            {!x.typeRules?.length && x.rule
+              ? <>{pctOf(x.rule)}<span style={st.pctSign}>%</span></>
               : <span style={{ fontSize: 11, color: C.faint }}>{isMobile ? "—" : "по видам"}</span>}
           </div>
         )}
