@@ -1,0 +1,140 @@
+-- ============================================================================
+-- Инварианты конкурентности леджера (ТЗ v2 §4.1 — Реестр как источник истины)
+--
+-- Закрывает гонки на workflow-переходах, где идемпотентность раньше держалась
+-- только на read-then-write проверке (без блокировки/констрейнта):
+--   1. Двойная оплата одной заявки при параллельных вызовах fp_pay_request.
+--   2. Двойное одобрение одного этапа при параллельных fp_distribute_stage.
+--
+-- Денежные инварианты (баланс-кэш через триггер, запрет минуса с FOR UPDATE по
+-- фонду, блокировка закрытого периода) уже были закрыты — здесь только
+-- сериализация переходов статусов и жёсткий констрейнт на оплату.
+--
+-- Идемпотентно: create or replace + create unique index if not exists.
+-- ============================================================================
+
+-- 1. Жёсткий запрет двойной оплаты на уровне БД: у одной заявки не больше одной
+--    проводки оплаты в Реестре. Частичный UNIQUE по op_type='request_payment'.
+--    (Если индекс не создастся из-за уже существующих дублей — это сигнал о
+--     рассинхроне данных, который нужно разобрать вручную.)
+create unique index if not exists fp_register_request_payment_uniq
+  on public.fp_register (request_id)
+  where (op_type = 'request_payment' and request_id is not null);
+
+-- 2. Оплата заявки: блокируем строку заявки FOR UPDATE и проводим статус
+--    условно (WHERE status='approved'), чтобы два параллельных вызова не
+--    провели двойную оплату. Тело идентично исходному (миграция
+--    20260612180508), добавлены только блокировка и проверка rowcount.
+create or replace function public.fp_pay_request(p_request_id uuid, p_cash_account_id uuid, p_period_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  r payment_requests%rowtype;
+  v_status period_status;
+  v_base numeric;
+  v_rate numeric;
+  v_is_base boolean;
+  v_base_cur uuid;
+  v_upd int;
+begin
+  if not (is_fin_admin() or my_role() = 'accountant') then
+    raise exception 'Оплачивать заявки может финдиректор, владелец или бухгалтер';
+  end if;
+
+  -- Пессимистичная блокировка строки заявки: сериализует параллельные оплаты
+  select * into r from payment_requests where id = p_request_id for update;
+  if r.id is null then raise exception 'Заявка не найдена'; end if;
+  if r.status <> 'approved' then raise exception 'Оплатить можно только одобренную заявку'; end if;
+  if r.fund_id is null then raise exception 'У заявки не назначен фонд-источник'; end if;
+
+  select status into v_status from fp_periods where id = p_period_id;
+  if v_status is null then raise exception 'Период ФП не найден'; end if;
+  if v_status = 'closed' then raise exception 'Период закрыт — операции запрещены'; end if;
+
+  if not exists (select 1 from cash_accounts where id = p_cash_account_id and not is_archived) then
+    raise exception 'Счёт ДС не найден';
+  end if;
+
+  select is_base into v_is_base from currencies where id = r.currency_id;
+  if v_is_base then
+    v_base := r.planned_amount;
+  else
+    select id into v_base_cur from currencies where is_base limit 1;
+    select rate into v_rate from exchange_rates
+    where from_cur_id = r.currency_id and to_cur_id = v_base_cur and valid_from <= current_date
+    order by valid_from desc limit 1;
+    if v_rate is null then raise exception 'Нет курса валюты заявки к базовой — добавьте курс'; end if;
+    v_base := round(r.planned_amount * v_rate, 2);
+  end if;
+
+  -- Условный перевод статуса: гарантирует, что оплата проводится ровно один раз
+  update payment_requests set status = 'paid' where id = r.id and status = 'approved';
+  get diagnostics v_upd = row_count;
+  if v_upd <> 1 then raise exception 'Заявка уже оплачена'; end if;
+
+  insert into fp_register (op_type, period_id, fund_id, fund_amount, cash_account_id, cash_amount,
+    request_id, counterparty_id, payment_type_id, currency_id, fx_rate, comment, created_by)
+  values ('request_payment', p_period_id, r.fund_id, -v_base, p_cash_account_id, -v_base,
+    r.id, r.counterparty_id, r.payment_type_id, r.currency_id, v_rate, 'Оплата заявки №' || r.number, auth.uid());
+end $$;
+
+revoke execute on function public.fp_pay_request(uuid, uuid, uuid) from public, anon;
+grant execute on function public.fp_pay_request(uuid, uuid, uuid) to authenticated, service_role;
+
+-- 3. Одобрение этапа распределения: блокируем строку периода FOR UPDATE, чтобы
+--    параллельные вызовы одного этапа сериализовались и второй увидел уже
+--    проведённый этап. Этап = много строк по фондам, поэтому unique-индекс не
+--    подходит — нужна блокировка. Тело идентично 007, добавлен FOR UPDATE.
+create or replace function public.fp_distribute_stage(p_period_id uuid, p_stage text, p_allocations jsonb)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_status period_status;
+  r record;
+  v_count int := 0;
+begin
+  if not is_fin_admin() then
+    raise exception 'Одобрять распределение может только финдиректор или владелец';
+  end if;
+  if p_stage not in ('revenue', 'margin', 'adjusted', 'remainder') then
+    raise exception 'Неизвестный этап распределения: %', p_stage;
+  end if;
+
+  -- Блокировка периода: сериализует одобрение этапов в рамках одной недели
+  select status into v_status from fp_periods where id = p_period_id for update;
+  if v_status is null then
+    raise exception 'Период ФП не найден';
+  end if;
+  if v_status = 'closed' then
+    raise exception 'Период закрыт — операции запрещены';
+  end if;
+  if exists (select 1 from fp_register
+             where period_id = p_period_id
+               and op_type = 'distribution'
+               and comment = 'stage:' || p_stage) then
+    raise exception 'Этот этап уже одобрен в данном периоде';
+  end if;
+
+  for r in
+    select (a ->> 'fund_id')::uuid as fund_id, (a ->> 'amount')::numeric as amount
+    from jsonb_array_elements(p_allocations) a
+  loop
+    continue when r.amount is null or r.amount <= 0;
+    if not exists (select 1 from funds where id = r.fund_id and not is_archived) then
+      raise exception 'Фонд % не найден', r.fund_id;
+    end if;
+    insert into fp_register (op_type, period_id, fund_id, fund_amount, comment, created_by)
+    values ('distribution', p_period_id, r.fund_id, r.amount, 'stage:' || p_stage, auth.uid());
+    v_count := v_count + 1;
+  end loop;
+
+  if v_count = 0 then
+    raise exception 'Нет сумм к зачислению';
+  end if;
+end $$;
