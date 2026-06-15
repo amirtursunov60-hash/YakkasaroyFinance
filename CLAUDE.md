@@ -61,7 +61,8 @@ src/
 │                          # PeriodCtx.jsx (контекст недели ФП чт–ср + выбранной точки)
 ├── theme/                 # ВСЁ оформление здесь, см. «Стиль» ниже
 │   ├── theme.js           # THEMES (dark/light палитры C + семантические токены info/warning/
-│   │                      # success/successSoft), ThemeCtx, useTheme
+│   │                      # success/successSoft, money — зелёный для сумм отдельно от бренда),
+│   │                      # ThemeCtx, useTheme
 │   ├── styles.js          # makeStyles(C) → объект st со всеми inline-стилями (радиусы 4/8/12/16/20)
 │   └── css.js             # makeCss(C) → строка глобального CSS (hover, фокус-кольца, анимации)
 ├── data/                  # МОКИ модулей без API (crm, dashboard, org, stats, restaurant);

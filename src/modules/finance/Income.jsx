@@ -119,7 +119,7 @@ export function Income() {
   const Trend = ({ cur, prev, big }) => {
     const d = delta(cur, prev);
     if (!d) return <span style={{ ...st.trend, color: C.faint }}>—</span>;
-    const col = d.up ? C.green : C.danger;
+    const col = d.up ? C.money : C.danger;
     return (
       <span style={{ ...st.trend, color: col, fontSize: big ? 13 : 12 }}>
         {d.up ? <ArrowUpRight size={big ? 15 : 13} /> : <ArrowDownRight size={big ? 15 : 13} />}
@@ -204,7 +204,7 @@ export function Income() {
                         )}
                       </div>
                       <div style={st.itemPrev}>{fmt(rc.prev)}</div>
-                      <div style={{ ...st.itemCur, color: rc.cur ? C.green : C.faint }}>{fmt(rc.cur)}</div>
+                      <div style={{ ...st.itemCur, color: rc.cur ? C.money : C.faint }}>{fmt(rc.cur)}</div>
                     </div>
                   );
                 })}

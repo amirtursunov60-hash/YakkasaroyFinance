@@ -17,6 +17,9 @@ export const THEMES = {
     panel: "rgba(28, 34, 44, 0.55)", panel2: "rgba(255,255,255,0.06)", line: "rgba(255,255,255,0.10)",
     glassBorder: "rgba(255,255,255,0.14)", glassHi: "rgba(255,255,255,0.22)",
     green: "#3ddc84", greenSoft: "#2bb673", text: "#f5f8fa", sub: "#a8b2bd", faint: "#6b7682",
+    // money — отдельный зелёный для денежных сумм (приход/рост), чтобы брендовый
+    // green не означал «всё сразу»: бренд/кнопки/активная вкладка ≠ деньги.
+    money: "#2fbf6f",
     inputBg: "rgba(255,255,255,0.07)", rowChild: "rgba(255,255,255,0.02)", rowHover: "rgba(255,255,255,0.05)",
     navHover: "rgba(255,255,255,0.06)", heroGrad: "linear-gradient(135deg, rgba(61,220,132,0.16) 0%, rgba(40,140,200,0.12) 50%, rgba(255,255,255,0.03) 100%)",
     heroLabel: "#c8e6d6", heroStat: "#a8c4d4", barBg: "rgba(255,255,255,0.10)", danger: "#ff6b5e",
@@ -34,6 +37,7 @@ export const THEMES = {
     panel: "rgba(255, 255, 255, 0.55)", panel2: "rgba(255,255,255,0.45)", line: "rgba(15,40,70,0.12)",
     glassBorder: "rgba(255,255,255,0.85)", glassHi: "rgba(255,255,255,0.95)",
     green: "#0aa552", greenSoft: "#0aa552", text: "#0b1722", sub: "#52606b", faint: "#94a0aa",
+    money: "#0a8f48", // деньги (приход/рост) — чуть глубже брендового зелёного
     inputBg: "rgba(255,255,255,0.65)", rowChild: "rgba(0,0,0,0.015)", rowHover: "rgba(255,255,255,0.6)",
     navHover: "rgba(255,255,255,0.5)", heroGrad: "linear-gradient(135deg, rgba(10,165,82,0.18) 0%, rgba(40,120,210,0.14) 50%, rgba(255,255,255,0.35) 100%)",
     heroLabel: "#1a6e46", heroStat: "#2a6f7d", barBg: "rgba(15,40,70,0.12)", danger: "#dc3b30",
