@@ -151,7 +151,7 @@ export function Register() {
         return (
           <div key={r.id} style={{
             display: "flex", alignItems: "center", gap: 10, padding: "10px 14px",
-            borderRadius: 12, background: offPlan ? `${C.danger}10` : C.panel,
+            borderRadius: 12, background: offPlan ? `${C.danger}10` : C.solid2,
             border: `1px solid ${offPlan ? `${C.danger}44` : C.line}`,
             flexWrap: isMobile ? "wrap" : "nowrap",
           }} className="frow">
