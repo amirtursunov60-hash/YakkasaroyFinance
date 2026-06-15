@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { ClipboardList, Calculator, CalendarDays, Check, RotateCcw, RotateCw, Lock, Unlock, Ban, ArrowRightLeft, Loader2, AlertCircle, CheckCircle2, X, Landmark, ChevronRight, Scale, TrendingUp, TrendingDown } from "lucide-react";
+import { ClipboardList, Calculator, CalendarDays, Check, RotateCcw, RotateCw, Lock, Unlock, Ban, ArrowRightLeft, Loader2, AlertCircle, CheckCircle2, X, Landmark, ChevronRight, Scale, TrendingUp, TrendingDown, Banknote, Wallet, Coins } from "lucide-react";
 import { Stat } from "../../components/common";
 import { useTheme } from "../../theme/theme";
 import { useScrollLock } from "../../hooks/useScrollLock";
@@ -23,9 +23,9 @@ import {
 // Неделя выбирается в шапке приложения (общий PeriodCtx).
 
 const STAGES = [
-  { key: "revenue",  title: "Выручка",                 fundsTitle: "Фонды выручки" },
-  { key: "margin",   title: "Маржинальный доход",      fundsTitle: "Фонды маржинального дохода" },
-  { key: "adjusted", title: "Скорректированный доход", fundsTitle: "Фонды скорректированного дохода" },
+  { key: "revenue",  title: "Выручка",                 fundsTitle: "Фонды выручки",                icon: Banknote },
+  { key: "margin",   title: "Маржинальный доход",      fundsTitle: "Фонды маржинального дохода",    icon: Scale },
+  { key: "adjusted", title: "Скорректированный доход", fundsTitle: "Фонды скорректированного дохода", icon: Wallet },
 ];
 
 const byFundCode = (fundById) => (a, b) =>
@@ -537,6 +537,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
   };
 
   const cbStyle = { width: 15, height: 15, accentColor: C.green, marginRight: 7, flexShrink: 0, cursor: "pointer" };
+  const StageIcon = sg.icon || Banknote; // иконка этапа (Выручка/Маржа/СКД)
   // Колонки. На десктопе видны все шесть. На телефоне всё помещается в экран без
   // горизонтального скролла: по умолчанию (режим "base") — Название · % ·
   // калькулятор · Доступно; кнопкой-стрелкой переключаемся в режим "results" —
@@ -602,6 +603,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <input type="checkbox" style={cbStyle} checked={checked.has(x.fund.id)}
               disabled={!rowEditable} onChange={() => toggleOne(x.fund.id)} />
+            <Coins size={14} color={C.money} style={{ flexShrink: 0 }} />
             <span style={st.fundCode}>{x.fund?.code}</span>
             <span style={{ fontWeight: 700, fontSize: 13.5, flex: 1, minWidth: 0 }}>{x.fund?.name}</span>
             {x.fund?.is_restricted && <Lock size={12} color={C.faint} />}
@@ -637,6 +639,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
           <div style={{ ...st.fundTop, minWidth: 0 }}>
             <input type="checkbox" style={cbStyle} checked={checked.has(x.fund.id)}
               disabled={!rowEditable} onChange={() => toggleOne(x.fund.id)} />
+            <Coins size={14} color={C.money} style={{ flexShrink: 0 }} />
             <span style={st.fundCode}>{x.fund?.code}</span>
             <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>{x.fund?.name}</span>
             {x.fund?.is_restricted && <Lock size={12} color={C.faint} />}
@@ -684,6 +687,9 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
         <div style={{ ...st.cardHead, cursor: "pointer" }} onClick={() => setCollapsed((c) => !c)}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
             <ChevronRight size={18} style={{ transform: collapsed ? "none" : "rotate(90deg)", transition: "transform .2s", color: C.sub, flexShrink: 0 }} />
+            <div style={{ width: 30, height: 30, borderRadius: 9, display: "grid", placeItems: "center", background: `${C.green}1f`, color: C.green, flexShrink: 0 }}>
+              <StageIcon size={17} />
+            </div>
             <div style={st.cardTitle}>{sg.title}</div>
           </div>
           <div className="denseNum" style={st.cardTotal}>{fmt(sg.base)} <span style={st.unit}>TJS</span></div>
