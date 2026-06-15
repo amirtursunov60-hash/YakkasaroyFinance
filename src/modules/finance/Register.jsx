@@ -170,7 +170,7 @@ export function Register() {
             {!isMobile && r.creator && (
               <span style={{ fontSize: 11, color: C.faint, flexShrink: 0 }}>{r.creator.full_name}</span>
             )}
-            <span style={{ fontWeight: 800, fontVariantNumeric: "tabular-nums", fontSize: 14, color: v >= 0 ? C.green : C.danger, flexShrink: 0, marginLeft: "auto" }}>
+            <span style={{ fontWeight: 800, fontVariantNumeric: "tabular-nums", fontSize: 14, color: v >= 0 ? C.money : C.danger, flexShrink: 0, marginLeft: "auto" }}>
               {v >= 0 ? "+" : ""}{fmt(v)}
             </span>
           </div>
