@@ -184,6 +184,28 @@ export function Directive() {
   const remainder = income - approvedTotal;
   const fundsTotal = useMemo(() => funds.reduce((a, f) => a + Number(f.balance || 0), 0), [funds]);
 
+  // Каскад дохода ПО ВИДАМ через этапы («матрёшка»): на входе каждого этапа доход
+  // вида = его остаток после удержаний предыдущих этапов. Калькулятор фонда считает
+  // процент именно от этого остатка. Пример (Флай Гарден 10000): выручка 50% → 5000
+  // (остаток 5000); маржа 80% → 4000 (остаток 1000); СКД 100% → 1000 (остаток 0).
+  const typeStageBase = useMemo(() => {
+    const result = {};
+    const remainingType = { ...incomeByType };
+    for (const meta of STAGES) {
+      result[meta.key] = { ...remainingType };               // доход вида на входе этапа
+      for (const frs of Object.values(fundRules)) {
+        frs.filter((r) => r.stage === meta.key).forEach((r) => {
+          const tid = r.income_type?.id;
+          if (!tid) return;
+          const avail = result[meta.key][tid] || 0;
+          const amt = r.percent != null ? avail * Number(r.percent) / 100 : Number(r.fixed_amount || 0);
+          remainingType[tid] = Math.max(0, (remainingType[tid] || 0) - amt);
+        });
+      }
+    }
+    return result;
+  }, [incomeByType, fundRules]);
+
   // -------- действия
   // Рассчитать выбранные галочками фонды (или все, если ничего не отмечено).
   // Фонд с обычным правилом: база × %. Фонд со схемой по видам дохода (ФРС):
@@ -200,9 +222,10 @@ export function Directive() {
           if (x.appr > 0) return; // уже одобренные не пересчитываем
           let amount = 0;
           if (x.typeRules?.length) {
-            // фонд со схемой по видам дохода (калькулятор): Σ (факт дохода вида × %)
+            // фонд со схемой по видам дохода (калькулятор): Σ (остаток вида на этапе × %)
+            const stageFact = typeStageBase[sg.key] || {};
             amount = x.typeRules.reduce((a, r) => {
-              const fact = incomeByType[r.income_type?.id] || 0;
+              const fact = stageFact[r.income_type?.id] || 0;
               return a + (r.percent != null ? fact * Number(r.percent) / 100 : Number(r.fixed_amount || 0));
             }, 0);
             amount = Math.round(amount * 100) / 100;
@@ -464,7 +487,7 @@ export function Directive() {
     {calcFund && (
       <FundCalcModal C={C} st={st} fund={calcFund.fund} stage={calcFund.stage}
         rules={(fundRules[calcFund.fund.id] || []).filter((x) => x.stage === calcFund.stage.key)}
-        incomeByType={incomeByType}
+        incomeByType={typeStageBase[calcFund.stage.key] || {}}
         approved={(approvedByStage[calcFund.stage.key] || {})[calcFund.fund.id] || 0}
         busy={busy === `calcappr:${calcFund.fund.id}`} locked={isClosed || !period}
         onClose={() => setCalcFund(null)}
