@@ -10,8 +10,8 @@ import React from "react";
 export const THEMES = {
   dark: {
     scheme: "dark",
-    // Фон страницы — насыщенный градиент, чтобы стекло «играло»
-    pageGrad: "linear-gradient(160deg, #0b1f3a 0%, #0e2a44 22%, #102a2e 50%, #0d1f33 78%, #0a1526 100%)",
+    // Фон страницы — мягкий серо-таупный градиент (тёплый серый → прохладный сланец)
+    pageGrad: "linear-gradient(200deg, #948c82 0%, #7c7a78 28%, #5f626b 52%, #454a55 76%, #353a45 100%)",
     bg: "transparent",
     // Стеклянные поверхности
     panel: "rgba(28, 34, 44, 0.55)", panel2: "rgba(255,255,255,0.06)", line: "rgba(255,255,255,0.10)",
