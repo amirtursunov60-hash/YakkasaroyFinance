@@ -45,6 +45,7 @@ src/
 ├── App.jsx                # корень: тема, сессия Supabase, логин ⇄ приложение
 ├── lib/                   # supabase.js (клиент), auth.js (signIn/signOut/getProfile),
 │                          # api.js (API-слой над Supabase для finance/staff),
+│                          # distribution.ts (каскад ФРС «матрёшка» — чистая типизированная логика),
 │                          # PeriodCtx.jsx (контекст недели ФП чт–ср + выбранной точки)
 ├── theme/                 # ВСЁ оформление здесь, см. «Стиль» ниже
 │   ├── theme.js           # THEMES (dark/light палитры C + семантические токены info/warning/

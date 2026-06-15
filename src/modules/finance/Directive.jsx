@@ -3,6 +3,7 @@ import { ClipboardList, Calculator, CalendarDays, Check, RotateCcw, RotateCw, Lo
 import { Stat } from "../../components/common";
 import { useTheme } from "../../theme/theme";
 import { fmt } from "../../utils/format";
+import { cascadeTypeStageBase, calcTypeRulesAmount } from "../../lib/distribution";
 import { usePeriod, periodTitle } from "../../lib/PeriodCtx";
 import {
   fetchFunds, fetchDefaultRules,
@@ -188,23 +189,10 @@ export function Directive() {
   // вида = его остаток после удержаний предыдущих этапов. Калькулятор фонда считает
   // процент именно от этого остатка. Пример (Флай Гарден 10000): выручка 50% → 5000
   // (остаток 5000); маржа 80% → 4000 (остаток 1000); СКД 100% → 1000 (остаток 0).
-  const typeStageBase = useMemo(() => {
-    const result = {};
-    const remainingType = { ...incomeByType };
-    for (const meta of STAGES) {
-      result[meta.key] = { ...remainingType };               // доход вида на входе этапа
-      for (const frs of Object.values(fundRules)) {
-        frs.filter((r) => r.stage === meta.key).forEach((r) => {
-          const tid = r.income_type?.id;
-          if (!tid) return;
-          const avail = result[meta.key][tid] || 0;
-          const amt = r.percent != null ? avail * Number(r.percent) / 100 : Number(r.fixed_amount || 0);
-          remainingType[tid] = Math.max(0, (remainingType[tid] || 0) - amt);
-        });
-      }
-    }
-    return result;
-  }, [incomeByType, fundRules]);
+  const typeStageBase = useMemo(
+    () => cascadeTypeStageBase(incomeByType, fundRules),
+    [incomeByType, fundRules],
+  );
 
   // -------- действия
   // Рассчитать выбранные галочками фонды (или все, если ничего не отмечено).
@@ -223,12 +211,7 @@ export function Directive() {
           let amount = 0;
           if (x.typeRules?.length) {
             // фонд со схемой по видам дохода (калькулятор): Σ (остаток вида на этапе × %)
-            const stageFact = typeStageBase[sg.key] || {};
-            amount = x.typeRules.reduce((a, r) => {
-              const fact = stageFact[r.income_type?.id] || 0;
-              return a + (r.percent != null ? fact * Number(r.percent) / 100 : Number(r.fixed_amount || 0));
-            }, 0);
-            amount = Math.round(amount * 100) / 100;
+            amount = calcTypeRulesAmount(x.typeRules, typeStageBase[sg.key] || {});
           } else if (x.rule) {
             // фонд без калькулятора: плоский процент от базы этапа
             amount = Math.round(sg.base * pctOf(x.rule)) / 100;
