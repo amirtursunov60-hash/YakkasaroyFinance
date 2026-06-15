@@ -415,18 +415,18 @@ export function Directive() {
         </div>
       </div>
       <div style={st.fpActions} className="fpActions">
-        <button style={{ ...st.fpBtn, ...(requestsBlocked ? st.fpBtnDanger : st.fpBtnGhost), opacity: busy === "block" ? 0.7 : 1 }}
-          className="btn fpBtn" onClick={toggleRequests} disabled={busy || isClosed || !period}>
+        <button style={{ ...st.btnGhost, width: "100%", justifyContent: "center", opacity: busy === "block" ? 0.7 : 1 }}
+          className="btn" onClick={toggleRequests} disabled={busy || isClosed || !period}>
           {busy === "block" ? <Loader2 size={15} className="spin" />
             : requestsBlocked ? <Lock size={15} /> : <Ban size={15} />}
           {requestsBlocked ? " Подача заявок запрещена" : " Запретить подачу заявок"}
         </button>
-        <button style={{ ...st.fpBtn, ...(isClosed ? st.fpBtnDanger : st.fpBtnPrimary), opacity: busy === "close" ? 0.7 : 1 }}
-          className="btn fpBtn" onClick={doToggleClose} disabled={busy || !period}>
+        <button style={{ ...(isClosed ? st.btnGhost : st.btnGreen), width: "100%", justifyContent: "center", opacity: busy === "close" ? 0.7 : 1 }}
+          className="btn" onClick={doToggleClose} disabled={busy || !period}>
           {busy === "close" ? <Loader2 size={15} className="spin" /> : isClosed ? <Unlock size={15} /> : <Lock size={15} />}
           {isClosed ? " Открыть неделю" : " Закрыть период ФП"}
         </button>
-        <button style={{ ...st.fpBtn, ...st.fpBtnGhost }} className="btn fpBtn"
+        <button style={{ ...st.btnGhost, width: "100%", justifyContent: "center" }} className="btn"
           onClick={() => setTransferOpen(true)} disabled={busy || isClosed || !period || remainder <= 0}>
           <ArrowRightLeft size={15} /> Перенести остатки в фонд
         </button>
