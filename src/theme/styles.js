@@ -69,7 +69,9 @@ export const makeStyles = (C) => ({
   roleDot: { width: 8, height: 8, borderRadius: "50%" },
   // fund card
   cardWrap: { overflowX: "auto", borderRadius: 22, border: `1px solid ${C.glassBorder}`, marginBottom: 18, WebkitOverflowScrolling: "touch", boxShadow: `inset 0 1px 0 ${C.glassHi}, 0 10px 30px ${C.shadow}` },
-  card: { background: C.panel, borderRadius: 22, border: `1px solid ${C.glassBorder}`, boxShadow: `inset 0 1px 0 ${C.glassHi}, 0 10px 30px ${C.shadow}`, backdropFilter: "blur(20px) saturate(160%)", WebkitBackdropFilter: "blur(20px) saturate(160%)" },
+  // Контейнер данных финэкранов — непрозрачный «банковский» фон для читаемости
+  // плотных таблиц. Стекло остаётся для навигации и герой-карточек.
+  card: { background: C.solid, borderRadius: 22, border: `1px solid ${C.glassBorder}`, boxShadow: `0 10px 30px ${C.shadow}` },
   cardHead: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "18px 22px" },
   cardTitle: { fontSize: 17, fontWeight: 800 }, cardTotal: { fontSize: 16, fontWeight: 700, color: C.sub }, unit: { fontSize: 12, color: C.faint },
   subHead: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "11px 22px", background: C.panel2 },
@@ -131,6 +133,9 @@ export const makeStyles = (C) => ({
   incHeroSub: { display: "flex", alignItems: "center", gap: 8, marginTop: 12, fontSize: 12.5, color: C.heroStat, flexWrap: "wrap" },
   incList: { display: "flex", flexDirection: "column", gap: 12 },
   locCard: { background: C.panel, border: `1px solid ${C.glassBorder}`, borderRadius: 18, overflow: "hidden", boxShadow: `inset 0 1px 0 ${C.glassHi}, 0 8px 24px ${C.shadow}`, backdropFilter: "blur(20px) saturate(160%)", WebkitBackdropFilter: "blur(20px) saturate(160%)" },
+  // Непрозрачный вариант карточки для плотных данных (Доходы/Расходы/Счета) —
+  // «банковский» фон; locCard (стекло) остаётся для обзорных модулей.
+  dataCard: { background: C.solid, border: `1px solid ${C.glassBorder}`, borderRadius: 18, overflow: "hidden", boxShadow: `0 8px 24px ${C.shadow}` },
   locHead: { display: "flex", alignItems: "center", gap: 14, padding: "16px 18px", cursor: "pointer", userSelect: "none", transition: "background .15s" },
   locDot: { width: 10, height: 10, borderRadius: 4, flexShrink: 0 },
   locTitle: { flex: 1, minWidth: 0 },
