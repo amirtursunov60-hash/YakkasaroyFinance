@@ -712,6 +712,19 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
             }), { avail: 0, calc: 0, appr: 0, pct: 0 });
             const gBarVal = fsum.appr || fsum.calc;
             const gFill = gBarVal > 0 ? Math.min(100, (gBarVal / (fsum.avail > 0 ? fsum.avail : gBarVal)) * 100) : 0;
+            const gByTypes = rows.some((x) => x.typeRules?.length);   // в группе есть фонды «по видам»
+            // Выбор всех фондов группы галочкой (только ещё не одобренные)
+            const gSel = rows.filter((x) => x.fund && !(x.appr > 0)).map((x) => x.fund.id);
+            const gChecked = gSel.length > 0 && gSel.every((id) => checked.has(id));
+            const toggleGroup = () => setChecked((s) => {
+              const n = new Set(s);
+              if (gSel.every((id) => n.has(id))) gSel.forEach((id) => n.delete(id));
+              else gSel.forEach((id) => n.add(id));
+              return n;
+            });
+            const PctTag = () => (fsum.pct > 0
+              ? <>{fsum.pct}<span style={st.pctSign}>%</span></>
+              : (gByTypes ? <span style={{ fontSize: 11, color: C.faint }}>по видам</span> : null));
             return (
               <div key={fid}>
                 {isMobile ? (
@@ -719,6 +732,9 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
                     style={{ padding: "12px 12px", cursor: "pointer", borderTop: `1px solid ${C.line}`,
                       background: isOpen ? `${C.info}12` : `${C.info}08` }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <input type="checkbox" style={cbStyle} checked={gChecked}
+                        disabled={locked || !gSel.length}
+                        onClick={(e) => e.stopPropagation()} onChange={toggleGroup} />
                       <div style={{ width: 30, height: 30, borderRadius: 9, display: "grid", placeItems: "center",
                         background: `${C.info}22`, color: C.info, flexShrink: 0 }}>
                         <Landmark size={16} />
@@ -729,7 +745,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
                         </div>
                         <div style={{ fontSize: 10.5, color: C.faint, marginTop: 1 }}>{rows.length} фонд(ов)</div>
                       </div>
-                      {fsum.pct > 0 && <span style={{ fontSize: 13, fontWeight: 800, color: C.sub, flexShrink: 0 }}>{fsum.pct}%</span>}
+                      {(fsum.pct > 0 || gByTypes) && <span style={{ fontSize: 13, fontWeight: 800, color: C.sub, flexShrink: 0 }}><PctTag /></span>}
                       <ChevronRight size={18} style={{ transform: isOpen ? "rotate(90deg)" : "none", transition: "transform .2s", color: C.faint, flexShrink: 0 }} />
                     </div>
                     <div style={{ ...st.bar, maxWidth: "100%", marginTop: 9 }}>
@@ -746,13 +762,16 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
                     onClick={() => setOpenFolders((o) => ({ ...o, [fid]: !o[fid] }))}>
                     <div style={st.fName}>
                       <div style={st.fundTop}>
+                        <input type="checkbox" style={cbStyle} checked={gChecked}
+                          disabled={locked || !gSel.length}
+                          onClick={(e) => e.stopPropagation()} onChange={toggleGroup} />
                         <Landmark size={15} color={C.info} />
                         <b>{folderById[fid]?.name || "Группа"}</b>
                         <span style={{ fontSize: 11, color: C.faint }}>· {rows.length} фонд(ов)</span>
                         <ChevronRight size={14} style={{ transform: isOpen ? "rotate(90deg)" : "none", transition: "transform .2s", color: C.faint }} />
                       </div>
                     </div>
-                    <div style={st.fPct}>{fsum.pct > 0 ? <>{fsum.pct}<span style={st.pctSign}>%</span></> : null}</div>
+                    <div style={st.fPct}><PctTag /></div>
                     <div />
                     <div className="denseNum" style={{ ...st.fNum, fontWeight: 700 }}>{fmt(fsum.avail)}</div>
                     <div className="denseNum" style={{ ...st.fNum, color: fsum.calc ? C.warning : C.faint }}>{fmt(fsum.calc)}</div>
