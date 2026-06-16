@@ -231,13 +231,35 @@ export function Expenses() {
             </div>
             {isOpen && hasChildren && (
               <div style={st.locBody}>
-                <div style={st.itemHeadRow}>
-                  <span />
-                  <div style={st.itemHeadCell}>Было</div>
-                  <div style={st.itemHeadCell}>Стало</div>
-                </div>
+                {!isMobile && (
+                  <div style={st.itemHeadRow}>
+                    <span />
+                    <div style={st.itemHeadCell}>Было</div>
+                    <div style={st.itemHeadCell}>Стало</div>
+                  </div>
+                )}
                 {cat.children.map((c) => {
                   const rc = rolled[c.id] || { cur: 0, prev: 0 };
+                  if (isMobile) {
+                    return (
+                      <div key={c.id} style={{ padding: "11px 18px", borderTop: `1px solid ${C.line}` }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                          <span style={{ ...st.itemCode, color: C.danger }}>{c.code}</span>
+                          <span style={{ fontWeight: 600, fontSize: 13, flex: 1, minWidth: 0 }}>{c.name}</span>
+                        </div>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                          <div>
+                            <div style={{ fontSize: 10, color: C.faint }}>Было</div>
+                            <div className="denseNum" style={{ fontSize: 13, fontWeight: 600 }}>{fmt(rc.prev)}</div>
+                          </div>
+                          <div>
+                            <div style={{ fontSize: 10, color: C.faint }}>Стало</div>
+                            <div className="denseNum" style={{ fontSize: 13, fontWeight: 700, color: rc.cur ? C.text : C.faint }}>{fmt(rc.cur)}</div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
                   return (
                     <div key={c.id} style={st.itemRow} className="itemRow">
                       <div style={st.itemName}>
