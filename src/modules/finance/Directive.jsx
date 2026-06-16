@@ -4,7 +4,7 @@ import { Stat } from "../../components/common";
 import { useTheme } from "../../theme/theme";
 import { useScrollLock } from "../../hooks/useScrollLock";
 import { fmt, avatarColor } from "../../utils/format";
-import { feedbackSuccess, feedbackError, feedbackTap } from "../../lib/feedback";
+import { feedbackSuccess, feedbackError } from "../../lib/feedback";
 import { cascadeTypeStageBase, calcTypeRulesAmount } from "../../lib/distribution";
 import { usePeriod, periodTitle } from "../../lib/PeriodCtx";
 import {
@@ -346,18 +346,9 @@ export function Directive() {
     finally { setBusy(null); }
   };
 
-  // Звук на появление сообщений Директивы (этапы/закрытие/перенос/калькулятор).
-  useEffect(() => { if (done) feedbackSuccess(); }, [done]);
-  useEffect(() => { if (err) feedbackError(); }, [err]);
-  // Тап по любой кнопке Директивы.
-  const onTapCapture = (e) => {
-    const btn = e.target.closest?.("button");
-    if (btn && !btn.disabled) feedbackTap();
-  };
-
   if (loading || periodsLoading) return <div style={st.empty}><Loader2 size={18} className="spin" /> Загрузка…</div>;
 
-  return (<div onClickCapture={onTapCapture}>
+  return (<>
     <section style={st.hero}>
       <div style={st.heroGlow} />
       <div style={st.heroContent}>
@@ -467,7 +458,7 @@ export function Directive() {
         onClose={() => setCalcFund(null)}
         onApprove={(amount) => doApproveFund(calcFund.fund, calcFund.stage.key, amount)} />
     )}
-  </div>);
+  </>);
 }
 
 
