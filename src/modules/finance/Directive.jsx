@@ -469,9 +469,6 @@ function RequestsReview({ C, st, isMobile, profile, requests, funds, periodId, b
 
   const [filter, setFilter] = useState("review");   // по умолчанию — «К рассмотрению на ФП»
   const [expanded, setExpanded] = useState({});
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState("");
-  const [done, setDone] = useState("");
 
   const counts = useMemo(() => requestCounts(requests), [requests]);
   const shown = useMemo(
@@ -479,53 +476,44 @@ function RequestsReview({ C, st, isMobile, profile, requests, funds, periodId, b
     [requests, filter],
   );
 
-  // Общая обёртка действия: блокировка, ошибки, перезагрузка данных Директивы.
-  const run = async (fn) => {
-    if (busy) return;
-    setBusy(true); setErr(""); setDone("");
-    try { await fn(); await onReload(); }
-    catch (e) { setErr(e?.message || String(e)); }
-    finally { setBusy(false); }
-  };
-
+  // Действия возвращают строку-успех или бросают ошибку — сообщения показывает
+  // сама карточка (RequestReviewControls), не общий блок сверху.
   // Одобрение: фонд-источник + одобренная сумма (отдельно от запрошенной) + комментарий.
-  const doApprove = (item, { fundId, amount, comment }) => {
-    if (!fundId) { setErr("Выберите фонд-источник"); return; }
+  const doApprove = async (item, { fundId, amount, comment }) => {
+    if (!fundId) throw new Error("Выберите фонд-источник");
     const amt = Math.round((parseFloat(String(amount).replace(",", ".")) || 0) * 100) / 100;
-    if (!amt || amt <= 0) { setErr("Введите одобренную сумму больше нуля"); return; }
-    if (!periodId) { setErr("Нет выбранного периода ФП"); return; }
+    if (!amt || amt <= 0) throw new Error("Введите одобренную сумму больше нуля");
+    if (!periodId) throw new Error("Нет выбранного периода ФП");
     // Не даём одобрить больше остатка фонда (для базовой валюты TJS).
     const fund = funds.find((f) => f.id === fundId);
     if (fund && item.currency?.is_base && amt > Number(fund.balance || 0)) {
-      setErr(`Недостаточно средств в фонде ${fund.code} «${fund.name}»: доступно ${fmt(Number(fund.balance))} TJS, требуется ${fmt(amt)}`);
-      return;
+      throw new Error(`Недостаточно средств в фонде ${fund.code} «${fund.name}»: доступно ${fmt(Number(fund.balance))} TJS, требуется ${fmt(amt)}`);
     }
-    run(async () => {
-      await decideRequest(item.id, {
-        status: "approved", fund_id: fundId, approved_amount: amt,
-        comment: comment?.trim() || null, period_id: periodId,
-      });
-      setDone(`Заявка №${item.number}: одобрена на ${fmt(amt)} — фонд ${funds.find((f) => f.id === fundId)?.code || ""}`);
+    await decideRequest(item.id, {
+      status: "approved", fund_id: fundId, approved_amount: amt,
+      comment: comment?.trim() || null, period_id: periodId,
     });
+    await onReload();
+    return `Заявка №${item.number}: одобрена на ${fmt(amt)} — фонд ${fund?.code || ""}`;
   };
 
   // Отклонение: комментарий обязателен (как причина).
-  const doReject = (item, { comment }) => {
-    if (!comment?.trim()) { setErr("Укажите причину отклонения в комментарии"); return; }
-    run(async () => {
-      await decideRequest(item.id, { status: "rejected", rejection_reason: comment.trim(), comment: comment.trim() });
-      setDone(`Заявка №${item.number}: отклонена`);
-    });
+  const doReject = async (item, { comment }) => {
+    if (!comment?.trim()) throw new Error("Укажите причину отклонения в комментарии");
+    await decideRequest(item.id, { status: "rejected", rejection_reason: comment.trim(), comment: comment.trim() });
+    await onReload();
+    return `Заявка №${item.number}: отклонена`;
   };
 
   // Сброс: вернуть заявку к рассмотрению (отменить решение). Для оплаченных недоступно.
-  const doReset = (item) => run(async () => {
+  const doReset = async (item) => {
     await decideRequest(item.id, {
       status: "submitted", decided_by: null, decided_at: null,
       approved_amount: null, rejection_reason: null,
     });
-    setDone(`Заявка №${item.number}: возвращена к рассмотрению`);
-  });
+    await onReload();
+    return `Заявка №${item.number}: возвращена к рассмотрению`;
+  };
 
   return (
     <section style={st.reqSection}>
@@ -535,9 +523,6 @@ function RequestsReview({ C, st, isMobile, profile, requests, funds, periodId, b
         <span style={st.reqSectionSub}>от поста · формат ЗРС · поданные на эту неделю</span>
         {blocked && <span style={st.reqBlockedTag}><Lock size={12} /> Подача закрыта</span>}
       </div>
-
-      {err && <div style={{ ...st.reqError, marginBottom: 12 }}><AlertCircle size={15} /> {err}</div>}
-      {done && <div style={{ ...st.reqError, marginBottom: 12, color: C.green, background: `${C.green}1a`, borderColor: `${C.green}44` }}><CheckCircle2 size={15} /> {done}</div>}
 
       <RequestStatusChips C={C} counts={counts} filter={filter} setFilter={setFilter} />
 
@@ -558,7 +543,7 @@ function RequestsReview({ C, st, isMobile, profile, requests, funds, periodId, b
             statusMeta={ST_META} profileId={profile?.id} onAttachmentsChanged={onReload}
             avatar={<Avatar C={C} name={who} />}>
             <RequestReviewControls C={C} st={st} isMobile={isMobile} item={r}
-              funds={funds} isFinAdmin={isFinAdmin} busy={busy}
+              funds={funds} isFinAdmin={isFinAdmin}
               onApprove={doApprove} onReject={doReject} onReset={doReset} />
           </ItemCard>
         );
@@ -584,7 +569,7 @@ function Avatar({ C, name }) {
 // ---------------------------------------------------------------- Инлайн-форма рассмотрения заявки
 // Внутри развёрнутой карточки: выбор фонда, правка одобряемой суммы и комментарий
 // (при рассмотрении) либо итог решения + Оплатить/Сброс (после решения).
-function RequestReviewControls({ C, st, isMobile, item, funds, isFinAdmin, busy, onApprove, onReject, onReset }) {
+function RequestReviewControls({ C, st, isMobile, item, funds, isFinAdmin, onApprove, onReject, onReset }) {
   const isPaid = item.status === "paid";
   const isApproved = item.status === "approved";
 
@@ -592,8 +577,26 @@ function RequestReviewControls({ C, st, isMobile, item, funds, isFinAdmin, busy,
   const [amount, setAmount] = useState(String(item.approved_amount ?? item.planned_amount ?? ""));
   const [comment, setComment] = useState(item.comment || "");
   const [localErr, setLocalErr] = useState("");
+  const [done, setDone] = useState("");
+  const [busy, setBusy] = useState(false);
   const [shake, setShake] = useState(false);
   const grid2 = { display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 180px", gap: 10 };
+
+  // Любое действие: блокировка, сообщение успеха/ошибки и тряска кнопок — в карточке.
+  const triggerShake = () => { setShake(true); setTimeout(() => setShake(false), 600); };
+  const act = async (fn) => {
+    if (busy) return;
+    setBusy(true); setLocalErr(""); setDone("");
+    try {
+      const msg = await fn();
+      if (msg) setDone(msg);
+    } catch (e) {
+      setLocalErr(e?.message || String(e));
+      triggerShake();
+    } finally {
+      setBusy(false);
+    }
+  };
 
   // Оплаченную заявку не пересматриваем (расход уже проведён в Реестре).
   if (isPaid) {
@@ -618,24 +621,6 @@ function RequestReviewControls({ C, st, isMobile, item, funds, isFinAdmin, busy,
 
   // Рассмотрение: фонд + сумма + комментарий. Три кнопки доступны всегда —
   // и на рассмотрении, и для уже одобренной/отклонённой (повторное решение / сброс).
-  const fund = funds.find((f) => f.id === fundId);
-  const amt = Math.round((parseFloat(String(amount).replace(",", ".")) || 0) * 100) / 100;
-  // Нехватка средств в фонде (для базовой валюты TJS) — подсветка и тряска кнопки.
-  const insufficient = !!fund && item.currency?.is_base && amt > Number(fund.balance || 0);
-
-  const triggerShake = () => { setShake(true); setTimeout(() => setShake(false), 600); };
-  const tryApprove = () => {
-    if (!fundId) { setLocalErr("Выберите фонд-источник"); triggerShake(); return; }
-    if (!amt || amt <= 0) { setLocalErr("Введите сумму больше нуля"); triggerShake(); return; }
-    if (insufficient) {
-      setLocalErr(`Недостаточно средств в фонде ${fund.code}: доступно ${fmt(Number(fund.balance))} TJS, нужно ${fmt(amt)}`);
-      triggerShake();
-      return;
-    }
-    setLocalErr("");
-    onApprove(item, { fundId, amount, comment });
-  };
-
   return (
     <div style={{ display: "grid", gap: 10 }}>
       <div style={grid2}>
@@ -660,16 +645,21 @@ function RequestReviewControls({ C, st, isMobile, item, funds, isFinAdmin, busy,
       {localErr && (
         <div style={{ ...st.reqError, marginBottom: 0 }}><AlertCircle size={14} /> {localErr}</div>
       )}
-      <div style={{ display: "flex", gap: 8 }}>
+      {done && (
+        <div style={{ ...st.reqError, marginBottom: 0, color: C.green, background: `${C.green}1a`, borderColor: `${C.green}44` }}>
+          <CheckCircle2 size={14} /> {done}
+        </div>
+      )}
+      <div style={{ display: "flex", gap: 8 }} className={shake ? "shake" : ""}>
         <button style={{ ...st.btnGreen, flex: 1, justifyContent: "center", minWidth: 0 }}
-          className={`btn${shake ? " shake" : ""}`} disabled={busy} onClick={tryApprove}>
+          className="btn" disabled={busy} onClick={() => act(() => onApprove(item, { fundId, amount, comment }))}>
           <Check size={14} /> Одобрить
         </button>
         <button style={{ ...st.btnGhost, color: C.danger, flex: 1, justifyContent: "center", minWidth: 0 }} className="btn" disabled={busy}
-          onClick={() => onReject(item, { comment })}>
+          onClick={() => act(() => onReject(item, { comment }))}>
           <Ban size={14} /> Отклонить
         </button>
-        <button style={{ ...st.btnGhost, flex: 1, justifyContent: "center", minWidth: 0 }} className="btn" disabled={busy} onClick={() => onReset(item)}>
+        <button style={{ ...st.btnGhost, flex: 1, justifyContent: "center", minWidth: 0 }} className="btn" disabled={busy} onClick={() => act(() => onReset(item))}>
           <RotateCcw size={14} /> Сброс
         </button>
       </div>
