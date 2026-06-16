@@ -36,7 +36,7 @@
 | `20260615185500_ledger_hardening_audit_reconcile.sql` | **применён** | доводка леджера: триггер `fp_register_no_update` (леджер неизменяем — UPDATE запрещён), функция `fp_reconcile_balances()` (сверка SUM(fp_register) = баланс фонда/счёта), аудит `fp_periods` и `directives` (переоткрытие/закрытие периода теперь пишутся в `audit_log`) |
 | `20260615190000_fix_register_no_update_search_path.sql` | **применён** | фикс advisors `function_search_path_mutable`: зафиксирован `search_path = public` у `trg_register_no_update` |
 | `20260615193000_enable_pgtap_testing.sql` | **применён** | включение pgTAP для модульного тестирования БД; тесты инвариантов леджера — в `supabase/tests/` |
-| `20260616120000_org_chart.sql` | **ожидает применения** | оргсхема (ТЗ §4.3–4.4): в `org_divisions` — `color`, `ckp` + unique по `code`; в `org_positions` — `section`, `ckp`, `statistic`, `duties` (jsonb), `is_executive`, `sort`; enum `hat_status` (none/learning/done) + колонка в `position_assignments`; сидинг 7 отделений и постов прототипа (ЦКП, секции, шляпы) как стартовый справочник (RLS наследуется из baseline) |
+| `20260616120000_org_chart.sql` | **применён** | оргсхема (ТЗ §4.3–4.4): в `org_divisions` — `color`, `ckp` + unique по `code`; в `org_positions` — `section`, `ckp`, `statistic`, `duties` (jsonb), `is_executive`, `sort`; enum `hat_status` (none/learning/done) + колонка в `position_assignments`; сидинг 7 отделений и постов прототипа (ЦКП, секции, шляпы) как стартовый справочник (RLS наследуется из baseline) |
 
 ## Тесты БД (pgTAP)
 
