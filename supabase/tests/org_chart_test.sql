@@ -22,7 +22,7 @@ select has_column('public', 'org_positions', 'is_executive', 'org_positions.is_e
 -- --- Статус шляпы у назначения --------------------------------------------
 select has_column('public', 'position_assignments', 'hat_status', 'position_assignments.hat_status есть');
 select has_type('public', 'hat_status', 'enum hat_status существует');
-select ok((select array_agg(e.enumlabel order by e.enumsortorder)
+select ok((select array_agg(e.enumlabel::text order by e.enumsortorder)
              from pg_enum e join pg_type t on t.oid = e.enumtypid
              where t.typname = 'hat_status') = array['none','learning','done'],
   'hat_status = (none, learning, done)');
