@@ -591,6 +591,8 @@ function RequestReviewControls({ C, st, isMobile, item, funds, isFinAdmin, busy,
   const [fundId, setFundId] = useState(item.fund?.id || "");
   const [amount, setAmount] = useState(String(item.approved_amount ?? item.planned_amount ?? ""));
   const [comment, setComment] = useState(item.comment || "");
+  const [localErr, setLocalErr] = useState("");
+  const [shake, setShake] = useState(false);
   const grid2 = { display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 180px", gap: 10 };
 
   // Оплаченную заявку не пересматриваем (расход уже проведён в Реестре).
@@ -616,20 +618,39 @@ function RequestReviewControls({ C, st, isMobile, item, funds, isFinAdmin, busy,
 
   // Рассмотрение: фонд + сумма + комментарий. Три кнопки доступны всегда —
   // и на рассмотрении, и для уже одобренной/отклонённой (повторное решение / сброс).
+  const fund = funds.find((f) => f.id === fundId);
+  const amt = Math.round((parseFloat(String(amount).replace(",", ".")) || 0) * 100) / 100;
+  // Нехватка средств в фонде (для базовой валюты TJS) — подсветка и тряска кнопки.
+  const insufficient = !!fund && item.currency?.is_base && amt > Number(fund.balance || 0);
+
+  const triggerShake = () => { setShake(true); setTimeout(() => setShake(false), 600); };
+  const tryApprove = () => {
+    if (!fundId) { setLocalErr("Выберите фонд-источник"); triggerShake(); return; }
+    if (!amt || amt <= 0) { setLocalErr("Введите сумму больше нуля"); triggerShake(); return; }
+    if (insufficient) {
+      setLocalErr(`Недостаточно средств в фонде ${fund.code}: доступно ${fmt(Number(fund.balance))} TJS, нужно ${fmt(amt)}`);
+      triggerShake();
+      return;
+    }
+    setLocalErr("");
+    onApprove(item, { fundId, amount, comment });
+  };
+
   return (
     <div style={{ display: "grid", gap: 10 }}>
       <div style={grid2}>
         <div style={st.reqField}>
           <span style={st.reqFieldLbl}>Фонд-источник</span>
-          <select style={st.mdSelect} className="fin" value={fundId} onChange={(e) => setFundId(e.target.value)}>
+          <select style={st.mdSelect} className="fin" value={fundId} onChange={(e) => { setFundId(e.target.value); setLocalErr(""); }}>
             <option value="">— выберите —</option>
             {funds.map((fd) => <option key={fd.id} value={fd.id}>{fd.code} — {fd.name} ({fmt(Number(fd.balance))})</option>)}
           </select>
         </div>
         <div style={st.reqField}>
           <span style={st.reqFieldLbl}>Одобрить сумму</span>
-          <input style={st.mdInput} className="fin" inputMode="decimal" value={amount}
-            onChange={(e) => setAmount(e.target.value)} onWheel={(e) => e.target.blur()} />
+          <input style={{ ...st.mdInput, ...(insufficient ? { borderColor: C.danger, color: C.danger } : {}) }} className="fin"
+            inputMode="decimal" value={amount}
+            onChange={(e) => { setAmount(e.target.value); setLocalErr(""); }} onWheel={(e) => e.target.blur()} />
         </div>
       </div>
       <div style={st.reqField}>
@@ -637,10 +658,14 @@ function RequestReviewControls({ C, st, isMobile, item, funds, isFinAdmin, busy,
         <textarea style={{ ...st.mdInput, minHeight: 56, resize: "vertical", fontFamily: "inherit" }} className="fin"
           placeholder="Комментарий финкомитета…" value={comment} onChange={(e) => setComment(e.target.value)} />
       </div>
+      {localErr && (
+        <div style={{ ...st.reqError, marginBottom: 0 }}><AlertCircle size={14} /> {localErr}</div>
+      )}
       <div style={{ display: "flex", gap: 8 }}>
-        <button style={{ ...st.btnGreen, flex: 1, justifyContent: "center", minWidth: 0 }} className="btn" disabled={busy}
-          onClick={() => onApprove(item, { fundId, amount, comment })}>
-          <Check size={14} /> Одобрить
+        <button
+          style={{ ...(insufficient ? { ...st.btnGreen, background: C.danger, borderColor: C.danger } : st.btnGreen), flex: 1, justifyContent: "center", minWidth: 0 }}
+          className={`btn${shake ? " shake" : ""}`} disabled={busy} onClick={tryApprove}>
+          {insufficient ? <AlertCircle size={14} /> : <Check size={14} />} {insufficient ? "Не хватает средств" : "Одобрить"}
         </button>
         <button style={{ ...st.btnGhost, color: C.danger, flex: 1, justifyContent: "center", minWidth: 0 }} className="btn" disabled={busy}
           onClick={() => onReject(item, { comment })}>

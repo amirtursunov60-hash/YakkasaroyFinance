@@ -53,6 +53,9 @@ export const makeCss = (C) => `
   .pop{display:inline-block;animation:popIn .35s cubic-bezier(.34,1.56,.64,1);}
   @keyframes flash{0%{background:${C.green}33;}100%{background:transparent;}}
   .flashRow{animation:flash .8s ease;}
+  /* Тряска кнопки при ошибке (например, нехватка средств в фонде) */
+  @keyframes shakeX{0%,100%{transform:translateX(0);}15%{transform:translateX(-6px);}30%{transform:translateX(6px);}45%{transform:translateX(-5px);}60%{transform:translateX(5px);}75%{transform:translateX(-3px);}90%{transform:translateX(3px);}}
+  .shake{animation:shakeX .5s cubic-bezier(.36,.07,.19,.97);}
   @keyframes pulseDot{0%,100%{opacity:1;}50%{opacity:.4;}}
   .ava:hover{filter:brightness(1.1);}
   .pmi:hover{background:${C.menuHover};}
@@ -71,7 +74,7 @@ export const makeCss = (C) => `
   /* Раскрытие капсулы профиля из аватара */
   @keyframes capsuleGrow{0%{opacity:0;transform:scale(0.12);}55%{opacity:1;}100%{opacity:1;transform:scale(1);}}
   .capsuleIn{animation:capsuleGrow .38s cubic-bezier(.34,1.35,.5,1);}
-  @media (prefers-reduced-motion: reduce){ main{animation:none;} .pop,.spin,.flashRow,.capsuleIn{animation:none;} }
+  @media (prefers-reduced-motion: reduce){ main{animation:none;} .pop,.spin,.flashRow,.capsuleIn,.shake{animation:none;} }
   /* Единое фокус-кольцо для навигации с клавиатуры (доступность) */
   button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{
     outline:2px solid ${C.green}!important;outline-offset:2px;border-radius:4px;
