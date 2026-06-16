@@ -469,32 +469,40 @@ function RequestsReview({ C, st, profile, requests, funds, accounts, periodId, b
   const isFinAdmin = ["owner", "fin_director"].includes(profile?.role);
   const canPay = isFinAdmin || profile?.role === "accountant";
 
-  const [filter, setFilter] = useState("all");
+  const [filter, setFilter] = useState("review");   // по умолчанию — «К рассмотрению на ФП»
   const [expanded, setExpanded] = useState({});
   const [decide, setDecide] = useState(null);   // { item, itemKind:'request', action }
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   const [done, setDone] = useState("");
 
-  // Счётчики по статусам — для чипов
+  // «К рассмотрению на ФП» = ждут решения финкомитета (поданные + на планировании).
+  const isReview = (r) => ["submitted", "planning"].includes(r.status);
+
+  // Счётчики для чипов
   const counts = useMemo(() => {
-    const c = { all: requests.length, submitted: 0, planning: 0, approved: 0, paid: 0, rejected: 0 };
-    requests.forEach((r) => { if (c[r.status] !== undefined) c[r.status] += 1; });
+    const c = { all: requests.length, review: 0, approved: 0, rejected: 0, paid: 0 };
+    requests.forEach((r) => {
+      if (isReview(r)) c.review += 1;
+      if (c[r.status] !== undefined) c[r.status] += 1;
+    });
     return c;
   }, [requests]);
 
   const shown = useMemo(() => {
-    const list = filter === "all" ? requests : requests.filter((r) => r.status === filter);
-    return [...list].sort((a, b) => Number(b.number || 0) - Number(a.number || 0));
+    const match = (r) =>
+      filter === "all" ? true
+      : filter === "review" ? isReview(r)
+      : r.status === filter;
+    return requests.filter(match).sort((a, b) => Number(b.number || 0) - Number(a.number || 0));
   }, [requests, filter]);
 
   const CHIPS = [
-    { key: "all",       label: "Все",           color: C.green },
-    { key: "submitted", label: "Поданы",        color: C.warning },
-    { key: "planning",  label: "Планирование",  color: C.info },
-    { key: "approved",  label: "Одобрены",      color: C.successSoft },
-    { key: "paid",      label: "Оплачены",      color: C.success },
-    { key: "rejected",  label: "Отклонены",     color: C.danger },
+    { key: "review",   label: "К рассмотрению на ФП", color: C.warning },
+    { key: "approved", label: "Одобрено",            color: C.successSoft },
+    { key: "rejected", label: "Отклонено",           color: C.danger },
+    { key: "paid",     label: "Оплачено",            color: C.success },
+    { key: "all",      label: "Все",                 color: C.green },
   ];
 
   const doDecide = async ({ item, action, fundId, reason, accountId }) => {
@@ -587,7 +595,9 @@ function RequestsReview({ C, st, profile, requests, funds, accounts, periodId, b
         <div style={{ ...st.locCard, ...st.empty }}>
           {requests.length === 0
             ? "На этой неделе заявок нет — они подаются в разделе «Заявки»"
-            : "Нет заявок с таким статусом"}
+            : filter === "review"
+              ? "Заявок к рассмотрению нет — всё обработано"
+              : "Нет заявок с таким статусом"}
         </div>
       ) : shown.map((r) => (
         <ItemCard key={r.id} C={C} st={st} item={r} itemKind="request"
