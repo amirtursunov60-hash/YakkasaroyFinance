@@ -30,6 +30,48 @@ export const reqStatusMeta = (C) => ({
   paid:      { label: "оплачена",        color: C.success },
 });
 
+// «К рассмотрению на ФП» = ждут решения финкомитета (поданные + на планировании).
+export const isReviewStatus = (status) => ["submitted", "planning"].includes(status);
+
+// Счётчики заявок по статусам — для чипов-фильтров.
+export const requestCounts = (requests) => {
+  const c = { all: requests.length, review: 0, approved: 0, rejected: 0, paid: 0 };
+  requests.forEach((r) => {
+    if (isReviewStatus(r.status)) c.review += 1;
+    if (c[r.status] !== undefined) c[r.status] += 1;
+  });
+  return c;
+};
+
+export const matchRequestFilter = (r, filter) =>
+  filter === "all" ? true : filter === "review" ? isReviewStatus(r.status) : r.status === filter;
+
+// Чипы-фильтры заявок по статусам (Директива и раздел «Заявки»).
+export function RequestStatusChips({ C, counts, filter, setFilter }) {
+  const CHIPS = [
+    { key: "review",   label: "К рассмотрению на ФП", color: C.warning },
+    { key: "approved", label: "Одобрено",            color: C.successSoft },
+    { key: "rejected", label: "Отклонено",           color: C.danger },
+    { key: "paid",     label: "Оплачено",            color: C.success },
+    { key: "all",      label: "Все",                 color: C.green },
+  ];
+  return (
+    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
+      {CHIPS.map((ch) => {
+        const active = filter === ch.key;
+        return (
+          <button key={ch.key} className="btn" onClick={() => setFilter(ch.key)}
+            style={{ padding: "7px 13px", borderRadius: 999, fontSize: 12.5, fontWeight: 700, cursor: "pointer",
+              whiteSpace: "nowrap", border: `1px solid ${active ? `${ch.color}66` : C.line}`,
+              background: active ? `${ch.color}22` : C.panel2, color: active ? ch.color : C.sub }}>
+            {ch.label} · {counts[ch.key] ?? 0}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 export function Requests() {
   const { C, st, isMobile, profile } = useTheme();
   const ST_META = reqStatusMeta(C);
@@ -51,6 +93,7 @@ export function Requests() {
   const [decide, setDecide] = useState(null);   // { item, itemKind: 'request'|'bill', action }
   const [showForm, setShowForm] = useState(false);
   const [busy, setBusy] = useState(null);
+  const [reqFilter, setReqFilter] = useState("approved");   // здесь оплачиваем — по умолчанию «Одобрено»
 
   const loadStatic = useCallback(async () => {
     try {
@@ -82,17 +125,20 @@ export function Requests() {
   }, [periodId, ctxLocationId]);
   useEffect(() => { if (!periodsLoading) loadItems(); }, [loadItems, periodsLoading]);
 
-  // Заявки по отделениям оргсхемы (отделение — от поста заявителя)
+  const reqCounts = useMemo(() => requestCounts(requests), [requests]);
+
+  // Заявки по отделениям оргсхемы (отделение — от поста заявителя), с учётом чипа-фильтра
   const byDivision = useMemo(() => {
     const groups = new Map();
     for (const r of requests) {
+      if (!matchRequestFilter(r, reqFilter)) continue;
       const d = r.position?.division;
       const key = d?.id || "none";
       if (!groups.has(key)) groups.set(key, { code: d?.code || "—", name: d?.name || "Без отделения", items: [] });
       groups.get(key).items.push(r);
     }
     return [...groups.values()].sort((a, b) => String(a.code).localeCompare(String(b.code), "ru", { numeric: true }));
-  }, [requests]);
+  }, [requests, reqFilter]);
 
   const sums = useMemo(() => {
     const pend = (arr) => arr.filter((x) => ["submitted", "planning"].includes(x.status));
@@ -140,27 +186,39 @@ export function Requests() {
 
   if (loading || periodsLoading) return <div style={st.empty}><Loader2 size={18} className="spin" /> Загрузка…</div>;
 
-  // Рассмотрение здесь — только для счетов поставщиков. Заявки-ЗРС рассматриваются
-  // в Директиве (одобрение/отклонение/оплата перенесены туда).
+  // Счета поставщиков: одобрение/отклонение/оплата. Заявки-ЗРС рассматриваются
+  // (одобрение/отклонение) в Директиве, а здесь — только оплачиваются одобренные.
   const Actions = ({ item, itemKind }) => {
-    if (itemKind !== "bill") return null;
-    return (
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-        {isFinAdmin && ["submitted", "planning"].includes(item.status) && (<>
-          <button style={st.btnGreen} className="btn" disabled={!!busy} onClick={() => setDecide({ item, itemKind, action: "approve" })}>
-            <Check size={14} /> Одобрить
-          </button>
-          <button style={{ ...st.btnGhost, color: C.danger }} className="btn" disabled={!!busy} onClick={() => setDecide({ item, itemKind, action: "reject" })}>
-            <Ban size={14} /> Отклонить
-          </button>
-        </>)}
-        {canPay && item.status === "approved" && (
+    if (itemKind === "bill") {
+      return (
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          {isFinAdmin && ["submitted", "planning"].includes(item.status) && (<>
+            <button style={st.btnGreen} className="btn" disabled={!!busy} onClick={() => setDecide({ item, itemKind, action: "approve" })}>
+              <Check size={14} /> Одобрить
+            </button>
+            <button style={{ ...st.btnGhost, color: C.danger }} className="btn" disabled={!!busy} onClick={() => setDecide({ item, itemKind, action: "reject" })}>
+              <Ban size={14} /> Отклонить
+            </button>
+          </>)}
+          {canPay && item.status === "approved" && (
+            <button style={st.btnGreen} className="btn" disabled={!!busy} onClick={() => setDecide({ item, itemKind, action: "pay" })}>
+              <Banknote size={14} /> Оплатить
+            </button>
+          )}
+        </div>
+      );
+    }
+    // заявка-ЗРС: только оплата одобренной (рассмотрение — в Директиве)
+    if (canPay && item.status === "approved") {
+      return (
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <button style={st.btnGreen} className="btn" disabled={!!busy} onClick={() => setDecide({ item, itemKind, action: "pay" })}>
             <Banknote size={14} /> Оплатить
           </button>
-        )}
-      </div>
-    );
+        </div>
+      );
+    }
+    return null;
   };
 
   return (<>
@@ -211,10 +269,14 @@ export function Requests() {
       <div style={st.reqSectionHead}>
         <ClipboardList size={18} color={C.green} />
         <h3 style={st.reqSectionTitle}>Заявки от постов</h3>
-        <span style={st.reqSectionSub}>по отделениям · формат ЗРС · рассмотрение в Директиве</span>
+        <span style={st.reqSectionSub}>оплата одобренных · рассмотрение — в Директиве</span>
       </div>
-      {!requests.length && <div style={{ ...st.locCard, ...st.empty }}>Заявок нет — подайте первую кнопкой «Подать заявку (ЗРС)» выше</div>}
-      {byDivision.map((g) => (
+      <RequestStatusChips C={C} counts={reqCounts} filter={reqFilter} setFilter={setReqFilter} />
+      {!requests.length ? (
+        <div style={{ ...st.locCard, ...st.empty }}>Заявок нет — подайте первую кнопкой «Подать заявку (ЗРС)» выше</div>
+      ) : byDivision.length === 0 ? (
+        <div style={{ ...st.locCard, ...st.empty }}>Нет заявок с таким статусом</div>
+      ) : byDivision.map((g) => (
         <div key={g.code + g.name} style={{ marginBottom: 14 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 7, margin: "10px 2px 8px", fontSize: 12, textTransform: "uppercase", letterSpacing: 0.5, color: C.faint, fontWeight: 700 }}>
             <Network size={13} /> {g.code !== "—" ? `Отделение ${g.code} · ` : ""}{g.name}
@@ -224,7 +286,9 @@ export function Requests() {
             <ItemCard key={r.id} C={C} st={st} item={r} itemKind="request"
               isExpanded={!!expanded[`request:${r.id}`]}
               onToggle={() => setExpanded((e) => ({ ...e, [`request:${r.id}`]: !e[`request:${r.id}`] }))}
-              statusMeta={ST_META} profileId={profile.id} onAttachmentsChanged={loadItems} />
+              statusMeta={ST_META} profileId={profile.id} onAttachmentsChanged={loadItems}>
+              <Actions item={r} itemKind="request" />
+            </ItemCard>
           ))}
         </div>
       ))}
@@ -254,7 +318,7 @@ export function Requests() {
 // Раскрывающаяся карточка: шапка (№, статья/контрагент, сумма, статус) и тело
 // (ЗРС-поля, вложения, реквизиты). Кнопки действий передаются через children —
 // в «Заявках» это рассмотрение счетов, в «Директиве» — рассмотрение заявок.
-export function ItemCard({ C, st, item, itemKind, isExpanded, onToggle, statusMeta, profileId, onAttachmentsChanged, avatar, children }) {
+export function ItemCard({ C, st, item, itemKind, isExpanded, onToggle, statusMeta, profileId, onAttachmentsChanged, avatar, hideFund, children }) {
   const m = statusMeta[item.status] || {};
   const amount = Number(itemKind === "bill" ? item.amount : item.planned_amount);
   return (
@@ -301,7 +365,7 @@ export function ItemCard({ C, st, item, itemKind, isExpanded, onToggle, statusMe
                 canUpload={false} profileId={profileId} onChanged={onAttachmentsChanged} />
             )}
             <div style={{ display: "flex", gap: 16, flexWrap: "wrap", fontSize: 12.5, color: C.sub }}>
-              {item.fund && <span>Фонд: <b style={{ color: C.text }}>{item.fund.code} {item.fund.name}</b></span>}
+              {!hideFund && item.fund && <span>Фонд: <b style={{ color: C.text }}>{item.fund.code} {item.fund.name}</b></span>}
               {itemKind === "bill" && item.due_on && <span>Срок: <b style={{ color: C.text }}>{new Date(item.due_on + "T00:00:00").toLocaleDateString("ru")}</b></span>}
               {item.comment && <span>{item.comment}</span>}
               <span>Подано: <b style={{ color: C.text }}>{new Date(item.created_at).toLocaleDateString("ru")}</b></span>
