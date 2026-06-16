@@ -320,7 +320,8 @@ export function Requests() {
 // в «Заявках» это рассмотрение счетов, в «Директиве» — рассмотрение заявок.
 export function ItemCard({ C, st, item, itemKind, isExpanded, onToggle, statusMeta, profileId, onAttachmentsChanged, avatar, hideFund, children }) {
   const m = statusMeta[item.status] || {};
-  const amount = Number(itemKind === "bill" ? item.amount : item.planned_amount);
+  // Для заявки в шапке показываем одобренную сумму (если задана), иначе запрошенную.
+  const amount = Number(itemKind === "bill" ? item.amount : (item.approved_amount ?? item.planned_amount));
   return (
     <div style={{ ...st.locCard, marginBottom: 8 }}>
       <div style={{ ...st.locHead, cursor: "pointer" }} className="locHead" onClick={onToggle}>
