@@ -100,7 +100,9 @@ export function App({ onLogout }) {
           <NotifyBell onGo={(m, sec) => { setActiveModule(m); setActive(sec); }} />
           {!isMobile && <div style={st.user}><div style={st.uName}>{userName}</div><div style={st.uRole}>{userRole}</div></div>}
           <div style={st.profileWrap}>
-            <div style={{ ...st.avatar, background: `${avatarColor(userName)}26`, color: avatarColor(userName) }} className="ava" onClick={() => setProfileOpen((o) => !o)}>{initials}</div>
+            {profile?.avatar_url
+              ? <img src={profile.avatar_url} alt={userName} className="ava" onClick={() => setProfileOpen((o) => !o)} style={{ ...st.avatar, background: "none", objectFit: "cover", cursor: "pointer" }} />
+              : <div style={{ ...st.avatar, background: `${avatarColor(userName)}26`, color: avatarColor(userName) }} className="ava" onClick={() => setProfileOpen((o) => !o)}>{initials}</div>}
             {profileOpen && (
               <>
                 <div style={st.profileOverlay} onClick={() => setProfileOpen(false)} />

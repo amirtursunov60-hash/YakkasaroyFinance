@@ -350,7 +350,7 @@ export async function payRequest(requestId, cashAccountId, periodId) {
 export async function fetchEmployees() {
   const { data, error } = await supabase
     .from("profiles")
-    .select(`id, full_name, phone, role, is_active, created_at,
+    .select(`id, full_name, phone, role, is_active, created_at, avatar_url,
       assignments:position_assignments!position_assignments_person_id_fkey(position:org_positions(id, code, name)),
       location_access:user_location_access!user_location_access_user_id_fkey(location_id)`)
     .order("full_name");
@@ -361,6 +361,21 @@ export async function fetchEmployees() {
 export async function updateProfile(id, patch) {
   const { error } = await supabase.from("profiles").update(patch).eq("id", id);
   if (error) throw error;
+}
+
+// Загрузка/замена аватара сотрудника. Файл кладётся в свою папку (uid) бакета
+// avatars; путь уникален по времени (обход кэша CDN). Возвращает публичный URL,
+// который проставляется в profiles.avatar_url (self-update разрешён политикой).
+export async function uploadAvatar(userId, file) {
+  const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+  const path = `${userId}/avatar_${Date.now()}.${ext}`;
+  const up = await supabase.storage.from("avatars").upload(path, file, { upsert: true });
+  if (up.error) throw up.error;
+  const { data } = supabase.storage.from("avatars").getPublicUrl(path);
+  const url = data.publicUrl;
+  const { error } = await supabase.from("profiles").update({ avatar_url: url }).eq("id", userId);
+  if (error) throw error;
+  return url;
 }
 
 export async function fetchAllPositions() {
