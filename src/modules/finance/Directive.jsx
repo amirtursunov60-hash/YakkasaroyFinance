@@ -696,17 +696,22 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
             <ChevronRight size={18} style={{ transform: collapsed ? "none" : "rotate(90deg)", transition: "transform .2s", color: C.sub, flexShrink: 0 }} />
           </div>
         </div>
-        <div style={st.subHead}>
-          <span style={st.subHeadTitle}>{sg.fundsTitle}</span>
-        </div>
-        {/* Свёрнутый этап: показываем итог (в развёрнутом он внизу в «Итого по этапу») */}
-        {collapsed && (
+        {/* Свёрнутый этап: итог (в развёрнутом он внизу в «Итого по этапу») + выбор всех фондов */}
+        {collapsed && (<>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, padding: "10px 16px 12px" }}>
             <MiniVal label="Доступно" value={fmt(totals.avail)} bold />
             <MiniVal label="Рассчитано" value={fmt(totals.calc)} color={totals.calc ? C.warning : C.faint} bold />
             <MiniVal label="Одобрено" value={fmt(totals.appr)} color={totals.appr ? C.green : C.faint} bold />
           </div>
-        )}
+          {sg.rows.length > 0 && (
+            <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "11px 16px",
+              borderTop: `1px solid ${C.line}`, color: C.sub, fontSize: 12, fontWeight: 600 }}>
+              <input type="checkbox" style={cbStyle} checked={allChecked}
+                disabled={locked || !selectable.length} onChange={toggleAll} />
+              Выбрать все фонды этапа
+            </div>
+          )}
+        </>)}
         {!collapsed && (sg.rows.length === 0 ? <div style={st.empty}>Фонды этого этапа не настроены</div> : (<>
           {isMobile ? (
             <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "11px 12px",
