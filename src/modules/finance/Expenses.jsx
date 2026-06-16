@@ -50,7 +50,7 @@ export function Expenses() {
   const [expanded, setExpanded] = useState({});    // раскрытые ЗРС заявок
   const [filter, setFilter] = useState("all");
   const [showForm, setShowForm] = useState(false);
-  const [showTypeMap, setShowTypeMap] = useState(false);  // привязка статей к фондам (админ)
+  const [editType, setEditType] = useState(null);  // статья для привязки фонда/цели (админ)
   const [decide, setDecide] = useState(null);      // { req, action: 'approve'|'reject'|'pay' }
   const [busy, setBusy] = useState(null);
 
@@ -181,6 +181,25 @@ export function Expenses() {
 
   const filtered = filter === "all" ? requests : requests.filter((r) => r.status === filter);
 
+  // Привязка статьи к фонду/цели: чип с привязанным фондом + кнопка правки (админам).
+  // Значения подставляются в форме ЗРС при выборе вида расхода.
+  const BindCtl = ({ c }) => {
+    const fd = funds.find((f) => f.id === c.default_fund_id);
+    return (
+      <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+        {fd && <span style={{ ...st.weekTag, marginLeft: 0, color: C.green, background: `${C.green}1a` }}>{fd.code}</span>}
+        {isFinAdmin && (
+          <button
+            style={{ display: "inline-grid", placeItems: "center", width: 26, height: 26, borderRadius: 8, background: C.panel2, border: `1px solid ${C.line}`, color: fd ? C.green : C.sub, cursor: "pointer", flexShrink: 0 }}
+            className="btn" title="Привязать фонд и цель"
+            onClick={(e) => { e.stopPropagation(); setEditType(c); }}>
+            <Link2 size={14} />
+          </button>
+        )}
+      </div>
+    );
+  };
+
   if (loading || periodsLoading) return <div style={st.empty}><Loader2 size={18} className="spin" /> Загрузка…</div>;
 
   return (<>
@@ -195,16 +214,9 @@ export function Expenses() {
             <Trend cur={totals.cur} prev={totals.prev} big /> к прошлому периоду · было {fmt(totals.prev)}
           </div>
         </div>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
-          {isFinAdmin && (
-            <button style={st.btnGhost} className="btn" onClick={() => { setErr(""); setShowTypeMap(true); }}>
-              <Link2 size={15} /> {isMobile ? "Привязка" : "Привязка статей"}
-            </button>
-          )}
-          <button style={st.btnGreen} className="btn" onClick={() => { setErr(""); setShowForm(true); }}>
-            <Plus size={15} /> {isMobile ? "Заявка (ЗРС)" : "Подать заявку (ЗРС)"}
-          </button>
-        </div>
+        <button style={st.btnGreen} className="btn" onClick={() => { setErr(""); setShowForm(true); }}>
+          <Plus size={15} /> {isMobile ? "Заявка (ЗРС)" : "Подать заявку (ЗРС)"}
+        </button>
       </div>
     </section>
 
@@ -253,6 +265,7 @@ export function Expenses() {
                         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
                           <span style={{ ...st.itemCode, color: C.danger }}>{c.code}</span>
                           <span style={{ fontWeight: 600, fontSize: 13, flex: 1, minWidth: 0 }}>{c.name}</span>
+                          <BindCtl c={c} />
                         </div>
                         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                           <div>
@@ -269,9 +282,10 @@ export function Expenses() {
                   }
                   return (
                     <div key={c.id} style={st.itemRow} className="itemRow">
-                      <div style={st.itemName}>
+                      <div style={{ ...st.itemName, display: "flex", alignItems: "center", gap: 8 }}>
                         <span style={{ ...st.itemCode, color: C.danger }}>{c.code}</span>
-                        <span>{c.name}</span>
+                        <span style={{ flex: 1, minWidth: 0 }}>{c.name}</span>
+                        <BindCtl c={c} />
                       </div>
                       <div style={st.itemPrev}>{fmt(rc.prev)}</div>
                       <div style={{ ...st.itemCur, color: rc.cur ? C.text : C.faint }}>{fmt(rc.cur)}</div>
@@ -407,11 +421,11 @@ export function Expenses() {
         busy={busy === "decide"} onClose={() => setDecide(null)} onConfirm={doDecide} />
     )}
 
-    {showTypeMap && (
-      <ExpenseTypeMapModal
-        C={C} st={st} isMobile={isMobile} tree={tree} funds={funds}
-        onClose={() => setShowTypeMap(false)}
-        onSaved={async (n) => { setShowTypeMap(false); setTypes(await fetchExpenseTypes()); setDone(`Привязка статей сохранена (${n})`); }}
+    {editType && (
+      <ExpenseTypeBindModal
+        C={C} st={st} type={editType} funds={funds}
+        onClose={() => setEditType(null)}
+        onSaved={async () => { const n = editType.name; setEditType(null); setTypes(await fetchExpenseTypes()); setDone(`Привязка статьи «${n}» сохранена`); }}
       />
     )}
   </>);
@@ -707,91 +721,53 @@ function DecideModal({ C, st, decide, funds, accounts, busy, onClose, onConfirm 
 // ---------------------------------------------------------------- Привязка статей РД к фондам/цели
 // Значения по умолчанию на статью: при выборе вида расхода в форме ЗРС подставятся
 // Источник (фонд) и Цель. Доступно админам (owner/fin_director).
-function ExpenseTypeMapModal({ C, st, isMobile, tree, funds, onClose, onSaved }) {
+// Привязка одной статьи РД к фонду/цели (открывается кнопкой в карточке статьи)
+function ExpenseTypeBindModal({ C, st, type, funds, onClose, onSaved }) {
   useScrollLock();
-  // Листья дерева статей по корневым папкам
-  const groups = useMemo(() => tree.map((root) => {
-    const leaves = [];
-    const walk = (n) => { if (!n.children.length) leaves.push(n); else n.children.forEach(walk); };
-    walk(root);
-    return { root, leaves };
-  }).filter((g) => g.leaves.length), [tree]);
-
-  // Текущее состояние правок: id -> { fundId, purpose }
-  const [map, setMap] = useState(() => {
-    const m = {};
-    groups.forEach((g) => g.leaves.forEach((l) => {
-      m[l.id] = { fundId: l.default_fund_id || "", purpose: l.default_purpose || "" };
-    }));
-    return m;
-  });
+  const [fundId, setFundId] = useState(type.default_fund_id || "");
+  const [purpose, setPurpose] = useState(type.default_purpose || "");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
-  const set = (id, k, v) => setMap((p) => ({ ...p, [id]: { ...p[id], [k]: v } }));
 
   const save = async () => {
     if (busy) return;
-    setErr("");
-    setBusy(true);
+    setErr(""); setBusy(true);
     try {
-      const changed = [];
-      groups.forEach((g) => g.leaves.forEach((l) => {
-        const cur = map[l.id];
-        const wasFund = l.default_fund_id || "";
-        const wasPurpose = l.default_purpose || "";
-        if (cur.fundId !== wasFund || cur.purpose.trim() !== wasPurpose) {
-          changed.push({ id: l.id, fund: cur.fundId, purpose: cur.purpose.trim() });
-        }
-      }));
-      for (const c of changed) {
-        await updateExpenseType(c.id, { default_fund_id: c.fund || null, default_purpose: c.purpose || null });
-      }
-      onSaved(changed.length);
+      await updateExpenseType(type.id, { default_fund_id: fundId || null, default_purpose: purpose.trim() || null });
+      onSaved();
     } catch (e) { setErr(e?.message || String(e)); setBusy(false); }
   };
 
   return (
     <div style={st.mdOverlay} onClick={onClose}>
-      <div style={{ ...st.mdCard, width: "min(640px, 100%)" }} onClick={(e) => e.stopPropagation()}>
+      <div style={{ ...st.mdCard, width: "min(440px, 100%)" }} onClick={(e) => e.stopPropagation()}>
         <div style={st.mdHead}>
-          <div style={st.mdTitle}>Привязка статей к фондам</div>
+          <div style={st.mdTitle}>Привязка статьи</div>
           <button style={st.iconBtn} onClick={onClose}><X size={17} /></button>
         </div>
 
-        <div style={{ fontSize: 12.5, color: C.sub, marginBottom: 12 }}>
-          Для статьи расхода задайте фонд-источник и цель по умолчанию — они подставятся
-          в форме заявки (ЗРС) при выборе этого вида расхода.
+        <div style={{ ...st.reqField, marginBottom: 12 }}>
+          <span style={st.reqFieldLbl}>Статья расхода</span>
+          <div style={{ fontSize: 15, fontWeight: 700 }}>
+            <span style={{ color: C.faint, marginRight: 6 }}>{type.code}</span>{type.name}
+          </div>
         </div>
 
-        <div style={{ display: "grid", gap: 14, maxHeight: "60vh", overflowY: "auto", paddingRight: 2 }}>
-          {groups.map((g) => (
-            <div key={g.root.id}>
-              <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: 0.5, color: C.faint, fontWeight: 700, marginBottom: 6 }}>
-                {g.root.code ? `${g.root.code} · ` : ""}{g.root.name}
-              </div>
-              <div style={{ display: "grid", gap: 8 }}>
-                {g.leaves.map((l) => (
-                  <div key={l.id} style={{
-                    display: "grid",
-                    gridTemplateColumns: isMobile ? "1fr" : "minmax(0,1.1fr) minmax(0,1.2fr) minmax(0,1.4fr)",
-                    gap: 8, alignItems: "center",
-                  }}>
-                    <div style={{ fontSize: 13, minWidth: 0 }}>
-                      <span style={{ color: C.faint, marginRight: 6 }}>{l.code}</span>{l.name}
-                    </div>
-                    <select style={st.mdSelect} className="fin"
-                      value={map[l.id].fundId} onChange={(e) => set(l.id, "fundId", e.target.value)}>
-                      <option value="">— фонд не задан —</option>
-                      {funds.map((fd) => <option key={fd.id} value={fd.id}>{fd.code} — {fd.name}</option>)}
-                    </select>
-                    <input style={st.mdInput} className="fin" placeholder="Цель по умолчанию (необязательно)"
-                      value={map[l.id].purpose} onChange={(e) => set(l.id, "purpose", e.target.value)} />
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-          {!groups.length && <div style={st.empty}>Справочник статей расходов пуст</div>}
+        <div style={{ fontSize: 12.5, color: C.sub, marginBottom: 12 }}>
+          Фонд-источник и цель подставятся в форме заявки (ЗРС) при выборе этого вида расхода.
+        </div>
+
+        <div style={st.reqField}>
+          <span style={st.reqFieldLbl}>Фонд-источник по умолчанию</span>
+          <select style={st.mdSelect} className="fin" value={fundId} onChange={(e) => setFundId(e.target.value)}>
+            <option value="">— не задан —</option>
+            {funds.map((fd) => <option key={fd.id} value={fd.id}>{fd.code} — {fd.name}</option>)}
+          </select>
+        </div>
+        <div style={{ ...st.reqField, marginTop: 12 }}>
+          <span style={st.reqFieldLbl}>Цель по умолчанию (необязательно)</span>
+          <input style={st.mdInput} className="fin" placeholder="Если пусто — подставится название статьи"
+            value={purpose} onChange={(e) => setPurpose(e.target.value)} />
         </div>
 
         {err && <div style={{ ...st.reqError, marginTop: 12 }}><AlertCircle size={15} /> {err}</div>}
