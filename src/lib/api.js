@@ -305,7 +305,7 @@ export async function fetchRequests(periodId, locationId) {
     .select(`id, number, status, planned_amount, approved_amount, comment, csw_data, csw_situation, csw_solution,
       purpose, tags, rejection_reason, created_at, decided_at, period_id, expense_type_id,
       position:org_positions(code, name, division:org_divisions(id, code, name)),
-      requester:profiles!payment_requests_requester_id_fkey(full_name),
+      requester:profiles!payment_requests_requester_id_fkey(full_name, avatar_url),
       expense_type:expense_types(code, name),
       fund:funds(id, code, name),
       location:locations(id, name),

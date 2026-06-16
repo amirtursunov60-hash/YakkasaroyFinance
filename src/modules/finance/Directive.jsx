@@ -3,7 +3,7 @@ import { ClipboardList, Calculator, CalendarDays, Check, RotateCcw, RotateCw, Lo
 import { Stat } from "../../components/common";
 import { useTheme } from "../../theme/theme";
 import { useScrollLock } from "../../hooks/useScrollLock";
-import { fmt, avatarColor } from "../../utils/format";
+import { fmt } from "../../utils/format";
 import { feedbackSuccess, feedbackError } from "../../lib/feedback";
 import { cascadeTypeStageBase, calcTypeRulesAmount } from "../../lib/distribution";
 import { usePeriod, periodTitle } from "../../lib/PeriodCtx";
@@ -13,7 +13,7 @@ import {
   fetchRequests, decideRequest, fetchPeriodOverrides, savePeriodOverrides,
   fetchIncomeTypeRules, fetchIncomeByType, fetchFundFolders,
 } from "../../lib/api";
-import { ItemCard, reqStatusMeta, RequestStatusChips, requestCounts, matchRequestFilter } from "./Requests";
+import { ItemCard, reqStatusMeta, RequestStatusChips, requestCounts, matchRequestFilter, RequesterAvatar } from "./Requests";
 
 
 // ---------------------------------------------------------------- DIRECTIVE
@@ -543,13 +543,12 @@ function RequestsReview({ C, st, isMobile, profile, requests, funds, periodId, b
               : "Нет заявок с таким статусом"}
         </div>
       ) : shown.map((r) => {
-        const who = r.requester?.full_name || r.position?.name || "—";
         return (
           <ItemCard key={r.id} C={C} st={st} item={r} itemKind="request" hideFund
             isExpanded={!!expanded[r.id]}
             onToggle={() => setExpanded((e) => ({ ...e, [r.id]: !e[r.id] }))}
             statusMeta={ST_META} profileId={profile?.id} onAttachmentsChanged={onReload}
-            avatar={<Avatar C={C} name={who} />}>
+            avatar={<RequesterAvatar requester={r.requester} size={60} round />}>
             <RequestReviewControls C={C} st={st} isMobile={isMobile} item={r}
               funds={funds} isFinAdmin={isFinAdmin}
               onApprove={doApprove} onReject={doReject} onReset={doReset} />
@@ -560,18 +559,6 @@ function RequestsReview({ C, st, isMobile, profile, requests, funds, periodId, b
   );
 }
 
-
-// Аватар заявителя (кружок с инициалами, цвет — по имени). Крупный — в шапке карточки.
-function Avatar({ C, name }) {
-  const color = avatarColor(name || "");
-  const initials = (name || "?").trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase()).join("") || "?";
-  return (
-    <div style={{ width: 60, height: 60, borderRadius: "50%", display: "grid", placeItems: "center", flexShrink: 0,
-      background: `${color}33`, color, fontWeight: 800, fontSize: 22, border: `1px solid ${color}55` }}>
-      {initials}
-    </div>
-  );
-}
 
 
 // ---------------------------------------------------------------- Инлайн-форма рассмотрения заявки
