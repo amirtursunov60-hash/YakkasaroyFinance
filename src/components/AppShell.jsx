@@ -70,10 +70,10 @@ export function App({ onLogout }) {
         <div style={{ ...st.brand, ...(isMobile ? { gap: 7 } : {}) }}>
           <div style={{
             display: "grid", placeItems: "center", flexShrink: 0,
-            width: isMobile ? 36 : 40, height: isMobile ? 36 : 40, borderRadius: "50%",
+            width: 40, height: 40, borderRadius: "50%",
             background: `linear-gradient(135deg, #14271d, #0b1611)`,
             border: `1px solid ${C.green}3a`,
-            boxShadow: `0 4px 14px ${C.green}33, inset 0 1px 0 ${C.glassHi}`,
+            boxShadow: `0 4px 14px ${C.green}55, inset 0 1px 0 rgba(255,255,255,0.35)`,
           }}>
             <img src="/icons/logo-mark.png" alt="Яккасарой"
               style={{ width: "84%", height: "84%", objectFit: "contain" }} />
