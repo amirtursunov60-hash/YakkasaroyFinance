@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { ClipboardList, Calculator, CalendarDays, Check, RotateCcw, RotateCw, Lock, Unlock, Ban, ArrowRightLeft, Loader2, AlertCircle, CheckCircle2, X, Landmark, ChevronRight, Scale, TrendingUp, TrendingDown, Banknote, Wallet, Coins } from "lucide-react";
+import { ClipboardList, Calculator, CalendarDays, Check, RotateCcw, RotateCw, Lock, Unlock, Ban, ArrowRightLeft, Loader2, AlertCircle, CheckCircle2, X, Landmark, ChevronRight, Scale, TrendingUp, TrendingDown, Banknote, Wallet, Coins, FileText } from "lucide-react";
 import { Stat } from "../../components/common";
 import { useTheme } from "../../theme/theme";
 import { useScrollLock } from "../../hooks/useScrollLock";
@@ -9,9 +9,10 @@ import { usePeriod, periodTitle } from "../../lib/PeriodCtx";
 import {
   fetchFunds, fetchDefaultRules,
   fetchPeriodIncome, fetchPeriodDistribution, distributeStage, setPeriodStatus, closePeriod, reopenPeriod, resetDistribution,
-  fetchRequests, fetchBills, fetchPeriodOverrides, savePeriodOverrides,
+  fetchRequests, decideRequest, payRequest, fetchIncomeRefs, fetchPeriodOverrides, savePeriodOverrides,
   fetchIncomeTypeRules, fetchIncomeByType, fetchFundFolders,
 } from "../../lib/api";
+import { ItemCard, DecideModal, reqStatusMeta } from "./Requests";
 
 
 // ---------------------------------------------------------------- DIRECTIVE
@@ -32,7 +33,7 @@ const byFundCode = (fundById) => (a, b) =>
   (fundById[a.fund_id]?.code || "").localeCompare(fundById[b.fund_id]?.code || "", "ru", { numeric: true });
 
 export function Directive() {
-  const { C, st, isMobile } = useTheme();
+  const { C, st, isMobile, profile } = useTheme();
   const { period, periodId, prevPeriod, loading: periodsLoading, reload: reloadPeriods } = usePeriod();
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
@@ -48,7 +49,8 @@ export function Directive() {
   const [pcts, setPcts] = useState({});             // правки процентов { ruleId: число }
   const [busy, setBusy] = useState(null);           // 'block'|'close'|'transfer'|`calc:х`|`appr:х`
   const [transferOpen, setTransferOpen] = useState(false);
-  const [pending, setPending] = useState({ reqs: [], bills: [] }); // к рассмотрению
+  const [weekReqs, setWeekReqs] = useState([]);   // заявки недели — рассмотрение в Директиве
+  const [accounts, setAccounts] = useState([]);   // счета ДС (для оплаты одобренных заявок)
   const [fundRules, setFundRules] = useState({});     // правила по видам дохода { fundId: [rules] }
   const [folders, setFolders] = useState([]);         // папки фондов
   const [incomeByType, setIncomeByType] = useState({}); // факт дохода недели по видам
@@ -61,11 +63,11 @@ export function Directive() {
   const loadRefs = useCallback(async () => {
     setErr("");
     try {
-      const [fs, rs, fr, fl] = await Promise.all([
-        fetchFunds(), fetchDefaultRules(), fetchIncomeTypeRules(), fetchFundFolders(),
+      const [fs, rs, fr, fl, refs] = await Promise.all([
+        fetchFunds(), fetchDefaultRules(), fetchIncomeTypeRules(), fetchFundFolders(), fetchIncomeRefs(),
       ]);
       setFunds(fs.sort((a, b) => a.code.localeCompare(b.code, "ru", { numeric: true })));
-      setRules(rs); setFundRules(fr); setFolders(fl);
+      setRules(rs); setFundRules(fr); setFolders(fl); setAccounts(refs?.accounts || []);
     } catch (e) {
       setErr("Не удалось загрузить данные: " + (e?.message || e));
     } finally {
@@ -85,6 +87,13 @@ export function Directive() {
     setIncome(inc); setPrevIncome(pinc); setRegRows(rows); setPrevDist(prows);
   }, [periodId, prevPeriod]);
 
+  // Заявки недели — для рассмотрения прямо в Директиве (одобрение/отклонение/оплата).
+  const reloadRequests = useCallback(async () => {
+    if (!periodId) { setWeekReqs([]); return; }
+    try { setWeekReqs(await fetchRequests(periodId)); }
+    catch { /* список заявок не критичен для распределения */ }
+  }, [periodId]);
+
   useEffect(() => {
     let on = true;
     (async () => {
@@ -100,13 +109,7 @@ export function Directive() {
         }
       }
       catch (e) { if (on) setErr("Не удалось загрузить период: " + (e?.message || e)); }
-      try {
-        const [reqs, bills] = await Promise.all([fetchRequests(periodId), fetchBills(periodId)]);
-        if (on) setPending({
-          reqs: reqs.filter((r) => ["submitted", "planning"].includes(r.status)),
-          bills: bills.filter((b) => ["submitted", "planning"].includes(b.status)),
-        });
-      } catch { /* сводка заявок не критична для Директивы */ }
+      if (on) await reloadRequests();
     })();
     return () => { on = false; };
   }, [periodId]);                                   // eslint-disable-line react-hooks/exhaustive-deps
@@ -434,35 +437,11 @@ export function Directive() {
       </div>
     </section>
 
-    {/* Заявки — появятся после реализации подачи в Личном кабинете */}
-    <section style={st.reqSection}>
-      <div style={st.reqSectionHead}>
-        <ClipboardList size={18} color={C.green} />
-        <h3 style={st.reqSectionTitle}>Заявки к рассмотрению</h3>
-        <span style={st.reqSectionSub}>Финкомитет одобряет или отклоняет</span>
-        {requestsBlocked && <span style={st.reqBlockedTag}><Lock size={12} /> Подача закрыта</span>}
-      </div>
-      {pending.reqs.length === 0 && pending.bills.length === 0 ? (
-        <div style={{ ...st.locCard, ...st.empty }}>
-          К рассмотрению ничего нет. Заявки подаются в «Расходах», счета — в «Счетах поставщиков»;
-          одобрение и оплата — в разделе «Заявки».
-        </div>
-      ) : (
-        <div style={{ ...st.locCard, padding: "14px 18px" }}>
-          <div style={{ display: "flex", gap: 18, flexWrap: "wrap", fontSize: 13.5 }}>
-            {pending.bills.length > 0 && (
-              <span>Счета поставщиков (приоритет): <b style={{ color: C.warning }}>{pending.bills.length}</b> на <b>{fmt(pending.bills.reduce((a, b) => a + Number(b.amount), 0))}</b> TJS</span>
-            )}
-            {pending.reqs.length > 0 && (
-              <span>Заявки от постов: <b style={{ color: C.warning }}>{pending.reqs.length}</b> на <b>{fmt(pending.reqs.reduce((a, r) => a + Number(r.planned_amount), 0))}</b> TJS</span>
-            )}
-          </div>
-          <div style={{ fontSize: 12, color: C.faint, marginTop: 6 }}>
-            Рассмотрение и оплата — в разделе «Заявки» (меню Финансовое планирование).
-          </div>
-        </div>
-      )}
-    </section>
+    {/* Заявки недели — рассмотрение прямо в Директиве (одобрение/отклонение/оплата) */}
+    <RequestsReview C={C} st={st} isMobile={isMobile} profile={profile}
+      requests={weekReqs} funds={funds} accounts={accounts} periodId={periodId}
+      blocked={requestsBlocked}
+      onReload={async () => { await Promise.all([reloadRequests(), reloadPeriodData(), loadRefs()]); }} />
 
     {transferOpen && (
       <TransferModal C={C} st={st} funds={funds} remainder={remainder}
@@ -478,6 +457,153 @@ export function Directive() {
         onApprove={(amount) => doApproveFund(calcFund.fund, calcFund.stage.key, amount)} />
     )}
   </>);
+}
+
+
+// ---------------------------------------------------------------- Заявки к рассмотрению (в Директиве)
+// Единственное место рассмотрения заявок-ЗРС недели: чипы-фильтры по статусам
+// со счётчиками + список карточек с кнопками Одобрить/Отклонить/На планирование/
+// Оплатить. Решения идут через те же API, что и финкомитет (decideRequest/payRequest).
+function RequestsReview({ C, st, profile, requests, funds, accounts, periodId, blocked, onReload }) {
+  const ST_META = reqStatusMeta(C);
+  const isFinAdmin = ["owner", "fin_director"].includes(profile?.role);
+  const canPay = isFinAdmin || profile?.role === "accountant";
+
+  const [filter, setFilter] = useState("all");
+  const [expanded, setExpanded] = useState({});
+  const [decide, setDecide] = useState(null);   // { item, itemKind:'request', action }
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  const [done, setDone] = useState("");
+
+  // Счётчики по статусам — для чипов
+  const counts = useMemo(() => {
+    const c = { all: requests.length, submitted: 0, planning: 0, approved: 0, paid: 0, rejected: 0 };
+    requests.forEach((r) => { if (c[r.status] !== undefined) c[r.status] += 1; });
+    return c;
+  }, [requests]);
+
+  const shown = useMemo(() => {
+    const list = filter === "all" ? requests : requests.filter((r) => r.status === filter);
+    return [...list].sort((a, b) => Number(b.number || 0) - Number(a.number || 0));
+  }, [requests, filter]);
+
+  const CHIPS = [
+    { key: "all",       label: "Все",           color: C.green },
+    { key: "submitted", label: "Поданы",        color: C.warning },
+    { key: "planning",  label: "Планирование",  color: C.info },
+    { key: "approved",  label: "Одобрены",      color: C.successSoft },
+    { key: "paid",      label: "Оплачены",      color: C.success },
+    { key: "rejected",  label: "Отклонены",     color: C.danger },
+  ];
+
+  const doDecide = async ({ item, action, fundId, reason, accountId }) => {
+    if (busy) return;
+    setBusy(true); setErr(""); setDone("");
+    try {
+      if (action === "approve") {
+        if (!fundId) throw new Error("Выберите фонд-источник");
+        if (!periodId) throw new Error("Нет выбранного периода ФП");
+        await decideRequest(item.id, { status: "approved", fund_id: fundId, period_id: periodId });
+        setDone(`Заявка №${item.number}: одобрена — фонд ${funds.find((f) => f.id === fundId)?.code || ""}`);
+      } else if (action === "reject") {
+        if (!reason?.trim()) throw new Error("Укажите причину отклонения");
+        await decideRequest(item.id, { status: "rejected", rejection_reason: reason.trim() });
+        setDone(`Заявка №${item.number}: отклонена`);
+      } else if (action === "pay") {
+        if (!accountId) throw new Error("Выберите счёт ДС");
+        if (!periodId) throw new Error("Нет выбранного периода ФП");
+        await payRequest(item.id, accountId, periodId);
+        setDone(`Заявка №${item.number}: оплачена — расход проведён в Реестре`);
+      }
+      setDecide(null);
+      await onReload();
+    } catch (e) { setErr(e?.message || String(e)); }
+    finally { setBusy(false); }
+  };
+
+  const toPlanning = async (req) => {
+    if (busy) return;
+    setBusy(true); setErr(""); setDone("");
+    try {
+      await decideRequest(req.id, { status: "planning" });
+      setDone(`Заявка №${req.number} взята на планирование`);
+      await onReload();
+    } catch (e) { setErr(e?.message || String(e)); }
+    finally { setBusy(false); }
+  };
+
+  // Кнопки рассмотрения внутри карточки заявки
+  const RowActions = ({ item }) => (
+    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+      {isFinAdmin && ["submitted", "planning"].includes(item.status) && (<>
+        {item.status === "submitted" && (
+          <button style={st.btnGhost} className="btn" disabled={busy} onClick={() => toPlanning(item)}>
+            <FileText size={14} /> На планирование
+          </button>
+        )}
+        <button style={st.btnGreen} className="btn" disabled={busy} onClick={() => setDecide({ item, itemKind: "request", action: "approve" })}>
+          <Check size={14} /> Одобрить
+        </button>
+        <button style={{ ...st.btnGhost, color: C.danger }} className="btn" disabled={busy} onClick={() => setDecide({ item, itemKind: "request", action: "reject" })}>
+          <Ban size={14} /> Отклонить
+        </button>
+      </>)}
+      {canPay && item.status === "approved" && (
+        <button style={st.btnGreen} className="btn" disabled={busy} onClick={() => setDecide({ item, itemKind: "request", action: "pay" })}>
+          <Banknote size={14} /> Оплатить
+        </button>
+      )}
+    </div>
+  );
+
+  return (
+    <section style={st.reqSection}>
+      <div style={st.reqSectionHead}>
+        <ClipboardList size={18} color={C.green} />
+        <h3 style={st.reqSectionTitle}>Заявки к рассмотрению</h3>
+        <span style={st.reqSectionSub}>от поста · формат ЗРС · поданные на эту неделю</span>
+        {blocked && <span style={st.reqBlockedTag}><Lock size={12} /> Подача закрыта</span>}
+      </div>
+
+      {err && <div style={{ ...st.reqError, marginBottom: 12 }}><AlertCircle size={15} /> {err}</div>}
+      {done && <div style={{ ...st.reqError, marginBottom: 12, color: C.green, background: `${C.green}1a`, borderColor: `${C.green}44` }}><CheckCircle2 size={15} /> {done}</div>}
+
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
+        {CHIPS.map((ch) => {
+          const active = filter === ch.key;
+          return (
+            <button key={ch.key} className="btn" onClick={() => setFilter(ch.key)}
+              style={{ padding: "7px 13px", borderRadius: 999, fontSize: 12.5, fontWeight: 700, cursor: "pointer",
+                whiteSpace: "nowrap", border: `1px solid ${active ? `${ch.color}66` : C.line}`,
+                background: active ? `${ch.color}22` : C.panel2, color: active ? ch.color : C.sub }}>
+              {ch.label} · {counts[ch.key] ?? 0}
+            </button>
+          );
+        })}
+      </div>
+
+      {shown.length === 0 ? (
+        <div style={{ ...st.locCard, ...st.empty }}>
+          {requests.length === 0
+            ? "На этой неделе заявок нет — они подаются в разделе «Заявки»"
+            : "Нет заявок с таким статусом"}
+        </div>
+      ) : shown.map((r) => (
+        <ItemCard key={r.id} C={C} st={st} item={r} itemKind="request"
+          isExpanded={!!expanded[r.id]}
+          onToggle={() => setExpanded((e) => ({ ...e, [r.id]: !e[r.id] }))}
+          statusMeta={ST_META} profileId={profile?.id} onAttachmentsChanged={onReload}>
+          <RowActions item={r} />
+        </ItemCard>
+      ))}
+
+      {decide && (
+        <DecideModal C={C} st={st} decide={decide} funds={funds} accounts={accounts}
+          busy={busy} onClose={() => setDecide(null)} onConfirm={doDecide} />
+      )}
+    </section>
+  );
 }
 
 

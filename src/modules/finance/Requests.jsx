@@ -20,16 +20,19 @@ import {
 // сгруппированы по отделениям оргсхемы (отделение берётся от поста
 // заявителя). Действия те же, что в Расходах/Счетах — общие API-функции.
 
+// Статусы заявок/счетов — цвета из семантических токенов темы (работают в обеих темах).
+// Вынесено для переиспользования в Директиве (рассмотрение заявок перенесено туда).
+export const reqStatusMeta = (C) => ({
+  submitted: { label: "подана",          color: C.warning },
+  planning:  { label: "на планировании", color: C.info },
+  approved:  { label: "одобрена",        color: C.successSoft },
+  rejected:  { label: "отклонена",       color: C.danger },
+  paid:      { label: "оплачена",        color: C.success },
+});
+
 export function Requests() {
   const { C, st, isMobile, profile } = useTheme();
-  // Статусы заявок — цвета из семантических токенов темы (работают в обеих темах).
-  const ST_META = {
-    submitted: { label: "подана",           color: C.warning },
-    planning:  { label: "на планировании",  color: C.info },
-    approved:  { label: "одобрена",         color: C.successSoft },
-    rejected:  { label: "отклонена",        color: C.danger },
-    paid:      { label: "оплачена",         color: C.success },
-  };
+  const ST_META = reqStatusMeta(C);
   const { period, periodId, periods, loading: periodsLoading, locationId: ctxLocationId } = usePeriod();
   const isFinAdmin = ["owner", "fin_director"].includes(profile?.role);
   const canPay = isFinAdmin || profile?.role === "accountant";
@@ -135,103 +138,26 @@ export function Requests() {
     finally { setBusy(null); }
   };
 
-  const toPlanning = async (req) => {
-    if (busy) return;
-    setBusy("decide"); setErr(""); setDone("");
-    try {
-      await decideRequest(req.id, { status: "planning" });
-      await loadItems();
-      setDone(`Заявка №${req.number} взята на планирование`);
-    } catch (e) { setErr(e?.message || String(e)); }
-    finally { setBusy(null); }
-  };
-
   if (loading || periodsLoading) return <div style={st.empty}><Loader2 size={18} className="spin" /> Загрузка…</div>;
 
-  const Actions = ({ item, itemKind }) => (
-    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-      {isFinAdmin && ["submitted", "planning"].includes(item.status) && (<>
-        {itemKind === "request" && item.status === "submitted" && (
-          <button style={st.btnGhost} className="btn" disabled={!!busy} onClick={() => toPlanning(item)}>
-            <FileText size={14} /> На планирование
-          </button>
-        )}
-        <button style={st.btnGreen} className="btn" disabled={!!busy} onClick={() => setDecide({ item, itemKind, action: "approve" })}>
-          <Check size={14} /> Одобрить
-        </button>
-        <button style={{ ...st.btnGhost, color: C.danger }} className="btn" disabled={!!busy} onClick={() => setDecide({ item, itemKind, action: "reject" })}>
-          <Ban size={14} /> Отклонить
-        </button>
-      </>)}
-      {canPay && item.status === "approved" && (
-        <button style={st.btnGreen} className="btn" disabled={!!busy} onClick={() => setDecide({ item, itemKind, action: "pay" })}>
-          <Banknote size={14} /> Оплатить
-        </button>
-      )}
-    </div>
-  );
-
-  const ItemCard = ({ item, itemKind }) => {
-    const m = ST_META[item.status] || {};
-    const key = `${itemKind}:${item.id}`;
-    const isExp = !!expanded[key];
-    const amount = Number(itemKind === "bill" ? item.amount : item.planned_amount);
+  // Рассмотрение здесь — только для счетов поставщиков. Заявки-ЗРС рассматриваются
+  // в Директиве (одобрение/отклонение/оплата перенесены туда).
+  const Actions = ({ item, itemKind }) => {
+    if (itemKind !== "bill") return null;
     return (
-      <div style={{ ...st.locCard, marginBottom: 8 }}>
-        <div style={{ ...st.locHead, cursor: "pointer" }} className="locHead"
-          onClick={() => setExpanded((e) => ({ ...e, [key]: !e[key] }))}>
-          <div style={{ width: 34, height: 34, borderRadius: 10, display: "grid", placeItems: "center", flexShrink: 0, background: `${m.color}22`, color: m.color }}><ClipboardList size={17} /></div>
-          <div style={st.locTitle}>
-            <div style={st.locName}>
-              №{item.number} · {itemKind === "bill"
-                ? (item.counterparty?.name || "—")
-                : (item.expense_type ? `${item.expense_type.code || ""} ${item.expense_type.name}` : "—")}
-            </div>
-            <div style={st.locCode}>
-              {itemKind === "bill"
-                ? `${item.expense_type ? `${item.expense_type.code || ""} ${item.expense_type.name}` : ""}${item.location ? ` · ${item.location.name}` : ""}`
-                : `${item.position ? `${item.position.code} ${item.position.name}` : "пост не указан"}${item.requester ? ` · ${item.requester.full_name}` : ""}${item.location ? ` · ${item.location.name}` : ""}`}
-            </div>
-          </div>
-          <div style={st.locRight}>
-            <div style={st.locSum}>{fmt(amount)} <span style={st.locUnit}>{item.currency?.code || ""}</span></div>
-            <div style={{ display: "flex", gap: 4, justifyContent: "flex-end", flexWrap: "wrap" }}>
-              {item.kind === "obligation" && <span style={{ ...st.weekTag, marginLeft: 0, color: "#9c6ade", background: "#9c6ade1a" }}>обязательство</span>}
-              <span style={{ ...st.weekTag, marginLeft: 0, color: m.color, background: `${m.color}1a` }}>{m.label}</span>
-            </div>
-          </div>
-          <span style={{ ...st.locChevron, transform: isExp ? "rotate(90deg)" : "none" }}><ChevronRight size={18} /></span>
-        </div>
-        {isExp && (
-          <div style={st.locBody}>
-            <div style={{ display: "grid", gap: 10, padding: "4px 2px 8px" }}>
-              {itemKind === "request" && (<>
-                {item.purpose && <CswRow C={C} label="Цель расхода" text={item.purpose} />}
-                <CswRow C={C} label="Ситуация" text={item.csw_situation} />
-                <CswRow C={C} label="Данные" text={item.csw_data} />
-                <CswRow C={C} label="Решение" text={item.csw_solution} />
-                {item.tags?.length > 0 && (
-                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                    {item.tags.map((t) => <span key={t} style={{ ...st.weekTag, marginLeft: 0 }}>{t}</span>)}
-                  </div>
-                )}
-              </>)}
-              {item.attachments?.length > 0 && (
-                <AttachmentsBlock kind={itemKind} parentId={item.id} attachments={item.attachments}
-                  canUpload={false} profileId={profile.id} onChanged={loadItems} />
-              )}
-              <div style={{ display: "flex", gap: 16, flexWrap: "wrap", fontSize: 12.5, color: C.sub }}>
-                {item.fund && <span>Фонд: <b style={{ color: C.text }}>{item.fund.code} {item.fund.name}</b></span>}
-                {itemKind === "bill" && item.due_on && <span>Срок: <b style={{ color: C.text }}>{new Date(item.due_on + "T00:00:00").toLocaleDateString("ru")}</b></span>}
-                {item.comment && <span>{item.comment}</span>}
-                <span>Подано: <b style={{ color: C.text }}>{new Date(item.created_at).toLocaleDateString("ru")}</b></span>
-              </div>
-              {item.status === "rejected" && item.rejection_reason && (
-                <div style={{ color: C.danger, fontSize: 13 }}>Причина отклонения: {item.rejection_reason}</div>
-              )}
-              <Actions item={item} itemKind={itemKind} />
-            </div>
-          </div>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        {isFinAdmin && ["submitted", "planning"].includes(item.status) && (<>
+          <button style={st.btnGreen} className="btn" disabled={!!busy} onClick={() => setDecide({ item, itemKind, action: "approve" })}>
+            <Check size={14} /> Одобрить
+          </button>
+          <button style={{ ...st.btnGhost, color: C.danger }} className="btn" disabled={!!busy} onClick={() => setDecide({ item, itemKind, action: "reject" })}>
+            <Ban size={14} /> Отклонить
+          </button>
+        </>)}
+        {canPay && item.status === "approved" && (
+          <button style={st.btnGreen} className="btn" disabled={!!busy} onClick={() => setDecide({ item, itemKind, action: "pay" })}>
+            <Banknote size={14} /> Оплатить
+          </button>
         )}
       </div>
     );
@@ -270,7 +196,14 @@ export function Requests() {
         <span style={st.reqSectionSub}>одобряются приоритетно</span>
       </div>
       {!bills.length && <div style={{ ...st.locCard, ...st.empty }}>Счетов на рассмотрении нет</div>}
-      {bills.map((b) => <ItemCard key={b.id} item={b} itemKind="bill" />)}
+      {bills.map((b) => (
+        <ItemCard key={b.id} C={C} st={st} item={b} itemKind="bill"
+          isExpanded={!!expanded[`bill:${b.id}`]}
+          onToggle={() => setExpanded((e) => ({ ...e, [`bill:${b.id}`]: !e[`bill:${b.id}`] }))}
+          statusMeta={ST_META} profileId={profile.id} onAttachmentsChanged={loadItems}>
+          <Actions item={b} itemKind="bill" />
+        </ItemCard>
+      ))}
     </section>
 
     {/* Заявки по отделениям оргсхемы */}
@@ -278,16 +211,21 @@ export function Requests() {
       <div style={st.reqSectionHead}>
         <ClipboardList size={18} color={C.green} />
         <h3 style={st.reqSectionTitle}>Заявки от постов</h3>
-        <span style={st.reqSectionSub}>по отделениям оргсхемы · формат ЗРС</span>
+        <span style={st.reqSectionSub}>по отделениям · формат ЗРС · рассмотрение в Директиве</span>
       </div>
-      {!requests.length && <div style={{ ...st.locCard, ...st.empty }}>Заявок на рассмотрении нет — подайте первую кнопкой «Подать заявку (ЗРС)» выше</div>}
+      {!requests.length && <div style={{ ...st.locCard, ...st.empty }}>Заявок нет — подайте первую кнопкой «Подать заявку (ЗРС)» выше</div>}
       {byDivision.map((g) => (
         <div key={g.code + g.name} style={{ marginBottom: 14 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 7, margin: "10px 2px 8px", fontSize: 12, textTransform: "uppercase", letterSpacing: 0.5, color: C.faint, fontWeight: 700 }}>
             <Network size={13} /> {g.code !== "—" ? `Отделение ${g.code} · ` : ""}{g.name}
             <span style={{ ...st.weekTag, marginLeft: 4 }}>{g.items.length}</span>
           </div>
-          {g.items.map((r) => <ItemCard key={r.id} item={r} itemKind="request" />)}
+          {g.items.map((r) => (
+            <ItemCard key={r.id} C={C} st={st} item={r} itemKind="request"
+              isExpanded={!!expanded[`request:${r.id}`]}
+              onToggle={() => setExpanded((e) => ({ ...e, [`request:${r.id}`]: !e[`request:${r.id}`] }))}
+              statusMeta={ST_META} profileId={profile.id} onAttachmentsChanged={loadItems} />
+          ))}
         </div>
       ))}
     </section>
@@ -309,6 +247,74 @@ export function Requests() {
       />
     )}
   </>);
+}
+
+
+// ---------------------------------------------------------------- Карточка заявки / счёта
+// Раскрывающаяся карточка: шапка (№, статья/контрагент, сумма, статус) и тело
+// (ЗРС-поля, вложения, реквизиты). Кнопки действий передаются через children —
+// в «Заявках» это рассмотрение счетов, в «Директиве» — рассмотрение заявок.
+export function ItemCard({ C, st, item, itemKind, isExpanded, onToggle, statusMeta, profileId, onAttachmentsChanged, children }) {
+  const m = statusMeta[item.status] || {};
+  const amount = Number(itemKind === "bill" ? item.amount : item.planned_amount);
+  return (
+    <div style={{ ...st.locCard, marginBottom: 8 }}>
+      <div style={{ ...st.locHead, cursor: "pointer" }} className="locHead" onClick={onToggle}>
+        <div style={{ width: 34, height: 34, borderRadius: 10, display: "grid", placeItems: "center", flexShrink: 0, background: `${m.color}22`, color: m.color }}><ClipboardList size={17} /></div>
+        <div style={st.locTitle}>
+          <div style={st.locName}>
+            №{item.number} · {itemKind === "bill"
+              ? (item.counterparty?.name || "—")
+              : (item.expense_type ? `${item.expense_type.code || ""} ${item.expense_type.name}` : "—")}
+          </div>
+          <div style={st.locCode}>
+            {itemKind === "bill"
+              ? `${item.expense_type ? `${item.expense_type.code || ""} ${item.expense_type.name}` : ""}${item.location ? ` · ${item.location.name}` : ""}`
+              : `${item.position ? `${item.position.code} ${item.position.name}` : "пост не указан"}${item.requester ? ` · ${item.requester.full_name}` : ""}${item.location ? ` · ${item.location.name}` : ""}`}
+          </div>
+        </div>
+        <div style={st.locRight}>
+          <div style={st.locSum}>{fmt(amount)} <span style={st.locUnit}>{item.currency?.code || ""}</span></div>
+          <div style={{ display: "flex", gap: 4, justifyContent: "flex-end", flexWrap: "wrap" }}>
+            {item.kind === "obligation" && <span style={{ ...st.weekTag, marginLeft: 0, color: "#9c6ade", background: "#9c6ade1a" }}>обязательство</span>}
+            <span style={{ ...st.weekTag, marginLeft: 0, color: m.color, background: `${m.color}1a` }}>{m.label}</span>
+          </div>
+        </div>
+        <span style={{ ...st.locChevron, transform: isExpanded ? "rotate(90deg)" : "none" }}><ChevronRight size={18} /></span>
+      </div>
+      {isExpanded && (
+        <div style={st.locBody}>
+          <div style={{ display: "grid", gap: 10, padding: "4px 2px 8px" }}>
+            {itemKind === "request" && (<>
+              {item.purpose && <CswRow C={C} label="Цель расхода" text={item.purpose} />}
+              <CswRow C={C} label="Ситуация" text={item.csw_situation} />
+              <CswRow C={C} label="Данные" text={item.csw_data} />
+              <CswRow C={C} label="Решение" text={item.csw_solution} />
+              {item.tags?.length > 0 && (
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  {item.tags.map((t) => <span key={t} style={{ ...st.weekTag, marginLeft: 0 }}>{t}</span>)}
+                </div>
+              )}
+            </>)}
+            {item.attachments?.length > 0 && (
+              <AttachmentsBlock kind={itemKind} parentId={item.id} attachments={item.attachments}
+                canUpload={false} profileId={profileId} onChanged={onAttachmentsChanged} />
+            )}
+            <div style={{ display: "flex", gap: 16, flexWrap: "wrap", fontSize: 12.5, color: C.sub }}>
+              {item.fund && <span>Фонд: <b style={{ color: C.text }}>{item.fund.code} {item.fund.name}</b></span>}
+              {itemKind === "bill" && item.due_on && <span>Срок: <b style={{ color: C.text }}>{new Date(item.due_on + "T00:00:00").toLocaleDateString("ru")}</b></span>}
+              {item.comment && <span>{item.comment}</span>}
+              <span>Подано: <b style={{ color: C.text }}>{new Date(item.created_at).toLocaleDateString("ru")}</b></span>
+            </div>
+            {item.status === "rejected" && item.rejection_reason && (
+              <div style={{ color: C.danger, fontSize: 13 }}>Причина отклонения: {item.rejection_reason}</div>
+            )}
+            {children}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 
@@ -523,7 +529,7 @@ function RequestForm({ st, isMobile, profile, tree, refs, funds, periods, locati
   );
 }
 
-const CswRow = ({ C, label, text }) => (
+export const CswRow = ({ C, label, text }) => (
   <div>
     <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: 0.5, color: C.faint, fontWeight: 700, marginBottom: 2 }}>{label}</div>
     <div style={{ fontSize: 13.5, whiteSpace: "pre-wrap" }}>{text || "—"}</div>
@@ -532,7 +538,7 @@ const CswRow = ({ C, label, text }) => (
 
 
 // ---------------------------------------------------------------- Одобрение / отклонение / оплата
-function DecideModal({ C, st, decide, funds, accounts, busy, onClose, onConfirm }) {
+export function DecideModal({ C, st, decide, funds, accounts, busy, onClose, onConfirm }) {
   useScrollLock();
   const { item, itemKind, action } = decide;
   const [fundId, setFundId] = useState(item.fund?.id || "");
