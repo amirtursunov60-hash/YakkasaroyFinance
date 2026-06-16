@@ -2,10 +2,12 @@
 export const makeCss = (C) => `
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
   *{box-sizing:border-box;}
-  /* Фон и на html — иначе за статус-баром (safe-area сверху) на iOS просвечивает
-     белый, т.к. body с background-attachment:fixed туда не красит. */
+  /* Фон-градиент фиксируем во вьюпорте через ::before. background-attachment:fixed
+     на iOS/WebKit (Safari, Яндекс) часто не отрисовывается — верх страницы белеет
+     и браузер красит статус-бар в белый. Фон и на html — как сплошной фолбэк. */
   html{background:${C.pageGrad};}
-  body{background:${C.pageGrad};background-attachment:fixed;}
+  body{background:${C.pageGrad};}
+  body::before{content:"";position:fixed;inset:0;background:${C.pageGrad};z-index:-1;pointer-events:none;}
   .nav:hover{background:${C.navHover};}
   .mod:hover{color:${C.text};}
   .frow:hover{background:${C.rowHover};}
