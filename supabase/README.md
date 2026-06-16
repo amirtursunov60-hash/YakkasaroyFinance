@@ -37,12 +37,15 @@
 | `20260615190000_fix_register_no_update_search_path.sql` | **применён** | фикс advisors `function_search_path_mutable`: зафиксирован `search_path = public` у `trg_register_no_update` |
 | `20260615193000_enable_pgtap_testing.sql` | **применён** | включение pgTAP для модульного тестирования БД; тесты инвариантов леджера — в `supabase/tests/` |
 | `20260616120000_org_chart.sql` | **применён** | оргсхема (ТЗ §4.3–4.4): в `org_divisions` — `color`, `ckp` + unique по `code`; в `org_positions` — `section`, `ckp`, `statistic`, `duties` (jsonb), `is_executive`, `sort`; enum `hat_status` (none/learning/done) + колонка в `position_assignments`; сидинг 7 отделений и постов прототипа (ЦКП, секции, шляпы) как стартовый справочник (RLS наследуется из baseline) |
+| `20260616130000_request_form_fields.sql` | **применён** | форма заявки (ЗРС) по шаблону ManaJet: в `payment_requests` — `purpose` (цель расхода) и `tags` (метки, `text[]` not null default `{}`); период «К рассмотрению на ФП» использует существующую `period_id` (RLS наследуется из baseline) |
 
 ## Тесты БД (pgTAP)
 
 `supabase/tests/ledger_invariants_test.sql` — pgTAP-набор на инварианты леджера (существование Реестра/функций, триггеры неизменяемости/овердрафта/блокировки периода, unique-индекс против двойной оплаты, отсутствие UPDATE-политики на `fp_register`, аудит reopen/close, сверка `SUM(fp_register)` = баланс). Запуск: `supabase test db` (на ветке/staging) или `pg_prove`. Структурная + read-only часть (15 проверок) безопасна на любой среде, включая прод; поведенческие тесты с фикстурами (овердрафт/двойная оплата/закрытый период) — секция TODO в файле, запускать на ветке/staging.
 
 `supabase/tests/org_chart_test.sql` — pgTAP на структуру оргсхемы (новые колонки отделений/постов, enum `hat_status`, наличие засеянного справочника: ≥ 7 отделений, ровно 7 руководящих постов). Только структурные/справочные проверки (11), ничего не пишут — безопасно везде.
+
+`supabase/tests/request_form_fields_test.sql` — pgTAP на поля формы заявки (`payment_requests.purpose`, `tags` — тип `text[]`, NOT NULL). 4 структурные проверки, ничего не пишут.
 
 Файлы 001–002 оставлены как история применённого; выполнять их повторно не нужно. Прежние `003_finance.sql`/`004_seed.sql` к базе не применились (откатились с ошибкой) и заменены.
 

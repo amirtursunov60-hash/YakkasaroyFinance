@@ -1267,9 +1267,11 @@ export type Database = {
           period_id: string | null
           planned_amount: number
           position_id: string
+          purpose: string | null
           rejection_reason: string | null
           requester_id: string
           status: Database["public"]["Enums"]["request_status"]
+          tags: string[]
         }
         Insert: {
           counterparty_id?: string | null
@@ -1290,9 +1292,11 @@ export type Database = {
           period_id?: string | null
           planned_amount: number
           position_id: string
+          purpose?: string | null
           rejection_reason?: string | null
           requester_id: string
           status?: Database["public"]["Enums"]["request_status"]
+          tags?: string[]
         }
         Update: {
           counterparty_id?: string | null
@@ -1313,9 +1317,11 @@ export type Database = {
           period_id?: string | null
           planned_amount?: number
           position_id?: string
+          purpose?: string | null
           rejection_reason?: string | null
           requester_id?: string
           status?: Database["public"]["Enums"]["request_status"]
+          tags?: string[]
         }
         Relationships: [
           {
