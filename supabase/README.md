@@ -41,6 +41,7 @@
 | `20260616140000_expense_type_defaults.sql` | **применён** | связь «вид расхода → источник/цель»: в `expense_types` — `default_fund_id` (uuid → `funds`) и `default_purpose` (text); форма ЗРС авто-подставляет фонд и цель при выборе вида расхода (привязка настраивается позже; RLS наследуется из baseline) |
 | `20260616150000_request_decision_fields.sql` | **применён** | рассмотрение заявки в Директиве: в `payment_requests` — `approved_amount` (одобренная сумма, отдельно от запрошенной `planned_amount`; check `> 0` либо NULL) и `comment` (комментарий решения); `fp_pay_request` теперь оплачивает `coalesce(approved_amount, planned_amount)` (с блокировкой строки `for update`). RLS наследуется из baseline |
 | `20260616160000_profile_avatar.sql` | **применён** | аватар сотрудника: `profiles.avatar_url` (text) + публичный бакет `avatars` с политиками (чтение всем, загрузка/замена — в свою папку по uid); self-update avatar_url разрешён политикой `profiles_self` |
+| `20260616170000_avatar_admin_write.sql` | **применён** | админам (`is_fin_admin`) разрешена загрузка/замена аватара любого сотрудника (политики `avatars_insert`/`avatars_update` бакета `avatars` дополнены `OR is_fin_admin()`) |
 
 ## Тесты БД (pgTAP)
 

@@ -114,7 +114,7 @@ function PeopleView({ C, st, isMobile, isFinAdmin, profile, people, positions, l
               {p.avatar_url
                 ? <img src={p.avatar_url} alt={p.full_name} style={{ ...st.avatar, background: "none", objectFit: "cover" }} />
                 : <div style={{ ...st.avatar, background: `${avatarColor(p.full_name)}26`, color: avatarColor(p.full_name) }}>{initials}</div>}
-              {profile?.id === p.id && (
+              {(profile?.id === p.id || isFinAdmin) && (
                 <label className="btn" title="Сменить аватар" onClick={(e) => e.stopPropagation()}
                   style={{ position: "absolute", right: -2, bottom: -2, width: 19, height: 19, borderRadius: "50%", background: C.green, color: "#04130a", display: "grid", placeItems: "center", cursor: busy ? "default" : "pointer", border: `2px solid ${C.panel}` }}>
                   {busy === `avatar:${p.id}` ? <Loader2 size={10} className="spin" /> : <Camera size={11} />}
