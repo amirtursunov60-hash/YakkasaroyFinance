@@ -3,7 +3,7 @@ import { ClipboardList, FileText, Check, Ban, Banknote, Loader2, AlertCircle, Ch
 import { Stat } from "../../components/common";
 import { useTheme } from "../../theme/theme";
 import { useScrollLock } from "../../hooks/useScrollLock";
-import { fmt } from "../../utils/format";
+import { fmt, avatarColor } from "../../utils/format";
 import { usePeriod, periodTitle } from "../../lib/PeriodCtx";
 import { AttachmentsBlock } from "../../components/AttachmentsBlock";
 import { feedbackSuccess, feedbackError } from "../../lib/feedback";
@@ -286,6 +286,7 @@ export function Requests() {
           </div>
           {g.items.map((r) => (
             <ItemCard key={r.id} C={C} st={st} item={r} itemKind="request"
+              avatar={<RequesterAvatar requester={r.requester} />}
               isExpanded={!!expanded[`request:${r.id}`]}
               onToggle={() => setExpanded((e) => ({ ...e, [`request:${r.id}`]: !e[`request:${r.id}`] }))}
               statusMeta={ST_META} profileId={profile.id} onAttachmentsChanged={loadItems}>
@@ -317,6 +318,18 @@ export function Requests() {
 
 
 // ---------------------------------------------------------------- Карточка заявки / счёта
+// Аватар заявителя для карточки заявки: фото (avatar_url) или инициалы.
+// size — сторона в px, round — круглый (иначе скруглённый квадрат).
+export function RequesterAvatar({ requester, size = 34, round = false }) {
+  const name = requester?.full_name || "?";
+  const color = avatarColor(name);
+  const initials = (name || "?").trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase()).join("") || "?";
+  const base = { width: size, height: size, borderRadius: round ? "50%" : 10, flexShrink: 0 };
+  return requester?.avatar_url
+    ? <img src={requester.avatar_url} alt={name} style={{ ...base, objectFit: "cover", border: `1px solid ${color}55` }} />
+    : <div style={{ ...base, display: "grid", placeItems: "center", background: `${color}33`, color, fontWeight: 800, fontSize: Math.round(size * 0.36), border: `1px solid ${color}55` }}>{initials}</div>;
+}
+
 // Раскрывающаяся карточка: шапка (№, статья/контрагент, сумма, статус) и тело
 // (ЗРС-поля, вложения, реквизиты). Кнопки действий передаются через children —
 // в «Заявках» это рассмотрение счетов, в «Директиве» — рассмотрение заявок.
