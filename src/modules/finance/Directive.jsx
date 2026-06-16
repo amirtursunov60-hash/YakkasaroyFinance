@@ -1,9 +1,9 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { ClipboardList, Calculator, CalendarDays, Check, RotateCcw, RotateCw, Lock, Unlock, Ban, ArrowRightLeft, Loader2, AlertCircle, CheckCircle2, X, Landmark, ChevronRight, Scale, TrendingUp, TrendingDown, Banknote, Wallet, Coins, FileText } from "lucide-react";
+import { ClipboardList, Calculator, CalendarDays, Check, RotateCcw, RotateCw, Lock, Unlock, Ban, ArrowRightLeft, Loader2, AlertCircle, CheckCircle2, X, Landmark, ChevronRight, Scale, TrendingUp, TrendingDown, Banknote, Wallet, Coins } from "lucide-react";
 import { Stat } from "../../components/common";
 import { useTheme } from "../../theme/theme";
 import { useScrollLock } from "../../hooks/useScrollLock";
-import { fmt } from "../../utils/format";
+import { fmt, avatarColor } from "../../utils/format";
 import { cascadeTypeStageBase, calcTypeRulesAmount } from "../../lib/distribution";
 import { usePeriod, periodTitle } from "../../lib/PeriodCtx";
 import {
@@ -12,7 +12,7 @@ import {
   fetchRequests, decideRequest, payRequest, fetchIncomeRefs, fetchPeriodOverrides, savePeriodOverrides,
   fetchIncomeTypeRules, fetchIncomeByType, fetchFundFolders,
 } from "../../lib/api";
-import { ItemCard, DecideModal, reqStatusMeta } from "./Requests";
+import { ItemCard, reqStatusMeta } from "./Requests";
 
 
 // ---------------------------------------------------------------- DIRECTIVE
@@ -464,14 +464,13 @@ export function Directive() {
 // Единственное место рассмотрения заявок-ЗРС недели: чипы-фильтры по статусам
 // со счётчиками + список карточек с кнопками Одобрить/Отклонить/На планирование/
 // Оплатить. Решения идут через те же API, что и финкомитет (decideRequest/payRequest).
-function RequestsReview({ C, st, profile, requests, funds, accounts, periodId, blocked, onReload }) {
+function RequestsReview({ C, st, isMobile, profile, requests, funds, accounts, periodId, blocked, onReload }) {
   const ST_META = reqStatusMeta(C);
   const isFinAdmin = ["owner", "fin_director"].includes(profile?.role);
   const canPay = isFinAdmin || profile?.role === "accountant";
 
   const [filter, setFilter] = useState("review");   // по умолчанию — «К рассмотрению на ФП»
   const [expanded, setExpanded] = useState({});
-  const [decide, setDecide] = useState(null);   // { item, itemKind:'request', action }
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   const [done, setDone] = useState("");
@@ -505,65 +504,57 @@ function RequestsReview({ C, st, profile, requests, funds, accounts, periodId, b
     { key: "all",      label: "Все",                 color: C.green },
   ];
 
-  const doDecide = async ({ item, action, fundId, reason, accountId }) => {
+  // Общая обёртка действия: блокировка, ошибки, перезагрузка данных Директивы.
+  const run = async (fn) => {
     if (busy) return;
     setBusy(true); setErr(""); setDone("");
-    try {
-      if (action === "approve") {
-        if (!fundId) throw new Error("Выберите фонд-источник");
-        if (!periodId) throw new Error("Нет выбранного периода ФП");
-        await decideRequest(item.id, { status: "approved", fund_id: fundId, period_id: periodId });
-        setDone(`Заявка №${item.number}: одобрена — фонд ${funds.find((f) => f.id === fundId)?.code || ""}`);
-      } else if (action === "reject") {
-        if (!reason?.trim()) throw new Error("Укажите причину отклонения");
-        await decideRequest(item.id, { status: "rejected", rejection_reason: reason.trim() });
-        setDone(`Заявка №${item.number}: отклонена`);
-      } else if (action === "pay") {
-        if (!accountId) throw new Error("Выберите счёт ДС");
-        if (!periodId) throw new Error("Нет выбранного периода ФП");
-        await payRequest(item.id, accountId, periodId);
-        setDone(`Заявка №${item.number}: оплачена — расход проведён в Реестре`);
-      }
-      setDecide(null);
-      await onReload();
-    } catch (e) { setErr(e?.message || String(e)); }
+    try { await fn(); await onReload(); }
+    catch (e) { setErr(e?.message || String(e)); }
     finally { setBusy(false); }
   };
 
-  const toPlanning = async (req) => {
-    if (busy) return;
-    setBusy(true); setErr(""); setDone("");
-    try {
-      await decideRequest(req.id, { status: "planning" });
-      setDone(`Заявка №${req.number} взята на планирование`);
-      await onReload();
-    } catch (e) { setErr(e?.message || String(e)); }
-    finally { setBusy(false); }
+  // Одобрение: фонд-источник + одобренная сумма (отдельно от запрошенной) + комментарий.
+  const doApprove = (item, { fundId, amount, comment }) => {
+    if (!fundId) { setErr("Выберите фонд-источник"); return; }
+    const amt = Math.round((parseFloat(String(amount).replace(",", ".")) || 0) * 100) / 100;
+    if (!amt || amt <= 0) { setErr("Введите одобренную сумму больше нуля"); return; }
+    if (!periodId) { setErr("Нет выбранного периода ФП"); return; }
+    run(async () => {
+      await decideRequest(item.id, {
+        status: "approved", fund_id: fundId, approved_amount: amt,
+        comment: comment?.trim() || null, period_id: periodId,
+      });
+      setDone(`Заявка №${item.number}: одобрена на ${fmt(amt)} — фонд ${funds.find((f) => f.id === fundId)?.code || ""}`);
+    });
   };
 
-  // Кнопки рассмотрения внутри карточки заявки
-  const RowActions = ({ item }) => (
-    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-      {isFinAdmin && ["submitted", "planning"].includes(item.status) && (<>
-        {item.status === "submitted" && (
-          <button style={st.btnGhost} className="btn" disabled={busy} onClick={() => toPlanning(item)}>
-            <FileText size={14} /> На планирование
-          </button>
-        )}
-        <button style={st.btnGreen} className="btn" disabled={busy} onClick={() => setDecide({ item, itemKind: "request", action: "approve" })}>
-          <Check size={14} /> Одобрить
-        </button>
-        <button style={{ ...st.btnGhost, color: C.danger }} className="btn" disabled={busy} onClick={() => setDecide({ item, itemKind: "request", action: "reject" })}>
-          <Ban size={14} /> Отклонить
-        </button>
-      </>)}
-      {canPay && item.status === "approved" && (
-        <button style={st.btnGreen} className="btn" disabled={busy} onClick={() => setDecide({ item, itemKind: "request", action: "pay" })}>
-          <Banknote size={14} /> Оплатить
-        </button>
-      )}
-    </div>
-  );
+  // Отклонение: комментарий обязателен (как причина).
+  const doReject = (item, { comment }) => {
+    if (!comment?.trim()) { setErr("Укажите причину отклонения в комментарии"); return; }
+    run(async () => {
+      await decideRequest(item.id, { status: "rejected", rejection_reason: comment.trim(), comment: comment.trim() });
+      setDone(`Заявка №${item.number}: отклонена`);
+    });
+  };
+
+  // Сброс: вернуть заявку к рассмотрению (отменить решение). Для оплаченных недоступно.
+  const doReset = (item) => run(async () => {
+    await decideRequest(item.id, {
+      status: "submitted", decided_by: null, decided_at: null,
+      approved_amount: null, rejection_reason: null,
+    });
+    setDone(`Заявка №${item.number}: возвращена к рассмотрению`);
+  });
+
+  // Оплата одобренной заявки (по одобренной сумме — через fp_pay_request).
+  const doPay = (item, { accountId }) => {
+    if (!accountId) { setErr("Выберите счёт ДС"); return; }
+    if (!periodId) { setErr("Нет выбранного периода ФП"); return; }
+    run(async () => {
+      await payRequest(item.id, accountId, periodId);
+      setDone(`Заявка №${item.number}: оплачена — расход проведён в Реестре`);
+    });
+  };
 
   return (
     <section style={st.reqSection}>
@@ -599,20 +590,124 @@ function RequestsReview({ C, st, profile, requests, funds, accounts, periodId, b
               ? "Заявок к рассмотрению нет — всё обработано"
               : "Нет заявок с таким статусом"}
         </div>
-      ) : shown.map((r) => (
-        <ItemCard key={r.id} C={C} st={st} item={r} itemKind="request"
-          isExpanded={!!expanded[r.id]}
-          onToggle={() => setExpanded((e) => ({ ...e, [r.id]: !e[r.id] }))}
-          statusMeta={ST_META} profileId={profile?.id} onAttachmentsChanged={onReload}>
-          <RowActions item={r} />
-        </ItemCard>
-      ))}
-
-      {decide && (
-        <DecideModal C={C} st={st} decide={decide} funds={funds} accounts={accounts}
-          busy={busy} onClose={() => setDecide(null)} onConfirm={doDecide} />
-      )}
+      ) : shown.map((r) => {
+        const who = r.requester?.full_name || r.position?.name || "—";
+        return (
+          <ItemCard key={r.id} C={C} st={st} item={r} itemKind="request"
+            isExpanded={!!expanded[r.id]}
+            onToggle={() => setExpanded((e) => ({ ...e, [r.id]: !e[r.id] }))}
+            statusMeta={ST_META} profileId={profile?.id} onAttachmentsChanged={onReload}
+            avatar={<Avatar C={C} name={who} />}>
+            <RequestReviewControls C={C} st={st} isMobile={isMobile} item={r}
+              funds={funds} accounts={accounts} isFinAdmin={isFinAdmin} canPay={canPay} busy={busy}
+              onApprove={doApprove} onReject={doReject} onReset={doReset} onPay={doPay} />
+          </ItemCard>
+        );
+      })}
     </section>
+  );
+}
+
+
+// Аватар заявителя (кружок с инициалами, цвет — по имени).
+function Avatar({ C, name }) {
+  const color = avatarColor(name || "");
+  const initials = (name || "?").trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase()).join("") || "?";
+  return (
+    <div style={{ width: 34, height: 34, borderRadius: "50%", display: "grid", placeItems: "center", flexShrink: 0,
+      background: `${color}33`, color, fontWeight: 800, fontSize: 12.5, border: `1px solid ${color}55` }}>
+      {initials}
+    </div>
+  );
+}
+
+
+// ---------------------------------------------------------------- Инлайн-форма рассмотрения заявки
+// Внутри развёрнутой карточки: выбор фонда, правка одобряемой суммы и комментарий
+// (при рассмотрении) либо итог решения + Оплатить/Сброс (после решения).
+function RequestReviewControls({ C, st, isMobile, item, funds, accounts, isFinAdmin, canPay, busy, onApprove, onReject, onReset, onPay }) {
+  const isPending = ["submitted", "planning"].includes(item.status);
+  const isApproved = item.status === "approved";
+  const isRejected = item.status === "rejected";
+
+  const [fundId, setFundId] = useState(item.fund?.id || "");
+  const [amount, setAmount] = useState(String(item.approved_amount ?? item.planned_amount ?? ""));
+  const [comment, setComment] = useState(item.comment || "");
+  const [accountId, setAccountId] = useState("");
+  const accs = accounts.filter((a) => a.currency_id === item.currency?.id);
+  const grid2 = { display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 180px", gap: 10 };
+
+  // Рассмотрение: фонд + сумма + комментарий + Одобрить/Отклонить
+  if (isPending && isFinAdmin) {
+    return (
+      <div style={{ display: "grid", gap: 10 }}>
+        <div style={grid2}>
+          <div style={st.reqField}>
+            <span style={st.reqFieldLbl}>Фонд-источник</span>
+            <select style={st.mdSelect} className="fin" value={fundId} onChange={(e) => setFundId(e.target.value)}>
+              <option value="">— выберите —</option>
+              {funds.map((fd) => <option key={fd.id} value={fd.id}>{fd.code} — {fd.name} ({fmt(Number(fd.balance))})</option>)}
+            </select>
+          </div>
+          <div style={st.reqField}>
+            <span style={st.reqFieldLbl}>Одобренная сумма</span>
+            <input style={st.mdInput} className="fin" inputMode="decimal" value={amount}
+              onChange={(e) => setAmount(e.target.value)} onWheel={(e) => e.target.blur()} />
+          </div>
+        </div>
+        <div style={st.reqField}>
+          <span style={st.reqFieldLbl}>Комментарий (при отклонении — обязателен)</span>
+          <textarea style={{ ...st.mdInput, minHeight: 56, resize: "vertical", fontFamily: "inherit" }} className="fin"
+            placeholder="Комментарий финкомитета…" value={comment} onChange={(e) => setComment(e.target.value)} />
+        </div>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <button style={st.btnGreen} className="btn" disabled={busy}
+            onClick={() => onApprove(item, { fundId, amount, comment })}>
+            <Check size={14} /> Одобрить
+          </button>
+          <button style={{ ...st.btnGhost, color: C.danger }} className="btn" disabled={busy}
+            onClick={() => onReject(item, { comment })}>
+            <Ban size={14} /> Отклонить
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // После решения: итог + действия (Оплатить / Сброс)
+  return (
+    <div style={{ display: "grid", gap: 10 }}>
+      <div style={{ display: "flex", gap: 16, flexWrap: "wrap", fontSize: 12.5, color: C.sub }}>
+        {isApproved && (
+          <span>Одобрено: <b style={{ color: C.text }}>{fmt(Number(item.approved_amount ?? item.planned_amount))}</b> {item.currency?.code || ""}
+            {item.approved_amount != null && Number(item.approved_amount) !== Number(item.planned_amount) &&
+              <span style={{ color: C.faint }}> (запрошено {fmt(Number(item.planned_amount))})</span>}
+          </span>
+        )}
+        {item.comment && <span>Комментарий: <b style={{ color: C.text }}>{item.comment}</b></span>}
+      </div>
+      {isApproved && canPay && (
+        <div style={st.reqField}>
+          <span style={st.reqFieldLbl}>Счёт ДС — откуда платим</span>
+          <select style={st.mdSelect} className="fin" value={accountId} onChange={(e) => setAccountId(e.target.value)}>
+            <option value="">{accs.length ? "— выберите —" : "Нет счетов в нужной валюте"}</option>
+            {accs.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+          </select>
+        </div>
+      )}
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        {isApproved && canPay && (
+          <button style={st.btnGreen} className="btn" disabled={busy} onClick={() => onPay(item, { accountId })}>
+            <Banknote size={14} /> Оплатить
+          </button>
+        )}
+        {(isApproved || isRejected) && isFinAdmin && (
+          <button style={st.btnGhost} className="btn" disabled={busy} onClick={() => onReset(item)}>
+            <RotateCcw size={14} /> Сброс
+          </button>
+        )}
+      </div>
+    </div>
   );
 }
 

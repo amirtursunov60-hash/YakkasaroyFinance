@@ -254,13 +254,13 @@ export function Requests() {
 // Раскрывающаяся карточка: шапка (№, статья/контрагент, сумма, статус) и тело
 // (ЗРС-поля, вложения, реквизиты). Кнопки действий передаются через children —
 // в «Заявках» это рассмотрение счетов, в «Директиве» — рассмотрение заявок.
-export function ItemCard({ C, st, item, itemKind, isExpanded, onToggle, statusMeta, profileId, onAttachmentsChanged, children }) {
+export function ItemCard({ C, st, item, itemKind, isExpanded, onToggle, statusMeta, profileId, onAttachmentsChanged, avatar, children }) {
   const m = statusMeta[item.status] || {};
   const amount = Number(itemKind === "bill" ? item.amount : item.planned_amount);
   return (
     <div style={{ ...st.locCard, marginBottom: 8 }}>
       <div style={{ ...st.locHead, cursor: "pointer" }} className="locHead" onClick={onToggle}>
-        <div style={{ width: 34, height: 34, borderRadius: 10, display: "grid", placeItems: "center", flexShrink: 0, background: `${m.color}22`, color: m.color }}><ClipboardList size={17} /></div>
+        {avatar || <div style={{ width: 34, height: 34, borderRadius: 10, display: "grid", placeItems: "center", flexShrink: 0, background: `${m.color}22`, color: m.color }}><ClipboardList size={17} /></div>}
         <div style={st.locTitle}>
           <div style={st.locName}>
             №{item.number} · {itemKind === "bill"
