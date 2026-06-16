@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { Banknote, Loader2, AlertCircle, CheckCircle2, Plus, X, Ban, ChevronRight, CalendarDays, PartyPopper } from "lucide-react";
+import { Banknote, Loader2, AlertCircle, CheckCircle2, Plus, X, Ban, ChevronRight, CalendarDays, PartyPopper , Receipt} from "lucide-react";
 import { Stat } from "../../components/common";
 import { useTheme } from "../../theme/theme";
 import { useScrollLock } from "../../hooks/useScrollLock";
@@ -188,7 +188,7 @@ export function Clients() {
         <div key={inv.id} style={{ ...st.locCard, marginBottom: 10, opacity: inv.status === "cancelled" ? 0.6 : 1 }}>
           <div style={{ ...st.locHead, cursor: "pointer" }} className="locHead"
             onClick={() => setExpanded((e) => ({ ...e, [inv.id]: !e[inv.id] }))}>
-            <div style={{ ...st.locDot, background: m.color }} />
+            <div style={{ width: 34, height: 34, borderRadius: 10, display: "grid", placeItems: "center", flexShrink: 0, background: `${m.color}22`, color: m.color }}><Receipt size={17} /></div>
             <div style={st.locTitle}>
               <div style={st.locName}>№{inv.number} · {inv.counterparty?.name || "—"}</div>
               <div style={st.locCode}>
