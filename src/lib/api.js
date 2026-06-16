@@ -302,7 +302,7 @@ export async function fetchCounterparties() {
 export async function fetchRequests(periodId, locationId) {
   let q = supabase
     .from("payment_requests")
-    .select(`id, number, status, planned_amount, csw_data, csw_situation, csw_solution,
+    .select(`id, number, status, planned_amount, approved_amount, comment, csw_data, csw_situation, csw_solution,
       purpose, tags, rejection_reason, created_at, decided_at, period_id, expense_type_id,
       position:org_positions(code, name, division:org_divisions(id, code, name)),
       requester:profiles!payment_requests_requester_id_fkey(full_name),

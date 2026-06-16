@@ -1262,6 +1262,8 @@ export type Database = {
       }
       payment_requests: {
         Row: {
+          approved_amount: number | null
+          comment: string | null
           counterparty_id: string | null
           created_at: string
           csw_data: string
@@ -1287,6 +1289,8 @@ export type Database = {
           tags: string[]
         }
         Insert: {
+          approved_amount?: number | null
+          comment?: string | null
           counterparty_id?: string | null
           created_at?: string
           csw_data: string
@@ -1312,6 +1316,8 @@ export type Database = {
           tags?: string[]
         }
         Update: {
+          approved_amount?: number | null
+          comment?: string | null
           counterparty_id?: string | null
           created_at?: string
           csw_data?: string
