@@ -648,8 +648,7 @@ function RequestReviewControls({ C, st, isMobile, item, funds, isFinAdmin, busy,
         </div>
         <div style={st.reqField}>
           <span style={st.reqFieldLbl}>Одобрить сумму</span>
-          <input style={{ ...st.mdInput, ...(insufficient ? { borderColor: C.danger, color: C.danger } : {}) }} className="fin"
-            inputMode="decimal" value={amount}
+          <input style={st.mdInput} className="fin" inputMode="decimal" value={amount}
             onChange={(e) => { setAmount(e.target.value); setLocalErr(""); }} onWheel={(e) => e.target.blur()} />
         </div>
       </div>
@@ -662,10 +661,9 @@ function RequestReviewControls({ C, st, isMobile, item, funds, isFinAdmin, busy,
         <div style={{ ...st.reqError, marginBottom: 0 }}><AlertCircle size={14} /> {localErr}</div>
       )}
       <div style={{ display: "flex", gap: 8 }}>
-        <button
-          style={{ ...(insufficient ? { ...st.btnGreen, background: C.danger, borderColor: C.danger } : st.btnGreen), flex: 1, justifyContent: "center", minWidth: 0 }}
+        <button style={{ ...st.btnGreen, flex: 1, justifyContent: "center", minWidth: 0 }}
           className={`btn${shake ? " shake" : ""}`} disabled={busy} onClick={tryApprove}>
-          {insufficient ? <AlertCircle size={14} /> : <Check size={14} />} {insufficient ? "Не хватает средств" : "Одобрить"}
+          <Check size={14} /> Одобрить
         </button>
         <button style={{ ...st.btnGhost, color: C.danger, flex: 1, justifyContent: "center", minWidth: 0 }} className="btn" disabled={busy}
           onClick={() => onReject(item, { comment })}>
