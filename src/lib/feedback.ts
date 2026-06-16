@@ -22,32 +22,37 @@ const audio = (): AudioContext | null => {
   return ctx;
 };
 
-type Note = { freq: number; start?: number; dur?: number; gain?: number; type?: OscillatorType };
+type Note = { freq: number; start?: number; dur?: number; gain?: number; type?: OscillatorType; slideTo?: number };
 
 // Мягкие «округлые» тоны в стиле Apple: плавная атака/экспоненциальное затухание,
-// общий low-pass для тёплого тембра без резкости. Ноты могут перекрываться.
+// общий low-pass для тёплого тембра без резкости. Ноты могут перекрываться,
+// поддерживается глайд частоты (slideTo) — для «капельного» тапа.
 const play = (notes: Note[]): void => {
   const ac = audio();
   if (!ac) return;
   if (ac.state === "suspended") ac.resume().catch(() => {});
-  const t0 = ac.currentTime + 0.01;
+  const t0 = ac.currentTime + 0.005;
 
   const filter = ac.createBiquadFilter();
   filter.type = "lowpass";
-  filter.frequency.value = 3400;
-  filter.Q.value = 0.6;
-  filter.connect(ac.destination);
+  filter.frequency.value = 4200;
+  filter.Q.value = 0.5;
+  const out = ac.createGain();
+  out.gain.value = 0.9;
+  filter.connect(out);
+  out.connect(ac.destination);
 
   for (const n of notes) {
     const osc = ac.createOscillator();
     const g = ac.createGain();
     osc.type = n.type || "sine";
-    osc.frequency.value = n.freq;
     const s = t0 + (n.start || 0);
     const dur = n.dur || 0.18;
     const peak = n.gain ?? 0.05;
+    osc.frequency.setValueAtTime(n.freq, s);
+    if (n.slideTo) osc.frequency.exponentialRampToValueAtTime(n.slideTo, s + dur);
     g.gain.setValueAtTime(0.0001, s);
-    g.gain.exponentialRampToValueAtTime(peak, s + 0.014);          // мягкая атака
+    g.gain.exponentialRampToValueAtTime(peak, s + 0.012);          // мягкая атака
     g.gain.exponentialRampToValueAtTime(0.0001, s + dur);          // плавное затухание
     osc.connect(g);
     g.connect(filter);
@@ -56,13 +61,23 @@ const play = (notes: Note[]): void => {
   }
 };
 
-// Успех — лёгкий восходящий перезвон (мажор), как подтверждение в iOS.
+// Тап по кнопке — деликатный «капельный» клик (короткий глайд вниз), как в iOS.
+export const feedbackTap = (): void => {
+  if (!isSoundOn()) return;
+  play([
+    { freq: 1180, slideTo: 760, dur: 0.055, gain: 0.03, type: "sine" },
+    { freq: 2360, slideTo: 1520, dur: 0.045, gain: 0.012, type: "sine" }, // лёгкий верхний призвук
+  ]);
+};
+
+// Успех — тёплый восходящий перезвон с шиммером (мажор) + мягкая «подложка».
 export const feedbackSuccess = (): void => {
   if (!isSoundOn()) return;
   play([
-    { freq: 880.0,  start: 0,    dur: 0.16, gain: 0.05 },   // A5
-    { freq: 1108.7, start: 0.05, dur: 0.16, gain: 0.045 },  // C#6
-    { freq: 1318.5, start: 0.10, dur: 0.22, gain: 0.04 },   // E6
+    { freq: 392.0,  start: 0,    dur: 0.30, gain: 0.022, type: "sine" },     // G4 — тёплая подложка
+    { freq: 783.99, start: 0,    dur: 0.18, gain: 0.05,  type: "triangle" }, // G5
+    { freq: 1046.5, start: 0.06, dur: 0.18, gain: 0.045, type: "triangle" }, // C6
+    { freq: 1567.98, start: 0.12, dur: 0.28, gain: 0.032, type: "sine" },    // G6 — шиммер
   ]);
 };
 
@@ -70,8 +85,8 @@ export const feedbackSuccess = (): void => {
 export const feedbackError = (): void => {
   if (!isSoundOn()) return;
   play([
-    { freq: 440.0, start: 0,    dur: 0.16, gain: 0.05 },   // A4
-    { freq: 329.6, start: 0.10, dur: 0.24, gain: 0.05 },   // E4
+    { freq: 466.16, start: 0,    dur: 0.16, gain: 0.05, type: "triangle" }, // A#4
+    { freq: 311.13, start: 0.11, dur: 0.28, gain: 0.05, type: "sine" },     // D#4
   ]);
   try { navigator.vibrate?.(28); } catch { /* вибрация не поддерживается */ }
 };
