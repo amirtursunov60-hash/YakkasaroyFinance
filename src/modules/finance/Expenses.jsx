@@ -214,9 +214,6 @@ export function Expenses() {
             <Trend cur={totals.cur} prev={totals.prev} big /> к прошлому периоду · было {fmt(totals.prev)}
           </div>
         </div>
-        <button style={st.btnGreen} className="btn" onClick={() => { setErr(""); setShowForm(true); }}>
-          <Plus size={15} /> {isMobile ? "Заявка (ЗРС)" : "Подать заявку (ЗРС)"}
-        </button>
       </div>
     </section>
 
@@ -305,6 +302,9 @@ export function Expenses() {
         <ClipboardList size={18} color={C.green} />
         <h3 style={st.reqSectionTitle}>Заявки</h3>
         <span style={st.reqSectionSub}>от поста · формат ЗРС</span>
+        <button style={{ ...st.btnGreen, marginLeft: "auto" }} className="btn" onClick={() => { setErr(""); setShowForm(true); }}>
+          <Plus size={15} /> {isMobile ? "Заявка (ЗРС)" : "Подать заявку (ЗРС)"}
+        </button>
       </div>
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
         {FILTERS.map(([key, label]) => (
