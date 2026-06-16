@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { Users, UserPlus, Loader2, AlertCircle, CheckCircle2, X, Plus, Copy, Trash2, ChevronRight, MapPin, Network } from "lucide-react";
+import { Users, UserPlus, Loader2, AlertCircle, CheckCircle2, X, Plus, Copy, Trash2, ChevronRight, MapPin, Network, Camera } from "lucide-react";
 import { useTheme } from "../../theme/theme";
 import { avatarColor } from "../../utils/format";
 import {
   fetchEmployees, updateProfile, fetchAllPositions, assignPosition, unassignPosition,
-  setLocationAccess, fetchIncomeRefs,
+  setLocationAccess, fetchIncomeRefs, uploadAvatar,
   fetchInvites, createInvite, deleteInvite,
 } from "../../lib/api";
 
@@ -83,7 +83,7 @@ export function StaffModule({ view }) {
 
   return (<>
     {banner}
-    <PeopleView C={C} st={st} isMobile={isMobile} isFinAdmin={isFinAdmin}
+    <PeopleView C={C} st={st} isMobile={isMobile} isFinAdmin={isFinAdmin} profile={profile}
       people={people} positions={positions} locations={locations}
       busy={busy} act={act} expanded={expanded} setExpanded={setExpanded} />
   </>);
@@ -91,7 +91,7 @@ export function StaffModule({ view }) {
 
 
 // ---------------------------------------------------------------- Сотрудники
-function PeopleView({ C, st, isMobile, isFinAdmin, people, positions, locations, busy, act, expanded, setExpanded }) {
+function PeopleView({ C, st, isMobile, isFinAdmin, profile, people, positions, locations, busy, act, expanded, setExpanded }) {
   const locName = useMemo(() => Object.fromEntries(locations.map((l) => [l.id, l.name])), [locations]);
 
   return (<>
@@ -110,7 +110,19 @@ function PeopleView({ C, st, isMobile, isFinAdmin, people, positions, locations,
         <div key={p.id} style={{ ...st.locCard, marginBottom: 10, opacity: p.is_active ? 1 : 0.55 }}>
           <div style={{ ...st.locHead, cursor: "pointer" }} className="locHead"
             onClick={() => setExpanded((e) => ({ ...e, [p.id]: !e[p.id] }))}>
-            <div style={{ ...st.avatar, flexShrink: 0, background: `${avatarColor(p.full_name)}26`, color: avatarColor(p.full_name) }}>{initials}</div>
+            <div style={{ position: "relative", flexShrink: 0 }}>
+              {p.avatar_url
+                ? <img src={p.avatar_url} alt={p.full_name} style={{ ...st.avatar, background: "none", objectFit: "cover" }} />
+                : <div style={{ ...st.avatar, background: `${avatarColor(p.full_name)}26`, color: avatarColor(p.full_name) }}>{initials}</div>}
+              {profile?.id === p.id && (
+                <label className="btn" title="Сменить аватар" onClick={(e) => e.stopPropagation()}
+                  style={{ position: "absolute", right: -2, bottom: -2, width: 19, height: 19, borderRadius: "50%", background: C.green, color: "#04130a", display: "grid", placeItems: "center", cursor: busy ? "default" : "pointer", border: `2px solid ${C.panel}` }}>
+                  {busy === `avatar:${p.id}` ? <Loader2 size={10} className="spin" /> : <Camera size={11} />}
+                  <input type="file" accept="image/*" hidden disabled={!!busy}
+                    onChange={(e) => { const f = e.target.files?.[0]; if (f) act(`avatar:${p.id}`, () => uploadAvatar(p.id, f), "Аватар обновлён"); e.target.value = ""; }} />
+                </label>
+              )}
+            </div>
             <div style={st.locTitle}>
               <div style={st.locName}>{p.full_name}{!p.is_active && " · деактивирован"}</div>
               <div style={st.locCode}>
