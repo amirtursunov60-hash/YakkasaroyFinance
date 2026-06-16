@@ -6,6 +6,7 @@ import { useScrollLock } from "../../hooks/useScrollLock";
 import { fmt } from "../../utils/format";
 import { usePeriod, periodTitle } from "../../lib/PeriodCtx";
 import { AttachmentsBlock } from "../../components/AttachmentsBlock";
+import { feedbackSuccess, feedbackError } from "../../lib/feedback";
 import {
   fetchRequests, decideRequest, payRequest,
   fetchBills, decideBill, payBill,
@@ -180,7 +181,8 @@ export function Requests() {
       }
       await loadItems();
       setDecide(null);
-    } catch (e) { setErr(e?.message || String(e)); }
+      feedbackSuccess();
+    } catch (e) { setErr(e?.message || String(e)); feedbackError(); }
     finally { setBusy(null); }
   };
 

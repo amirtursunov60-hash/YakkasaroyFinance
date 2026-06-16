@@ -4,6 +4,7 @@ import { Stat } from "../../components/common";
 import { useTheme } from "../../theme/theme";
 import { useScrollLock } from "../../hooks/useScrollLock";
 import { fmt, avatarColor } from "../../utils/format";
+import { feedbackSuccess, feedbackError } from "../../lib/feedback";
 import { cascadeTypeStageBase, calcTypeRulesAmount } from "../../lib/distribution";
 import { usePeriod, periodTitle } from "../../lib/PeriodCtx";
 import {
@@ -345,6 +346,11 @@ export function Directive() {
     finally { setBusy(null); }
   };
 
+  // Звук на результат любой операции Директивы (этапы, закрытие периода, перенос
+  // остатков, калькулятор фонда, запрет подачи) — через появление сообщения.
+  useEffect(() => { if (done) feedbackSuccess(); }, [done]);
+  useEffect(() => { if (err) feedbackError(); }, [err]);
+
   if (loading || periodsLoading) return <div style={st.empty}><Loader2 size={18} className="spin" /> Загрузка…</div>;
 
   return (<>
@@ -592,9 +598,11 @@ function RequestReviewControls({ C, st, isMobile, item, funds, isFinAdmin, onApp
     try {
       const msg = await fn();
       if (msg) setDone(msg);
+      feedbackSuccess();
     } catch (e) {
       setLocalErr(e?.message || String(e));
       triggerShake();
+      feedbackError();
     } finally {
       setBusy(false);
     }
