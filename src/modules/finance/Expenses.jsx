@@ -334,8 +334,8 @@ export function Expenses() {
               <div style={st.locBody}>
                 <div style={{ display: "grid", gap: 10, padding: "4px 2px 8px" }}>
                   {req.purpose && <CswRow C={C} label="Цель расхода" text={req.purpose} />}
-                  <CswRow C={C} label="Данные" text={req.csw_data} />
                   <CswRow C={C} label="Ситуация" text={req.csw_situation} />
+                  <CswRow C={C} label="Данные" text={req.csw_data} />
                   <CswRow C={C} label="Решение" text={req.csw_solution} />
                   {req.tags?.length > 0 && (
                     <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
@@ -422,7 +422,6 @@ function RequestForm({ st, isMobile, profile, tree, refs, funds, periods, locati
   // Валюта — базовая (TJS) по умолчанию, в форме не показывается;
   // точка берётся из выбора в шапке приложения (поле в форме убрано).
   const baseCur = refs.currencies.find((c) => c.is_base) || refs.currencies[0];
-  const headerLoc = refs.locations.find((l) => l.id === locationId) || null;
   const [f, setF] = useState({
     positionId: myPositions[0]?.id || "", typeId: "", purpose: "",
     periodId: currentPeriodId || "", amount: "", fundId: "",
@@ -445,6 +444,25 @@ function RequestForm({ st, isMobile, profile, tree, refs, funds, periods, locati
     walk(root);
     return { root, leaves };
   }).filter((g) => g.leaves.length), [tree]);
+  const leafById = useMemo(() => {
+    const m = {};
+    groups.forEach((g) => g.leaves.forEach((l) => { m[l.id] = l; }));
+    return m;
+  }, [groups]);
+
+  // Выбор вида расхода авто-подставляет Цель и Источник (фонд) из настроек статьи
+  // (default_purpose / default_fund_id; привязка настраивается позже). Цель по
+  // умолчанию — название статьи, если своя не задана.
+  const onType = (e) => {
+    const id = e.target.value;
+    const t = leafById[id];
+    setF((p) => ({
+      ...p,
+      typeId: id,
+      purpose: t ? (t.default_purpose || t.name) : "",
+      fundId: t?.default_fund_id || "",
+    }));
+  };
 
   const makePosition = async () => {
     if (busy) return;
@@ -545,13 +563,15 @@ function RequestForm({ st, isMobile, profile, tree, refs, funds, periods, locati
               {myPositions.map((p) => <option key={p.id} value={p.id}>{p.code} · {p.name}</option>)}
             </select>
           </Field>
-          <Field st={st} label="Точка (из шапки)">
-            <input style={{ ...st.mdInput, opacity: 0.85 }} className="fin" readOnly
-              value={headerLoc ? headerLoc.name : "— выберите точку в шапке —"} />
+          <Field st={st} label="К рассмотрению на ФП">
+            <select style={st.mdSelect} className="fin" value={f.periodId} onChange={set("periodId")}>
+              <option value="">— выберите неделю —</option>
+              {openPeriods.map((p) => <option key={p.id} value={p.id}>{periodTitle(p)}</option>)}
+            </select>
           </Field>
 
           <Field st={st} label="Вид расхода" full>
-            <select style={st.mdSelect} className="fin" value={f.typeId} onChange={set("typeId")}>
+            <select style={st.mdSelect} className="fin" value={f.typeId} onChange={onType}>
               <option value="">— не выбран —</option>
               {groups.map((g) => (
                 <optgroup key={g.root.id} label={`${g.root.code || ""} ${g.root.name}`}>
@@ -562,30 +582,24 @@ function RequestForm({ st, isMobile, profile, tree, refs, funds, periods, locati
           </Field>
 
           <Field st={st} label="Цель расхода" full>
-            <input style={st.mdInput} className="fin" placeholder="Коротко: на что именно нужны средства"
+            <input style={st.mdInput} className="fin" placeholder="Подставится по виду расхода — можно изменить"
               value={f.purpose} onChange={set("purpose")} />
           </Field>
 
-          <Field st={st} label="К рассмотрению на ФП">
-            <select style={st.mdSelect} className="fin" value={f.periodId} onChange={set("periodId")}>
-              <option value="">— выберите неделю —</option>
-              {openPeriods.map((p) => <option key={p.id} value={p.id}>{periodTitle(p)}</option>)}
-            </select>
-          </Field>
-          <Field st={st} label="Сумма">
-            <input style={st.mdInput} className="fin" inputMode="decimal" placeholder="0.00"
-              value={f.amount} onChange={set("amount")} />
-          </Field>
-
-          <Field st={st} label="Источник — фонд (предложение, назначается при одобрении)" full>
+          <Field st={st} label="Источник — фонд (подставляется по виду расхода, назначается при одобрении)" full>
             <select style={st.mdSelect} className="fin" value={f.fundId} onChange={set("fundId")}>
               <option value="">— не выбран —</option>
               {funds.map((fd) => <option key={fd.id} value={fd.id}>{fd.code} — {fd.name} ({fmt(Number(fd.balance))})</option>)}
             </select>
           </Field>
 
-          <Field st={st} label="Данные (факты, цифры)" full>{area("cswData", "Что известно: счёт, цены, объёмы…")}</Field>
+          <Field st={st} label="Сумма">
+            <input style={st.mdInput} className="fin" inputMode="decimal" placeholder="0.00"
+              value={f.amount} onChange={set("amount")} />
+          </Field>
+
           <Field st={st} label="Ситуация (что происходит)" full>{area("cswSituation", "Почему возник расход, что будет без него…")}</Field>
+          <Field st={st} label="Данные (факты, цифры)" full>{area("cswData", "Что известно: счёт, цены, объёмы…")}</Field>
           <Field st={st} label="Решение (что предлагаете)" full>{area("cswSolution", "Что предлагаете сделать и сколько это стоит…")}</Field>
 
           <Field st={st} label="Метки (через запятую)" full>

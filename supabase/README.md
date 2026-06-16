@@ -38,6 +38,7 @@
 | `20260615193000_enable_pgtap_testing.sql` | **применён** | включение pgTAP для модульного тестирования БД; тесты инвариантов леджера — в `supabase/tests/` |
 | `20260616120000_org_chart.sql` | **применён** | оргсхема (ТЗ §4.3–4.4): в `org_divisions` — `color`, `ckp` + unique по `code`; в `org_positions` — `section`, `ckp`, `statistic`, `duties` (jsonb), `is_executive`, `sort`; enum `hat_status` (none/learning/done) + колонка в `position_assignments`; сидинг 7 отделений и постов прототипа (ЦКП, секции, шляпы) как стартовый справочник (RLS наследуется из baseline) |
 | `20260616130000_request_form_fields.sql` | **применён** | форма заявки (ЗРС) по шаблону ManaJet: в `payment_requests` — `purpose` (цель расхода) и `tags` (метки, `text[]` not null default `{}`); период «К рассмотрению на ФП» использует существующую `period_id` (RLS наследуется из baseline) |
+| `20260616140000_expense_type_defaults.sql` | **применён** | связь «вид расхода → источник/цель»: в `expense_types` — `default_fund_id` (uuid → `funds`) и `default_purpose` (text); форма ЗРС авто-подставляет фонд и цель при выборе вида расхода (привязка настраивается позже; RLS наследуется из baseline) |
 
 ## Тесты БД (pgTAP)
 
@@ -46,6 +47,8 @@
 `supabase/tests/org_chart_test.sql` — pgTAP на структуру оргсхемы (новые колонки отделений/постов, enum `hat_status`, наличие засеянного справочника: ≥ 7 отделений, ровно 7 руководящих постов). Только структурные/справочные проверки (11), ничего не пишут — безопасно везде.
 
 `supabase/tests/request_form_fields_test.sql` — pgTAP на поля формы заявки (`payment_requests.purpose`, `tags` — тип `text[]`, NOT NULL). 4 структурные проверки, ничего не пишут.
+
+`supabase/tests/expense_type_defaults_test.sql` — pgTAP на значения по умолчанию вида расхода (`expense_types.default_fund_id` — uuid, `default_purpose`). 3 структурные проверки, ничего не пишут.
 
 Файлы 001–002 оставлены как история применённого; выполнять их повторно не нужно. Прежние `003_finance.sql`/`004_seed.sql` к базе не применились (откатились с ошибкой) и заменены.
 

@@ -190,8 +190,8 @@ export function Requests() {
             <div style={{ display: "grid", gap: 10, padding: "4px 2px 8px" }}>
               {itemKind === "request" && (<>
                 {item.purpose && <CswRow C={C} label="Цель расхода" text={item.purpose} />}
-                <CswRow C={C} label="Данные" text={item.csw_data} />
                 <CswRow C={C} label="Ситуация" text={item.csw_situation} />
+                <CswRow C={C} label="Данные" text={item.csw_data} />
                 <CswRow C={C} label="Решение" text={item.csw_solution} />
                 {item.tags?.length > 0 && (
                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>

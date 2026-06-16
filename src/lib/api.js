@@ -132,7 +132,7 @@ export async function insertIncome(row) {
 export async function fetchExpenseTypes() {
   const { data, error } = await supabase
     .from("expense_types")
-    .select("id, code, name, parent_id, location_id")
+    .select("id, code, name, parent_id, location_id, default_fund_id, default_purpose")
     .eq("is_archived", false);
   if (error) throw error;
   return data;

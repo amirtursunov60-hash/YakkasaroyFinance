@@ -509,6 +509,8 @@ export type Database = {
       expense_types: {
         Row: {
           code: string | null
+          default_fund_id: string | null
+          default_purpose: string | null
           id: string
           is_archived: boolean
           location_id: string | null
@@ -518,6 +520,8 @@ export type Database = {
         }
         Insert: {
           code?: string | null
+          default_fund_id?: string | null
+          default_purpose?: string | null
           id?: string
           is_archived?: boolean
           location_id?: string | null
@@ -527,6 +531,8 @@ export type Database = {
         }
         Update: {
           code?: string | null
+          default_fund_id?: string | null
+          default_purpose?: string | null
           id?: string
           is_archived?: boolean
           location_id?: string | null
@@ -535,6 +541,13 @@ export type Database = {
           parent_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "expense_types_default_fund_id_fkey"
+            columns: ["default_fund_id"]
+            isOneToOne: false
+            referencedRelation: "funds"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "expense_types_location_id_fkey"
             columns: ["location_id"]
