@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { ArrowUpRight, ArrowDownRight, ChevronRight, Plus, X, Loader2, AlertCircle, Calculator, Trash2 } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, ChevronRight, Plus, X, Loader2, AlertCircle, Calculator, Trash2, Store } from "lucide-react";
 import { useTheme } from "../../theme/theme";
 import { useScrollLock } from "../../hooks/useScrollLock";
 import { fmt } from "../../utils/format";
@@ -165,7 +165,10 @@ export function Income() {
         return (
           <div key={loc.id} style={st.dataCard}>
             <div style={st.locHead} className="locHead" onClick={() => hasChildren && setOpen((o) => ({ ...o, [loc.id]: !o?.[loc.id] }))}>
-              <div style={{ ...st.locDot, background: PALETTE[i % PALETTE.length] }} />
+              <div style={{ width: 34, height: 34, borderRadius: 10, display: "grid", placeItems: "center", flexShrink: 0,
+                background: `${PALETTE[i % PALETTE.length]}22`, color: PALETTE[i % PALETTE.length] }}>
+                <Store size={18} />
+              </div>
               <div style={st.locTitle}>
                 <div style={st.locName}>{loc.name}</div>
                 <div style={st.locCode}>{loc.code}{hasChildren ? ` · ${loc.children.length} статей` : ""}</div>
@@ -185,24 +188,52 @@ export function Income() {
 
             {isOpen && hasChildren && (
               <div style={st.locBody}>
-                <div style={st.itemHeadRow}>
-                  <span />
-                  <div style={st.itemHeadCell}>Было</div>
-                  <div style={st.itemHeadCell}>Стало</div>
-                </div>
+                {!isMobile && (
+                  <div style={st.itemHeadRow}>
+                    <span />
+                    <div style={st.itemHeadCell}>Было</div>
+                    <div style={st.itemHeadCell}>Стало</div>
+                  </div>
+                )}
                 {loc.children.map((c) => {
                   const rc = rolled[c.id] || { cur: 0, prev: 0 };
+                  const hasScheme = rulesByType[c.id]?.length;
+                  const calcBtn = isFinAdmin ? (
+                    <button style={{ width: 30, height: 30, borderRadius: 9, display: "grid", placeItems: "center", flexShrink: 0,
+                        border: `1px solid ${hasScheme ? C.green : C.line}`, background: hasScheme ? `${C.green}1a` : "transparent",
+                        color: hasScheme ? C.green : C.faint, cursor: "pointer" }}
+                      className="btn" title="Схема распределения по фондам" onClick={(e) => { e.stopPropagation(); setSchemeType(c); }}>
+                      <Calculator size={15} />
+                    </button>
+                  ) : null;
+
+                  if (isMobile) {
+                    return (
+                      <div key={c.id} style={{ padding: "11px 18px", borderTop: `1px solid ${C.line}` }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                          <span style={st.itemCode}>{c.code}</span>
+                          <span style={{ fontWeight: 600, fontSize: 13, flex: 1, minWidth: 0 }}>{c.name}</span>
+                          {calcBtn}
+                        </div>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                          <div>
+                            <div style={{ fontSize: 10, color: C.faint }}>Было</div>
+                            <div className="denseNum" style={{ fontSize: 13, fontWeight: 600 }}>{fmt(rc.prev)}</div>
+                          </div>
+                          <div>
+                            <div style={{ fontSize: 10, color: C.faint }}>Стало</div>
+                            <div className="denseNum" style={{ fontSize: 13, fontWeight: 700, color: rc.cur ? C.money : C.faint }}>{fmt(rc.cur)}</div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
                   return (
                     <div key={c.id} style={st.itemRow} className="itemRow">
                       <div style={st.itemName}>
                         <span style={st.itemCode}>{c.code}</span>
                         <span>{c.name}</span>
-                        {isFinAdmin && (
-                          <button style={{ ...st.iconBtn, padding: 3, color: (rulesByType[c.id]?.length ? C.green : C.faint) }} className="btn"
-                            title="Схема распределения по фондам" onClick={() => setSchemeType(c)}>
-                            <Calculator size={14} />
-                          </button>
-                        )}
+                        {calcBtn}
                       </div>
                       <div style={st.itemPrev}>{fmt(rc.prev)}</div>
                       <div style={{ ...st.itemCur, color: rc.cur ? C.money : C.faint }}>{fmt(rc.cur)}</div>
@@ -296,8 +327,8 @@ function SchemeModal({ C, st, type, rules, funds, onChanged, onClose }) {
             <option value="">— фонд —</option>
             {funds.map((fd) => <option key={fd.id} value={fd.id}>{fd.code} — {fd.name}</option>)}
           </select>
-          <div style={{ display: "flex", gap: 8 }}>
-            <select style={{ ...st.mdSelect, flex: 1 }} className="fin" value={f.stage} onChange={(e) => setF((p) => ({ ...p, stage: e.target.value }))}>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <select style={{ ...st.mdSelect, flex: 1, minWidth: 120 }} className="fin" value={f.stage} onChange={(e) => setF((p) => ({ ...p, stage: e.target.value }))}>
               {STAGE_OPTS.map(([k, l]) => <option key={k} value={k}>{l}</option>)}
             </select>
             <input style={{ ...st.mdInput, width: 90 }} className="fin" inputMode="decimal" placeholder="%"
