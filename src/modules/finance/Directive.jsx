@@ -494,6 +494,12 @@ function RequestsReview({ C, st, isMobile, profile, requests, funds, periodId, b
     const amt = Math.round((parseFloat(String(amount).replace(",", ".")) || 0) * 100) / 100;
     if (!amt || amt <= 0) { setErr("Введите одобренную сумму больше нуля"); return; }
     if (!periodId) { setErr("Нет выбранного периода ФП"); return; }
+    // Не даём одобрить больше остатка фонда (для базовой валюты TJS).
+    const fund = funds.find((f) => f.id === fundId);
+    if (fund && item.currency?.is_base && amt > Number(fund.balance || 0)) {
+      setErr(`Недостаточно средств в фонде ${fund.code} «${fund.name}»: доступно ${fmt(Number(fund.balance))} TJS, требуется ${fmt(amt)}`);
+      return;
+    }
     run(async () => {
       await decideRequest(item.id, {
         status: "approved", fund_id: fundId, approved_amount: amt,
