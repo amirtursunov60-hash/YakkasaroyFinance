@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from "react";
-import { X, Menu, User2, Settings, LogOut, Sun, Moon } from "lucide-react";
+import { X, Menu, User2, Settings, LogOut, Sun, Moon, Volume2, VolumeX } from "lucide-react";
 import { Stub } from "./common";
 import { MODULES, MODULE_NAV } from "../data/navigation";
 import { avatarColor } from "../utils/format";
@@ -31,7 +31,7 @@ import { GlobalSearch, NotifyBell } from "./TopWidgets";
 
 
 export function App({ onLogout }) {
-  const { C, st, theme, setTheme, lang, setLang, isMobile, profile } = useTheme();
+  const { C, st, theme, setTheme, lang, setLang, sound, setSound, isMobile, profile } = useTheme();
   const ROLE_LABELS = {
     owner: "Владелец",
     fin_director: "Финансовый директор",
@@ -117,6 +117,10 @@ export function App({ onLogout }) {
                   <div style={st.themeToggle}>
                     <button style={{ ...st.themeBtn, ...(theme === "light" ? st.themeBtnOn : {}) }} onClick={() => setTheme("light")}><Sun size={14} /> Light</button>
                     <button style={{ ...st.themeBtn, ...(theme === "dark" ? st.themeBtnOn : {}) }} onClick={() => setTheme("dark")}><Moon size={14} /> Dark</button>
+                  </div>
+                  <div style={st.themeToggle}>
+                    <button style={{ ...st.themeBtn, ...(sound ? st.themeBtnOn : {}) }} onClick={() => setSound(true)}><Volume2 size={14} /> Звук вкл</button>
+                    <button style={{ ...st.themeBtn, ...(!sound ? st.themeBtnOn : {}) }} onClick={() => setSound(false)}><VolumeX size={14} /> Выкл</button>
                   </div>
                   <div style={st.pmDivider} />
                   <div style={st.pmItem} className="pmi"><User2 size={16} color={C.sub} /> Профиль</div>

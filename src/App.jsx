@@ -7,6 +7,7 @@ import { THEMES, ThemeCtx } from "./theme/theme";
 import { supabase } from "./lib/supabase";
 import { getProfile, signOut } from "./lib/auth";
 import { redeemInvite } from "./lib/api";
+import { isSoundOn, setSoundOn } from "./lib/feedback";
 
 // Токен приглашения из ссылки (?invite=…) сохраняем до завершения регистрации
 const url = new URL(window.location.href);
@@ -21,6 +22,8 @@ if (inviteParam) {
 export default function YakkasaroyFinance() {
   const [theme, setTheme] = useState("dark");
   const [lang, setLang] = useState("ru");
+  const [sound, setSoundState] = useState(isSoundOn());   // звук/вибрация отдачи (по умолчанию выкл)
+  const setSound = (v) => { setSoundState(v); setSoundOn(v); };
   const [profile, setProfile] = useState(null);  // профиль вошедшего (с ролью) или null
   const [hasUser, setHasUser] = useState(false);  // есть сессия, но возможно нет профиля
   const [loading, setLoading] = useState(true);   // идёт первичная проверка сессии
@@ -62,7 +65,7 @@ export default function YakkasaroyFinance() {
     setProfile(null);
   };
 
-  const ctxVal = { C, st, theme, setTheme, lang, setLang, isMobile, profile };
+  const ctxVal = { C, st, theme, setTheme, lang, setLang, sound, setSound, isMobile, profile };
 
   if (loading) {
     return (

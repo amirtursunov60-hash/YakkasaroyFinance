@@ -4,6 +4,7 @@ import { Stat } from "../../components/common";
 import { useTheme } from "../../theme/theme";
 import { useScrollLock } from "../../hooks/useScrollLock";
 import { fmt, avatarColor } from "../../utils/format";
+import { feedbackSuccess, feedbackError } from "../../lib/feedback";
 import { cascadeTypeStageBase, calcTypeRulesAmount } from "../../lib/distribution";
 import { usePeriod, periodTitle } from "../../lib/PeriodCtx";
 import {
@@ -592,9 +593,11 @@ function RequestReviewControls({ C, st, isMobile, item, funds, isFinAdmin, onApp
     try {
       const msg = await fn();
       if (msg) setDone(msg);
+      feedbackSuccess();
     } catch (e) {
       setLocalErr(e?.message || String(e));
       triggerShake();
+      feedbackError();
     } finally {
       setBusy(false);
     }
