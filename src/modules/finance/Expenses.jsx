@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { ArrowUpRight, ArrowDownRight, ChevronRight, Plus, X, Loader2, AlertCircle, CheckCircle2, ClipboardList, Check, Ban, Banknote, FileText, Receipt } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, ChevronRight, Plus, X, Loader2, AlertCircle, CheckCircle2, ClipboardList, Check, Ban, Banknote, FileText, Receipt, Link2 } from "lucide-react";
 import { useTheme } from "../../theme/theme";
 import { useScrollLock } from "../../hooks/useScrollLock";
 import { fmt } from "../../utils/format";
@@ -8,7 +8,7 @@ import { AttachmentsBlock } from "../../components/AttachmentsBlock";
 import {
   fetchExpenseTypes, fetchExpenseSums, fetchIncomeRefs, fetchFunds,
   fetchMyPositions, fetchOrgDivisions, createPositionAndAssign,
-  fetchRequests, insertRequest, decideRequest, payRequest,
+  fetchRequests, insertRequest, decideRequest, payRequest, updateExpenseType,
 } from "../../lib/api";
 
 
@@ -50,6 +50,7 @@ export function Expenses() {
   const [expanded, setExpanded] = useState({});    // раскрытые ЗРС заявок
   const [filter, setFilter] = useState("all");
   const [showForm, setShowForm] = useState(false);
+  const [showTypeMap, setShowTypeMap] = useState(false);  // привязка статей к фондам (админ)
   const [decide, setDecide] = useState(null);      // { req, action: 'approve'|'reject'|'pay' }
   const [busy, setBusy] = useState(null);
 
@@ -194,9 +195,16 @@ export function Expenses() {
             <Trend cur={totals.cur} prev={totals.prev} big /> к прошлому периоду · было {fmt(totals.prev)}
           </div>
         </div>
-        <button style={st.btnGreen} className="btn" onClick={() => { setErr(""); setShowForm(true); }}>
-          <Plus size={15} /> Подать заявку (ЗРС)
-        </button>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
+          {isFinAdmin && (
+            <button style={st.btnGhost} className="btn" onClick={() => { setErr(""); setShowTypeMap(true); }}>
+              <Link2 size={15} /> {isMobile ? "Привязка" : "Привязка статей"}
+            </button>
+          )}
+          <button style={st.btnGreen} className="btn" onClick={() => { setErr(""); setShowForm(true); }}>
+            <Plus size={15} /> {isMobile ? "Заявка (ЗРС)" : "Подать заявку (ЗРС)"}
+          </button>
+        </div>
       </div>
     </section>
 
@@ -397,6 +405,14 @@ export function Expenses() {
     {decide && (
       <DecideModal C={C} st={st} decide={decide} funds={funds} accounts={refs?.accounts || []}
         busy={busy === "decide"} onClose={() => setDecide(null)} onConfirm={doDecide} />
+    )}
+
+    {showTypeMap && (
+      <ExpenseTypeMapModal
+        C={C} st={st} isMobile={isMobile} tree={tree} funds={funds}
+        onClose={() => setShowTypeMap(false)}
+        onSaved={async (n) => { setShowTypeMap(false); setTypes(await fetchExpenseTypes()); setDone(`Привязка статей сохранена (${n})`); }}
+      />
     )}
   </>);
 }
@@ -680,6 +696,110 @@ function DecideModal({ C, st, decide, funds, accounts, busy, onClose, onConfirm 
             disabled={busy} onClick={() => onConfirm({ req, action, fundId, reason, accountId })}>
             {busy ? <Loader2 size={15} className="spin" /> : action === "pay" ? <Banknote size={15} /> : action === "reject" ? <Ban size={15} /> : <Check size={15} />}
             {" "}{titles[action].split(" ")[0]}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+// ---------------------------------------------------------------- Привязка статей РД к фондам/цели
+// Значения по умолчанию на статью: при выборе вида расхода в форме ЗРС подставятся
+// Источник (фонд) и Цель. Доступно админам (owner/fin_director).
+function ExpenseTypeMapModal({ C, st, isMobile, tree, funds, onClose, onSaved }) {
+  useScrollLock();
+  // Листья дерева статей по корневым папкам
+  const groups = useMemo(() => tree.map((root) => {
+    const leaves = [];
+    const walk = (n) => { if (!n.children.length) leaves.push(n); else n.children.forEach(walk); };
+    walk(root);
+    return { root, leaves };
+  }).filter((g) => g.leaves.length), [tree]);
+
+  // Текущее состояние правок: id -> { fundId, purpose }
+  const [map, setMap] = useState(() => {
+    const m = {};
+    groups.forEach((g) => g.leaves.forEach((l) => {
+      m[l.id] = { fundId: l.default_fund_id || "", purpose: l.default_purpose || "" };
+    }));
+    return m;
+  });
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  const set = (id, k, v) => setMap((p) => ({ ...p, [id]: { ...p[id], [k]: v } }));
+
+  const save = async () => {
+    if (busy) return;
+    setErr("");
+    setBusy(true);
+    try {
+      const changed = [];
+      groups.forEach((g) => g.leaves.forEach((l) => {
+        const cur = map[l.id];
+        const wasFund = l.default_fund_id || "";
+        const wasPurpose = l.default_purpose || "";
+        if (cur.fundId !== wasFund || cur.purpose.trim() !== wasPurpose) {
+          changed.push({ id: l.id, fund: cur.fundId, purpose: cur.purpose.trim() });
+        }
+      }));
+      for (const c of changed) {
+        await updateExpenseType(c.id, { default_fund_id: c.fund || null, default_purpose: c.purpose || null });
+      }
+      onSaved(changed.length);
+    } catch (e) { setErr(e?.message || String(e)); setBusy(false); }
+  };
+
+  return (
+    <div style={st.mdOverlay} onClick={onClose}>
+      <div style={{ ...st.mdCard, width: "min(640px, 100%)" }} onClick={(e) => e.stopPropagation()}>
+        <div style={st.mdHead}>
+          <div style={st.mdTitle}>Привязка статей к фондам</div>
+          <button style={st.iconBtn} onClick={onClose}><X size={17} /></button>
+        </div>
+
+        <div style={{ fontSize: 12.5, color: C.sub, marginBottom: 12 }}>
+          Для статьи расхода задайте фонд-источник и цель по умолчанию — они подставятся
+          в форме заявки (ЗРС) при выборе этого вида расхода.
+        </div>
+
+        <div style={{ display: "grid", gap: 14, maxHeight: "60vh", overflowY: "auto", paddingRight: 2 }}>
+          {groups.map((g) => (
+            <div key={g.root.id}>
+              <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: 0.5, color: C.faint, fontWeight: 700, marginBottom: 6 }}>
+                {g.root.code ? `${g.root.code} · ` : ""}{g.root.name}
+              </div>
+              <div style={{ display: "grid", gap: 8 }}>
+                {g.leaves.map((l) => (
+                  <div key={l.id} style={{
+                    display: "grid",
+                    gridTemplateColumns: isMobile ? "1fr" : "minmax(0,1.1fr) minmax(0,1.2fr) minmax(0,1.4fr)",
+                    gap: 8, alignItems: "center",
+                  }}>
+                    <div style={{ fontSize: 13, minWidth: 0 }}>
+                      <span style={{ color: C.faint, marginRight: 6 }}>{l.code}</span>{l.name}
+                    </div>
+                    <select style={st.mdSelect} className="fin"
+                      value={map[l.id].fundId} onChange={(e) => set(l.id, "fundId", e.target.value)}>
+                      <option value="">— фонд не задан —</option>
+                      {funds.map((fd) => <option key={fd.id} value={fd.id}>{fd.code} — {fd.name}</option>)}
+                    </select>
+                    <input style={st.mdInput} className="fin" placeholder="Цель по умолчанию (необязательно)"
+                      value={map[l.id].purpose} onChange={(e) => set(l.id, "purpose", e.target.value)} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+          {!groups.length && <div style={st.empty}>Справочник статей расходов пуст</div>}
+        </div>
+
+        {err && <div style={{ ...st.reqError, marginTop: 12 }}><AlertCircle size={15} /> {err}</div>}
+
+        <div style={st.mdActions}>
+          <button style={st.btnGhost} className="btn" onClick={onClose}>Отмена</button>
+          <button style={{ ...st.btnGreen, opacity: busy ? 0.7 : 1 }} className="btn" disabled={busy} onClick={save}>
+            {busy ? <Loader2 size={15} className="spin" /> : <Check size={15} />} Сохранить
           </button>
         </div>
       </div>
