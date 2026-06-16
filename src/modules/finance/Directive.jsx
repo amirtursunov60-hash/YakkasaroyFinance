@@ -692,7 +692,7 @@ function Delta({ C, delta, small }) {
 function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders, compare, prevByFund, stageFact, onCalc, onApprove, onReset, onResetApproved, onOpenCalc }) {
   const [openFolders, setOpenFolders] = useState({});
   const [checked, setChecked] = useState(() => new Set());
-  const [collapsed, setCollapsed] = useState(false); // свернут ли этап целиком
+  const [collapsed, setCollapsed] = useState(true); // по умолчанию этап свёрнут
   const calcBusy = busy === `calc:${sg.key}`;
   const apprBusy = busy === `appr:${sg.key}`;
   const resetBusy = busy === `reset:${sg.key}`;
