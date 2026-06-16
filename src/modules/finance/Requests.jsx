@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { ClipboardList, FileText, Check, Ban, Banknote, Loader2, AlertCircle, CheckCircle2, ChevronRight, X, Network } from "lucide-react";
+import { ClipboardList, FileText, Check, Ban, Banknote, Loader2, AlertCircle, CheckCircle2, ChevronRight, X, Network, Plus } from "lucide-react";
 import { Stat } from "../../components/common";
 import { useTheme } from "../../theme/theme";
 import { useScrollLock } from "../../hooks/useScrollLock";
@@ -10,6 +10,7 @@ import {
   fetchRequests, decideRequest, payRequest,
   fetchBills, decideBill, payBill,
   fetchFunds, fetchIncomeRefs,
+  fetchExpenseTypes, insertRequest, createPositionAndAssign, fetchMyPositions, fetchOrgDivisions,
 } from "../../lib/api";
 
 
@@ -29,7 +30,7 @@ export function Requests() {
     rejected:  { label: "отклонена",        color: C.danger },
     paid:      { label: "оплачена",         color: C.success },
   };
-  const { period, periodId, loading: periodsLoading, locationId: ctxLocationId } = usePeriod();
+  const { period, periodId, periods, loading: periodsLoading, locationId: ctxLocationId } = usePeriod();
   const isFinAdmin = ["owner", "fin_director"].includes(profile?.role);
   const canPay = isFinAdmin || profile?.role === "accountant";
 
@@ -40,19 +41,35 @@ export function Requests() {
   const [bills, setBills] = useState([]);
   const [funds, setFunds] = useState([]);
   const [refs, setRefs] = useState(null);
+  const [types, setTypes] = useState([]);
+  const [myPositions, setMyPositions] = useState([]);
+  const [divisions, setDivisions] = useState([]);
   const [expanded, setExpanded] = useState({});
   const [decide, setDecide] = useState(null);   // { item, itemKind: 'request'|'bill', action }
+  const [showForm, setShowForm] = useState(false);
   const [busy, setBusy] = useState(null);
 
   const loadStatic = useCallback(async () => {
     try {
-      const [fs, refData] = await Promise.all([fetchFunds(), fetchIncomeRefs()]);
+      const [fs, refData, list, poss, divs] = await Promise.all([
+        fetchFunds(), fetchIncomeRefs(), fetchExpenseTypes(), fetchMyPositions(profile.id), fetchOrgDivisions(),
+      ]);
       setFunds(fs.sort((a, b) => a.code.localeCompare(b.code, "ru", { numeric: true })));
-      setRefs(refData);
+      setRefs(refData); setTypes(list); setMyPositions(poss); setDivisions(divs);
     } catch (e) { setErr("Не удалось загрузить справочники: " + (e?.message || e)); }
     finally { setLoading(false); }
-  }, []);
+  }, [profile.id]);
   useEffect(() => { loadStatic(); }, [loadStatic]);
+
+  // Дерево статей РД (для формы подачи ЗРС)
+  const tree = useMemo(() => {
+    const byParent = {};
+    types.forEach((t) => { (byParent[t.parent_id || "root"] ??= []).push(t); });
+    const cmp = (a, b) => (a.code || a.name).localeCompare(b.code || b.name, "ru", { numeric: true });
+    Object.values(byParent).forEach((arr) => arr.sort(cmp));
+    const attach = (t) => ({ ...t, children: (byParent[t.id] || []).map(attach) });
+    return (byParent.root || []).map(attach);
+  }, [types]);
 
   const loadItems = useCallback(async () => {
     try {
@@ -229,6 +246,9 @@ export function Requests() {
             <div style={st.heroLabel}>Заявки · рассмотрение финкомитетом</div>
             <div style={st.heroTitle}>{period ? periodTitle(period) : "Период не создан"}</div>
           </div>
+          <button style={st.btnGreen} className="btn" onClick={() => { setErr(""); setShowForm(true); }}>
+            <Plus size={15} /> {isMobile ? "Заявка (ЗРС)" : "Подать заявку (ЗРС)"}
+          </button>
         </div>
         <div style={st.heroStats}>
           <Stat label="Счета к одобрению" value={`${sums.billPendN} · ${fmt(sums.billPendSum)}`} unit="TJS" accent />
@@ -260,7 +280,7 @@ export function Requests() {
         <h3 style={st.reqSectionTitle}>Заявки от постов</h3>
         <span style={st.reqSectionSub}>по отделениям оргсхемы · формат ЗРС</span>
       </div>
-      {!requests.length && <div style={{ ...st.locCard, ...st.empty }}>Заявок на рассмотрении нет — подаются в разделе «Расходы»</div>}
+      {!requests.length && <div style={{ ...st.locCard, ...st.empty }}>Заявок на рассмотрении нет — подайте первую кнопкой «Подать заявку (ЗРС)» выше</div>}
       {byDivision.map((g) => (
         <div key={g.code + g.name} style={{ marginBottom: 14 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 7, margin: "10px 2px 8px", fontSize: 12, textTransform: "uppercase", letterSpacing: 0.5, color: C.faint, fontWeight: 700 }}>
@@ -276,7 +296,231 @@ export function Requests() {
       <DecideModal C={C} st={st} decide={decide} funds={funds} accounts={refs?.accounts || []}
         busy={busy === "decide"} onClose={() => setDecide(null)} onConfirm={doDecide} />
     )}
+
+    {showForm && refs && (
+      <RequestForm
+        st={st} isMobile={isMobile} profile={profile}
+        tree={tree} refs={refs} funds={funds}
+        periods={periods} locationId={ctxLocationId} currentPeriodId={periodId}
+        myPositions={myPositions} divisions={divisions}
+        onPositionsChanged={async () => setMyPositions(await fetchMyPositions(profile.id))}
+        onClose={() => setShowForm(false)}
+        onSaved={() => { setShowForm(false); loadItems(); setDone("Заявка подана — рассмотрите её ниже"); }}
+      />
+    )}
   </>);
+}
+
+
+// ---------------------------------------------------------------- Форма подачи заявки (ЗРС)
+const Field = ({ st, label, full, children }) => (
+  <div style={{ ...st.reqField, ...(full ? st.mdFull : {}) }}>
+    <span style={st.reqFieldLbl}>{label}</span>
+    {children}
+  </div>
+);
+
+function RequestForm({ st, isMobile, profile, tree, refs, funds, periods, locationId, currentPeriodId, myPositions, divisions, onPositionsChanged, onClose, onSaved }) {
+  useScrollLock();
+  // Валюта — базовая (TJS) по умолчанию, в форме не показывается;
+  // точка берётся из выбора в шапке приложения (поле в форме убрано).
+  const baseCur = refs.currencies.find((c) => c.is_base) || refs.currencies[0];
+  const [f, setF] = useState({
+    positionId: myPositions[0]?.id || "", typeId: "", purpose: "",
+    periodId: currentPeriodId || "", amount: "", fundId: "",
+    cswData: "", cswSituation: "", cswSolution: "", tags: "",
+  });
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  // Быстрое создание поста, пока оргсхема пуста (только владелец/директора)
+  const canMakePosition = ["owner", "fin_director", "ops_director"].includes(profile?.role);
+  const [pos, setPos] = useState({ code: "", name: "", divisionId: "" });
+  const set = (k) => (e) => setF((p) => ({ ...p, [k]: e?.target ? e.target.value : e }));
+
+  // Недели ФП для выбора «К рассмотрению» — закрытые исключаем
+  const openPeriods = useMemo(() => (periods || []).filter((p) => p.status !== "closed"), [periods]);
+
+  // Листья дерева статей по корневым папкам
+  const groups = useMemo(() => tree.map((root) => {
+    const leaves = [];
+    const walk = (n) => { if (!n.children.length) leaves.push(n); else n.children.forEach(walk); };
+    walk(root);
+    return { root, leaves };
+  }).filter((g) => g.leaves.length), [tree]);
+  const leafById = useMemo(() => {
+    const m = {};
+    groups.forEach((g) => g.leaves.forEach((l) => { m[l.id] = l; }));
+    return m;
+  }, [groups]);
+
+  // Выбор вида расхода авто-подставляет Цель и Источник (фонд) из настроек статьи
+  // (default_purpose / default_fund_id). Цель по умолчанию — название статьи.
+  const onType = (e) => {
+    const id = e.target.value;
+    const t = leafById[id];
+    setF((p) => ({
+      ...p,
+      typeId: id,
+      purpose: t ? (t.default_purpose || t.name) : "",
+      fundId: t?.default_fund_id || "",
+    }));
+  };
+
+  const makePosition = async () => {
+    if (busy) return;
+    setErr("");
+    if (!pos.code.trim() || !pos.name.trim()) return setErr("Укажите код и название поста (например 7.1 · Владелец)");
+    setBusy(true);
+    try {
+      const p = await createPositionAndAssign(profile.id, {
+        code: pos.code.trim(), name: pos.name.trim(), divisionId: pos.divisionId || null,
+      });
+      await onPositionsChanged();
+      setF((prev) => ({ ...prev, positionId: p.id }));
+    } catch (e) { setErr(e?.message || String(e)); }
+    finally { setBusy(false); }
+  };
+
+  const submit = async () => {
+    if (busy) return;
+    setErr("");
+    const amount = parseFloat(String(f.amount).replace(",", "."));
+    if (!f.positionId) return setErr("Заявка подаётся от поста — выберите пост");
+    if (!f.typeId) return setErr("Выберите вид расхода");
+    if (!locationId) return setErr("Выберите точку в шапке приложения — заявка привязывается к точке");
+    if (!f.periodId) return setErr("Выберите неделю ФП для рассмотрения");
+    if (!amount || amount <= 0) return setErr("Введите сумму больше нуля");
+    if (!f.cswData.trim() || !f.cswSituation.trim() || !f.cswSolution.trim())
+      return setErr("Заполните все три поля ЗРС: данные, ситуация, решение");
+    if (!baseCur?.id) return setErr("Не найдена базовая валюта");
+    setBusy(true);
+    try {
+      const tags = f.tags.split(",").map((t) => t.trim()).filter(Boolean);
+      await insertRequest({
+        position_id: f.positionId, requester_id: profile.id, location_id: locationId,
+        expense_type_id: f.typeId, fund_id: f.fundId || null,
+        planned_amount: amount, currency_id: baseCur.id, period_id: f.periodId,
+        purpose: f.purpose.trim() || null, tags,
+        csw_data: f.cswData.trim(), csw_situation: f.cswSituation.trim(), csw_solution: f.cswSolution.trim(),
+        status: "submitted",
+      });
+      onSaved();
+    } catch (e) {
+      const msg = e?.message || String(e);
+      setErr(msg.includes("row-level security")
+        ? "Нет прав на подачу: проверьте, что вам назначен пост и есть доступ к точке."
+        : msg);
+      setBusy(false);
+    }
+  };
+
+  const area = (k, ph) => (
+    <textarea style={{ ...st.mdInput, minHeight: 64, resize: "vertical", fontFamily: "inherit" }} className="fin"
+      placeholder={ph} value={f[k]} onChange={set(k)} />
+  );
+
+  return (
+    <div style={st.mdOverlay} onClick={onClose}>
+      <div style={st.mdCard} onClick={(e) => e.stopPropagation()}>
+        <div style={st.mdHead}>
+          <div style={st.mdTitle}>Заявка на расход средств (ЗРС)</div>
+          <button style={st.iconBtn} onClick={onClose}><X size={17} /></button>
+        </div>
+
+        {!myPositions.length && (
+          <div style={{ ...st.reqError, marginBottom: 12 }}>
+            <AlertCircle size={15} />
+            <span>
+              Заявка подаётся от поста оргсхемы, а вам пост не назначен.
+              {canMakePosition ? " Создайте пост ниже:" : " Обратитесь к владельцу или директору."}
+            </span>
+          </div>
+        )}
+        {!myPositions.length && canMakePosition && (
+          <div style={{ ...st.mdGrid, marginBottom: 14, ...(isMobile ? { gridTemplateColumns: "1fr" } : {}) }}>
+            <Field st={st} label="Код поста (напр. 7.1)">
+              <input style={st.mdInput} className="fin" value={pos.code} onChange={(e) => setPos((p) => ({ ...p, code: e.target.value }))} />
+            </Field>
+            <Field st={st} label="Название поста">
+              <input style={st.mdInput} className="fin" placeholder="Владелец" value={pos.name} onChange={(e) => setPos((p) => ({ ...p, name: e.target.value }))} />
+            </Field>
+            <Field st={st} label="Отделение">
+              <select style={st.mdSelect} className="fin" value={pos.divisionId} onChange={(e) => setPos((p) => ({ ...p, divisionId: e.target.value }))}>
+                <option value="">—</option>
+                {divisions.map((d) => <option key={d.id} value={d.id}>{d.code} · {d.name}</option>)}
+              </select>
+            </Field>
+            <Field st={st} label=" ">
+              <button style={st.btnGreen} className="btn" onClick={makePosition} disabled={busy}>
+                {busy ? <Loader2 size={15} className="spin" /> : <Plus size={15} />} Создать пост и назначить себя
+              </button>
+            </Field>
+          </div>
+        )}
+
+        <div style={{ ...st.mdGrid, ...(isMobile ? { gridTemplateColumns: "1fr" } : {}) }}>
+          <Field st={st} label="Должность (от поста)">
+            <select style={st.mdSelect} className="fin" value={f.positionId} onChange={set("positionId")}>
+              <option value="">— выберите —</option>
+              {myPositions.map((p) => <option key={p.id} value={p.id}>{p.code} · {p.name}</option>)}
+            </select>
+          </Field>
+          <Field st={st} label="К рассмотрению на ФП">
+            <select style={st.mdSelect} className="fin" value={f.periodId} onChange={set("periodId")}>
+              <option value="">— выберите неделю —</option>
+              {openPeriods.map((p) => <option key={p.id} value={p.id}>{periodTitle(p)}</option>)}
+            </select>
+          </Field>
+
+          <Field st={st} label="Вид расхода" full>
+            <select style={st.mdSelect} className="fin" value={f.typeId} onChange={onType}>
+              <option value="">— не выбран —</option>
+              {groups.map((g) => (
+                <optgroup key={g.root.id} label={`${g.root.code || ""} ${g.root.name}`}>
+                  {g.leaves.map((l) => <option key={l.id} value={l.id}>{l.code ? `${l.code} · ` : ""}{l.name}</option>)}
+                </optgroup>
+              ))}
+            </select>
+          </Field>
+
+          <Field st={st} label="Цель расхода" full>
+            <input style={st.mdInput} className="fin" placeholder="Подставится по виду расхода — можно изменить"
+              value={f.purpose} onChange={set("purpose")} />
+          </Field>
+
+          <Field st={st} label="Источник — фонд (подставляется по виду расхода, назначается при одобрении)" full>
+            <select style={st.mdSelect} className="fin" value={f.fundId} onChange={set("fundId")}>
+              <option value="">— не выбран —</option>
+              {funds.map((fd) => <option key={fd.id} value={fd.id}>{fd.code} — {fd.name} ({fmt(Number(fd.balance))})</option>)}
+            </select>
+          </Field>
+
+          <Field st={st} label="Сумма">
+            <input style={st.mdInput} className="fin" inputMode="decimal" placeholder="0.00"
+              value={f.amount} onChange={set("amount")} />
+          </Field>
+
+          <Field st={st} label="Ситуация (что происходит)" full>{area("cswSituation", "Почему возник расход, что будет без него…")}</Field>
+          <Field st={st} label="Данные (факты, цифры)" full>{area("cswData", "Что известно: счёт, цены, объёмы…")}</Field>
+          <Field st={st} label="Решение (что предлагаете)" full>{area("cswSolution", "Что предлагаете сделать и сколько это стоит…")}</Field>
+
+          <Field st={st} label="Метки (через запятую)" full>
+            <input style={st.mdInput} className="fin" placeholder="напр. срочно, кухня, ремонт"
+              value={f.tags} onChange={set("tags")} />
+          </Field>
+        </div>
+
+        {err && <div style={st.reqError}><AlertCircle size={15} /> {err}</div>}
+
+        <div style={st.mdActions}>
+          <button style={st.btnGhost} className="btn" onClick={onClose}>Отмена</button>
+          <button style={{ ...st.btnGreen, opacity: busy ? 0.7 : 1 }} className="btn" onClick={submit} disabled={busy || !myPositions.length}>
+            {busy ? <Loader2 size={15} className="spin" /> : <Plus size={15} />} Подать заявку
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 const CswRow = ({ C, label, text }) => (
