@@ -686,13 +686,15 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
       <section style={st.card}>
         <div style={{ ...st.cardHead, cursor: "pointer" }} onClick={() => setCollapsed((c) => !c)}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
-            <ChevronRight size={18} style={{ transform: collapsed ? "none" : "rotate(90deg)", transition: "transform .2s", color: C.sub, flexShrink: 0 }} />
             <div style={{ width: 30, height: 30, borderRadius: 9, display: "grid", placeItems: "center", background: `${C.green}1f`, color: C.green, flexShrink: 0 }}>
               <StageIcon size={17} />
             </div>
             <div style={st.cardTitle}>{sg.title}</div>
           </div>
-          <div className="denseNum" style={st.cardTotal}>{fmt(sg.base)} <span style={st.unit}>TJS</span></div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+            <div className="denseNum" style={st.cardTotal}>{fmt(sg.base)} <span style={st.unit}>TJS</span></div>
+            <ChevronRight size={18} style={{ transform: collapsed ? "none" : "rotate(90deg)", transition: "transform .2s", color: C.sub, flexShrink: 0 }} />
+          </div>
         </div>
         <div style={st.subHead}>
           <span style={st.subHeadTitle}>{sg.fundsTitle}</span>
