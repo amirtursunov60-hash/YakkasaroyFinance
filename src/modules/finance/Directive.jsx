@@ -631,16 +631,16 @@ function RequestReviewControls({ C, st, isMobile, item, funds, isFinAdmin, busy,
         <textarea style={{ ...st.mdInput, minHeight: 56, resize: "vertical", fontFamily: "inherit" }} className="fin"
           placeholder="Комментарий финкомитета…" value={comment} onChange={(e) => setComment(e.target.value)} />
       </div>
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-        <button style={st.btnGreen} className="btn" disabled={busy}
+      <div style={{ display: "flex", gap: 8 }}>
+        <button style={{ ...st.btnGreen, flex: 1, justifyContent: "center", minWidth: 0 }} className="btn" disabled={busy}
           onClick={() => onApprove(item, { fundId, amount, comment })}>
           <Check size={14} /> Одобрить
         </button>
-        <button style={{ ...st.btnGhost, color: C.danger }} className="btn" disabled={busy}
+        <button style={{ ...st.btnGhost, color: C.danger, flex: 1, justifyContent: "center", minWidth: 0 }} className="btn" disabled={busy}
           onClick={() => onReject(item, { comment })}>
           <Ban size={14} /> Отклонить
         </button>
-        <button style={st.btnGhost} className="btn" disabled={busy} onClick={() => onReset(item)}>
+        <button style={{ ...st.btnGhost, flex: 1, justifyContent: "center", minWidth: 0 }} className="btn" disabled={busy} onClick={() => onReset(item)}>
           <RotateCcw size={14} /> Сброс
         </button>
       </div>
