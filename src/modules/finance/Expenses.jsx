@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { ArrowUpRight, ArrowDownRight, ChevronRight, Plus, X, Loader2, AlertCircle, CheckCircle2, ClipboardList, Check, Ban, Banknote, FileText } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, ChevronRight, Plus, X, Loader2, AlertCircle, CheckCircle2, ClipboardList, Check, Ban, Banknote, FileText, Receipt } from "lucide-react";
 import { useTheme } from "../../theme/theme";
 import { useScrollLock } from "../../hooks/useScrollLock";
 import { fmt } from "../../utils/format";
@@ -218,7 +218,7 @@ export function Expenses() {
         return (
           <div key={cat.id} style={st.dataCard}>
             <div style={st.locHead} className="locHead" onClick={() => hasChildren && setOpen((o) => ({ ...o, [cat.id]: !o?.[cat.id] }))}>
-              <div style={{ ...st.locDot, background: PALETTE[i % PALETTE.length] }} />
+              <div style={{ width: 34, height: 34, borderRadius: 10, display: "grid", placeItems: "center", flexShrink: 0, background: `${PALETTE[i % PALETTE.length]}22`, color: PALETTE[i % PALETTE.length] }}><Receipt size={18} /></div>
               <div style={st.locTitle}>
                 <div style={st.locName}>{cat.name}</div>
                 <div style={st.locCode}>{cat.code}{hasChildren ? ` · ${cat.children.length} статей` : ""}</div>
@@ -231,13 +231,35 @@ export function Expenses() {
             </div>
             {isOpen && hasChildren && (
               <div style={st.locBody}>
-                <div style={st.itemHeadRow}>
-                  <span />
-                  <div style={st.itemHeadCell}>Было</div>
-                  <div style={st.itemHeadCell}>Стало</div>
-                </div>
+                {!isMobile && (
+                  <div style={st.itemHeadRow}>
+                    <span />
+                    <div style={st.itemHeadCell}>Было</div>
+                    <div style={st.itemHeadCell}>Стало</div>
+                  </div>
+                )}
                 {cat.children.map((c) => {
                   const rc = rolled[c.id] || { cur: 0, prev: 0 };
+                  if (isMobile) {
+                    return (
+                      <div key={c.id} style={{ padding: "11px 18px", borderTop: `1px solid ${C.line}` }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                          <span style={{ ...st.itemCode, color: C.danger }}>{c.code}</span>
+                          <span style={{ fontWeight: 600, fontSize: 13, flex: 1, minWidth: 0 }}>{c.name}</span>
+                        </div>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                          <div>
+                            <div style={{ fontSize: 10, color: C.faint }}>Было</div>
+                            <div className="denseNum" style={{ fontSize: 13, fontWeight: 600 }}>{fmt(rc.prev)}</div>
+                          </div>
+                          <div>
+                            <div style={{ fontSize: 10, color: C.faint }}>Стало</div>
+                            <div className="denseNum" style={{ fontSize: 13, fontWeight: 700, color: rc.cur ? C.text : C.faint }}>{fmt(rc.cur)}</div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
                   return (
                     <div key={c.id} style={st.itemRow} className="itemRow">
                       <div style={st.itemName}>
