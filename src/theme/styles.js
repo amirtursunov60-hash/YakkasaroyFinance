@@ -8,7 +8,7 @@
 // Шкала отступов (padding/margin/gap, ориентир): 4 / 8 / 12 / 16 / 24.
 export const makeStyles = (C) => ({
   app: { minHeight: "100vh", background: C.pageGrad, backgroundAttachment: "fixed", color: C.text, fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', system-ui, sans-serif", WebkitFontSmoothing: "antialiased", letterSpacing: "-0.01em" },
-  topbar: { height: "calc(60px + env(safe-area-inset-top))", display: "flex", alignItems: "center", gap: 14, padding: "env(safe-area-inset-top) 16px 0", background: C.panel, backdropFilter: "blur(24px) saturate(160%)", WebkitBackdropFilter: "blur(24px) saturate(160%)", borderBottom: `1px solid ${C.glassBorder}`, position: "sticky", top: 0, zIndex: 40 },
+  topbar: { height: 60, display: "flex", alignItems: "center", gap: 14, padding: "0 16px", background: C.panel, backdropFilter: "blur(24px) saturate(160%)", WebkitBackdropFilter: "blur(24px) saturate(160%)", borderBottom: `1px solid ${C.glassBorder}`, position: "sticky", top: 0, zIndex: 40 },
   burger: { width: 40, height: 40, borderRadius: "50%", background: C.panel2, border: `1px solid ${C.glassBorder}`, color: C.text, cursor: "pointer", display: "grid", placeItems: "center", flexShrink: 0, boxShadow: `inset 0 1px 0 ${C.glassHi}`, backdropFilter: "blur(20px) saturate(160%)", WebkitBackdropFilter: "blur(20px) saturate(160%)" },
   brand: { display: "flex", alignItems: "center", gap: 11 },
   logo: { width: 36, height: 36, borderRadius: 11, background: `linear-gradient(135deg, ${C.green}, ${C.greenSoft})`, color: "#04130a", display: "grid", placeItems: "center", boxShadow: `0 4px 14px ${C.green}55, inset 0 1px 0 rgba(255,255,255,0.35)` },
