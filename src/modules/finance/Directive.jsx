@@ -424,11 +424,6 @@ export function Directive() {
             : requestsBlocked ? <Lock size={15} /> : <Ban size={15} />}
           {requestsBlocked ? " Подача заявок запрещена" : " Запретить подачу заявок"}
         </button>
-        <button style={{ ...(isClosed ? st.btnGhost : st.btnGreen), width: "100%", justifyContent: "center", opacity: busy === "close" ? 0.7 : 1 }}
-          className="btn" onClick={doToggleClose} disabled={busy || !period}>
-          {busy === "close" ? <Loader2 size={15} className="spin" /> : isClosed ? <Unlock size={15} /> : <Lock size={15} />}
-          {isClosed ? " Открыть неделю" : " Закрыть период ФП"}
-        </button>
         <button style={{ ...st.btnGhost, width: "100%", justifyContent: "center" }} className="btn"
           onClick={() => setTransferOpen(true)} disabled={busy || isClosed || !period || remainder <= 0}>
           <ArrowRightLeft size={15} /> Перенести остатки в фонд
@@ -441,6 +436,13 @@ export function Directive() {
       requests={weekReqs} funds={funds} periodId={periodId}
       blocked={requestsBlocked}
       onReload={async () => { await Promise.all([reloadRequests(), reloadPeriodData(), loadRefs()]); }} />
+
+    {/* Закрытие периода Директивой — отдельной кнопкой в самом низу */}
+    <button style={{ ...(isClosed ? st.btnGhost : st.btnGreen), width: "100%", justifyContent: "center", marginTop: 14, opacity: busy === "close" ? 0.7 : 1 }}
+      className="btn" onClick={doToggleClose} disabled={busy || !period}>
+      {busy === "close" ? <Loader2 size={15} className="spin" /> : isClosed ? <Unlock size={15} /> : <Lock size={15} />}
+      {isClosed ? " Открыть неделю" : " Закрыть период ФП"}
+    </button>
 
     {transferOpen && (
       <TransferModal C={C} st={st} funds={funds} remainder={remainder}
