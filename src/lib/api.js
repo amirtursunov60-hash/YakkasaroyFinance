@@ -138,6 +138,12 @@ export async function fetchExpenseTypes() {
   return data;
 }
 
+// Привязка статьи РД к фонду/цели по умолчанию (для авто-подстановки в форме ЗРС)
+export async function updateExpenseType(id, patch) {
+  const { error } = await supabase.from("expense_types").update(patch).eq("id", id);
+  if (error) throw error;
+}
+
 // Факт расходов по статьям за периоды (оплаты заявок и счетов из Реестра):
 // { [expense_type_id]: { [period_id]: сумма в базовой валюте } }
 export async function fetchExpenseSums(periodIds, locationId) {
