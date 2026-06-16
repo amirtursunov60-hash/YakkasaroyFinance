@@ -696,14 +696,15 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
             <ChevronRight size={18} style={{ transform: collapsed ? "none" : "rotate(90deg)", transition: "transform .2s", color: C.sub, flexShrink: 0 }} />
           </div>
         </div>
-        <div style={st.subHead}>
-          <span style={st.subHeadTitle}>{sg.fundsTitle}</span>
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, padding: "10px 16px 12px", borderBottom: collapsed ? "none" : `1px solid ${C.line}` }}>
-          <MiniVal label="Доступно" value={fmt(totals.avail)} bold />
-          <MiniVal label="Рассчитано" value={fmt(totals.calc)} color={totals.calc ? C.warning : C.faint} bold />
-          <MiniVal label="Одобрено" value={fmt(totals.appr)} color={totals.appr ? C.green : C.faint} bold />
-        </div>
+        {/* Свёрнутый этап: только выбор всех фондов (итог по этапу — общий блок ниже) */}
+        {collapsed && sg.rows.length > 0 && (
+          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "11px 16px",
+            color: C.sub, fontSize: 12, fontWeight: 600 }}>
+            <input type="checkbox" style={cbStyle} checked={allChecked}
+              disabled={locked || !selectable.length} onChange={toggleAll} />
+            Выбрать все фонды этапа
+          </div>
+        )}
         {!collapsed && (sg.rows.length === 0 ? <div style={st.empty}>Фонды этого этапа не настроены</div> : (<>
           {isMobile ? (
             <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "11px 12px",
@@ -805,42 +806,43 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
               </div>
             );
           })}
-          {isMobile ? (
-            <div style={{ ...st.frowTotal, padding: "12px 12px", borderTop: `1px solid ${C.line}` }}>
-              <div style={{ fontSize: 12, fontWeight: 800, marginBottom: 8 }}>Итого по этапу</div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
-                <MiniVal label="Доступно" value={fmt(totals.avail)} bold />
-                <MiniVal label="Рассчитано" value={fmt(totals.calc)} color={totals.calc ? C.warning : C.faint} bold />
-                <div>
-                  <div style={{ fontSize: 10, color: C.faint, marginBottom: 2 }}>Одобрено</div>
-                  <div className="denseNum" style={{ fontSize: 13, fontWeight: 800, color: C.green }}>{fmt(totals.appr)}</div>
-                  {showPrev && (totals.prev > 0 || totals.appr > 0) && (
-                    <div style={{ fontSize: 10, fontWeight: 500, color: C.faint, marginTop: 1 }}>
-                      пр. {fmt(totals.prev)}<Delta C={C} delta={totals.appr - totals.prev} small />
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div style={{ ...frow6, ...st.frowTotal }}>
-              <div style={st.fName}><div style={st.actions}><CalcBtn /><ApproveBtn /><ResetBtn /></div></div>
-              <div style={st.fPct} />
-              <div />
-              <div className="denseNum" style={{ ...st.fNum, fontWeight: 700 }}>{fmt(totals.avail)}</div>
-              <div className="denseNum" style={{ ...st.fNum, fontWeight: 700, color: totals.calc ? C.warning : C.faint }}>{fmt(totals.calc)}</div>
-              <div className="denseNum" style={{ ...st.fNum, fontWeight: 700, color: C.green }}>
-                {fmt(totals.appr)}
+        </>))}
+        {/* Итог по этапу — общий блок: виден и в свёрнутом, и в развёрнутом виде */}
+        {sg.rows.length > 0 && (isMobile ? (
+          <div style={{ ...st.frowTotal, padding: "12px 12px", borderTop: `1px solid ${C.line}` }}>
+            <div style={{ fontSize: 12, fontWeight: 800, marginBottom: 8 }}>Итого по этапу</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+              <MiniVal label="Доступно" value={fmt(totals.avail)} bold />
+              <MiniVal label="Рассчитано" value={fmt(totals.calc)} color={totals.calc ? C.warning : C.faint} bold />
+              <div>
+                <div style={{ fontSize: 10, color: C.faint, marginBottom: 2 }}>Одобрено</div>
+                <div className="denseNum" style={{ fontSize: 13, fontWeight: 800, color: C.green }}>{fmt(totals.appr)}</div>
                 {showPrev && (totals.prev > 0 || totals.appr > 0) && (
-                  <div style={{ fontSize: 10.5, fontWeight: 500, color: C.faint, marginTop: 2 }}>
+                  <div style={{ fontSize: 10, fontWeight: 500, color: C.faint, marginTop: 1 }}>
                     пр. {fmt(totals.prev)}<Delta C={C} delta={totals.appr - totals.prev} small />
                   </div>
                 )}
               </div>
             </div>
-          )}
-          {isMobile && <div style={st.mActions}><CalcBtn eq /><ApproveBtn eq /><ResetBtn eq /></div>}
-        </>))}
+          </div>
+        ) : (
+          <div style={{ ...frow6, ...st.frowTotal }}>
+            <div style={st.fName}><div style={st.actions}><CalcBtn /><ApproveBtn /><ResetBtn /></div></div>
+            <div style={st.fPct} />
+            <div />
+            <div className="denseNum" style={{ ...st.fNum, fontWeight: 700 }}>{fmt(totals.avail)}</div>
+            <div className="denseNum" style={{ ...st.fNum, fontWeight: 700, color: totals.calc ? C.warning : C.faint }}>{fmt(totals.calc)}</div>
+            <div className="denseNum" style={{ ...st.fNum, fontWeight: 700, color: C.green }}>
+              {fmt(totals.appr)}
+              {showPrev && (totals.prev > 0 || totals.appr > 0) && (
+                <div style={{ fontSize: 10.5, fontWeight: 500, color: C.faint, marginTop: 2 }}>
+                  пр. {fmt(totals.prev)}<Delta C={C} delta={totals.appr - totals.prev} small />
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+        {sg.rows.length > 0 && isMobile && <div style={st.mActions}><CalcBtn eq /><ApproveBtn eq /><ResetBtn eq /></div>}
       </section>
     </div>
   );
