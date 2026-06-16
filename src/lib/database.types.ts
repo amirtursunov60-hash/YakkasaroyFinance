@@ -1149,19 +1149,25 @@ export type Database = {
       }
       org_divisions: {
         Row: {
+          ckp: string | null
           code: string
+          color: string | null
           id: string
           name: string
           sort: number
         }
         Insert: {
+          ckp?: string | null
           code: string
+          color?: string | null
           id?: string
           name: string
           sort?: number
         }
         Update: {
+          ckp?: string | null
           code?: string
+          color?: string | null
           id?: string
           name?: string
           sort?: number
@@ -1170,34 +1176,52 @@ export type Database = {
       }
       org_positions: {
         Row: {
+          ckp: string | null
           code: string
           division_id: string | null
+          duties: Json
           id: string
           is_archived: boolean
+          is_executive: boolean
           location_id: string | null
           name: string
           outer_id: string | null
           parent_id: string | null
+          section: string | null
+          sort: number
+          statistic: string | null
         }
         Insert: {
+          ckp?: string | null
           code: string
           division_id?: string | null
+          duties?: Json
           id?: string
           is_archived?: boolean
+          is_executive?: boolean
           location_id?: string | null
           name: string
           outer_id?: string | null
           parent_id?: string | null
+          section?: string | null
+          sort?: number
+          statistic?: string | null
         }
         Update: {
+          ckp?: string | null
           code?: string
           division_id?: string | null
+          duties?: Json
           id?: string
           is_archived?: boolean
+          is_executive?: boolean
           location_id?: string | null
           name?: string
           outer_id?: string | null
           parent_id?: string | null
+          section?: string | null
+          sort?: number
+          statistic?: string | null
         }
         Relationships: [
           {
@@ -1544,18 +1568,21 @@ export type Database = {
       }
       position_assignments: {
         Row: {
+          hat_status: Database["public"]["Enums"]["hat_status"]
           is_holder: boolean
           is_main: boolean
           person_id: string
           position_id: string
         }
         Insert: {
+          hat_status?: Database["public"]["Enums"]["hat_status"]
           is_holder?: boolean
           is_main?: boolean
           person_id: string
           position_id: string
         }
         Update: {
+          hat_status?: Database["public"]["Enums"]["hat_status"]
           is_holder?: boolean
           is_main?: boolean
           person_id?: string
@@ -2161,6 +2188,7 @@ export type Database = {
       client_invoice_status: "planned" | "issued" | "paid" | "cancelled"
       distribution_stage: "revenue" | "margin" | "adjusted"
       fund_kind: "working" | "accumulative"
+      hat_status: "none" | "learning" | "done"
       hms_state:
         | "power"
         | "affluence"
@@ -2331,6 +2359,7 @@ export const Constants = {
       client_invoice_status: ["planned", "issued", "paid", "cancelled"],
       distribution_stage: ["revenue", "margin", "adjusted"],
       fund_kind: ["working", "accumulative"],
+      hat_status: ["none", "learning", "done"],
       hms_state: [
         "power",
         "affluence",
