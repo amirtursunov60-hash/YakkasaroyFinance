@@ -63,7 +63,7 @@ export function App({ onLogout }) {
     <div style={st.app}>
       <style>{css}</style>
 
-      <header style={{ ...st.topbar, ...(isMobile ? { gap: 8, padding: "0 10px" } : {}) }}>
+      <header className="appTop" style={{ ...st.topbar, ...(isMobile ? { gap: 8, padding: "0 10px" } : {}) }}>
         {isMobile && (
           <button style={st.burger} onClick={() => setMenuOpen(true)}><Menu size={20} /></button>
         )}

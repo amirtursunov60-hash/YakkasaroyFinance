@@ -2,7 +2,21 @@
 export const makeCss = (C) => `
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
   *{box-sizing:border-box;}
-  body{background:${C.pageGrad};background-attachment:fixed;}
+  /* Фон-градиент фиксируем во вьюпорте через ::before. background-attachment:fixed
+     на iOS/WebKit (Safari, Яндекс) часто не отрисовывается — верх страницы белеет
+     и браузер красит статус-бар в белый. Фон и на html — как сплошной фолбэк. */
+  html{background:${C.pageGrad};}
+  body{background:${C.pageGrad};}
+  body::before{content:"";position:fixed;inset:0;background:${C.pageGrad};z-index:-1;pointer-events:none;}
+  /* viewport-fit=cover заводит контент под статус-бар (так полоса становится в цвет
+     приложения). Сдвигаем шапку вниз на высоту статус-бара. !important — перебить
+     инлайн height/padding. constant() — фолбэк для старых WebKit. */
+  .appTop{
+    padding-top: constant(safe-area-inset-top) !important;
+    padding-top: env(safe-area-inset-top) !important;
+    height: calc(60px + constant(safe-area-inset-top)) !important;
+    height: calc(60px + env(safe-area-inset-top)) !important;
+  }
   .nav:hover{background:${C.navHover};}
   .mod:hover{color:${C.text};}
   .frow:hover{background:${C.rowHover};}
