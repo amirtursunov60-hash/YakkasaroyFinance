@@ -483,7 +483,7 @@ function RequestForm({ st, isMobile, profile, tree, refs, funds, periods, locati
     if (busy) return;
     setErr("");
     const amount = parseFloat(String(f.amount).replace(",", "."));
-    if (!f.positionId) return setErr("Заявка подаётся от поста — выберите пост");
+    if (!f.positionId) return setErr("Вам не назначен пост оргсхемы — создайте пост или обратитесь к владельцу/директору");
     if (!f.typeId) return setErr("Выберите вид расхода");
     if (!locationId) return setErr("Выберите точку в шапке приложения — заявка привязывается к точке");
     if (!f.periodId) return setErr("Выберите неделю ФП для рассмотрения");
@@ -557,13 +557,7 @@ function RequestForm({ st, isMobile, profile, tree, refs, funds, periods, locati
         )}
 
         <div style={{ ...st.mdGrid, ...(isMobile ? { gridTemplateColumns: "1fr" } : {}) }}>
-          <Field st={st} label="Должность (от поста)">
-            <select style={st.mdSelect} className="fin" value={f.positionId} onChange={set("positionId")} autoFocus>
-              <option value="">— выберите —</option>
-              {myPositions.map((p) => <option key={p.id} value={p.id}>{p.code} · {p.name}</option>)}
-            </select>
-          </Field>
-          <Field st={st} label="К рассмотрению на ФП">
+          <Field st={st} label="К рассмотрению на ФП" full>
             <select style={st.mdSelect} className="fin" value={f.periodId} onChange={set("periodId")}>
               <option value="">— выберите неделю —</option>
               {openPeriods.map((p) => <option key={p.id} value={p.id}>{periodTitle(p)}</option>)}
@@ -571,7 +565,7 @@ function RequestForm({ st, isMobile, profile, tree, refs, funds, periods, locati
           </Field>
 
           <Field st={st} label="Вид расхода" full>
-            <select style={st.mdSelect} className="fin" value={f.typeId} onChange={onType}>
+            <select style={st.mdSelect} className="fin" value={f.typeId} onChange={onType} autoFocus>
               <option value="">— не выбран —</option>
               {groups.map((g) => (
                 <optgroup key={g.root.id} label={`${g.root.code || ""} ${g.root.name}`}>
