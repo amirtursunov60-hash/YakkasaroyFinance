@@ -68,9 +68,16 @@ export function App({ onLogout }) {
           <button style={st.burger} onClick={() => setMenuOpen(true)}><Menu size={20} /></button>
         )}
         <div style={{ ...st.brand, ...(isMobile ? { gap: 7 } : {}) }}>
-          <img src="/icons/icon-192.png" alt="Яккасарой"
-            style={{ width: isMobile ? 38 : 40, height: isMobile ? 38 : 40, borderRadius: 12, flexShrink: 0 }} />
-          <div style={{ ...st.brandTxt, ...(isMobile ? { fontSize: 16.5 } : {}) }}>Яккасарой{!isMobile && <span style={st.brandThin}> финанс</span>}</div>
+          <div style={{
+            display: "grid", placeItems: "center", flexShrink: 0,
+            width: isMobile ? 36 : 40, height: isMobile ? 36 : 40, borderRadius: 11,
+            background: `linear-gradient(135deg, #14271d, #0b1611)`,
+            border: `1px solid ${C.green}3a`,
+            boxShadow: `0 4px 14px ${C.green}33, inset 0 1px 0 ${C.glassHi}`,
+          }}>
+            <img src="/icons/logo-mark.png" alt="Яккасарой"
+              style={{ width: "84%", height: "84%", objectFit: "contain" }} />
+          </div>
         </div>
         <WeekPicker />
         <LocationPicker />

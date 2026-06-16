@@ -192,9 +192,8 @@ export function LocationPicker() {
   const { C, st, isMobile } = useTheme();
   const ctx = usePeriod();
   const [open, setOpen] = useState(false);
-  // На телефоне шапка тесная — селектор точки не показываем,
-  // чтобы колокольчик и аватарка оставались на месте
-  if (isMobile) return null;
+  // На телефоне показываем компактно (только иконка) — точка нужна и на
+  // мобильном (например, для подачи заявки, которая привязывается к точке).
   if (!ctx) return null;
   const { locations, locationId, setLocationId, location } = ctx;
   if (!locations.length) return null;

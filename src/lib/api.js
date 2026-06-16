@@ -132,7 +132,7 @@ export async function insertIncome(row) {
 export async function fetchExpenseTypes() {
   const { data, error } = await supabase
     .from("expense_types")
-    .select("id, code, name, parent_id, location_id")
+    .select("id, code, name, parent_id, location_id, default_fund_id, default_purpose")
     .eq("is_archived", false);
   if (error) throw error;
   return data;
@@ -297,7 +297,7 @@ export async function fetchRequests(periodId, locationId) {
   let q = supabase
     .from("payment_requests")
     .select(`id, number, status, planned_amount, csw_data, csw_situation, csw_solution,
-      rejection_reason, created_at, decided_at, period_id, expense_type_id,
+      purpose, tags, rejection_reason, created_at, decided_at, period_id, expense_type_id,
       position:org_positions(code, name, division:org_divisions(id, code, name)),
       requester:profiles!payment_requests_requester_id_fkey(full_name),
       expense_type:expense_types(code, name),

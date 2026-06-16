@@ -189,9 +189,15 @@ export function Requests() {
           <div style={st.locBody}>
             <div style={{ display: "grid", gap: 10, padding: "4px 2px 8px" }}>
               {itemKind === "request" && (<>
-                <CswRow C={C} label="Данные" text={item.csw_data} />
+                {item.purpose && <CswRow C={C} label="Цель расхода" text={item.purpose} />}
                 <CswRow C={C} label="Ситуация" text={item.csw_situation} />
+                <CswRow C={C} label="Данные" text={item.csw_data} />
                 <CswRow C={C} label="Решение" text={item.csw_solution} />
+                {item.tags?.length > 0 && (
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    {item.tags.map((t) => <span key={t} style={{ ...st.weekTag, marginLeft: 0 }}>{t}</span>)}
+                  </div>
+                )}
               </>)}
               {item.attachments?.length > 0 && (
                 <AttachmentsBlock kind={itemKind} parentId={item.id} attachments={item.attachments}

@@ -6,7 +6,7 @@ import { fmt } from "../../utils/format";
 import { usePeriod, periodTitle } from "../../lib/PeriodCtx";
 import { AttachmentsBlock } from "../../components/AttachmentsBlock";
 import {
-  fetchExpenseTypes, fetchExpenseSums, fetchIncomeRefs, fetchFunds, fetchCounterparties,
+  fetchExpenseTypes, fetchExpenseSums, fetchIncomeRefs, fetchFunds,
   fetchMyPositions, fetchOrgDivisions, createPositionAndAssign,
   fetchRequests, insertRequest, decideRequest, payRequest,
 } from "../../lib/api";
@@ -32,7 +32,7 @@ export function Expenses() {
     rejected:  { label: "отклонена",        color: C.danger },
     paid:      { label: "оплачена",         color: C.success },
   };
-  const { period, prevPeriod, periodId, loading: periodsLoading, locationId: ctxLocationId } = usePeriod();
+  const { period, prevPeriod, periodId, periods, loading: periodsLoading, locationId: ctxLocationId } = usePeriod();
   const isFinAdmin = ["owner", "fin_director"].includes(profile?.role);
   const canPay = isFinAdmin || profile?.role === "accountant";
 
@@ -43,7 +43,6 @@ export function Expenses() {
   const [sums, setSums] = useState({});
   const [refs, setRefs] = useState(null);          // счета, способы, валюты, точки
   const [funds, setFunds] = useState([]);
-  const [counterparties, setCounterparties] = useState([]);
   const [myPositions, setMyPositions] = useState([]);
   const [divisions, setDivisions] = useState([]);
   const [requests, setRequests] = useState([]);
@@ -57,11 +56,11 @@ export function Expenses() {
   const loadStatic = useCallback(async () => {
     setErr("");
     try {
-      const [list, refData, fs, cps, poss, divs] = await Promise.all([
-        fetchExpenseTypes(), fetchIncomeRefs(), fetchFunds(), fetchCounterparties(),
+      const [list, refData, fs, poss, divs] = await Promise.all([
+        fetchExpenseTypes(), fetchIncomeRefs(), fetchFunds(),
         fetchMyPositions(profile.id), fetchOrgDivisions(),
       ]);
-      setTypes(list); setRefs(refData); setCounterparties(cps); setDivisions(divs);
+      setTypes(list); setRefs(refData); setDivisions(divs);
       setFunds(fs.sort((a, b) => a.code.localeCompare(b.code, "ru", { numeric: true })));
       setMyPositions(poss);
     } catch (e) {
@@ -334,14 +333,19 @@ export function Expenses() {
             {isExp && (
               <div style={st.locBody}>
                 <div style={{ display: "grid", gap: 10, padding: "4px 2px 8px" }}>
-                  <CswRow C={C} label="Данные" text={req.csw_data} />
+                  {req.purpose && <CswRow C={C} label="Цель расхода" text={req.purpose} />}
                   <CswRow C={C} label="Ситуация" text={req.csw_situation} />
+                  <CswRow C={C} label="Данные" text={req.csw_data} />
                   <CswRow C={C} label="Решение" text={req.csw_solution} />
+                  {req.tags?.length > 0 && (
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                      {req.tags.map((t) => <span key={t} style={{ ...st.weekTag, marginLeft: 0 }}>{t}</span>)}
+                    </div>
+                  )}
                   <AttachmentsBlock kind="request" parentId={req.id} attachments={req.attachments}
                     canUpload={!["paid", "rejected"].includes(req.status)} profileId={profile.id} onChanged={loadPeriodData} />
                   <div style={{ display: "flex", gap: 16, flexWrap: "wrap", fontSize: 12.5, color: C.sub }}>
                     {req.fund && <span>Фонд: <b style={{ color: C.text }}>{req.fund.code} {req.fund.name}</b></span>}
-                    {req.payment_type && <span>Оплата: <b style={{ color: C.text }}>{req.payment_type.name}</b></span>}
                     {req.counterparty && <span>Контрагент: <b style={{ color: C.text }}>{req.counterparty.name}</b></span>}
                     <span>Подана: <b style={{ color: C.text }}>{new Date(req.created_at).toLocaleDateString("ru")}</b></span>
                   </div>
@@ -380,8 +384,9 @@ export function Expenses() {
 
     {showForm && refs && (
       <RequestForm
-        C={C} st={st} isMobile={isMobile} profile={profile}
-        tree={tree} refs={refs} funds={funds} counterparties={counterparties}
+        st={st} isMobile={isMobile} profile={profile}
+        tree={tree} refs={refs} funds={funds}
+        periods={periods} locationId={ctxLocationId} currentPeriodId={periodId}
         myPositions={myPositions} divisions={divisions}
         onPositionsChanged={async () => setMyPositions(await fetchMyPositions(profile.id))}
         onClose={() => setShowForm(false)}
@@ -412,13 +417,15 @@ const Field = ({ st, label, full, children }) => (
   </div>
 );
 
-function RequestForm({ C, st, isMobile, profile, tree, refs, funds, counterparties, myPositions, divisions, onPositionsChanged, onClose, onSaved }) {
+function RequestForm({ st, isMobile, profile, tree, refs, funds, periods, locationId, currentPeriodId, myPositions, divisions, onPositionsChanged, onClose, onSaved }) {
   useScrollLock();
+  // Валюта — базовая (TJS) по умолчанию, в форме не показывается;
+  // точка берётся из выбора в шапке приложения (поле в форме убрано).
   const baseCur = refs.currencies.find((c) => c.is_base) || refs.currencies[0];
   const [f, setF] = useState({
-    positionId: myPositions[0]?.id || "", typeId: "", locationId: "",
-    amount: "", currencyId: baseCur?.id || "", payTypeId: "", counterpartyId: "", fundId: "",
-    cswData: "", cswSituation: "", cswSolution: "",
+    positionId: myPositions[0]?.id || "", typeId: "", purpose: "",
+    periodId: currentPeriodId || "", amount: "", fundId: "",
+    cswData: "", cswSituation: "", cswSolution: "", tags: "",
   });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
@@ -427,6 +434,9 @@ function RequestForm({ C, st, isMobile, profile, tree, refs, funds, counterparti
   const [pos, setPos] = useState({ code: "", name: "", divisionId: "" });
   const set = (k) => (e) => setF((p) => ({ ...p, [k]: e?.target ? e.target.value : e }));
 
+  // Недели ФП для выбора «К рассмотрению» — закрытые исключаем
+  const openPeriods = useMemo(() => (periods || []).filter((p) => p.status !== "closed"), [periods]);
+
   // Листья дерева статей по корневым папкам
   const groups = useMemo(() => tree.map((root) => {
     const leaves = [];
@@ -434,6 +444,25 @@ function RequestForm({ C, st, isMobile, profile, tree, refs, funds, counterparti
     walk(root);
     return { root, leaves };
   }).filter((g) => g.leaves.length), [tree]);
+  const leafById = useMemo(() => {
+    const m = {};
+    groups.forEach((g) => g.leaves.forEach((l) => { m[l.id] = l; }));
+    return m;
+  }, [groups]);
+
+  // Выбор вида расхода авто-подставляет Цель и Источник (фонд) из настроек статьи
+  // (default_purpose / default_fund_id; привязка настраивается позже). Цель по
+  // умолчанию — название статьи, если своя не задана.
+  const onType = (e) => {
+    const id = e.target.value;
+    const t = leafById[id];
+    setF((p) => ({
+      ...p,
+      typeId: id,
+      purpose: t ? (t.default_purpose || t.name) : "",
+      fundId: t?.default_fund_id || "",
+    }));
+  };
 
   const makePosition = async () => {
     if (busy) return;
@@ -455,18 +484,21 @@ function RequestForm({ C, st, isMobile, profile, tree, refs, funds, counterparti
     setErr("");
     const amount = parseFloat(String(f.amount).replace(",", "."));
     if (!f.positionId) return setErr("Заявка подаётся от поста — выберите пост");
-    if (!f.typeId) return setErr("Выберите статью расхода");
-    if (!f.locationId) return setErr("Выберите точку");
+    if (!f.typeId) return setErr("Выберите вид расхода");
+    if (!locationId) return setErr("Выберите точку в шапке приложения — заявка привязывается к точке");
+    if (!f.periodId) return setErr("Выберите неделю ФП для рассмотрения");
     if (!amount || amount <= 0) return setErr("Введите сумму больше нуля");
     if (!f.cswData.trim() || !f.cswSituation.trim() || !f.cswSolution.trim())
       return setErr("Заполните все три поля ЗРС: данные, ситуация, решение");
+    if (!baseCur?.id) return setErr("Не найдена базовая валюта");
     setBusy(true);
     try {
+      const tags = f.tags.split(",").map((t) => t.trim()).filter(Boolean);
       await insertRequest({
-        position_id: f.positionId, requester_id: profile.id, location_id: f.locationId,
+        position_id: f.positionId, requester_id: profile.id, location_id: locationId,
         expense_type_id: f.typeId, fund_id: f.fundId || null,
-        planned_amount: amount, currency_id: f.currencyId,
-        payment_type_id: f.payTypeId || null, counterparty_id: f.counterpartyId || null,
+        planned_amount: amount, currency_id: baseCur.id, period_id: f.periodId,
+        purpose: f.purpose.trim() || null, tags,
         csw_data: f.cswData.trim(), csw_situation: f.cswSituation.trim(), csw_solution: f.cswSolution.trim(),
         status: "submitted",
       });
@@ -525,22 +557,22 @@ function RequestForm({ C, st, isMobile, profile, tree, refs, funds, counterparti
         )}
 
         <div style={{ ...st.mdGrid, ...(isMobile ? { gridTemplateColumns: "1fr" } : {}) }}>
-          <Field st={st} label="От поста">
-            <select style={st.mdSelect} className="fin" value={f.positionId} onChange={set("positionId")} autoFocus>
+          <Field st={st} label="Должность (от поста)">
+            <select style={st.mdSelect} className="fin" value={f.positionId} onChange={set("positionId")}>
               <option value="">— выберите —</option>
               {myPositions.map((p) => <option key={p.id} value={p.id}>{p.code} · {p.name}</option>)}
             </select>
           </Field>
-          <Field st={st} label="Точка">
-            <select style={st.mdSelect} className="fin" value={f.locationId} onChange={set("locationId")}>
-              <option value="">— выберите —</option>
-              {refs.locations.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
+          <Field st={st} label="К рассмотрению на ФП">
+            <select style={st.mdSelect} className="fin" value={f.periodId} onChange={set("periodId")}>
+              <option value="">— выберите неделю —</option>
+              {openPeriods.map((p) => <option key={p.id} value={p.id}>{periodTitle(p)}</option>)}
             </select>
           </Field>
 
-          <Field st={st} label="Статья расхода (РД)" full>
-            <select style={st.mdSelect} className="fin" value={f.typeId} onChange={set("typeId")}>
-              <option value="">— выберите —</option>
+          <Field st={st} label="Вид расхода" full>
+            <select style={st.mdSelect} className="fin" value={f.typeId} onChange={onType}>
+              <option value="">— не выбран —</option>
               {groups.map((g) => (
                 <optgroup key={g.root.id} label={`${g.root.code || ""} ${g.root.name}`}>
                   {g.leaves.map((l) => <option key={l.id} value={l.id}>{l.code ? `${l.code} · ` : ""}{l.name}</option>)}
@@ -549,39 +581,31 @@ function RequestForm({ C, st, isMobile, profile, tree, refs, funds, counterparti
             </select>
           </Field>
 
-          <Field st={st} label="Плановая сумма">
-            <input style={st.mdInput} className="fin" inputMode="decimal" placeholder="0.00"
-              value={f.amount} onChange={set("amount")} />
-          </Field>
-          <Field st={st} label="Валюта">
-            <select style={st.mdSelect} className="fin" value={f.currencyId} onChange={set("currencyId")}>
-              {refs.currencies.map((c) => <option key={c.id} value={c.id}>{c.code} — {c.name}</option>)}
-            </select>
+          <Field st={st} label="Цель расхода" full>
+            <input style={st.mdInput} className="fin" placeholder="Подставится по виду расхода — можно изменить"
+              value={f.purpose} onChange={set("purpose")} />
           </Field>
 
-          <Field st={st} label="Способ оплаты">
-            <select style={st.mdSelect} className="fin" value={f.payTypeId} onChange={set("payTypeId")}>
-              <option value="">—</option>
-              {refs.payTypes.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-            </select>
-          </Field>
-          <Field st={st} label="Контрагент">
-            <select style={st.mdSelect} className="fin" value={f.counterpartyId} onChange={set("counterpartyId")}>
-              <option value="">—</option>
-              {counterparties.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
-          </Field>
-
-          <Field st={st} label="Фонд-источник (предложение, назначается при одобрении)" full>
+          <Field st={st} label="Источник — фонд (подставляется по виду расхода, назначается при одобрении)" full>
             <select style={st.mdSelect} className="fin" value={f.fundId} onChange={set("fundId")}>
-              <option value="">—</option>
+              <option value="">— не выбран —</option>
               {funds.map((fd) => <option key={fd.id} value={fd.id}>{fd.code} — {fd.name} ({fmt(Number(fd.balance))})</option>)}
             </select>
           </Field>
 
-          <Field st={st} label="Данные (факты, цифры)" full>{area("cswData", "Что известно: счёт, цены, объёмы…")}</Field>
+          <Field st={st} label="Сумма">
+            <input style={st.mdInput} className="fin" inputMode="decimal" placeholder="0.00"
+              value={f.amount} onChange={set("amount")} />
+          </Field>
+
           <Field st={st} label="Ситуация (что происходит)" full>{area("cswSituation", "Почему возник расход, что будет без него…")}</Field>
-          <Field st={st} label="Предлагаемое решение" full>{area("cswSolution", "Что предлагаете сделать и сколько это стоит…")}</Field>
+          <Field st={st} label="Данные (факты, цифры)" full>{area("cswData", "Что известно: счёт, цены, объёмы…")}</Field>
+          <Field st={st} label="Решение (что предлагаете)" full>{area("cswSolution", "Что предлагаете сделать и сколько это стоит…")}</Field>
+
+          <Field st={st} label="Метки (через запятую)" full>
+            <input style={st.mdInput} className="fin" placeholder="напр. срочно, кухня, ремонт"
+              value={f.tags} onChange={set("tags")} />
+          </Field>
         </div>
 
         {err && <div style={st.reqError}><AlertCircle size={15} /> {err}</div>}
