@@ -52,11 +52,18 @@ export function App({ onLogout }) {
   const [profileOpen, setProfileOpen] = useState(false);
   const navList = MODULE_NAV[activeModule] || [];
   // На телефоне прокручиваем ленту разделов так, чтобы активный был по центру
+  const navBarRef = useRef(null);
   const activeNavRef = useRef(null);
   useEffect(() => {
-    if (isMobile && activeNavRef.current) {
-      activeNavRef.current.scrollIntoView({ inline: "center", block: "nearest" });
-    }
+    if (!isMobile) return;
+    const center = () => {
+      const nav = navBarRef.current, el = activeNavRef.current;
+      if (!nav || !el) return;
+      nav.scrollLeft = el.offsetLeft - (nav.clientWidth - el.offsetWidth) / 2;
+    };
+    const r = requestAnimationFrame(center);
+    const t = setTimeout(center, 200);  // повтор после загрузки шрифтов/раскладки
+    return () => { cancelAnimationFrame(r); clearTimeout(t); };
   }, [active, activeModule, isMobile]);
   const pick = (key) => { setActive(key); setMenuOpen(false); };
   const pickModule = (key) => {
@@ -125,7 +132,7 @@ export function App({ onLogout }) {
         </div>
       </header>
 
-      <nav style={st.modBar}>
+      <nav ref={navBarRef} style={st.modBar}>
         {navList.map((n) => { const Icon = n.icon; const on = active === n.key; return (
           <div key={n.key} ref={on ? activeNavRef : null} style={{ ...st.mod, ...(on ? st.modActive : {}) }} className="mod" onClick={() => pick(n.key)}>
             <Icon size={17} strokeWidth={2} color={on ? C.green : C.sub} /><span>{n.label}</span>
