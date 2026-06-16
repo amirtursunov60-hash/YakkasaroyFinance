@@ -346,6 +346,11 @@ export function Directive() {
     finally { setBusy(null); }
   };
 
+  // Звук на результат любой операции Директивы (этапы, закрытие периода, перенос
+  // остатков, калькулятор фонда, запрет подачи) — через появление сообщения.
+  useEffect(() => { if (done) feedbackSuccess(); }, [done]);
+  useEffect(() => { if (err) feedbackError(); }, [err]);
+
   if (loading || periodsLoading) return <div style={st.empty}><Loader2 size={18} className="spin" /> Загрузка…</div>;
 
   return (<>
