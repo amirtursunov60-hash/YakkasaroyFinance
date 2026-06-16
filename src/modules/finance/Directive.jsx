@@ -621,7 +621,7 @@ function RequestReviewControls({ C, st, isMobile, item, funds, isFinAdmin, busy,
           </select>
         </div>
         <div style={st.reqField}>
-          <span style={st.reqFieldLbl}>Одобренная сумма</span>
+          <span style={st.reqFieldLbl}>Одобрить сумму</span>
           <input style={st.mdInput} className="fin" inputMode="decimal" value={amount}
             onChange={(e) => setAmount(e.target.value)} onWheel={(e) => e.target.blur()} />
         </div>
