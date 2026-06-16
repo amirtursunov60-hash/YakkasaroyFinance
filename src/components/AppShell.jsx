@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { X, Menu, User2, Settings, LogOut, Sun, Moon } from "lucide-react";
 import { Stub } from "./common";
 import { MODULES, MODULE_NAV } from "../data/navigation";
@@ -51,6 +51,20 @@ export function App({ onLogout }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const navList = MODULE_NAV[activeModule] || [];
+  // На телефоне прокручиваем ленту разделов так, чтобы активный был по центру
+  const navBarRef = useRef(null);
+  const activeNavRef = useRef(null);
+  useEffect(() => {
+    if (!isMobile) return;
+    const center = () => {
+      const nav = navBarRef.current, el = activeNavRef.current;
+      if (!nav || !el) return;
+      nav.scrollLeft = el.offsetLeft - (nav.clientWidth - el.offsetWidth) / 2;
+    };
+    const r = requestAnimationFrame(center);
+    const t = setTimeout(center, 200);  // повтор после загрузки шрифтов/раскладки
+    return () => { cancelAnimationFrame(r); clearTimeout(t); };
+  }, [active, activeModule, isMobile]);
   const pick = (key) => { setActive(key); setMenuOpen(false); };
   const pickModule = (key) => {
     if (!MODULE_NAV[key]) return;
@@ -70,10 +84,10 @@ export function App({ onLogout }) {
         <div style={{ ...st.brand, ...(isMobile ? { gap: 7 } : {}) }}>
           <div style={{
             display: "grid", placeItems: "center", flexShrink: 0,
-            width: isMobile ? 36 : 40, height: isMobile ? 36 : 40, borderRadius: 11,
+            width: 40, height: 40, borderRadius: "50%",
             background: `linear-gradient(135deg, #14271d, #0b1611)`,
             border: `1px solid ${C.green}3a`,
-            boxShadow: `0 4px 14px ${C.green}33, inset 0 1px 0 ${C.glassHi}`,
+            boxShadow: `0 4px 14px ${C.green}55, inset 0 1px 0 rgba(255,255,255,0.35)`,
           }}>
             <img src="/icons/logo-mark.png" alt="Яккасарой"
               style={{ width: "84%", height: "84%", objectFit: "contain" }} />
@@ -118,9 +132,9 @@ export function App({ onLogout }) {
         </div>
       </header>
 
-      <nav style={st.modBar}>
+      <nav ref={navBarRef} style={st.modBar}>
         {navList.map((n) => { const Icon = n.icon; const on = active === n.key; return (
-          <div key={n.key} style={{ ...st.mod, ...(on ? st.modActive : {}) }} className="mod" onClick={() => pick(n.key)}>
+          <div key={n.key} ref={on ? activeNavRef : null} style={{ ...st.mod, ...(on ? st.modActive : {}) }} className="mod" onClick={() => pick(n.key)}>
             <Icon size={17} strokeWidth={2} color={on ? C.green : C.sub} /><span>{n.label}</span>
           </div>); })}
       </nav>

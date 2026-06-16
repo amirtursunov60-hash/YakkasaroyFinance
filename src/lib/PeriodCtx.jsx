@@ -147,7 +147,7 @@ export function WeekPicker() {
       </button>
       {open && (<>
         <div style={st.weekOverlay} onClick={() => setOpen(false)} />
-        <div style={{ ...st.weekMenu, top: 44 }}>
+        <div style={{ ...st.weekMenu, top: 44, ...(isMobile ? { position: "fixed", top: "calc(env(safe-area-inset-top) + 52px)", left: 10, right: 10, width: "auto" } : {}) }}>
           <div style={{ ...st.weekMenuHead, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <span>Периоды ФП</span>
             <button style={{ ...st.iconBtn, color: C.green }} className="btn" title="Добавить неделю"
@@ -209,7 +209,7 @@ export function LocationPicker() {
       </button>
       {open && (<>
         <div style={st.weekOverlay} onClick={() => setOpen(false)} />
-        <div style={{ ...st.weekMenu, top: 44, width: 230 }}>
+        <div style={{ ...st.weekMenu, top: 44, width: 230, ...(isMobile ? { position: "fixed", top: "calc(env(safe-area-inset-top) + 52px)", left: 10, right: 10, width: "auto" } : {}) }}>
           <div style={st.weekMenuHead}>Точка</div>
           <button style={{ ...st.weekOption, ...(locationId === null ? st.weekOptionOn : {}) }} className="weekOpt"
             onClick={() => { setLocationId(null); setOpen(false); }}>
