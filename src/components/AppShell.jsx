@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { X, Menu, User2, Settings, LogOut, Sun, Moon } from "lucide-react";
 import { Stub } from "./common";
 import { MODULES, MODULE_NAV } from "../data/navigation";
@@ -51,6 +51,13 @@ export function App({ onLogout }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const navList = MODULE_NAV[activeModule] || [];
+  // На телефоне прокручиваем ленту разделов так, чтобы активный был по центру
+  const activeNavRef = useRef(null);
+  useEffect(() => {
+    if (isMobile && activeNavRef.current) {
+      activeNavRef.current.scrollIntoView({ inline: "center", block: "nearest" });
+    }
+  }, [active, activeModule, isMobile]);
   const pick = (key) => { setActive(key); setMenuOpen(false); };
   const pickModule = (key) => {
     if (!MODULE_NAV[key]) return;
@@ -120,7 +127,7 @@ export function App({ onLogout }) {
 
       <nav style={st.modBar}>
         {navList.map((n) => { const Icon = n.icon; const on = active === n.key; return (
-          <div key={n.key} style={{ ...st.mod, ...(on ? st.modActive : {}) }} className="mod" onClick={() => pick(n.key)}>
+          <div key={n.key} ref={on ? activeNavRef : null} style={{ ...st.mod, ...(on ? st.modActive : {}) }} className="mod" onClick={() => pick(n.key)}>
             <Icon size={17} strokeWidth={2} color={on ? C.green : C.sub} /><span>{n.label}</span>
           </div>); })}
       </nav>
