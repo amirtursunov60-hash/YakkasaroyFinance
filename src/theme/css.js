@@ -2,6 +2,9 @@
 export const makeCss = (C) => `
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
   *{box-sizing:border-box;}
+  /* Фон и на html — иначе за статус-баром (safe-area сверху) на iOS просвечивает
+     белый, т.к. body с background-attachment:fixed туда не красит. */
+  html{background:${C.pageGrad};}
   body{background:${C.pageGrad};background-attachment:fixed;}
   .nav:hover{background:${C.navHover};}
   .mod:hover{color:${C.text};}
