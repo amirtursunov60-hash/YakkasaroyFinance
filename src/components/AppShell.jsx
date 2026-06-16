@@ -51,7 +51,7 @@ export function App({ onLogout }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const navList = MODULE_NAV[activeModule] || [];
-  // На телефоне прокручиваем ленту разделов так, чтобы активный был по центру
+  // На телефоне плавно прокручиваем ленту разделов так, чтобы активный был по центру
   const navBarRef = useRef(null);
   const activeNavRef = useRef(null);
   useEffect(() => {
@@ -59,17 +59,21 @@ export function App({ onLogout }) {
     const center = () => {
       const nav = navBarRef.current, el = activeNavRef.current;
       if (!nav || !el) return;
-      nav.scrollLeft = el.offsetLeft - (nav.clientWidth - el.offsetWidth) / 2;
+      const target = el.offsetLeft - (nav.clientWidth - el.offsetWidth) / 2;
+      nav.scrollTo({ left: Math.max(0, target), behavior: "smooth" });
     };
     const r = requestAnimationFrame(center);
-    const t = setTimeout(center, 200);  // повтор после загрузки шрифтов/раскладки
+    const t = setTimeout(center, 220);  // повтор после загрузки шрифтов/раскладки
     return () => { cancelAnimationFrame(r); clearTimeout(t); };
   }, [active, activeModule, isMobile]);
   const pick = (key) => { setActive(key); setMenuOpen(false); };
+  // Раздел по умолчанию при переходе в модуль: для «Финансов» — Директива
+  const defaultSection = (key) => (key === "finance" ? "directive" : MODULE_NAV[key][0].key);
   const pickModule = (key) => {
     if (!MODULE_NAV[key]) return;
     setActiveModule(key);
-    setActive(MODULE_NAV[key][0].key);
+    const def = defaultSection(key);
+    setActive(MODULE_NAV[key].some((n) => n.key === def) ? def : MODULE_NAV[key][0].key);
     setMenuOpen(false);
   };
   return (
