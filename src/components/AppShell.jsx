@@ -18,6 +18,7 @@ import { Requests } from "../modules/finance/Requests";
 import { Suppliers } from "../modules/finance/Suppliers";
 import { Obligations } from "../modules/finance/Obligations";
 import { OrgModule } from "../modules/org/OrgModule";
+import { MenuModule } from "../modules/menu/MenuModule";
 import { RestMenu } from "../modules/restaurant/RestMenu";
 import { RestOrders } from "../modules/restaurant/RestOrders";
 import { RestStock } from "../modules/restaurant/RestStock";
@@ -199,6 +200,8 @@ export function App({ onLogout }) {
           {activeModule === "restaurant" && active === "r_menu" && <RestMenu />}
           {activeModule === "restaurant" && active === "r_stock" && <RestStock />}
           {activeModule === "restaurant" && active === "r_shifts" && <Stub label="Смены" />}
+
+          {activeModule === "menu" && <MenuModule />}
         </main>
       </div>
     </div>
