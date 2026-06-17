@@ -13,8 +13,8 @@ export function MenuModule() {
         width: "100%",
         // высота под область контента: вычитаем шапку+ленту разделов и отступы;
         // на телефоне ещё safe-area сверху
-        height: isMobile ? "calc(100dvh - 124px - env(safe-area-inset-top))" : "calc(100dvh - 120px)",
-        border: "none", borderRadius: 10, background: "#fff", display: "block",
+        height: isMobile ? "calc(100dvh - 118px - env(safe-area-inset-top))" : "calc(100dvh - 120px)",
+        border: "none", borderRadius: 8, background: "#fff", display: "block",
       }} />
   );
 }

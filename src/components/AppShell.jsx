@@ -67,8 +67,9 @@ export function App({ onLogout }) {
     return () => { cancelAnimationFrame(r); clearTimeout(t); };
   }, [active, activeModule, isMobile]);
   const pick = (key) => { setActive(key); setMenuOpen(false); };
-  // Раздел по умолчанию при переходе в модуль: для «Финансов» — Директива
-  const defaultSection = (key) => (key === "finance" ? "directive" : MODULE_NAV[key][0].key);
+  // Раздел по умолчанию при переходе в модуль: Финансы → Директива, Ресторан → Меню
+  const DEFAULT_SECTION = { finance: "directive", restaurant: "r_menu" };
+  const defaultSection = (key) => DEFAULT_SECTION[key] || MODULE_NAV[key][0].key;
   const pickModule = (key) => {
     if (!MODULE_NAV[key]) return;
     setActiveModule(key);
@@ -169,7 +170,7 @@ export function App({ onLogout }) {
             </div>); })}
         </aside>
 
-        <main style={{ ...st.main, ...(isMobile ? { padding: (activeModule === "restaurant" && active === "r_menu") ? "4px" : "16px 8px 40px" } : {}) }}>
+        <main style={{ ...st.main, ...(isMobile ? { padding: (activeModule === "restaurant" && active === "r_menu") ? "1px" : "16px 8px 40px" } : {}) }}>
           {activeModule === "finance" && active === "control" && <Control />}
           {activeModule === "finance" && active === "directive" && <Directive />}
           {activeModule === "finance" && active === "income" && <Income />}
