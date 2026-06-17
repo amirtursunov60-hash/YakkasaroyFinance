@@ -18,7 +18,7 @@ import { Requests } from "../modules/finance/Requests";
 import { Suppliers } from "../modules/finance/Suppliers";
 import { Obligations } from "../modules/finance/Obligations";
 import { OrgModule } from "../modules/org/OrgModule";
-import { RestMenu } from "../modules/restaurant/RestMenu";
+import { MenuModule } from "../modules/menu/MenuModule";
 import { RestOrders } from "../modules/restaurant/RestOrders";
 import { RestStock } from "../modules/restaurant/RestStock";
 import { RestTables } from "../modules/restaurant/RestTables";
@@ -67,8 +67,9 @@ export function App({ onLogout }) {
     return () => { cancelAnimationFrame(r); clearTimeout(t); };
   }, [active, activeModule, isMobile]);
   const pick = (key) => { setActive(key); setMenuOpen(false); };
-  // Раздел по умолчанию при переходе в модуль: для «Финансов» — Директива
-  const defaultSection = (key) => (key === "finance" ? "directive" : MODULE_NAV[key][0].key);
+  // Раздел по умолчанию при переходе в модуль: Финансы → Директива, Ресторан → Меню
+  const DEFAULT_SECTION = { finance: "directive", restaurant: "r_menu" };
+  const defaultSection = (key) => DEFAULT_SECTION[key] || MODULE_NAV[key][0].key;
   const pickModule = (key) => {
     if (!MODULE_NAV[key]) return;
     setActiveModule(key);
@@ -169,7 +170,7 @@ export function App({ onLogout }) {
             </div>); })}
         </aside>
 
-        <main style={{ ...st.main, ...(isMobile ? { padding: "16px 8px 40px" } : {}) }}>
+        <main style={{ ...st.main, ...(isMobile ? { padding: (activeModule === "restaurant" && active === "r_menu") ? "1px" : "16px 8px 40px" } : {}) }}>
           {activeModule === "finance" && active === "control" && <Control />}
           {activeModule === "finance" && active === "directive" && <Directive />}
           {activeModule === "finance" && active === "income" && <Income />}
@@ -196,7 +197,7 @@ export function App({ onLogout }) {
 
           {activeModule === "restaurant" && active === "r_orders" && <RestOrders />}
           {activeModule === "restaurant" && active === "r_tables" && <RestTables />}
-          {activeModule === "restaurant" && active === "r_menu" && <RestMenu />}
+          {activeModule === "restaurant" && active === "r_menu" && <MenuModule />}
           {activeModule === "restaurant" && active === "r_stock" && <RestStock />}
           {activeModule === "restaurant" && active === "r_shifts" && <Stub label="Смены" />}
         </main>
