@@ -169,7 +169,7 @@ export function App({ onLogout }) {
             </div>); })}
         </aside>
 
-        <main style={{ ...st.main, ...(isMobile ? { padding: "16px 8px 40px" } : {}) }}>
+        <main style={{ ...st.main, ...(isMobile ? { padding: (activeModule === "restaurant" && active === "r_menu") ? "4px" : "16px 8px 40px" } : {}) }}>
           {activeModule === "finance" && active === "control" && <Control />}
           {activeModule === "finance" && active === "directive" && <Directive />}
           {activeModule === "finance" && active === "income" && <Income />}
