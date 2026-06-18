@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from "react";
-import { X, Menu, User2, Settings, LogOut, Sun, Moon, Volume2, VolumeX } from "lucide-react";
+import { X, Menu, User2, Settings, LogOut, Sun, Moon, Volume2, VolumeX, List } from "lucide-react";
 import { Stub } from "./common";
 import { MODULES, MODULE_NAV } from "../data/navigation";
 import { avatarColor } from "../utils/format";
@@ -100,6 +100,24 @@ export function App({ onLogout }) {
         </div>
         <WeekPicker />
         <LocationPicker />
+        {(() => {
+          const regActive = activeModule === "finance" && active === "register";
+          return (
+            <button className="btn" title="Реестр операций"
+              onClick={() => { setActiveModule("finance"); setActive("register"); }}
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 7, flexShrink: 0,
+                height: 38, padding: isMobile ? "0 9px" : "0 12px", borderRadius: 10,
+                cursor: "pointer", fontSize: 13, fontWeight: 600,
+                color: regActive ? C.green : C.text,
+                border: `1px solid ${regActive ? C.green + "66" : C.line}`,
+                background: regActive ? `${C.green}1a` : C.panel2,
+              }}>
+              <List size={18} />
+              {!isMobile && <span>Реестр</span>}
+            </button>
+          );
+        })()}
         {!isMobile && <GlobalSearch onGo={(m, sec) => { setActiveModule(m); setActive(sec); }} />}
         <div style={{ ...st.topRight, ...(isMobile ? { gap: 6, marginLeft: "auto", flexShrink: 0 } : {}) }}>
           <NotifyBell onGo={(m, sec) => { setActiveModule(m); setActive(sec); }} />
