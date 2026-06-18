@@ -44,6 +44,7 @@
 | `20260616170000_avatar_admin_write.sql` | **применён** | админам (`is_fin_admin`) разрешена загрузка/замена аватара любого сотрудника (политики `avatars_insert`/`avatars_update` бакета `avatars` дополнены `OR is_fin_admin()`) |
 | `20260618120000_funds_tab_fields_and_ops.sql` | **применён** | вкладка «Фонды» (`docs/funds-spec.md`): в `funds` — `description`, `color`, `stage` (один этап на фонд, бэкофилл из `distribution_rules`), `no_transfer` (запрет ручного перемещения/возврата), `is_private` (виден только owner/fin_director); enum `register_op_type` += `fund_income`/`fund_return`; RPC `fp_fund_income`/`fp_fund_return`; в `fp_fund_transfer`/`fp_fund_loan` — проверка `no_transfer`; в `fp_pay_request`/`fp_pay_bill` — запрет накопительного фонда; `has_fund_access` учитывает `is_private`. Применено двумя вызовами MCP (enum до использования) |
 | `20260618121000_restore_pay_request_approved_amount.sql` | **применён** | восстановление `fp_pay_request` после предыдущей миграции: вернул блокировку строки `for update` (защита от двойной оплаты) и оплату по `coalesce(approved_amount, planned_amount)`, сохранив проверку накопительного фонда |
+| `20260618130000_set_fund_stage.sql` | **применён** | `fp_set_fund_stage(fund, stage)`: смена этапа фонда переносит его в Директиве — обновляет/сворачивает дефолтное правило `distribution_rules` (income_type_id IS NULL) на новый этап (учитывает UNIQUE (fund_id, stage); ФД6 с двух этапов сворачивается в один). ФРС-правила по видам дохода не трогает. Используется `createFund`/`updateFund` |
 
 ## Тесты БД (pgTAP)
 

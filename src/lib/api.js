@@ -845,10 +845,13 @@ export async function createFund({ code, name, kind, locationId, currencyId, fol
       no_transfer: !!noTransfer, is_private: !!isPrivate })
     .select().single();
   if (error) throw error;
+  // синхронизируем этап с Директивой (создаём дефолтное правило распределения)
+  if (stage) await setFundStage(data.id, stage);
   return data;
 }
 
 // Редактирование фонда (docs/funds-spec.md §8). Передаём только изменяемые поля.
+// Этап (stage) синхронизируется с Директивой через fp_set_fund_stage отдельно.
 export async function updateFund(id, { code, name, kind, locationId, folderId,
   description, color, stage, noTransfer, isPrivate }) {
   const patch = {};
@@ -859,12 +862,23 @@ export async function updateFund(id, { code, name, kind, locationId, folderId,
   if (folderId !== undefined) patch.folder_id = folderId || null;
   if (description !== undefined) patch.description = description || null;
   if (color !== undefined) patch.color = color || null;
-  if (stage !== undefined) patch.stage = stage || null;
   if (noTransfer !== undefined) patch.no_transfer = !!noTransfer;
   if (isPrivate !== undefined) patch.is_private = !!isPrivate;
-  const { data, error } = await supabase.from("funds").update(patch).eq("id", id).select().single();
-  if (error) throw error;
+  let data = null;
+  if (Object.keys(patch).length) {
+    const res = await supabase.from("funds").update(patch).eq("id", id).select().single();
+    if (res.error) throw res.error;
+    data = res.data;
+  }
+  // этап меняем через RPC — он переносит/сворачивает дефолтное правило Директивы
+  if (stage !== undefined) await setFundStage(id, stage || null);
   return data;
+}
+
+// Этап фонда + перенос его дефолтного правила распределения в Директиве.
+export async function setFundStage(fundId, stage) {
+  const { error } = await supabase.rpc("fp_set_fund_stage", { p_fund: fundId, p_stage: stage });
+  if (error) throw error;
 }
 
 // Архивирование фонда (вместо удаления — is_archived, ТЗ-конвенция).
