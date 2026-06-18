@@ -297,9 +297,10 @@ export async function fetchCounterparties() {
   return data;
 }
 
-// Заявки: выбранного периода + все поданные (ещё без периода — период
-// проставляется при одобрении, ТЗ: период одобрения)
-export async function fetchRequests(periodId, locationId) {
+// Заявки показываем ВСЕГДА, независимо от выбранной недели (заказчик): заявка
+// может быть подана в одной неделе, а одобрена/оплачена в другой — она не должна
+// пропадать при переключении периода. Период фиксируется на самой заявке.
+export async function fetchRequests(_periodId, locationId) {
   let q = supabase
     .from("payment_requests")
     .select(`id, number, status, planned_amount, approved_amount, comment, csw_data, csw_situation, csw_solution,
@@ -315,7 +316,6 @@ export async function fetchRequests(periodId, locationId) {
       attachments:request_attachments(id, file_path, file_name)`)
     .order("created_at", { ascending: false });
   if (locationId) q = q.eq("location_id", locationId);
-  q = periodId ? q.or(`period_id.eq.${periodId},status.eq.submitted`) : q.eq("status", "submitted");
   const { data, error } = await q;
   if (error) throw error;
   return data;
@@ -450,7 +450,10 @@ export async function redeemInvite(token, fullName) {
 // поданные (ещё без периода) + одобренные/оплаченные в выбранном периоде.
 // kind: 'supply' — поставщики (продукты/хозтовары), 'obligation' —
 // обязательства (оборудование, услуги, ремонт); без kind — все.
-export async function fetchBills(periodId, kind, locationId) {
+// Счета и обязательства показываем ВСЕГДА, независимо от выбранной недели
+// (заказчик): счёт живёт в двух периодах (одобрения и оплаты) и не должен
+// пропадать при переключении недели. Периоды фиксируются на самом счёте.
+export async function fetchBills(_periodId, kind, locationId) {
   let q = supabase
     .from("supplier_bills")
     .select(`id, number, status, kind, amount, issued_on, due_on, is_recurring, comment,
@@ -468,9 +471,6 @@ export async function fetchBills(periodId, kind, locationId) {
     .order("created_at", { ascending: false });
   if (kind) q = q.eq("kind", kind);
   if (locationId) q = q.eq("location_id", locationId);
-  q = periodId
-    ? q.or(`status.eq.submitted,period_approved_id.eq.${periodId},period_paid_id.eq.${periodId}`)
-    : q.eq("status", "submitted");
   const { data, error } = await q;
   if (error) throw error;
   return data;
