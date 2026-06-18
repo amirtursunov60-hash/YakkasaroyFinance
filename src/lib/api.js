@@ -835,14 +835,57 @@ export async function payPayroll(sheetId, cashAccountId, periodId) {
 }
 
 // ---------------------------------------------------------------- Фонды
-export async function createFund({ code, name, kind, isRestricted, locationId, currencyId, folderId }) {
+export async function createFund({ code, name, kind, locationId, currencyId, folderId,
+  description, color, stage, noTransfer, isPrivate }) {
   const { data, error } = await supabase
     .from("funds")
-    .insert({ code, name, kind, is_restricted: isRestricted, location_id: locationId || null,
-      currency_id: currencyId, folder_id: folderId || null })
+    .insert({ code, name, kind, location_id: locationId || null,
+      currency_id: currencyId, folder_id: folderId || null,
+      description: description || null, color: color || null, stage: stage || null,
+      no_transfer: !!noTransfer, is_private: !!isPrivate })
     .select().single();
   if (error) throw error;
   return data;
+}
+
+// Редактирование фонда (docs/funds-spec.md §8). Передаём только изменяемые поля.
+export async function updateFund(id, { code, name, kind, locationId, folderId,
+  description, color, stage, noTransfer, isPrivate }) {
+  const patch = {};
+  if (code !== undefined) patch.code = code;
+  if (name !== undefined) patch.name = name;
+  if (kind !== undefined) patch.kind = kind;
+  if (locationId !== undefined) patch.location_id = locationId || null;
+  if (folderId !== undefined) patch.folder_id = folderId || null;
+  if (description !== undefined) patch.description = description || null;
+  if (color !== undefined) patch.color = color || null;
+  if (stage !== undefined) patch.stage = stage || null;
+  if (noTransfer !== undefined) patch.no_transfer = !!noTransfer;
+  if (isPrivate !== undefined) patch.is_private = !!isPrivate;
+  const { data, error } = await supabase.from("funds").update(patch).eq("id", id).select().single();
+  if (error) throw error;
+  return data;
+}
+
+// Архивирование фонда (вместо удаления — is_archived, ТЗ-конвенция).
+export async function archiveFund(id) {
+  const { error } = await supabase.from("funds").update({ is_archived: true }).eq("id", id);
+  if (error) throw error;
+}
+
+// Ручной приход средств в фонд (Приход) и изъятие (Возврат) — RPC, строки Реестра.
+export async function fundIncome(fundId, amount, periodId, comment) {
+  const { error } = await supabase.rpc("fp_fund_income", {
+    p_fund: fundId, p_amount: amount, p_period_id: periodId, p_comment: comment || null,
+  });
+  if (error) throw error;
+}
+
+export async function fundReturn(fundId, amount, periodId, comment) {
+  const { error } = await supabase.rpc("fp_fund_return", {
+    p_fund: fundId, p_amount: amount, p_period_id: periodId, p_comment: comment || null,
+  });
+  if (error) throw error;
 }
 
 // История операций между фондами: перемещения, займы, возвраты.
@@ -899,6 +942,37 @@ export async function fundLoanReturn(loanId, amount, periodId, comment) {
     p_loan_id: loanId, p_amount: amount, p_period_id: periodId, p_comment: comment || null,
   });
   if (error) throw error;
+}
+
+// Журнал всех операций по фондам (docs/funds-spec.md §7) — единая лента,
+// без фильтра по датам. Назначение (статья РД) берётся из заявки/счёта.
+export async function fetchFundJournal(limit = 300) {
+  const { data, error } = await supabase
+    .from("fp_register")
+    .select(`id, op_type, fund_id, fund_amount, comment, created_at, period_id,
+      fund:funds(code, name),
+      counterparty:counterparties(name),
+      payment_type:payment_types(name),
+      request:payment_requests(number, expense_type:expense_types(code, name)),
+      bill:supplier_bills(number, expense_type:expense_types(code, name))`)
+    .not("fund_id", "is", null)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return data;
+}
+
+// Займы, в которых участвует фонд (для клика по «Долгу»): как кредитор и как
+// заёмщик, с остатком к возврату. docs/funds-spec.md §8.
+export async function fetchFundLoans(fundId) {
+  const all = await fetchFundOps();
+  return all
+    .filter((o) => o.opType === "fund_loan" && (o.fromFundId === fundId || o.toFundId === fundId))
+    .map((o) => ({
+      ...o,
+      role: o.fromFundId === fundId ? "lender" : "borrower",
+      outstanding: o.amount - (o.returned || 0),
+    }));
 }
 
 // Выписка по фонду из Реестра
@@ -981,10 +1055,42 @@ export async function fetchPeriods(limit = 12) {
 export async function fetchFunds() {
   const { data, error } = await supabase
     .from("funds")
-    .select("id, code, name, kind, is_restricted, balance, folder_id")
+    .select("id, code, name, kind, is_restricted, is_private, no_transfer, stage, color, description, balance, folder_id, location_id")
     .eq("is_archived", false);
   if (error) throw error;
   return data;
+}
+
+// Остаток (одобренное-неоплаченное) по фондам: { [fund_id]: сумма }.
+// Производная (docs/funds-spec.md §11): одобренные, но НЕ оплаченные заявки +
+// одобренные, но не оплаченные счета/обязательства поставщиков. Леджер не трогаем.
+export async function fetchFundCommitments() {
+  const [reqRes, billRes] = await Promise.all([
+    supabase.from("payment_requests")
+      .select("fund_id, planned_amount").eq("status", "approved").not("fund_id", "is", null),
+    supabase.from("supplier_bills")
+      .select("fund_id, amount").eq("status", "approved").eq("is_archived", false).not("fund_id", "is", null),
+  ]);
+  if (reqRes.error) throw reqRes.error;
+  if (billRes.error) throw billRes.error;
+  const m = {};
+  for (const r of reqRes.data) m[r.fund_id] = (m[r.fund_id] || 0) + Number(r.planned_amount || 0);
+  for (const b of billRes.data) m[b.fund_id] = (m[b.fund_id] || 0) + Number(b.amount || 0);
+  return m;
+}
+
+// Долг по фондам: { [fund_id]: сальдо }. Сумма fund_amount по займам и возвратам:
+// − фонду должны (кредитор), + фонд должен (заёмщик). docs/funds-spec.md §4/§11.
+export async function fetchFundDebts() {
+  const { data, error } = await supabase
+    .from("fp_register")
+    .select("fund_id, fund_amount")
+    .in("op_type", ["fund_loan", "fund_loan_return"])
+    .not("fund_id", "is", null);
+  if (error) throw error;
+  const m = {};
+  for (const r of data) m[r.fund_id] = (m[r.fund_id] || 0) + Number(r.fund_amount || 0);
+  return m;
 }
 
 // Правила схемы распределения по умолчанию (income_type_id is null)
