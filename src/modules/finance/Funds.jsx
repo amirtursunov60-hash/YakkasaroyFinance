@@ -333,8 +333,8 @@ export function Funds() {
           ))}
         </div>
 
-        {/* Итого — три столбца (как метрики в карточке); числа переносятся, не режутся */}
-        <div style={{ marginTop: 14, paddingTop: 12, borderTop: `2px solid ${C.line}` }}>
+        {/* Итого — три столбца, выровнены под столбцы карточек (отступ слева как у цвет-метки) */}
+        <div style={{ marginTop: 16, paddingTop: 14, paddingBottom: 10, paddingLeft: 16, paddingRight: 14, borderTop: `2px solid ${C.line}` }}>
           <div style={{ fontSize: 11, color: C.faint, textTransform: "uppercase", letterSpacing: 0.3, fontWeight: 700, marginBottom: 8 }}>Всего по фондам</div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: isMobile ? 6 : 8, fontVariantNumeric: "tabular-nums" }}>
             {[["Остаток", fmt(totals.remaining), C.sub], ["Доступно", fmt(totals.available), availColor(totals.available)], ["Долг", debtLabel(totals.debt), debtColor(totals.debt)]].map(([l, v, col]) => (
