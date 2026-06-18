@@ -331,23 +331,28 @@ export function Funds() {
           ))}
         </div>
 
-        {/* Итого — компактно, влезает на телефоне */}
+        {/* Итого: на телефоне — вертикально (подпись слева, сумма справа), на десктопе — в ряд */}
         <div style={{ marginTop: 14, paddingTop: 12, borderTop: `2px solid ${C.line}` }}>
           <div style={{ fontSize: 11, color: C.faint, textTransform: "uppercase", letterSpacing: 0.3, fontWeight: 700, marginBottom: 8 }}>Всего по фондам</div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, fontVariantNumeric: "tabular-nums" }}>
-            <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: 10, color: C.faint, textTransform: "uppercase" }}>Остаток</div>
-              <div style={{ fontWeight: 800, color: C.sub, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{fmt(totals.remaining)}</div>
+          {isMobile ? (
+            <div style={{ display: "grid", gap: 6, fontVariantNumeric: "tabular-nums" }}>
+              {[["Остаток", fmt(totals.remaining), C.sub], ["Доступно", fmt(totals.available), C.money], ["Долг", debtLabel(totals.debt), debtColor(totals.debt)]].map(([l, v, col]) => (
+                <div key={l} style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12 }}>
+                  <span style={{ fontSize: 12.5, color: C.faint }}>{l}</span>
+                  <b style={{ fontSize: 15, fontWeight: 800, color: col }}>{v}</b>
+                </div>
+              ))}
             </div>
-            <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: 10, color: C.faint, textTransform: "uppercase" }}>Доступно</div>
-              <div style={{ fontWeight: 800, color: C.money, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{fmt(totals.available)}</div>
+          ) : (
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, fontVariantNumeric: "tabular-nums" }}>
+              {[["Остаток", fmt(totals.remaining), C.sub], ["Доступно", fmt(totals.available), C.money], ["Долг", debtLabel(totals.debt), debtColor(totals.debt)]].map(([l, v, col]) => (
+                <div key={l} style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 10, color: C.faint, textTransform: "uppercase" }}>{l}</div>
+                  <div style={{ fontWeight: 800, color: col, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{v}</div>
+                </div>
+              ))}
             </div>
-            <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: 10, color: C.faint, textTransform: "uppercase" }}>Долг</div>
-              <div style={{ fontWeight: 800, color: debtColor(totals.debt), whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{debtLabel(totals.debt)}</div>
-            </div>
-          </div>
+          )}
         </div>
       </section>
     </div>
