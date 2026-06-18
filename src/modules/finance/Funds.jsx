@@ -1,28 +1,41 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { RotateCcw, Ban, ArrowRightLeft, Clock, Lock, Loader2, AlertCircle, CheckCircle2, Plus, X, List, Folder, FolderOpen, ChevronRight , Coins} from "lucide-react";
+import {
+  RotateCcw, ArrowRightLeft, Clock, Lock, Loader2, AlertCircle, CheckCircle2,
+  Plus, X, List, ChevronRight, Pencil, Archive, ArrowDownToLine,
+  ArrowUpFromLine, HandCoins,
+} from "lucide-react";
 import { Stat } from "../../components/common";
 import { useTheme } from "../../theme/theme";
 import { useScrollLock } from "../../hooks/useScrollLock";
 import { fmt } from "../../utils/format";
 import { usePeriod, periodTitle } from "../../lib/PeriodCtx";
 import {
-  fetchFunds, fetchDefaultRules, fetchIncomeRefs, createFund,
-  fetchFundOps, fundTransfer, fundLoan, fundLoanReturn, fetchFundStatement,
-  fetchFundFolders, createFundFolder,
+  fetchFunds, fetchIncomeRefs, createFund, updateFund, archiveFund,
+  fetchFundDebts, fetchFundCommitments, fetchFundJournal, fetchFundLoans,
+  fundTransfer, fundLoan, fundLoanReturn, fundIncome, fundReturn,
+  fetchFundStatement, fetchFundFolders, createFundFolder,
 } from "../../lib/api";
 
-
 // ---------------------------------------------------------------- FUNDS
-// Живые данные (ТЗ v2 §4.1.4): балансы фондов — производная Реестра,
-// операции перемещение / заём с возвратом — серверные функции с парными
-// записями Реестра (pair_id). Закрытые фонды (is_restricted) видны по списку
-// доступа fund_access (RLS). Суммы — в базовой валюте (TJS).
+// Вкладка «Фонды» (docs/funds-spec.md). Колонки: Остаток (одобренное-неоплаченное)
+// · Доступно (свободные деньги) · Долг (сальдо займов: − фонду должны, + фонд
+// должен). Балансы — производная Реестра, движения — серверные RPC. Суммы — TJS.
 
 const STAGE_LABEL = { revenue: "Выручка", margin: "Маржинальный", adjusted: "Скорректированный" };
+const STAGE_OPTS = [
+  { v: "", l: "— не задан —" },
+  { v: "revenue", l: "Выручка" },
+  { v: "margin", l: "Маржинальный доход" },
+  { v: "adjusted", l: "Скорректированный доход" },
+];
+// Готовые цвета-метки фонда (docs/funds-spec.md §10) — работают в обеих темах.
+const FUND_COLORS = ["#3ddc84", "#5b8def", "#e8911c", "#ff6b5e", "#a78bfa", "#2dd4bf", "#f472b6", "#facc15"];
+
 const OP_LABELS = {
   income: "Доход", income_return: "Возврат дохода", distribution: "Распределение",
-  request_payment: "Оплата заявки", bill_payment: "Оплата счёта", payroll_payment: "Выплата ЗП", fund_transfer: "Перемещение",
-  fund_loan: "Заём", fund_loan_return: "Возврат займа", fx_exchange: "Обмен валют",
+  request_payment: "Оплата заявки", bill_payment: "Оплата счёта", payroll_payment: "Выплата ЗП",
+  fund_transfer: "Перемещение", fund_loan: "Заём", fund_loan_return: "Возврат займа",
+  fund_income: "Приход", fund_return: "Возврат", fx_exchange: "Обмен валют",
   cash_transfer: "Перемещение ДС", off_plan: "Вне ФП", adjustment: "Корректировка",
 };
 
@@ -35,13 +48,14 @@ export function Funds() {
   const [err, setErr] = useState("");
   const [done, setDone] = useState("");
   const [funds, setFunds] = useState([]);
-  const [rules, setRules] = useState([]);
-  const [ops, setOps] = useState([]);
+  const [commitments, setCommitments] = useState({});
+  const [debts, setDebts] = useState({});
+  const [journal, setJournal] = useState([]);
   const [busy, setBusy] = useState(null);
   const [statement, setStatement] = useState(null);
-  const [showAdd, setShowAdd] = useState(false);
+  const [editing, setEditing] = useState(null); // фонд для редактирования | "new"
   const [refs, setRefs] = useState(null);
-  const [returning, setReturning] = useState(null); // { op } для частичного возврата
+  const [loansOf, setLoansOf] = useState(null); // { fund, rows } для клика по «Долгу»
   const [folders, setFolders] = useState([]);
   const [openFolders, setOpenFolders] = useState({});
 
@@ -49,19 +63,19 @@ export function Funds() {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [amt, setAmt] = useState("");
-  const [kind, setKind] = useState("move"); // move | loan
+  const [kind, setKind] = useState("move"); // move | loan | income | return
   const [comment, setComment] = useState("");
 
   const load = useCallback(async () => {
     setErr("");
     try {
-      const [fs, rs, opData, refData, fl] = await Promise.all([
-        fetchFunds(), fetchDefaultRules(), fetchFundOps(), fetchIncomeRefs(),
-        fetchFundFolders(),
+      const [fs, comm, dbt, jr, refData, fl] = await Promise.all([
+        fetchFunds(), fetchFundCommitments(), fetchFundDebts(), fetchFundJournal(),
+        fetchIncomeRefs(), fetchFundFolders(),
       ]);
       const sorted = fs.sort((a, b) => a.code.localeCompare(b.code, "ru", { numeric: true }));
-      setFunds(sorted); setRules(rs); setOps(opData); setRefs(refData);
-      setFolders(fl);
+      setFunds(sorted); setCommitments(comm); setDebts(dbt); setJournal(jr);
+      setRefs(refData); setFolders(fl);
       setFrom((f) => f || sorted.find((x) => x.code === "FD6")?.id || sorted[0]?.id || "");
       setTo((t) => t || sorted.find((x) => x.code === "FD3")?.id || sorted[1]?.id || "");
     } catch (e) {
@@ -74,46 +88,48 @@ export function Funds() {
 
   const fundById = useMemo(() => Object.fromEntries(funds.map((f) => [f.id, f])), [funds]);
   const nameOf = (id) => { const f = fundById[id]; return f ? `${f.code} — ${f.name}` : "?"; };
-  // Этапы пополнения фонда по правилам схемы (этап — свойство правила, не фонда)
-  const stagesOf = useMemo(() => {
-    const m = {};
-    rules.forEach((r) => { (m[r.fund_id] ??= new Set()).add(STAGE_LABEL[r.stage] || r.stage); });
-    return m;
-  }, [rules]);
 
-  const total = useMemo(() => funds.reduce((a, f) => a + Number(f.balance || 0), 0), [funds]);
-  const working = funds.filter((f) => f.kind === "working");
-  const saving = funds.filter((f) => f.kind === "accumulative");
-  const openLoans = ops.filter((o) => o.opType === "fund_loan" && o.returned < o.amount);
+  // Производные метрики фонда: Остаток / Доступно / Долг
+  const metrics = useCallback((f) => {
+    const remaining = Number(commitments[f.id] || 0);
+    const available = Number(f.balance || 0) - remaining;
+    const debt = Number(debts[f.id] || 0);
+    return { remaining, available, debt };
+  }, [commitments, debts]);
 
-  const doTransfer = async () => {
+  const totals = useMemo(() => funds.reduce((a, f) => {
+    const m = metrics(f);
+    a.available += m.available; a.remaining += m.remaining; a.debt += m.debt;
+    return a;
+  }, { available: 0, remaining: 0, debt: 0 }), [funds, metrics]);
+
+  const colorOf = (f, i) => f.color || FUND_COLORS[i % FUND_COLORS.length];
+  const availableOf = (id) => { const f = fundById[id]; return f ? metrics(f).available : 0; };
+
+  const doOperation = async () => {
     if (busy) return;
     const a = parseFloat(String(amt).replace(",", "."));
     setErr(""); setDone("");
     if (!a || a <= 0) return setErr("Укажите сумму больше нуля");
-    if (!from || !to || from === to) return setErr("Выберите два разных фонда");
+    if (!comment.trim()) return setErr("Комментарий обязателен");
     if (!periodId) return setErr("Нет выбранного периода ФП — добавьте неделю в шапке");
+    const twoFunds = kind === "move" || kind === "loan";
+    if (twoFunds && (!from || !to || from === to)) return setErr("Выберите два разных фонда");
+    if ((kind === "move" || kind === "loan" || kind === "return") && a > availableOf(from) + 0.009)
+      return setErr(`Доступно только ${fmt(availableOf(from))} TJS`);
+    if (kind === "income" && !to) return setErr("Выберите фонд");
     setBusy("op");
     try {
-      if (kind === "move") await fundTransfer(from, to, a, periodId, comment.trim() || null);
-      else await fundLoan(from, to, a, periodId, comment.trim() || null);
+      const c = comment.trim();
+      if (kind === "move") await fundTransfer(from, to, a, periodId, c);
+      else if (kind === "loan") await fundLoan(from, to, a, periodId, c);
+      else if (kind === "income") await fundIncome(to, a, periodId, c);
+      else if (kind === "return") await fundReturn(from, a, periodId, c);
       await load();
       setAmt(""); setComment("");
-      setDone(`${kind === "move" ? "Перемещено" : "Выдан заём"}: ${fmt(a)} TJS · ${nameOf(from)} → ${nameOf(to)}`);
-    } catch (e) { setErr(e?.message || String(e)); }
-    finally { setBusy(null); }
-  };
-
-  const doReturn = async (op, amount) => {
-    if (busy) return;
-    setErr(""); setDone("");
-    if (!periodId) return setErr("Нет выбранного периода ФП");
-    setBusy(`ret:${op.id}`);
-    try {
-      await fundLoanReturn(op.id, amount, periodId, null);
-      await load();
-      setReturning(null);
-      setDone(`Возврат займа: ${fmt(amount)} TJS · ${nameOf(op.toFundId)} → ${nameOf(op.fromFundId)}`);
+      const labels = { move: "Перемещено", loan: "Выдан заём", income: "Оприходовано", return: "Изъято" };
+      const where = kind === "income" ? nameOf(to) : kind === "return" ? nameOf(from) : `${nameOf(from)} → ${nameOf(to)}`;
+      setDone(`${labels[kind]}: ${fmt(a)} TJS · ${where}`);
     } catch (e) { setErr(e?.message || String(e)); }
     finally { setBusy(null); }
   };
@@ -127,15 +143,61 @@ export function Funds() {
     finally { setBusy(null); }
   };
 
+  const openLoans = async (fund) => {
+    setBusy(`loans:${fund.id}`); setErr("");
+    try {
+      const rows = await fetchFundLoans(fund.id);
+      setLoansOf({ fund, rows });
+    } catch (e) { setErr(e?.message || String(e)); }
+    finally { setBusy(null); }
+  };
+
+  const doReturnLoan = async (op, amount) => {
+    setBusy(`ret:${op.id}`); setErr(""); setDone("");
+    if (!periodId) { setBusy(null); return setErr("Нет выбранного периода ФП"); }
+    try {
+      await fundLoanReturn(op.id, amount, periodId, null);
+      await load();
+      setLoansOf(null);
+      setDone(`Возврат займа: ${fmt(amount)} TJS · ${nameOf(op.toFundId)} → ${nameOf(op.fromFundId)}`);
+    } catch (e) { setErr(e?.message || String(e)); }
+    finally { setBusy(null); }
+  };
+
+  const doArchive = async (fund) => {
+    setBusy(`arch:${fund.id}`); setErr(""); setDone("");
+    try {
+      await archiveFund(fund.id);
+      await load();
+      setEditing(null);
+      setDone(`Фонд ${fund.code} архивирован`);
+    } catch (e) { setErr(e?.message || String(e)); }
+    finally { setBusy(null); }
+  };
+
   if (loading || periodsLoading) return <div style={st.empty}><Loader2 size={18} className="spin" /> Загрузка…</div>;
 
-  const selStyle = { ...st.reqSelect, minWidth: isMobile ? "100%" : 200 };
-  const typeBadge = (kind) => ({
-    fontSize: 10.5, fontWeight: 700, padding: "3px 9px", borderRadius: 20, whiteSpace: "nowrap",
-    color: kind === "working" ? C.green : C.info,
-    background: kind === "working" ? `${C.green}1a` : `${C.info}1a`,
+  const selStyle = { ...st.reqSelect, minWidth: isMobile ? "100%" : 190 };
+  const typeBadge = (k) => ({
+    fontSize: 10.5, fontWeight: 700, padding: "2px 8px", borderRadius: 20, whiteSpace: "nowrap",
+    color: k === "working" ? C.green : C.info, background: k === "working" ? `${C.green}1a` : `${C.info}1a`,
   });
-  const GRID = isMobile ? "1fr 120px" : "1fr 190px 130px 150px 90px";
+  const twoFunds = kind === "move" || kind === "loan";
+  const GRID = isMobile ? "1fr 104px" : "1fr 120px 120px 120px 132px";
+
+  // Долг: − фонду должны (хорошо, зелёный money), + фонд должен (danger)
+  const debtColor = (d) => d < -0.009 ? C.money : d > 0.009 ? C.danger : C.faint;
+  const debtLabel = (d) => d === 0 ? "—" : (d > 0 ? "+" : "") + fmt(d);
+
+  // строки списка: сначала фонды без секции, потом секции с детьми
+  const rows = [
+    ...funds.filter((f) => !f.folder_id).map((f) => ({ fund: f })),
+    ...Object.entries(funds.filter((f) => f.folder_id).reduce((m, f) => { (m[f.folder_id] ??= []).push(f); return m; }, {}))
+      .flatMap(([fid, children]) => [
+        { section: fid, children },
+        ...(openFolders[fid] ? children.map((c) => ({ fund: c, child: true })) : []),
+      ]),
+  ];
 
   return (<>
     <section style={st.hero}>
@@ -148,10 +210,10 @@ export function Funds() {
           </div>
         </div>
         <div style={st.heroStats}>
-          <Stat label="Всего в фондах" value={fmt(total)} unit="TJS" accent />
-          <Stat label="Рабочих фондов" value={String(working.length)} unit="" />
-          <Stat label="Накопительных" value={String(saving.length)} unit="" />
-          <Stat label="Открытых займов" value={String(openLoans.length)} unit="" />
+          <Stat label="Всего доступно" value={fmt(totals.available)} unit="TJS" accent />
+          <Stat label="К оплате (остаток)" value={fmt(totals.remaining)} unit="TJS" />
+          <Stat label="Сальдо долгов" value={debtLabel(totals.debt)} unit="TJS" />
+          <Stat label="Фондов" value={String(funds.length)} unit="" />
         </div>
       </div>
     </section>
@@ -159,12 +221,12 @@ export function Funds() {
     {err && <div style={{ ...st.reqError, marginBottom: 14 }}><AlertCircle size={15} /> {err}</div>}
     {done && <div style={{ ...st.reqError, marginBottom: 14, color: C.green, background: `${C.green}1a`, borderColor: `${C.green}44` }}><CheckCircle2 size={15} /> {done}</div>}
 
-    {/* Операция: перемещение / заём */}
+    {/* Операция с фондами: перемещение / заём / приход / возврат */}
     {isFinAdmin && (
       <section style={st.fpCard}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
           <ArrowRightLeft size={18} color={C.green} />
-          <h3 style={st.reqSectionTitle}>Операция между фондами</h3>
+          <h3 style={st.reqSectionTitle}>Операция с фондами</h3>
         </div>
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "flex-end" }}>
           <label style={st.reqField}>
@@ -172,33 +234,42 @@ export function Funds() {
             <select style={selStyle} className="fin" value={kind} onChange={(e) => setKind(e.target.value)}>
               <option value="move">Перемещение</option>
               <option value="loan">Заём (с возвратом)</option>
+              <option value="income">Приход</option>
+              <option value="return">Возврат (изъятие)</option>
             </select>
           </label>
-          <label style={st.reqField}>
-            <span style={st.reqFieldLbl}>Из фонда · доступно {fmt(Number(fundById[from]?.balance || 0))}</span>
-            <select style={selStyle} className="fin" value={from} onChange={(e) => setFrom(e.target.value)}>
-              {funds.map((f) => <option key={f.id} value={f.id}>{f.code} — {f.name}</option>)}
-            </select>
-          </label>
-          <label style={st.reqField}>
-            <span style={st.reqFieldLbl}>В фонд</span>
-            <select style={selStyle} className="fin" value={to} onChange={(e) => setTo(e.target.value)}>
-              {funds.map((f) => <option key={f.id} value={f.id}>{f.code} — {f.name}</option>)}
-            </select>
-          </label>
+          {(twoFunds || kind === "return") && (
+            <label style={st.reqField}>
+              <span style={st.reqFieldLbl}>{kind === "loan" ? "Кредитор" : "Из фонда"} · доступно {fmt(availableOf(from))}</span>
+              <select style={selStyle} className="fin" value={from} onChange={(e) => setFrom(e.target.value)}>
+                {funds.map((f) => <option key={f.id} value={f.id}>{f.code} — {f.name}</option>)}
+              </select>
+            </label>
+          )}
+          {(twoFunds || kind === "income") && (
+            <label style={st.reqField}>
+              <span style={st.reqFieldLbl}>{kind === "loan" ? "Заёмщик" : "В фонд"}</span>
+              <select style={selStyle} className="fin" value={to} onChange={(e) => setTo(e.target.value)}>
+                {funds.map((f) => <option key={f.id} value={f.id}>{f.code} — {f.name}</option>)}
+              </select>
+            </label>
+          )}
           <label style={st.reqField}>
             <span style={st.reqFieldLbl}>Сумма, TJS</span>
             <input type="number" inputMode="decimal" value={amt} onChange={(e) => setAmt(e.target.value)}
               onWheel={(e) => e.target.blur()} placeholder="0" style={{ ...st.numInput, width: "100%" }} className="amtIn" />
           </label>
           <label style={{ ...st.reqField, flex: 1, minWidth: 160 }}>
-            <span style={st.reqFieldLbl}>Комментарий</span>
+            <span style={st.reqFieldLbl}>Комментарий (обязательно)</span>
             <input style={st.mdInput} className="fin" placeholder="Назначение…"
               value={comment} onChange={(e) => setComment(e.target.value)} />
           </label>
-          <button style={{ ...st.btnGreen, opacity: busy === "op" ? 0.7 : 1 }} className="btn" onClick={doTransfer} disabled={!!busy}>
-            {busy === "op" ? <Loader2 size={15} className="spin" /> : <ArrowRightLeft size={15} />}
-            {kind === "move" ? " Переместить" : " Одолжить"}
+          <button style={{ ...st.btnGreen, opacity: busy === "op" ? 0.7 : 1 }} className="btn" onClick={doOperation} disabled={!!busy}>
+            {busy === "op" ? <Loader2 size={15} className="spin" />
+              : kind === "income" ? <ArrowDownToLine size={15} />
+              : kind === "return" ? <ArrowUpFromLine size={15} />
+              : kind === "loan" ? <HandCoins size={15} /> : <ArrowRightLeft size={15} />}
+            {kind === "move" ? " Переместить" : kind === "loan" ? " Одолжить" : kind === "income" ? " Оприходовать" : " Изъять"}
           </button>
         </div>
       </section>
@@ -211,72 +282,95 @@ export function Funds() {
           <div style={st.cardTitle}>Остатки по фондам</div>
           <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
             {isFinAdmin && (
-              <button style={st.btnGhost} className="btn" onClick={() => setShowAdd(true)}>
+              <button style={st.btnGhost} className="btn" onClick={() => setEditing("new")}>
                 <Plus size={15} /> {!isMobile && "Новый фонд"}
               </button>
             )}
-            <div style={st.cardTotal}>{fmt(total)} <span style={st.unit}>TJS</span></div>
+            <div style={st.cardTotal}>{fmt(totals.available)} <span style={st.unit}>TJS</span></div>
           </div>
         </div>
         <div style={{ ...st.frow, ...st.frowHead, gridTemplateColumns: GRID }}>
           <div style={st.fName}>Фонд</div>
-          {!isMobile && <div style={st.fPct}>Этап распределения</div>}
-          {!isMobile && <div style={st.fPct}>Тип</div>}
+          {!isMobile && <div style={st.fNum}>Остаток</div>}
           <div style={st.fNum}>Доступно</div>
+          {!isMobile && <div style={st.fNum}>Долг</div>}
           {!isMobile && <div style={st.fNum} />}
         </div>
-        {[...funds.filter((f) => !f.folder_id),
-          ...Object.entries(funds.filter((f) => f.folder_id).reduce((m, f) => { (m[f.folder_id] ??= []).push(f); return m; }, {}))
-            .flatMap(([fid, children]) => [{ __folder: fid, children }, ...(openFolders[fid] ? children.map((c) => ({ ...c, __child: true })) : [])]),
-        ].map((f) => f.__folder ? (
-          <div key={"folder" + f.__folder} style={{ ...st.frow, gridTemplateColumns: GRID, cursor: "pointer", background: C.panel2 }} className="frow"
-            onClick={() => setOpenFolders((o) => ({ ...o, [f.__folder]: !o[f.__folder] }))}>
-            <div style={st.fName}>
-              <div style={st.fundTop}>
-                {openFolders[f.__folder] ? <FolderOpen size={15} color={C.warning} /> : <Folder size={15} color={C.warning} />}
-                <b>{folders.find((x) => x.id === f.__folder)?.name || "Папка"}</b>
-                <span style={{ fontSize: 11, color: C.faint }}>· {f.children.length} фонд(ов)</span>
-                <ChevronRight size={14} style={{ transform: openFolders[f.__folder] ? "rotate(90deg)" : "none", transition: "transform .2s", color: C.faint }} />
+
+        {rows.map((r, i) => r.section ? (() => {
+          const sub = r.children.reduce((acc, c) => { const m = metrics(c); acc.av += m.available; return acc; }, { av: 0 });
+          const open = openFolders[r.section];
+          return (
+            <div key={"sec" + r.section} style={{ ...st.frow, gridTemplateColumns: GRID, cursor: "pointer", background: C.panel2, borderRadius: 10 }} className="frow"
+              onClick={() => setOpenFolders((o) => ({ ...o, [r.section]: !o[r.section] }))}>
+              <div style={st.fName}>
+                <div style={st.fundTop}>
+                  <ChevronRight size={15} style={{ transform: open ? "rotate(90deg)" : "none", transition: "transform .2s", color: C.green }} />
+                  <b style={{ textTransform: "uppercase", fontSize: 12, letterSpacing: 0.4 }}>{folders.find((x) => x.id === r.section)?.name || "Раздел"}</b>
+                  <span style={{ fontSize: 11, color: C.faint }}>· {r.children.length}</span>
+                </div>
               </div>
+              {!isMobile && <div style={st.fNum} />}
+              <div style={{ ...st.fNum, fontWeight: 700 }}>{fmt(sub.av)}</div>
+              {!isMobile && <div style={st.fNum} />}
+              {!isMobile && <div />}
             </div>
-            {!isMobile && <div style={st.fPct} />}
-            {!isMobile && <div style={st.fPct} />}
-            <div style={{ ...st.fNum, fontWeight: 700 }}>{fmt(f.children.reduce((a, c) => a + Number(c.balance || 0), 0))}</div>
-            {!isMobile && <div />}
-          </div>
-        ) : (
-          <div key={f.id} style={{ ...st.frow, gridTemplateColumns: GRID, ...(f.__child ? { paddingLeft: 26 } : {}) }} className="frow">
-            <div style={st.fName}>
-              <div style={st.fundTop}>
-                <Coins size={14} color={C.money} style={{ flexShrink: 0 }} />
-                <span style={st.fundCode}>{f.code}</span>
-                <span>{f.name}</span>
-                {f.is_restricted && <Lock size={12} color={C.faint} />}
+          );
+        })() : (() => {
+          const f = r.fund; const m = metrics(f);
+          return (
+            <div key={f.id} style={{ ...st.frow, gridTemplateColumns: GRID, ...(r.child ? { paddingLeft: 16 } : {}) }} className="frow">
+              <div style={st.fName}>
+                <div style={st.fundTop}>
+                  <span style={{ width: 4, alignSelf: "stretch", minHeight: 18, borderRadius: 4, background: colorOf(f, i), flexShrink: 0 }} />
+                  <span style={st.fundCode}>{f.code}</span>
+                  <span>{f.name}</span>
+                  {f.is_private && <Lock size={12} color={C.faint} />}
+                </div>
+                <div style={{ fontSize: 11, color: C.faint, marginTop: 2, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                  <span>{STAGE_LABEL[f.stage] || "этап не задан"}</span>
+                  <span style={typeBadge(f.kind)}>{f.kind === "working" ? "рабочий" : "накопительный"}</span>
+                  {f.no_transfer && <span style={{ fontSize: 10, color: C.warning }}>без перемещения</span>}
+                  {isMobile && <span>· остаток {fmt(m.remaining)} · долг {debtLabel(m.debt)}</span>}
+                </div>
               </div>
-              {isMobile && (
-                <div style={{ fontSize: 11, color: C.faint, marginTop: 2 }}>
-                  {[...(stagesOf[f.id] || [])].join(" + ") || "—"} · {f.kind === "working" ? "рабочий" : "накопительный"}
+              {!isMobile && <div style={{ ...st.fNum, color: C.sub }}>{fmt(m.remaining)}</div>}
+              <div style={{ ...st.fNum, fontWeight: 700, color: C.money }}>{fmt(m.available)}</div>
+              {!isMobile && (
+                <div style={{ ...st.fNum, fontWeight: 600, color: debtColor(m.debt), cursor: m.debt !== 0 ? "pointer" : "default" }}
+                  onClick={() => m.debt !== 0 && openLoans(f)} className={m.debt !== 0 ? "lnk" : ""}>
+                  {busy === `loans:${f.id}` ? <Loader2 size={12} className="spin" /> : debtLabel(m.debt)}
+                </div>
+              )}
+              {!isMobile && (
+                <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
+                  <button style={{ ...st.btnGhost, padding: "6px 9px", fontSize: 12 }} className="btn" disabled={!!busy} onClick={() => openStatement(f)}>
+                    {busy === `stmt:${f.id}` ? <Loader2 size={13} className="spin" /> : <List size={13} />}
+                  </button>
+                  {isFinAdmin && (
+                    <button style={{ ...st.btnGhost, padding: "6px 9px", fontSize: 12 }} className="btn" onClick={() => setEditing(f)}>
+                      <Pencil size={13} />
+                    </button>
+                  )}
                 </div>
               )}
             </div>
-            {!isMobile && <div style={{ ...st.fPct, fontSize: 12 }}>{[...(stagesOf[f.id] || [])].join(" + ") || "—"}</div>}
-            {!isMobile && <div style={st.fPct}><span style={typeBadge(f.kind)}>{f.kind === "working" ? "рабочий" : "накопительный"}</span></div>}
-            <div style={{ ...st.fNum, fontWeight: 700 }}>{fmt(Number(f.balance || 0))}</div>
-            {!isMobile && (
-              <div style={{ textAlign: "right" }}>
-                <button style={{ ...st.btnGhost, padding: "6px 10px", fontSize: 12 }} className="btn"
-                  disabled={!!busy} onClick={() => openStatement(f)}>
-                  {busy === `stmt:${f.id}` ? <Loader2 size={13} className="spin" /> : <List size={13} />} Подробно
-                </button>
-              </div>
-            )}
-          </div>
-        ))}
+          );
+        })())}
+
+        {/* строка «Всего» */}
+        <div style={{ ...st.frow, gridTemplateColumns: GRID, borderTop: `2px solid ${C.line}`, fontWeight: 800, marginTop: 4 }}>
+          <div style={st.fName}>Всего</div>
+          {!isMobile && <div style={{ ...st.fNum, color: C.sub }}>{fmt(totals.remaining)}</div>}
+          <div style={{ ...st.fNum, color: C.money }}>{fmt(totals.available)}</div>
+          {!isMobile && <div style={{ ...st.fNum, color: debtColor(totals.debt) }}>{debtLabel(totals.debt)}</div>}
+          {!isMobile && <div />}
+        </div>
+
         {isMobile && (
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 10 }}>
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 12 }}>
             {funds.map((f) => (
-              <button key={f.id} style={{ ...st.btnGhost, padding: "6px 10px", fontSize: 12 }} className="btn"
-                disabled={!!busy} onClick={() => openStatement(f)}>
+              <button key={f.id} style={{ ...st.btnGhost, padding: "6px 10px", fontSize: 12 }} className="btn" disabled={!!busy} onClick={() => openStatement(f)}>
                 <List size={13} /> {f.code}
               </button>
             ))}
@@ -285,42 +379,35 @@ export function Funds() {
       </section>
     </div>
 
-    {/* История операций между фондами */}
+    {/* Журнал всех операций по фондам */}
     <section style={{ ...st.fpCard, marginTop: 18 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
         <Clock size={18} color={C.green} />
-        <h3 style={st.reqSectionTitle}>Перемещения и займы</h3>
+        <h3 style={st.reqSectionTitle}>Операции с фондами</h3>
         <span style={st.reqSectionSub}>из Реестра</span>
       </div>
-      {ops.length === 0 ? (
-        <div style={st.empty}>Операций пока нет — переместите средства между фондами выше</div>
-      ) : ops.map((op) => {
-        const isLoan = op.opType === "fund_loan";
-        const isReturn = op.opType === "fund_loan_return";
-        const outstanding = isLoan ? op.amount - op.returned : 0;
-        const badgeColor = isLoan ? C.warning : isReturn ? C.info : C.green;
+      {journal.length === 0 ? (
+        <div style={st.empty}>Операций пока нет</div>
+      ) : journal.map((op) => {
+        const amount = Number(op.fund_amount) || 0;
+        const et = op.request?.expense_type || op.bill?.expense_type;
+        const info = [
+          et ? `${et.code || ""} ${et.name || ""}`.trim() : null,
+          op.counterparty?.name, op.payment_type?.name, op.comment,
+        ].filter(Boolean).join(" · ");
         return (
-          <div key={op.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 4px", borderBottom: `1px solid ${C.line}`, flexWrap: "wrap" }}>
-            <span style={{ fontSize: 11.5, color: C.faint, flexShrink: 0, width: 86 }}>
-              {new Date(op.createdAt).toLocaleString("ru", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
+          <div key={op.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 4px", borderBottom: `1px solid ${C.line}`, flexWrap: "wrap" }}>
+            <span style={{ fontSize: 11.5, color: C.faint, flexShrink: 0, width: 84 }}>
+              {new Date(op.created_at).toLocaleString("ru", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
             </span>
-            <span style={{ fontSize: 10.5, fontWeight: 700, padding: "3px 9px", borderRadius: 20, whiteSpace: "nowrap", color: badgeColor, background: `${badgeColor}1a` }}>
-              {OP_LABELS[op.opType]}
+            <span style={{ fontSize: 12.5, fontWeight: 600, flexShrink: 0, minWidth: 96 }}>{op.fund ? op.fund.code : "—"}</span>
+            <span style={{ fontSize: 10.5, fontWeight: 700, padding: "3px 9px", borderRadius: 20, whiteSpace: "nowrap", color: C.info, background: `${C.info}1a` }}>
+              {OP_LABELS[op.op_type] || op.op_type}
             </span>
-            <span style={{ fontSize: 13, flex: 1, minWidth: 180 }}>
-              {nameOf(op.fromFundId)} → {nameOf(op.toFundId)}
-              {op.comment ? <span style={{ color: C.faint }}> · {op.comment}</span> : ""}
+            <span style={{ fontSize: 12.5, flex: 1, minWidth: 160, color: C.sub, overflow: "hidden", textOverflow: "ellipsis" }}>{info || "—"}</span>
+            <span style={{ fontSize: 14, fontWeight: 700, fontVariantNumeric: "tabular-nums", color: amount >= 0 ? C.money : C.danger }}>
+              {amount >= 0 ? "+" : ""}{fmt(amount)}
             </span>
-            <span style={{ fontSize: 14, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>{fmt(op.amount)}</span>
-            {isLoan && outstanding > 0.009 && isFinAdmin && (
-              <button style={st.btnGhost} className="btn" disabled={!!busy} onClick={() => setReturning(op)}>
-                {busy === `ret:${op.id}` ? <Loader2 size={13} className="spin" /> : <RotateCcw size={13} />}
-                {" "}Вернуть{op.returned > 0 ? ` (ост. ${fmt(outstanding)})` : ""}
-              </button>
-            )}
-            {isLoan && outstanding <= 0.009 && (
-              <span style={{ fontSize: 11.5, fontWeight: 700, color: C.sub }}>возвращён</span>
-            )}
           </div>
         );
       })}
@@ -331,15 +418,17 @@ export function Funds() {
         onAllTime={() => openStatement(statement.fund, true)}
         onClose={() => setStatement(null)} />
     )}
-    {returning && (
-      <ReturnModal C={C} st={st} op={returning} nameOf={nameOf}
-        busy={busy === `ret:${returning.id}`}
-        onClose={() => setReturning(null)} onConfirm={doReturn} />
+    {loansOf && (
+      <FundLoansModal C={C} st={st} data={loansOf} nameOf={nameOf} isFinAdmin={isFinAdmin}
+        busy={busy} onReturn={doReturnLoan} onClose={() => setLoansOf(null)} />
     )}
-    {showAdd && refs && (
-      <AddFundModal C={C} st={st} refs={refs} folders={folders}
-        onClose={() => setShowAdd(false)}
-        onSaved={async () => { setShowAdd(false); await load(); setDone("Фонд создан"); }} />
+    {editing && refs && (
+      <FundFormModal C={C} st={st} refs={refs} folders={folders}
+        fund={editing === "new" ? null : editing}
+        busyArchive={editing !== "new" && busy === `arch:${editing.id}`}
+        onArchive={() => doArchive(editing)}
+        onClose={() => setEditing(null)}
+        onSaved={async (msg) => { setEditing(null); await load(); setDone(msg); }} />
     )}
   </>);
 }
@@ -359,9 +448,7 @@ function FundStatementModal({ C, st, statement, period, onAllTime, onClose }) {
         <div style={{ fontSize: 12.5, color: C.sub, marginBottom: 12, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
           <span>{allTime ? "Последние операции (все периоды)" : `Неделя ${period ? periodTitle(period) : "—"}`}</span>
           {!allTime && (
-            <button style={{ ...st.btnGhost, padding: "5px 10px", fontSize: 12 }} className="btn" onClick={onAllTime}>
-              Показать все
-            </button>
+            <button style={{ ...st.btnGhost, padding: "5px 10px", fontSize: 12 }} className="btn" onClick={onAllTime}>Показать все</button>
           )}
         </div>
         {!rows.length && <div style={st.empty}>Операций нет</div>}
@@ -369,10 +456,7 @@ function FundStatementModal({ C, st, statement, period, onAllTime, onClose }) {
           {rows.map((r) => {
             const amt = Number(r.fund_amount) || 0;
             return (
-              <div key={r.id} style={{
-                display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10,
-                padding: "9px 12px", borderRadius: 12, background: C.panel2, border: `1px solid ${C.line}`,
-              }}>
+              <div key={r.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, padding: "9px 12px", borderRadius: 12, background: C.panel2, border: `1px solid ${C.line}` }}>
                 <div style={{ minWidth: 0 }}>
                   <div style={{ fontSize: 13, fontWeight: 600 }}>{OP_LABELS[r.op_type] || r.op_type}</div>
                   <div style={{ fontSize: 11.5, color: C.faint, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -380,7 +464,7 @@ function FundStatementModal({ C, st, statement, period, onAllTime, onClose }) {
                     {r.comment ? ` · ${r.comment}` : ""}
                   </div>
                 </div>
-                <div style={{ fontWeight: 700, fontVariantNumeric: "tabular-nums", color: amt >= 0 ? C.green : C.danger, flexShrink: 0 }}>
+                <div style={{ fontWeight: 700, fontVariantNumeric: "tabular-nums", color: amt >= 0 ? C.money : C.danger, flexShrink: 0 }}>
                   {amt >= 0 ? "+" : ""}{fmt(amt)}
                 </div>
               </div>
@@ -393,33 +477,59 @@ function FundStatementModal({ C, st, statement, period, onAllTime, onClose }) {
 }
 
 
-// ---------------------------------------------------------------- Возврат займа
-function ReturnModal({ C, st, op, nameOf, busy, onClose, onConfirm }) {
+// ---------------------------------------------------------------- Займы фонда (клик по «Долгу»)
+function FundLoansModal({ C, st, data, nameOf, isFinAdmin, busy, onReturn, onClose }) {
   useScrollLock();
-  const outstanding = op.amount - op.returned;
-  const [val, setVal] = useState(String(outstanding));
-  const a = parseFloat(String(val).replace(",", ".")) || 0;
+  const { fund, rows } = data;
+  const [ret, setRet] = useState(null); // { op, val }
   return (
     <div style={st.mdOverlay} onClick={onClose}>
-      <div style={{ ...st.mdCard, width: "min(420px, 100%)" }} onClick={(e) => e.stopPropagation()}>
+      <div style={{ ...st.mdCard, width: "min(520px, 100%)" }} onClick={(e) => e.stopPropagation()}>
         <div style={st.mdHead}>
-          <div style={st.mdTitle}>Возврат займа</div>
+          <div style={st.mdTitle}>{fund.code} · займы</div>
           <button style={st.iconBtn} onClick={onClose}><X size={17} /></button>
         </div>
-        <div style={{ fontSize: 13, color: C.sub, marginBottom: 12 }}>
-          {nameOf(op.toFundId)} → {nameOf(op.fromFundId)} · к возврату <b style={{ color: C.text }}>{fmt(outstanding)}</b> TJS
+        <div style={{ fontSize: 12.5, color: C.sub, marginBottom: 12 }}>
+          «−» фонду должны (кредитор) · «+» фонд должен (заёмщик)
         </div>
-        <div style={st.reqField}>
-          <span style={st.reqFieldLbl}>Сумма возврата (можно частично)</span>
-          <input type="number" inputMode="decimal" value={val} onChange={(e) => setVal(e.target.value)}
-            onWheel={(e) => e.target.blur()} style={{ ...st.numInput, width: "100%" }} autoFocus />
-        </div>
-        <div style={st.mdActions}>
-          <button style={st.btnGhost} className="btn" onClick={onClose}>Отмена</button>
-          <button style={{ ...st.btnGreen, opacity: busy ? 0.7 : 1 }} className="btn"
-            disabled={busy || a <= 0 || a > outstanding + 0.009} onClick={() => onConfirm(op, a)}>
-            {busy ? <Loader2 size={15} className="spin" /> : <RotateCcw size={15} />} Вернуть
-          </button>
+        {!rows.length && <div style={st.empty}>Займов нет</div>}
+        <div style={{ display: "grid", gap: 8 }}>
+          {rows.map((op) => {
+            const isLender = op.role === "lender";
+            return (
+              <div key={op.id} style={{ padding: "10px 12px", borderRadius: 12, background: C.panel2, border: `1px solid ${C.line}` }}>
+                <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+                  <div style={{ fontSize: 13 }}>
+                    {nameOf(op.fromFundId)} → {nameOf(op.toFundId)}
+                    {op.comment ? <span style={{ color: C.faint }}> · {op.comment}</span> : ""}
+                  </div>
+                  <div style={{ fontWeight: 700, color: isLender ? C.money : C.danger }}>
+                    {isLender ? "−" : "+"}{fmt(op.outstanding)}
+                  </div>
+                </div>
+                {op.outstanding > 0.009 && isLender && isFinAdmin && (
+                  ret?.op?.id === op.id ? (
+                    <div style={{ display: "flex", gap: 8, marginTop: 8, alignItems: "center", flexWrap: "wrap" }}>
+                      <input type="number" inputMode="decimal" value={ret.val} autoFocus
+                        onChange={(e) => setRet({ op, val: e.target.value })}
+                        onWheel={(e) => e.target.blur()} style={{ ...st.numInput, width: 140 }} />
+                      <button style={{ ...st.btnGreen, padding: "7px 12px" }} className="btn"
+                        disabled={busy === `ret:${op.id}`}
+                        onClick={() => { const a = parseFloat(String(ret.val).replace(",", ".")) || 0; if (a > 0 && a <= op.outstanding + 0.009) onReturn(op, a); }}>
+                        {busy === `ret:${op.id}` ? <Loader2 size={14} className="spin" /> : <RotateCcw size={14} />} Вернуть
+                      </button>
+                      <button style={{ ...st.btnGhost, padding: "7px 10px" }} className="btn" onClick={() => setRet(null)}>Отмена</button>
+                    </div>
+                  ) : (
+                    <button style={{ ...st.btnGhost, padding: "6px 10px", fontSize: 12, marginTop: 8 }} className="btn"
+                      onClick={() => setRet({ op, val: String(op.outstanding) })}>
+                      <RotateCcw size={13} /> Вернуть заём
+                    </button>
+                  )
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
@@ -427,12 +537,19 @@ function ReturnModal({ C, st, op, nameOf, busy, onClose, onConfirm }) {
 }
 
 
-// ---------------------------------------------------------------- Новый фонд
-function AddFundModal({ C, st, refs, folders, onClose, onSaved }) {
+// ---------------------------------------------------------------- Новый / Редактировать фонд
+function FundFormModal({ C, st, refs, folders, fund, busyArchive, onArchive, onClose, onSaved }) {
   useScrollLock();
+  const isEdit = !!fund;
   const baseCur = refs.currencies.find((c) => c.is_base) || refs.currencies[0];
-  const [f, setF] = useState({ code: "", name: "", kind: "working", isRestricted: false, locationId: "", folderId: "" });
+  const [f, setF] = useState({
+    code: fund?.code || "", name: fund?.name || "", description: fund?.description || "",
+    kind: fund?.kind || "working", stage: fund?.stage || "", color: fund?.color || FUND_COLORS[0],
+    isPrivate: fund?.is_private || false, noTransfer: fund?.no_transfer || false,
+    locationId: fund?.location_id || "", folderId: fund?.folder_id || "",
+  });
   const [newFolder, setNewFolder] = useState("");
+  const [confirmArch, setConfirmArch] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
 
@@ -444,11 +561,14 @@ function AddFundModal({ C, st, refs, folders, onClose, onSaved }) {
     try {
       let folderId = f.folderId;
       if (newFolder.trim()) folderId = (await createFundFolder(newFolder.trim())).id;
-      await createFund({
-        code: f.code.trim(), name: f.name.trim(), kind: f.kind,
-        isRestricted: f.isRestricted, locationId: f.locationId, currencyId: baseCur.id, folderId,
-      });
-      onSaved();
+      const payload = {
+        code: f.code.trim(), name: f.name.trim(), description: f.description.trim(),
+        kind: f.kind, stage: f.stage || null, color: f.color,
+        isPrivate: f.isPrivate, noTransfer: f.noTransfer,
+        locationId: f.locationId, folderId,
+      };
+      if (isEdit) { await updateFund(fund.id, payload); onSaved("Фонд обновлён"); }
+      else { await createFund({ ...payload, currencyId: baseCur.id }); onSaved("Фонд создан"); }
     } catch (e) {
       const msg = e?.message || String(e);
       setErr(msg.includes("duplicate") ? "Фонд с таким кодом уже существует" : msg);
@@ -458,28 +578,53 @@ function AddFundModal({ C, st, refs, folders, onClose, onSaved }) {
 
   return (
     <div style={st.mdOverlay} onClick={onClose}>
-      <div style={{ ...st.mdCard, width: "min(420px, 100%)" }} onClick={(e) => e.stopPropagation()}>
+      <div style={{ ...st.mdCard, width: "min(460px, 100%)", maxHeight: "92vh", overflowY: "auto" }} onClick={(e) => e.stopPropagation()}>
         <div style={st.mdHead}>
-          <div style={st.mdTitle}>Новый фонд</div>
+          <div style={st.mdTitle}>{isEdit ? `Редактировать ${fund.code}` : "Новый фонд"}</div>
           <button style={st.iconBtn} onClick={onClose}><X size={17} /></button>
         </div>
         <div style={{ display: "grid", gap: 10 }}>
-          <div style={st.reqField}>
-            <span style={st.reqFieldLbl}>Код</span>
-            <input style={st.mdInput} className="fin" placeholder="FD10" autoFocus
-              value={f.code} onChange={(e) => setF((p) => ({ ...p, code: e.target.value }))} />
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <div style={{ ...st.reqField, flex: "0 0 120px" }}>
+              <span style={st.reqFieldLbl}>Код</span>
+              <input style={st.mdInput} className="fin" placeholder="FD10" autoFocus
+                value={f.code} onChange={(e) => setF((p) => ({ ...p, code: e.target.value }))} />
+            </div>
+            <div style={{ ...st.reqField, flex: 1, minWidth: 160 }}>
+              <span style={st.reqFieldLbl}>Название</span>
+              <input style={st.mdInput} className="fin" placeholder="Фонд развития…"
+                value={f.name} onChange={(e) => setF((p) => ({ ...p, name: e.target.value }))} />
+            </div>
           </div>
           <div style={st.reqField}>
-            <span style={st.reqFieldLbl}>Название</span>
-            <input style={st.mdInput} className="fin" placeholder="Фонд развития…"
-              value={f.name} onChange={(e) => setF((p) => ({ ...p, name: e.target.value }))} />
+            <span style={st.reqFieldLbl}>Описание</span>
+            <input style={st.mdInput} className="fin" placeholder="Назначение фонда…"
+              value={f.description} onChange={(e) => setF((p) => ({ ...p, description: e.target.value }))} />
+          </div>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <div style={{ ...st.reqField, flex: 1, minWidth: 150 }}>
+              <span style={st.reqFieldLbl}>Этап распределения</span>
+              <select style={st.mdSelect} className="fin" value={f.stage} onChange={(e) => setF((p) => ({ ...p, stage: e.target.value }))}>
+                {STAGE_OPTS.map((o) => <option key={o.v} value={o.v}>{o.l}</option>)}
+              </select>
+            </div>
+            <div style={{ ...st.reqField, flex: 1, minWidth: 150 }}>
+              <span style={st.reqFieldLbl}>Тип</span>
+              <select style={st.mdSelect} className="fin" value={f.kind} onChange={(e) => setF((p) => ({ ...p, kind: e.target.value }))}>
+                <option value="working">рабочий</option>
+                <option value="accumulative">накопительный (нельзя оплачивать)</option>
+              </select>
+            </div>
           </div>
           <div style={st.reqField}>
-            <span style={st.reqFieldLbl}>Тип</span>
-            <select style={st.mdSelect} className="fin" value={f.kind} onChange={(e) => setF((p) => ({ ...p, kind: e.target.value }))}>
-              <option value="working">рабочий</option>
-              <option value="accumulative">накопительный</option>
-            </select>
+            <span style={st.reqFieldLbl}>Цвет-метка</span>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              {FUND_COLORS.map((c) => (
+                <button key={c} type="button" onClick={() => setF((p) => ({ ...p, color: c }))}
+                  style={{ width: 26, height: 26, borderRadius: "50%", background: c, cursor: "pointer",
+                    border: f.color === c ? `3px solid ${C.text}` : `2px solid ${C.line}` }} />
+              ))}
+            </div>
           </div>
           <div style={st.reqField}>
             <span style={st.reqFieldLbl}>Точка</span>
@@ -489,26 +634,42 @@ function AddFundModal({ C, st, refs, folders, onClose, onSaved }) {
             </select>
           </div>
           <div style={st.reqField}>
-            <span style={st.reqFieldLbl}>Папка (как ФД5 «Фонд учредителей»)</span>
+            <span style={st.reqFieldLbl}>Раздел (группа фондов)</span>
             <select style={st.mdSelect} className="fin" value={f.folderId} onChange={(e) => setF((p) => ({ ...p, folderId: e.target.value }))}>
-              <option value="">— без папки —</option>
+              <option value="">— без раздела —</option>
               {folders.map((fl) => <option key={fl.id} value={fl.id}>{fl.name}</option>)}
             </select>
-            <input style={{ ...st.mdInput, marginTop: 6 }} className="fin" placeholder="…или новая папка"
+            <input style={{ ...st.mdInput, marginTop: 6 }} className="fin" placeholder="…или новый раздел"
               value={newFolder} onChange={(e) => setNewFolder(e.target.value)} />
           </div>
           <label style={st.mdCheck}>
-            <input type="checkbox" checked={f.isRestricted}
-              onChange={(e) => setF((p) => ({ ...p, isRestricted: e.target.checked }))} />
-            Закрытый фонд (доступ по персональному списку)
+            <input type="checkbox" checked={f.isPrivate} onChange={(e) => setF((p) => ({ ...p, isPrivate: e.target.checked }))} />
+            Приватный фонд (виден только владельцу и финдиректору)
+          </label>
+          <label style={st.mdCheck}>
+            <input type="checkbox" checked={f.noTransfer} onChange={(e) => setF((p) => ({ ...p, noTransfer: e.target.checked }))} />
+            Запрет перемещения (нельзя вручную перемещать/изымать средства)
           </label>
         </div>
         {err && <div style={st.reqError}><AlertCircle size={15} /> {err}</div>}
-        <div style={st.mdActions}>
-          <button style={st.btnGhost} className="btn" onClick={onClose}>Отмена</button>
-          <button style={{ ...st.btnGreen, opacity: busy ? 0.7 : 1 }} className="btn" onClick={submit} disabled={busy}>
-            {busy ? <Loader2 size={15} className="spin" /> : <Plus size={15} />} Создать
-          </button>
+        <div style={{ ...st.mdActions, justifyContent: isEdit ? "space-between" : "flex-end" }}>
+          {isEdit && (
+            confirmArch ? (
+              <button style={{ ...st.btnGhost, color: C.danger, borderColor: `${C.danger}55` }} className="btn" disabled={busyArchive} onClick={onArchive}>
+                {busyArchive ? <Loader2 size={15} className="spin" /> : <Archive size={15} />} Точно архивировать?
+              </button>
+            ) : (
+              <button style={{ ...st.btnGhost, color: C.danger }} className="btn" onClick={() => setConfirmArch(true)}>
+                <Archive size={15} /> Архивировать
+              </button>
+            )
+          )}
+          <div style={{ display: "flex", gap: 8 }}>
+            <button style={st.btnGhost} className="btn" onClick={onClose}>Отмена</button>
+            <button style={{ ...st.btnGreen, opacity: busy ? 0.7 : 1 }} className="btn" onClick={submit} disabled={busy}>
+              {busy ? <Loader2 size={15} className="spin" /> : <Plus size={15} />} {isEdit ? "Сохранить" : "Создать"}
+            </button>
+          </div>
         </div>
       </div>
     </div>
