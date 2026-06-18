@@ -998,12 +998,14 @@ export async function fundLoanReturn(loanId, amount, periodId, comment) {
   if (error) throw error;
 }
 
-// Журнал всех операций по фондам (docs/funds-spec.md §7) — единая лента,
-// без фильтра по датам. Назначение (статья РД) берётся из заявки/счёта.
-export async function fetchFundJournal(limit = 300) {
+// Журнал всех операций по фондам (docs/funds-spec.md §7) — единая лента.
+// Парные операции (перемещение/заём/возврат, pair_id) собираются в ОДНУ запись
+// (источник → получатель). Назначение (статья РД) — из заявки/счёта.
+// reversible — можно ли откатить (перемещение/приход/возврат, ещё не откачены).
+export async function fetchFundJournal(limit = 400) {
   const { data, error } = await supabase
     .from("fp_register")
-    .select(`id, op_type, fund_id, fund_amount, comment, created_at, period_id,
+    .select(`id, op_type, fund_id, fund_amount, comment, created_at, period_id, pair_id, reverses_id,
       fund:funds(code, name),
       counterparty:counterparties(name),
       payment_type:payment_types(name),
@@ -1013,7 +1015,51 @@ export async function fetchFundJournal(limit = 300) {
     .order("created_at", { ascending: false })
     .limit(limit);
   if (error) throw error;
-  return data;
+
+  const reversedLegIds = new Set(data.filter((r) => r.reverses_id).map((r) => r.reverses_id));
+  const info = (r) => ({
+    expenseType: r.request?.expense_type || r.bill?.expense_type || null,
+    counterparty: r.counterparty?.name || null,
+    paymentType: r.payment_type?.name || null,
+    docNumber: r.request?.number || r.bill?.number || null,
+    comment: r.comment || null,
+    isReversal: !!r.reverses_id,
+  });
+  const seenPair = new Set();
+  const ops = [];
+  for (const r of data) {
+    if (r.pair_id) {
+      if (seenPair.has(r.pair_id)) continue;
+      seenPair.add(r.pair_id);
+      const legs = data.filter((x) => x.pair_id === r.pair_id);
+      const neg = legs.find((x) => Number(x.fund_amount) < 0) || legs[0];
+      const pos = legs.find((x) => Number(x.fund_amount) > 0) || legs[legs.length - 1];
+      const reversed = legs.some((x) => reversedLegIds.has(x.id));
+      ops.push({
+        id: neg.id, opType: r.op_type, createdAt: r.created_at, periodId: r.period_id,
+        fromFund: neg?.fund || null, toFund: pos?.fund || null, fund: null,
+        amount: Math.abs(Number(pos?.fund_amount || neg?.fund_amount || 0)), signed: false,
+        ...info(r), reversed,
+        reversible: r.op_type === "fund_transfer" && !reversed && !r.reverses_id,
+      });
+    } else {
+      const reversed = reversedLegIds.has(r.id);
+      ops.push({
+        id: r.id, opType: r.op_type, createdAt: r.created_at, periodId: r.period_id,
+        fromFund: null, toFund: null, fund: r.fund || null,
+        amount: Number(r.fund_amount) || 0, signed: true,
+        ...info(r), reversed,
+        reversible: ["fund_income", "fund_return"].includes(r.op_type) && !reversed && !r.reverses_id,
+      });
+    }
+  }
+  return ops;
+}
+
+// Откат операции фонда (компенсирующая запись возвращает деньги в исходный фонд).
+export async function reverseFundOp(id) {
+  const { error } = await supabase.rpc("fp_reverse_fund_op", { p_id: id });
+  if (error) throw error;
 }
 
 // Займы, в которых участвует фонд (для клика по «Долгу»): как кредитор и как

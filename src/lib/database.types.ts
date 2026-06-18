@@ -621,6 +621,7 @@ export type Database = {
           payroll_sheet_id: string | null
           period_id: string | null
           request_id: string | null
+          reverses_id: number | null
         }
         Insert: {
           bill_id?: string | null
@@ -643,6 +644,7 @@ export type Database = {
           payroll_sheet_id?: string | null
           period_id?: string | null
           request_id?: string | null
+          reverses_id?: number | null
         }
         Update: {
           bill_id?: string | null
@@ -665,6 +667,7 @@ export type Database = {
           payroll_sheet_id?: string | null
           period_id?: string | null
           request_id?: string | null
+          reverses_id?: number | null
         }
         Relationships: [
           {
@@ -749,6 +752,13 @@ export type Database = {
             columns: ["request_id"]
             isOneToOne: false
             referencedRelation: "payment_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fp_register_reverses_id_fkey"
+            columns: ["reverses_id"]
+            isOneToOne: false
+            referencedRelation: "fp_register"
             referencedColumns: ["id"]
           },
         ]
@@ -2235,6 +2245,7 @@ export type Database = {
         Args: { p_period_id: string; p_stage: string }
         Returns: undefined
       }
+      fp_reverse_fund_op: { Args: { p_id: number }; Returns: undefined }
       fp_set_fund_stage: {
         Args: {
           p_fund: string

@@ -14,7 +14,7 @@ import {
   fetchFundDebts, fetchFundCommitments, fetchFundJournal, fetchFundLoans,
   fundTransfer, fundLoan, fundLoanReturn, fundIncome, fundReturn,
   fetchFundStatement, fetchFundFolders, createFundFolder, updateFundFolder,
-  archiveFundFolder, fetchFolderStatement,
+  archiveFundFolder, fetchFolderStatement, reverseFundOp,
 } from "../../lib/api";
 
 // ---------------------------------------------------------------- FUNDS
@@ -150,6 +150,16 @@ export function Funds() {
     try {
       const rows = await fetchFolderStatement(folder.id, allTime ? null : periodId);
       setStatement({ kind: "folder", entity: folder, title: `${folder.name} · сводная выписка`, rows, allTime });
+    } catch (e) { setErr(e?.message || String(e)); }
+    finally { setBusy(null); }
+  };
+
+  const doReverse = async (op) => {
+    setBusy(`rev:${op.id}`); setErr(""); setDone("");
+    try {
+      await reverseFundOp(op.id);
+      await load();
+      setDone("Операция откачена — деньги возвращены в исходный фонд");
     } catch (e) { setErr(e?.message || String(e)); }
     finally { setBusy(null); }
   };
@@ -358,25 +368,43 @@ export function Funds() {
       {journal.length === 0 ? (
         <div style={st.empty}>Операций пока нет</div>
       ) : journal.map((op) => {
-        const amount = Number(op.fund_amount) || 0;
-        const et = op.request?.expense_type || op.bill?.expense_type;
+        const src = op.fromFund || op.fund;
+        const et = op.expenseType;
         const info = [
-          et ? `${et.code || ""} ${et.name || ""}`.trim() : null,
-          op.counterparty?.name, op.payment_type?.name, op.comment,
+          op.docNumber ? `Заявка/счёт №${op.docNumber}` : null,
+          op.counterparty, op.paymentType, op.comment,
         ].filter(Boolean).join(" · ");
+        const amtColor = op.signed ? (op.amount >= 0 ? C.money : C.danger) : C.sub;
+        const amtText = op.signed ? `${op.amount >= 0 ? "+" : ""}${fmt(op.amount)}` : fmt(op.amount);
         return (
-          <div key={op.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 4px", borderBottom: `1px solid ${C.line}`, flexWrap: "wrap" }}>
-            <span style={{ fontSize: 11.5, color: C.faint, flexShrink: 0, width: 84 }}>
-              {new Date(op.created_at).toLocaleString("ru", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
+          <div key={op.id} style={{ display: "flex", gap: 12, padding: "11px 4px", borderBottom: `1px solid ${C.line}`,
+            alignItems: "flex-start", opacity: op.reversed ? 0.55 : 1 }}>
+            <span style={{ fontSize: 11.5, color: C.faint, flexShrink: 0, width: 60, paddingTop: 2 }}>
+              {new Date(op.createdAt).toLocaleString("ru", { day: "2-digit", month: "2-digit" })}
             </span>
-            <span style={{ fontSize: 12.5, fontWeight: 600, flexShrink: 0, minWidth: 96 }}>{op.fund ? op.fund.code : "—"}</span>
-            <span style={{ fontSize: 10.5, fontWeight: 700, padding: "3px 9px", borderRadius: 20, whiteSpace: "nowrap", color: C.info, background: `${C.info}1a` }}>
-              {OP_LABELS[op.op_type] || op.op_type}
-            </span>
-            <span style={{ fontSize: 12.5, flex: 1, minWidth: 160, color: C.sub, overflow: "hidden", textOverflow: "ellipsis" }}>{info || "—"}</span>
-            <span style={{ fontSize: 14, fontWeight: 700, fontVariantNumeric: "tabular-nums", color: amount >= 0 ? C.money : C.danger }}>
-              {amount >= 0 ? "+" : ""}{fmt(amount)}
-            </span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                <span style={{ fontSize: 10.5, fontWeight: 700, padding: "2px 8px", borderRadius: 20, whiteSpace: "nowrap",
+                  color: op.isReversal ? C.warning : C.info, background: `${op.isReversal ? C.warning : C.info}1a` }}>
+                  {op.isReversal ? "Откат" : (OP_LABELS[op.opType] || op.opType)}
+                </span>
+                <span style={{ fontSize: 12.5, fontWeight: 600 }}>
+                  {src ? src.code : "—"}{op.toFund ? <span style={{ color: C.faint, fontWeight: 400 }}> → {op.toFund.code}</span> : ""}
+                </span>
+                {op.reversed && <span style={{ fontSize: 10.5, color: C.faint }}>откачено</span>}
+              </div>
+              {et && <div style={{ fontSize: 11.5, color: C.sub, marginTop: 2 }}>{[et.code, et.name].filter(Boolean).join(" ")}</div>}
+              {info && <div style={{ fontSize: 11.5, color: C.faint, marginTop: 2, overflow: "hidden", textOverflow: "ellipsis" }}>{info}</div>}
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6, flexShrink: 0 }}>
+              <span style={{ fontSize: 14, fontWeight: 700, fontVariantNumeric: "tabular-nums", color: amtColor, whiteSpace: "nowrap" }}>{amtText}</span>
+              {isFinAdmin && op.reversible && (
+                <button style={{ ...st.btnGhost, padding: "4px 8px", fontSize: 11.5, color: C.danger, borderColor: `${C.danger}44` }} className="btn"
+                  disabled={!!busy} onClick={() => doReverse(op)} title="Откатить — вернуть деньги в исходный фонд">
+                  {busy === `rev:${op.id}` ? <Loader2 size={12} className="spin" /> : <RotateCcw size={12} />} Откатить
+                </button>
+              )}
+            </div>
           </div>
         );
       })}
