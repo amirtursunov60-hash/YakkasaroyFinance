@@ -19,15 +19,15 @@ export const NAV_FINANCE = [
   { key: "control", icon: Wallet, label: "Контроль средств" },
   { key: "income", icon: ArrowUpRight, label: "Доходы" },
   { key: "expense", icon: ArrowDownLeft, label: "Расходы" },
-  { key: "funds", icon: Layers, label: "Фонды" },
   { key: "suppliers", icon: FileText, label: "Счета поставщиков" },
   { key: "clients", icon: ClipboardList, label: "Счета клиентов" },
+  { key: "funds", icon: Layers, label: "Фонды" },
   { key: "directive", icon: SlidersHorizontal, label: "Директива" },
-  { key: "register", icon: List, label: "Реестр операций" },
   { key: "requests", icon: ClipboardList, label: "Заявки" },
   { key: "obligations", icon: FileText, label: "Обязательства" },
   { key: "payroll", icon: Calculator, label: "Расчёт зарплаты" },
   { key: "reports", icon: BarChart3, label: "Управленческие отчёты" },
+  { key: "register", icon: List, label: "Реестр операций" },
 ];
 
 export const NAV_RESTAURANT = [
