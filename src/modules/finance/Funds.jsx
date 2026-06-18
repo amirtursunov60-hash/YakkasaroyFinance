@@ -208,6 +208,8 @@ export function Funds() {
   // Долг: − фонду должны (хорошо, зелёный money), + фонд должен (danger)
   const debtColor = (d) => d < -0.009 ? C.money : d > 0.009 ? C.danger : C.faint;
   const debtLabel = (d) => d === 0 ? "—" : (d > 0 ? "+" : "") + fmt(d);
+  // Доступно: отрицательное (одобрено больше, чем есть) — тревога, красным
+  const availColor = (v) => v < -0.009 ? C.danger : C.money;
 
   // строки списка: сначала фонды без секции, потом секции с детьми
   const rows = [
@@ -316,7 +318,7 @@ export function Funds() {
             const sub = r.children.reduce((acc, c) => { const mm = metrics(c); acc.remaining += mm.remaining; acc.available += mm.available; acc.debt += mm.debt; return acc; }, { remaining: 0, available: 0, debt: 0 });
             return (
               <FolderCard key={"sec" + r.section} C={C} st={st} folder={folder} sub={sub} childCount={r.children.length}
-                color={colorOf(folder)} debtColor={debtColor} debtLabel={debtLabel}
+                color={colorOf(folder)} debtColor={debtColor} debtLabel={debtLabel} availColor={availColor}
                 open={openFolders[r.section]} isFinAdmin={isFinAdmin} busy={busy}
                 onToggle={() => setOpenFolders((o) => ({ ...o, [r.section]: !o[r.section] }))}
                 onStatement={() => openFolderStatement(folder)} onEdit={() => setEditingFolder(folder)}
@@ -324,7 +326,7 @@ export function Funds() {
             );
           })() : (
             <FundCard key={r.fund.id} C={C} st={st} fund={r.fund} m={metrics(r.fund)}
-              color={colorOf(r.fund)} typeBadge={typeBadge} debtColor={debtColor} debtLabel={debtLabel}
+              color={colorOf(r.fund)} typeBadge={typeBadge} debtColor={debtColor} debtLabel={debtLabel} availColor={availColor}
               isFinAdmin={isFinAdmin} busy={busy}
               onStatement={() => openStatement(r.fund)} onEdit={() => setEditing(r.fund)}
               onLoans={() => openLoans(r.fund)} onArchive={() => doArchive(r.fund)} />
@@ -335,7 +337,7 @@ export function Funds() {
         <div style={{ marginTop: 14, paddingTop: 12, borderTop: `2px solid ${C.line}` }}>
           <div style={{ fontSize: 11, color: C.faint, textTransform: "uppercase", letterSpacing: 0.3, fontWeight: 700, marginBottom: 8 }}>Всего по фондам</div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: isMobile ? 6 : 8, fontVariantNumeric: "tabular-nums" }}>
-            {[["Остаток", fmt(totals.remaining), C.sub], ["Доступно", fmt(totals.available), C.money], ["Долг", debtLabel(totals.debt), debtColor(totals.debt)]].map(([l, v, col]) => (
+            {[["Остаток", fmt(totals.remaining), C.sub], ["Доступно", fmt(totals.available), availColor(totals.available)], ["Долг", debtLabel(totals.debt), debtColor(totals.debt)]].map(([l, v, col]) => (
               <div key={l} style={{ minWidth: 0 }}>
                 <div style={{ fontSize: 10, color: C.faint, textTransform: "uppercase" }}>{l}</div>
                 <div style={{ fontSize: isMobile ? 12.5 : 15, fontWeight: 800, color: col, lineHeight: 1.2, wordBreak: "break-word" }}>{v}</div>
@@ -405,7 +407,7 @@ export function Funds() {
 
 
 // ---------------------------------------------------------------- Карточка фонда
-function FundCard({ C, st, fund: f, m, color, typeBadge, debtColor, debtLabel, isFinAdmin, busy, onStatement, onEdit, onLoans, onArchive }) {
+function FundCard({ C, st, fund: f, m, color, typeBadge, debtColor, debtLabel, availColor, isFinAdmin, busy, onStatement, onEdit, onLoans, onArchive }) {
   const [confirmArch, setConfirmArch] = useState(false);
   const mini = (label, value, opts = {}) => (
     <div style={{ minWidth: 0, ...(opts.onClick && f && m.debt !== 0 ? { cursor: "pointer" } : {}) }} onClick={opts.onClick}>
@@ -433,7 +435,7 @@ function FundCard({ C, st, fund: f, m, color, typeBadge, debtColor, debtLabel, i
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, padding: "10px 0", borderTop: `1px solid ${C.line}`, borderBottom: `1px solid ${C.line}` }}>
         {mini("Остаток", fmt(m.remaining), { color: C.sub })}
-        {mini("Доступно", fmt(m.available), { color: C.money, big: true })}
+        {mini("Доступно", fmt(m.available), { color: availColor(m.available), big: true })}
         {mini("Долг", debtLabel(m.debt), { color: debtColor(m.debt), onClick: m.debt !== 0 ? onLoans : undefined, loading: busy === `loans:${f.id}` })}
       </div>
       <div style={{ display: "flex", gap: 6 }}>
@@ -571,7 +573,7 @@ function FundLoansModal({ C, st, data, nameOf, isFinAdmin, busy, onReturn, onClo
 
 
 // ---------------------------------------------------------------- Карточка папки (раздела)
-function FolderCard({ C, st, folder, sub, childCount, color, debtColor, debtLabel, open, isFinAdmin, busy, onToggle, onStatement, onEdit, onArchive }) {
+function FolderCard({ C, st, folder, sub, childCount, color, debtColor, debtLabel, availColor, open, isFinAdmin, busy, onToggle, onStatement, onEdit, onArchive }) {
   const [confirmArch, setConfirmArch] = useState(false);
   const stop = (fn) => (e) => { e.stopPropagation(); fn(); };
   const mini = (label, value, col) => (
@@ -592,7 +594,7 @@ function FolderCard({ C, st, folder, sub, childCount, color, debtColor, debtLabe
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, padding: "10px 0", borderTop: `1px solid ${C.line}`, borderBottom: `1px solid ${C.line}` }}>
         {mini("Остаток", fmt(sub.remaining), C.sub)}
-        {mini("Доступно", fmt(sub.available), C.money)}
+        {mini("Доступно", fmt(sub.available), availColor(sub.available))}
         {mini("Долг", debtLabel(sub.debt), debtColor(sub.debt))}
       </div>
       <div style={{ display: "flex", gap: 6 }}>
