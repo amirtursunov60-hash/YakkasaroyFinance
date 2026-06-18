@@ -785,17 +785,26 @@ export type Database = {
       }
       fund_folders: {
         Row: {
+          color: string | null
+          description: string | null
           id: string
+          is_archived: boolean
           name: string
           parent_id: string | null
         }
         Insert: {
+          color?: string | null
+          description?: string | null
           id?: string
+          is_archived?: boolean
           name: string
           parent_id?: string | null
         }
         Update: {
+          color?: string | null
+          description?: string | null
           id?: string
+          is_archived?: boolean
           name?: string
           parent_id?: string | null
         }
@@ -2224,6 +2233,13 @@ export type Database = {
       fp_reopen_period: { Args: { p_period_id: string }; Returns: undefined }
       fp_reset_distribution: {
         Args: { p_period_id: string; p_stage: string }
+        Returns: undefined
+      }
+      fp_set_fund_stage: {
+        Args: {
+          p_fund: string
+          p_stage: Database["public"]["Enums"]["distribution_stage"]
+        }
         Returns: undefined
       }
       has_fund_access: { Args: { f: string }; Returns: boolean }

@@ -654,14 +654,54 @@ export async function fetchIncomeByType(periodId) {
 // ---------------------------------------------------------------- Папки фондов
 export async function fetchFundFolders() {
   const { data, error } = await supabase
-    .from("fund_folders").select("id, name, parent_id").order("name");
+    .from("fund_folders").select("id, name, parent_id, color, description")
+    .eq("is_archived", false).order("name");
   if (error) throw error;
   return data;
 }
 
-export async function createFundFolder(name) {
+export async function createFundFolder(name, { color, description } = {}) {
   const { data, error } = await supabase
-    .from("fund_folders").insert({ name }).select().single();
+    .from("fund_folders").insert({ name, color: color || null, description: description || null })
+    .select().single();
+  if (error) throw error;
+  return data;
+}
+
+// Редактирование папки (docs/funds-spec.md §9): название, цвет, описание.
+export async function updateFundFolder(id, { name, color, description }) {
+  const patch = {};
+  if (name !== undefined) patch.name = name;
+  if (color !== undefined) patch.color = color || null;
+  if (description !== undefined) patch.description = description || null;
+  const { data, error } = await supabase.from("fund_folders").update(patch).eq("id", id).select().single();
+  if (error) throw error;
+  return data;
+}
+
+// Архив папки: фонды внутри остаются (folder_id → null), сама папка в архив.
+export async function archiveFundFolder(id) {
+  const r1 = await supabase.from("funds").update({ folder_id: null }).eq("folder_id", id);
+  if (r1.error) throw r1.error;
+  const r2 = await supabase.from("fund_folders").update({ is_archived: true }).eq("id", id);
+  if (r2.error) throw r2.error;
+}
+
+// Сводная выписка по всем фондам папки (Реестр), для кнопки «Подробно» папки.
+export async function fetchFolderStatement(folderId, periodId) {
+  const { data: fs, error: e1 } = await supabase
+    .from("funds").select("id").eq("folder_id", folderId).eq("is_archived", false);
+  if (e1) throw e1;
+  const ids = (fs || []).map((f) => f.id);
+  if (!ids.length) return [];
+  let q = supabase
+    .from("fp_register")
+    .select("id, op_type, fund_amount, comment, created_at, fund:funds(code)")
+    .in("fund_id", ids)
+    .order("created_at", { ascending: false })
+    .limit(200);
+  if (periodId) q = q.eq("period_id", periodId);
+  const { data, error } = await q;
   if (error) throw error;
   return data;
 }

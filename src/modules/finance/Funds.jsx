@@ -13,7 +13,8 @@ import {
   fetchFunds, fetchIncomeRefs, createFund, updateFund, archiveFund,
   fetchFundDebts, fetchFundCommitments, fetchFundJournal, fetchFundLoans,
   fundTransfer, fundLoan, fundLoanReturn, fundIncome, fundReturn,
-  fetchFundStatement, fetchFundFolders, createFundFolder,
+  fetchFundStatement, fetchFundFolders, createFundFolder, updateFundFolder,
+  archiveFundFolder, fetchFolderStatement,
 } from "../../lib/api";
 
 // ---------------------------------------------------------------- FUNDS
@@ -54,6 +55,7 @@ export function Funds() {
   const [busy, setBusy] = useState(null);
   const [statement, setStatement] = useState(null);
   const [editing, setEditing] = useState(null); // фонд для редактирования | "new"
+  const [editingFolder, setEditingFolder] = useState(null); // папка | "new"
   const [refs, setRefs] = useState(null);
   const [loansOf, setLoansOf] = useState(null); // { fund, rows } для клика по «Долгу»
   const [folders, setFolders] = useState([]);
@@ -103,7 +105,7 @@ export function Funds() {
     return a;
   }, { available: 0, remaining: 0, debt: 0 }), [funds, metrics]);
 
-  const colorOf = (f) => f.color || FUND_COLORS[[...f.code].reduce((a, c) => a + c.charCodeAt(0), 0) % FUND_COLORS.length];
+  const colorOf = (f) => f.color || FUND_COLORS[[...(f.code || f.name || "?")].reduce((a, c) => a + c.charCodeAt(0), 0) % FUND_COLORS.length];
   const availableOf = (id) => { const f = fundById[id]; return f ? metrics(f).available : 0; };
 
   const doOperation = async () => {
@@ -138,7 +140,26 @@ export function Funds() {
     setBusy(`stmt:${fund.id}`); setErr("");
     try {
       const rows = await fetchFundStatement(fund.id, allTime ? null : periodId);
-      setStatement({ fund, rows, allTime });
+      setStatement({ kind: "fund", entity: fund, title: `${fund.code} ${fund.name} · выписка`, rows, allTime });
+    } catch (e) { setErr(e?.message || String(e)); }
+    finally { setBusy(null); }
+  };
+
+  const openFolderStatement = async (folder, allTime = false) => {
+    setBusy(`stmt:${folder.id}`); setErr("");
+    try {
+      const rows = await fetchFolderStatement(folder.id, allTime ? null : periodId);
+      setStatement({ kind: "folder", entity: folder, title: `${folder.name} · сводная выписка`, rows, allTime });
+    } catch (e) { setErr(e?.message || String(e)); }
+    finally { setBusy(null); }
+  };
+
+  const doArchiveFolder = async (folder) => {
+    setBusy(`arch:${folder.id}`); setErr(""); setDone("");
+    try {
+      await archiveFundFolder(folder.id);
+      await load();
+      setDone(`Раздел «${folder.name}» архивирован (фонды сохранены)`);
     } catch (e) { setErr(e?.message || String(e)); }
     finally { setBusy(null); }
   };
@@ -279,7 +300,12 @@ export function Funds() {
       <section style={st.card}>
         <div style={st.cardHead}>
           <div style={st.cardTitle}>Остатки по фондам</div>
-          <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+            {isFinAdmin && (
+              <button style={st.btnGhost} className="btn" onClick={() => setEditingFolder("new")}>
+                <Plus size={15} /> {!isMobile && "Раздел"}
+              </button>
+            )}
             {isFinAdmin && (
               <button style={st.btnGhost} className="btn" onClick={() => setEditing("new")}>
                 <Plus size={15} /> {!isMobile && "Новый фонд"}
@@ -291,19 +317,15 @@ export function Funds() {
 
         <div style={{ display: "grid", gap: 12, gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill, minmax(300px, 1fr))" }}>
           {rows.map((r) => r.section ? (() => {
-            const sub = r.children.reduce((acc, c) => { acc.av += metrics(c).available; return acc; }, { av: 0 });
-            const open = openFolders[r.section];
+            const folder = folders.find((x) => x.id === r.section) || { id: r.section, name: "Раздел" };
+            const sub = r.children.reduce((acc, c) => { const mm = metrics(c); acc.remaining += mm.remaining; acc.available += mm.available; acc.debt += mm.debt; return acc; }, { remaining: 0, available: 0, debt: 0 });
             return (
-              <button key={"sec" + r.section} className="btn"
-                onClick={() => setOpenFolders((o) => ({ ...o, [r.section]: !o[r.section] }))}
-                style={{ gridColumn: "1 / -1", display: "flex", alignItems: "center", gap: 8, width: "100%",
-                  textAlign: "left", padding: "10px 12px", borderRadius: 12, cursor: "pointer",
-                  background: C.panel2, border: `1px solid ${C.line}`, color: C.text }}>
-                <ChevronRight size={15} style={{ transform: open ? "rotate(90deg)" : "none", transition: "transform .2s", color: C.green }} />
-                <b style={{ textTransform: "uppercase", fontSize: 12, letterSpacing: 0.4 }}>{folders.find((x) => x.id === r.section)?.name || "Раздел"}</b>
-                <span style={{ fontSize: 11, color: C.faint }}>· {r.children.length} фонд(ов)</span>
-                <span style={{ marginLeft: "auto", fontWeight: 700, color: C.money, fontVariantNumeric: "tabular-nums" }}>{fmt(sub.av)}</span>
-              </button>
+              <FolderCard key={"sec" + r.section} C={C} st={st} folder={folder} sub={sub} childCount={r.children.length}
+                color={colorOf(folder)} debtColor={debtColor} debtLabel={debtLabel}
+                open={openFolders[r.section]} isFinAdmin={isFinAdmin} busy={busy}
+                onToggle={() => setOpenFolders((o) => ({ ...o, [r.section]: !o[r.section] }))}
+                onStatement={() => openFolderStatement(folder)} onEdit={() => setEditingFolder(folder)}
+                onArchive={() => doArchiveFolder(folder)} />
             );
           })() : (
             <FundCard key={r.fund.id} C={C} st={st} fund={r.fund} m={metrics(r.fund)}
@@ -361,7 +383,7 @@ export function Funds() {
 
     {statement && (
       <FundStatementModal C={C} st={st} statement={statement} period={period}
-        onAllTime={() => openStatement(statement.fund, true)}
+        onAllTime={() => statement.kind === "folder" ? openFolderStatement(statement.entity, true) : openStatement(statement.entity, true)}
         onClose={() => setStatement(null)} />
     )}
     {loansOf && (
@@ -373,6 +395,11 @@ export function Funds() {
         fund={editing === "new" ? null : editing}
         onClose={() => setEditing(null)}
         onSaved={async (msg) => { setEditing(null); await load(); setDone(msg); }} />
+    )}
+    {editingFolder && (
+      <FolderFormModal C={C} st={st} folder={editingFolder === "new" ? null : editingFolder}
+        onClose={() => setEditingFolder(null)}
+        onSaved={async (msg) => { setEditingFolder(null); await load(); setDone(msg); }} />
     )}
   </>);
 }
@@ -441,12 +468,12 @@ function FundCard({ C, st, fund: f, m, color, typeBadge, debtColor, debtLabel, i
 // ---------------------------------------------------------------- Выписка по фонду
 function FundStatementModal({ C, st, statement, period, onAllTime, onClose }) {
   useScrollLock();
-  const { fund, rows, allTime } = statement;
+  const { rows, allTime, title } = statement;
   return (
     <div style={st.mdOverlay} onClick={onClose}>
       <div style={{ ...st.mdCard, width: "min(560px, 100%)" }} onClick={(e) => e.stopPropagation()}>
         <div style={st.mdHead}>
-          <div style={st.mdTitle}>{fund.code} {fund.name} · выписка</div>
+          <div style={st.mdTitle}>{title}</div>
           <button style={st.iconBtn} onClick={onClose}><X size={17} /></button>
         </div>
         <div style={{ fontSize: 12.5, color: C.sub, marginBottom: 12, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
@@ -462,7 +489,10 @@ function FundStatementModal({ C, st, statement, period, onAllTime, onClose }) {
             return (
               <div key={r.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, padding: "9px 12px", borderRadius: 12, background: C.panel2, border: `1px solid ${C.line}` }}>
                 <div style={{ minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600 }}>{OP_LABELS[r.op_type] || r.op_type}</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, display: "flex", gap: 6, alignItems: "center" }}>
+                    {r.fund?.code && <span style={{ fontSize: 11, fontWeight: 700, color: C.money, fontFamily: "var(--mono, monospace)" }}>{r.fund.code}</span>}
+                    {OP_LABELS[r.op_type] || r.op_type}
+                  </div>
                   <div style={{ fontSize: 11.5, color: C.faint, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {new Date(r.created_at).toLocaleString("ru", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
                     {r.comment ? ` · ${r.comment}` : ""}
@@ -534,6 +564,121 @@ function FundLoansModal({ C, st, data, nameOf, isFinAdmin, busy, onReturn, onClo
               </div>
             );
           })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+// ---------------------------------------------------------------- Карточка папки (раздела)
+function FolderCard({ C, st, folder, sub, childCount, color, debtColor, debtLabel, open, isFinAdmin, busy, onToggle, onStatement, onEdit, onArchive }) {
+  const [confirmArch, setConfirmArch] = useState(false);
+  const stop = (fn) => (e) => { e.stopPropagation(); fn(); };
+  const mini = (label, value, col) => (
+    <div style={{ minWidth: 0 }}>
+      <div style={{ fontSize: 10, color: C.faint, textTransform: "uppercase", letterSpacing: 0.3, whiteSpace: "nowrap" }}>{label}</div>
+      <div style={{ fontSize: 14, fontWeight: 700, color: col || C.text, fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{value}</div>
+    </div>
+  );
+  return (
+    <div onClick={onToggle} style={{ gridColumn: "1 / -1", position: "relative", display: "flex", flexDirection: "column", gap: 10,
+      padding: "13px 14px 13px 16px", borderRadius: 14, background: C.panel, border: `1px solid ${C.glassBorder}`, cursor: "pointer", overflow: "hidden" }}>
+      <span style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 4, background: color }} />
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <ChevronRight size={16} style={{ transform: open ? "rotate(90deg)" : "none", transition: "transform .2s", color: C.green, flexShrink: 0 }} />
+        <b style={{ textTransform: "uppercase", fontSize: 12.5, letterSpacing: 0.4 }}>{folder.name}</b>
+        <span style={{ fontSize: 11, color: C.faint }}>· {childCount} фонд(ов)</span>
+        {folder.description && <span style={{ fontSize: 11, color: C.faint, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>· {folder.description}</span>}
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, padding: "10px 0", borderTop: `1px solid ${C.line}`, borderBottom: `1px solid ${C.line}` }}>
+        {mini("Остаток", fmt(sub.remaining), C.sub)}
+        {mini("Доступно", fmt(sub.available), C.money)}
+        {mini("Долг", debtLabel(sub.debt), debtColor(sub.debt))}
+      </div>
+      <div style={{ display: "flex", gap: 6 }}>
+        <button style={{ ...st.btnGhost, flex: 1, justifyContent: "center", padding: "7px 8px", fontSize: 12 }} className="btn" disabled={!!busy} onClick={stop(onStatement)}>
+          {busy === `stmt:${folder.id}` ? <Loader2 size={13} className="spin" /> : <List size={13} />} Подробно
+        </button>
+        {isFinAdmin && (
+          <button style={{ ...st.btnGhost, flex: 1, justifyContent: "center", padding: "7px 8px", fontSize: 12 }} className="btn" onClick={stop(onEdit)}>
+            <Pencil size={13} /> Изменить
+          </button>
+        )}
+        {isFinAdmin && (
+          confirmArch ? (
+            <button style={{ ...st.btnGhost, flex: 1.4, justifyContent: "center", padding: "7px 8px", fontSize: 12, color: C.danger, borderColor: `${C.danger}55` }} className="btn"
+              disabled={busy === `arch:${folder.id}`} onClick={stop(onArchive)}>
+              {busy === `arch:${folder.id}` ? <Loader2 size={13} className="spin" /> : <Archive size={13} />} Точно?
+            </button>
+          ) : (
+            <button style={{ ...st.btnGhost, justifyContent: "center", padding: "7px 9px", fontSize: 12, color: C.danger }} className="btn"
+              onClick={stop(() => setConfirmArch(true))} title="Архивировать раздел">
+              <Archive size={13} />
+            </button>
+          )
+        )}
+      </div>
+    </div>
+  );
+}
+
+
+// ---------------------------------------------------------------- Новый / Редактировать раздел
+function FolderFormModal({ C, st, folder, onClose, onSaved }) {
+  useScrollLock();
+  const isEdit = !!folder;
+  const [f, setF] = useState({ name: folder?.name || "", color: folder?.color || FUND_COLORS[0], description: folder?.description || "" });
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+
+  const submit = async () => {
+    if (busy) return;
+    setErr("");
+    if (!f.name.trim()) return setErr("Укажите название раздела");
+    setBusy(true);
+    try {
+      const payload = { name: f.name.trim(), color: f.color, description: f.description.trim() };
+      if (isEdit) { await updateFundFolder(folder.id, payload); onSaved("Раздел обновлён"); }
+      else { await createFundFolder(payload.name, payload); onSaved("Раздел создан"); }
+    } catch (e) { setErr(e?.message || String(e)); setBusy(false); }
+  };
+
+  return (
+    <div style={st.mdOverlay} onClick={onClose}>
+      <div style={{ ...st.mdCard, width: "min(420px, 100%)" }} onClick={(e) => e.stopPropagation()}>
+        <div style={st.mdHead}>
+          <div style={st.mdTitle}>{isEdit ? "Редактировать раздел" : "Новый раздел"}</div>
+          <button style={st.iconBtn} onClick={onClose}><X size={17} /></button>
+        </div>
+        <div style={{ display: "grid", gap: 10 }}>
+          <div style={st.reqField}>
+            <span style={st.reqFieldLbl}>Название</span>
+            <input style={st.mdInput} className="fin" placeholder="Фонд учредителей…" autoFocus
+              value={f.name} onChange={(e) => setF((p) => ({ ...p, name: e.target.value }))} />
+          </div>
+          <div style={st.reqField}>
+            <span style={st.reqFieldLbl}>Описание</span>
+            <input style={st.mdInput} className="fin" placeholder="Назначение раздела…"
+              value={f.description} onChange={(e) => setF((p) => ({ ...p, description: e.target.value }))} />
+          </div>
+          <div style={st.reqField}>
+            <span style={st.reqFieldLbl}>Цвет-метка</span>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              {FUND_COLORS.map((c) => (
+                <button key={c} type="button" onClick={() => setF((p) => ({ ...p, color: c }))}
+                  style={{ width: 26, height: 26, borderRadius: "50%", background: c, cursor: "pointer",
+                    border: f.color === c ? `3px solid ${C.text}` : `2px solid ${C.line}` }} />
+              ))}
+            </div>
+          </div>
+        </div>
+        {err && <div style={st.reqError}><AlertCircle size={15} /> {err}</div>}
+        <div style={st.mdActions}>
+          <button style={st.btnGhost} className="btn" onClick={onClose}>Отмена</button>
+          <button style={{ ...st.btnGreen, opacity: busy ? 0.7 : 1 }} className="btn" onClick={submit} disabled={busy}>
+            {busy ? <Loader2 size={15} className="spin" /> : <Plus size={15} />} {isEdit ? "Сохранить" : "Создать"}
+          </button>
         </div>
       </div>
     </div>
