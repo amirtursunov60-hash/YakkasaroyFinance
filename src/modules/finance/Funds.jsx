@@ -377,21 +377,18 @@ export function Funds() {
         const amtColor = op.signed ? (op.amount >= 0 ? C.money : C.danger) : C.sub;
         const amtText = op.signed ? `${op.amount >= 0 ? "+" : ""}${fmt(op.amount)}` : fmt(op.amount);
         return (
-          <div key={op.id} style={{ display: "flex", gap: 12, padding: "11px 4px", borderBottom: `1px solid ${C.line}`,
-            alignItems: "flex-start", opacity: op.reversed ? 0.55 : 1 }}>
+          <div key={op.id} style={{ display: "flex", gap: 12, padding: "11px 4px", borderBottom: `1px solid ${C.line}`, alignItems: "flex-start" }}>
             <span style={{ fontSize: 11.5, color: C.faint, flexShrink: 0, width: 60, paddingTop: 2 }}>
               {new Date(op.createdAt).toLocaleString("ru", { day: "2-digit", month: "2-digit" })}
             </span>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                <span style={{ fontSize: 10.5, fontWeight: 700, padding: "2px 8px", borderRadius: 20, whiteSpace: "nowrap",
-                  color: op.isReversal ? C.warning : C.info, background: `${op.isReversal ? C.warning : C.info}1a` }}>
-                  {op.isReversal ? "Откат" : (OP_LABELS[op.opType] || op.opType)}
+                <span style={{ fontSize: 10.5, fontWeight: 700, padding: "2px 8px", borderRadius: 20, whiteSpace: "nowrap", color: C.info, background: `${C.info}1a` }}>
+                  {OP_LABELS[op.opType] || op.opType}
                 </span>
                 <span style={{ fontSize: 12.5, fontWeight: 600 }}>
                   {src ? src.code : "—"}{op.toFund ? <span style={{ color: C.faint, fontWeight: 400 }}> → {op.toFund.code}</span> : ""}
                 </span>
-                {op.reversed && <span style={{ fontSize: 10.5, color: C.faint }}>откачено</span>}
               </div>
               {et && <div style={{ fontSize: 11.5, color: C.sub, marginTop: 2 }}>{[et.code, et.name].filter(Boolean).join(" ")}</div>}
               {info && <div style={{ fontSize: 11.5, color: C.faint, marginTop: 2, overflow: "hidden", textOverflow: "ellipsis" }}>{info}</div>}

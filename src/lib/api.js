@@ -1053,7 +1053,9 @@ export async function fetchFundJournal(limit = 400) {
       });
     }
   }
-  return ops;
+  // Откаченные операции и сами записи-откаты прячем из журнала вкладки «Фонды»
+  // (в главном Реестре они остаются). docs/funds-spec.md §7.
+  return ops.filter((o) => !o.isReversal && !o.reversed);
 }
 
 // Откат операции фонда (компенсирующая запись возвращает деньги в исходный фонд).
