@@ -45,7 +45,7 @@ export function Directive() {
   const [prevIncome, setPrevIncome] = useState(0);
   const [regRows, setRegRows] = useState([]);     // распределение из Реестра
   const [prevDist, setPrevDist] = useState([]);   // распределение прошлой недели (для сравнения)
-  const [compare, setCompare] = useState(false);  // режим сравнения с прошлой неделей
+  const compare = false;  // режим сравнения отключён (кнопку «Сравнить» убрали по просьбе заказчика)
   const [calculated, setCalculated] = useState({}); // { stage: { fund_id: сумма } }
   const [pcts, setPcts] = useState({});             // правки процентов { ruleId: число }
   const [busy, setBusy] = useState(null);           // 'block'|'close'|'transfer'|`calc:х`|`appr:х`
@@ -381,16 +381,6 @@ export function Directive() {
     {!rules.length && (
       <div style={{ ...st.locCard, ...st.empty }}>
         Схема распределения не настроена — примените миграции 006–007 (supabase/README.md).
-      </div>
-    )}
-
-    {rules.length > 0 && period && canCompare && (
-      <div style={st.dirToolbar} className="dirToolbar">
-        <button style={{ ...st.btnGhost, ...(compare ? st.dirToggleOn : {}) }} className="btn"
-          onClick={() => setCompare((v) => !v)}
-          title="Показать суммы фондов за прошлую неделю и динамику">
-          <Scale size={15} /> {compare ? "Скрыть сравнение" : "Сравнить с прошлой неделей"}
-        </button>
       </div>
     )}
 
