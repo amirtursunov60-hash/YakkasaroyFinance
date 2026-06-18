@@ -299,13 +299,8 @@ export function Funds() {
     <div style={{ ...st.cardWrap, marginTop: 18 }}>
       <section style={st.card}>
         <div style={st.cardHead}>
-          <div style={st.cardTitle}>Остатки по фондам</div>
+          <div style={st.cardTitle}>Фонды</div>
           <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-            {isFinAdmin && (
-              <button style={st.btnGhost} className="btn" onClick={() => setEditingFolder("new")}>
-                <Plus size={15} /> {!isMobile && "Раздел"}
-              </button>
-            )}
             {isFinAdmin && (
               <button style={st.btnGhost} className="btn" onClick={() => setEditing("new")}>
                 <Plus size={15} /> {!isMobile && "Новый фонд"}
@@ -336,13 +331,23 @@ export function Funds() {
           ))}
         </div>
 
-        {/* Итого */}
-        <div style={{ display: "flex", gap: 18, flexWrap: "wrap", justifyContent: "flex-end", alignItems: "center",
-          marginTop: 14, paddingTop: 12, borderTop: `2px solid ${C.line}`, fontVariantNumeric: "tabular-nums" }}>
-          <span style={{ fontWeight: 800, marginRight: "auto" }}>Всего</span>
-          <span style={{ fontSize: 12.5, color: C.sub }}>Остаток <b style={{ color: C.text }}>{fmt(totals.remaining)}</b></span>
-          <span style={{ fontSize: 12.5, color: C.sub }}>Доступно <b style={{ color: C.money }}>{fmt(totals.available)}</b></span>
-          <span style={{ fontSize: 12.5, color: C.sub }}>Долг <b style={{ color: debtColor(totals.debt) }}>{debtLabel(totals.debt)}</b></span>
+        {/* Итого — компактно, влезает на телефоне */}
+        <div style={{ marginTop: 14, paddingTop: 12, borderTop: `2px solid ${C.line}` }}>
+          <div style={{ fontSize: 11, color: C.faint, textTransform: "uppercase", letterSpacing: 0.3, fontWeight: 700, marginBottom: 8 }}>Всего по фондам</div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, fontVariantNumeric: "tabular-nums" }}>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: 10, color: C.faint, textTransform: "uppercase" }}>Остаток</div>
+              <div style={{ fontWeight: 800, color: C.sub, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{fmt(totals.remaining)}</div>
+            </div>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: 10, color: C.faint, textTransform: "uppercase" }}>Доступно</div>
+              <div style={{ fontWeight: 800, color: C.money, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{fmt(totals.available)}</div>
+            </div>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: 10, color: C.faint, textTransform: "uppercase" }}>Долг</div>
+              <div style={{ fontWeight: 800, color: debtColor(totals.debt), whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{debtLabel(totals.debt)}</div>
+            </div>
+          </div>
         </div>
       </section>
     </div>
