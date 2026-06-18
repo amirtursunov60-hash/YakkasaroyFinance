@@ -621,6 +621,7 @@ export type Database = {
           payroll_sheet_id: string | null
           period_id: string | null
           request_id: string | null
+          reverses_id: number | null
         }
         Insert: {
           bill_id?: string | null
@@ -643,6 +644,7 @@ export type Database = {
           payroll_sheet_id?: string | null
           period_id?: string | null
           request_id?: string | null
+          reverses_id?: number | null
         }
         Update: {
           bill_id?: string | null
@@ -665,6 +667,7 @@ export type Database = {
           payroll_sheet_id?: string | null
           period_id?: string | null
           request_id?: string | null
+          reverses_id?: number | null
         }
         Relationships: [
           {
@@ -751,6 +754,13 @@ export type Database = {
             referencedRelation: "payment_requests"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fp_register_reverses_id_fkey"
+            columns: ["reverses_id"]
+            isOneToOne: false
+            referencedRelation: "fp_register"
+            referencedColumns: ["id"]
+          },
         ]
       }
       fund_access: {
@@ -785,17 +795,26 @@ export type Database = {
       }
       fund_folders: {
         Row: {
+          color: string | null
+          description: string | null
           id: string
+          is_archived: boolean
           name: string
           parent_id: string | null
         }
         Insert: {
+          color?: string | null
+          description?: string | null
           id?: string
+          is_archived?: boolean
           name: string
           parent_id?: string | null
         }
         Update: {
+          color?: string | null
+          description?: string | null
           id?: string
+          is_archived?: boolean
           name?: string
           parent_id?: string | null
         }
@@ -813,44 +832,59 @@ export type Database = {
         Row: {
           balance: number
           code: string
+          color: string | null
           created_at: string
           currency_id: string
+          description: string | null
           folder_id: string | null
           id: string
           is_archived: boolean
+          is_private: boolean
           is_restricted: boolean
           kind: Database["public"]["Enums"]["fund_kind"]
           location_id: string | null
           name: string
+          no_transfer: boolean
           outer_id: string | null
+          stage: Database["public"]["Enums"]["distribution_stage"] | null
         }
         Insert: {
           balance?: number
           code: string
+          color?: string | null
           created_at?: string
           currency_id: string
+          description?: string | null
           folder_id?: string | null
           id?: string
           is_archived?: boolean
+          is_private?: boolean
           is_restricted?: boolean
           kind?: Database["public"]["Enums"]["fund_kind"]
           location_id?: string | null
           name: string
+          no_transfer?: boolean
           outer_id?: string | null
+          stage?: Database["public"]["Enums"]["distribution_stage"] | null
         }
         Update: {
           balance?: number
           code?: string
+          color?: string | null
           created_at?: string
           currency_id?: string
+          description?: string | null
           folder_id?: string | null
           id?: string
           is_archived?: boolean
+          is_private?: boolean
           is_restricted?: boolean
           kind?: Database["public"]["Enums"]["fund_kind"]
           location_id?: string | null
           name?: string
+          no_transfer?: boolean
           outer_id?: string | null
+          stage?: Database["public"]["Enums"]["distribution_stage"] | null
         }
         Relationships: [
           {
@@ -2113,6 +2147,15 @@ export type Database = {
         Args: { p_allocations: Json; p_period_id: string; p_stage: string }
         Returns: undefined
       }
+      fp_fund_income: {
+        Args: {
+          p_amount: number
+          p_comment?: string
+          p_fund: string
+          p_period_id: string
+        }
+        Returns: undefined
+      }
       fp_fund_loan: {
         Args: {
           p_amount: number
@@ -2128,6 +2171,15 @@ export type Database = {
           p_amount: number
           p_comment?: string
           p_loan_id: number
+          p_period_id: string
+        }
+        Returns: undefined
+      }
+      fp_fund_return: {
+        Args: {
+          p_amount: number
+          p_comment?: string
+          p_fund: string
           p_period_id: string
         }
         Returns: undefined
@@ -2193,6 +2245,14 @@ export type Database = {
         Args: { p_period_id: string; p_stage: string }
         Returns: undefined
       }
+      fp_reverse_fund_op: { Args: { p_id: number }; Returns: undefined }
+      fp_set_fund_stage: {
+        Args: {
+          p_fund: string
+          p_stage: Database["public"]["Enums"]["distribution_stage"]
+        }
+        Returns: undefined
+      }
       has_fund_access: { Args: { f: string }; Returns: boolean }
       has_location_access: { Args: { loc: string }; Returns: boolean }
       holds_position: { Args: { pos: string }; Returns: boolean }
@@ -2241,6 +2301,8 @@ export type Database = {
         | "adjustment"
         | "bill_payment"
         | "payroll_payment"
+        | "fund_income"
+        | "fund_return"
       request_status:
         | "submitted"
         | "planning"
@@ -2413,6 +2475,8 @@ export const Constants = {
         "adjustment",
         "bill_payment",
         "payroll_payment",
+        "fund_income",
+        "fund_return",
       ],
       request_status: ["submitted", "planning", "approved", "rejected", "paid"],
     },
