@@ -1184,14 +1184,14 @@ export async function fetchFunds() {
 export async function fetchFundCommitments() {
   const [reqRes, billRes] = await Promise.all([
     supabase.from("payment_requests")
-      .select("fund_id, planned_amount").eq("status", "approved").not("fund_id", "is", null),
+      .select("fund_id, planned_amount, approved_amount").eq("status", "approved").not("fund_id", "is", null),
     supabase.from("supplier_bills")
       .select("fund_id, amount").eq("status", "approved").eq("is_archived", false).not("fund_id", "is", null),
   ]);
   if (reqRes.error) throw reqRes.error;
   if (billRes.error) throw billRes.error;
   const m = {};
-  for (const r of reqRes.data) m[r.fund_id] = (m[r.fund_id] || 0) + Number(r.planned_amount || 0);
+  for (const r of reqRes.data) m[r.fund_id] = (m[r.fund_id] || 0) + Number(r.approved_amount ?? r.planned_amount ?? 0);
   for (const b of billRes.data) m[b.fund_id] = (m[b.fund_id] || 0) + Number(b.amount || 0);
   return m;
 }
