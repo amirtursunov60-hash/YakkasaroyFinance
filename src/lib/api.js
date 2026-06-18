@@ -1005,7 +1005,8 @@ export async function fundLoanReturn(loanId, amount, periodId, comment) {
 export async function fetchFundJournal(limit = 400) {
   const { data, error } = await supabase
     .from("fp_register")
-    .select(`id, op_type, fund_id, fund_amount, comment, created_at, period_id, pair_id, reverses_id,
+    .select(`id, op_type, fund_id, fund_amount, comment, created_at, period_id, pair_id, reverses_id, loan_parent_id,
+      period:fp_periods(status),
       fund:funds(code, name),
       counterparty:counterparties(name),
       payment_type:payment_types(name),
@@ -1017,6 +1018,15 @@ export async function fetchFundJournal(limit = 400) {
   if (error) throw error;
 
   const reversedLegIds = new Set(data.filter((r) => r.reverses_id).map((r) => r.reverses_id));
+  // возвращено по каждому займу (родитель = отрицательная нога), чтобы не давать
+  // откат уже погашенного займа
+  const returnedByLoan = {};
+  for (const r of data) {
+    if (r.op_type === "fund_loan_return" && r.loan_parent_id && Number(r.fund_amount) > 0)
+      returnedByLoan[r.loan_parent_id] = (returnedByLoan[r.loan_parent_id] || 0) + Number(r.fund_amount);
+  }
+  // откат разрешён только в открытой неделе (в закрытом периоде — нельзя)
+  const periodOpen = (r) => r.period?.status && r.period.status !== "closed";
   const info = (r) => ({
     expenseType: r.request?.expense_type || r.bill?.expense_type || null,
     counterparty: r.counterparty?.name || null,
@@ -1035,12 +1045,17 @@ export async function fetchFundJournal(limit = 400) {
       const neg = legs.find((x) => Number(x.fund_amount) < 0) || legs[0];
       const pos = legs.find((x) => Number(x.fund_amount) > 0) || legs[legs.length - 1];
       const reversed = legs.some((x) => reversedLegIds.has(x.id));
+      // заём откатывается, пока не погашен полностью
+      const loanOutstanding = r.op_type === "fund_loan"
+        ? -Number(neg.fund_amount) - (returnedByLoan[neg.id] || 0) : 0;
       ops.push({
         id: neg.id, opType: r.op_type, createdAt: r.created_at, periodId: r.period_id,
         fromFund: neg?.fund || null, toFund: pos?.fund || null, fund: null,
         amount: Math.abs(Number(pos?.fund_amount || neg?.fund_amount || 0)), signed: false,
         ...info(r), reversed,
-        reversible: r.op_type === "fund_transfer" && !reversed && !r.reverses_id,
+        reversible: periodOpen(r) && !reversed && !r.reverses_id && (
+          r.op_type === "fund_transfer" || (r.op_type === "fund_loan" && loanOutstanding > 0.009)
+        ),
       });
     } else {
       const reversed = reversedLegIds.has(r.id);
@@ -1049,7 +1064,7 @@ export async function fetchFundJournal(limit = 400) {
         fromFund: null, toFund: null, fund: r.fund || null,
         amount: Number(r.fund_amount) || 0, signed: true,
         ...info(r), reversed,
-        reversible: ["fund_income", "fund_return"].includes(r.op_type) && !reversed && !r.reverses_id,
+        reversible: periodOpen(r) && ["fund_income", "fund_return"].includes(r.op_type) && !reversed && !r.reverses_id,
       });
     }
   }
