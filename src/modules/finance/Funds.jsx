@@ -609,15 +609,18 @@ function FolderCard({ C, st, folder, sub, childCount, color, debtColor, debtLabe
   );
   return (
     <div onClick={onToggle} style={{ gridColumn: "1 / -1", position: "relative", display: "flex", flexDirection: "column", gap: 10,
-      padding: "13px 14px 13px 16px", borderRadius: 14, background: C.panel, border: `1px solid ${C.glassBorder}`, cursor: "pointer", overflow: "hidden" }}>
-      <span style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 4, background: color }} />
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <ChevronRight size={16} style={{ transform: open ? "rotate(90deg)" : "none", transition: "transform .2s", color: C.green, flexShrink: 0 }} />
-        <b style={{ textTransform: "uppercase", fontSize: 12.5, letterSpacing: 0.4 }}>{folder.name}</b>
+      padding: "14px 16px 14px 20px", borderRadius: 16,
+      background: `linear-gradient(135deg, ${color}26, ${C.panel} 70%)`,
+      border: `1px solid ${color}55`, boxShadow: `0 2px 12px ${C.shadow}`, cursor: "pointer", overflow: "hidden" }}>
+      <span style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 6, background: color }} />
+      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+        <ChevronRight size={17} style={{ transform: open ? "rotate(90deg)" : "none", transition: "transform .2s", color, flexShrink: 0 }} />
+        <span style={{ fontSize: 9.5, fontWeight: 800, letterSpacing: 0.6, textTransform: "uppercase", color, background: `${color}2e`, padding: "2px 7px", borderRadius: 6 }}>Раздел</span>
+        <b style={{ textTransform: "uppercase", fontSize: 13, letterSpacing: 0.4 }}>{folder.name}</b>
         <span style={{ fontSize: 11, color: C.faint }}>· {childCount} фонд(ов)</span>
         {folder.description && <span style={{ fontSize: 11, color: C.faint, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>· {folder.description}</span>}
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, padding: "10px 0", borderTop: `1px solid ${C.line}`, borderBottom: `1px solid ${C.line}` }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, padding: "10px 0", borderTop: `1px solid ${color}33`, borderBottom: `1px solid ${color}33` }}>
         {mini("Остаток", fmt(sub.remaining), C.sub)}
         {mini("Доступно", fmt(sub.available), availColor(sub.available))}
         {mini("Долг", debtLabel(sub.debt), debtColor(sub.debt))}
