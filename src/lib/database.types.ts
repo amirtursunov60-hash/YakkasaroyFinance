@@ -813,44 +813,59 @@ export type Database = {
         Row: {
           balance: number
           code: string
+          color: string | null
           created_at: string
           currency_id: string
+          description: string | null
           folder_id: string | null
           id: string
           is_archived: boolean
+          is_private: boolean
           is_restricted: boolean
           kind: Database["public"]["Enums"]["fund_kind"]
           location_id: string | null
           name: string
+          no_transfer: boolean
           outer_id: string | null
+          stage: Database["public"]["Enums"]["distribution_stage"] | null
         }
         Insert: {
           balance?: number
           code: string
+          color?: string | null
           created_at?: string
           currency_id: string
+          description?: string | null
           folder_id?: string | null
           id?: string
           is_archived?: boolean
+          is_private?: boolean
           is_restricted?: boolean
           kind?: Database["public"]["Enums"]["fund_kind"]
           location_id?: string | null
           name: string
+          no_transfer?: boolean
           outer_id?: string | null
+          stage?: Database["public"]["Enums"]["distribution_stage"] | null
         }
         Update: {
           balance?: number
           code?: string
+          color?: string | null
           created_at?: string
           currency_id?: string
+          description?: string | null
           folder_id?: string | null
           id?: string
           is_archived?: boolean
+          is_private?: boolean
           is_restricted?: boolean
           kind?: Database["public"]["Enums"]["fund_kind"]
           location_id?: string | null
           name?: string
+          no_transfer?: boolean
           outer_id?: string | null
+          stage?: Database["public"]["Enums"]["distribution_stage"] | null
         }
         Relationships: [
           {
@@ -2113,6 +2128,15 @@ export type Database = {
         Args: { p_allocations: Json; p_period_id: string; p_stage: string }
         Returns: undefined
       }
+      fp_fund_income: {
+        Args: {
+          p_amount: number
+          p_comment?: string
+          p_fund: string
+          p_period_id: string
+        }
+        Returns: undefined
+      }
       fp_fund_loan: {
         Args: {
           p_amount: number
@@ -2128,6 +2152,15 @@ export type Database = {
           p_amount: number
           p_comment?: string
           p_loan_id: number
+          p_period_id: string
+        }
+        Returns: undefined
+      }
+      fp_fund_return: {
+        Args: {
+          p_amount: number
+          p_comment?: string
+          p_fund: string
           p_period_id: string
         }
         Returns: undefined
@@ -2241,6 +2274,8 @@ export type Database = {
         | "adjustment"
         | "bill_payment"
         | "payroll_payment"
+        | "fund_income"
+        | "fund_return"
       request_status:
         | "submitted"
         | "planning"
@@ -2413,6 +2448,8 @@ export const Constants = {
         "adjustment",
         "bill_payment",
         "payroll_payment",
+        "fund_income",
+        "fund_return",
       ],
       request_status: ["submitted", "planning", "approved", "rejected", "paid"],
     },
