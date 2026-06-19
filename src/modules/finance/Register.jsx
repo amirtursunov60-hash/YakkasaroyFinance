@@ -106,7 +106,7 @@ export function Register() {
             <div style={st.heroLabel}>Реестр операций · источник истины ФП</div>
             <div style={st.heroTitle}>{f.scope === "week" ? (period ? periodTitle(period) : "Период не создан") : "Все периоды"}</div>
           </div>
-          <button style={st.btnGhost} className="btn" onClick={exportCsv} disabled={!rows.length}>
+          <button style={st.btnLiquid} className="btn glass" onClick={exportCsv} disabled={!rows.length}>
             <Download size={15} /> {!isMobile && "Экспорт CSV"}
           </button>
         </div>

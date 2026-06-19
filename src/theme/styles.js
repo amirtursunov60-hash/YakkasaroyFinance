@@ -111,6 +111,14 @@ export const makeStyles = (C) => ({
   // buttons
   btnGreen: { display: "inline-flex", alignItems: "center", gap: 7, background: "linear-gradient(180deg, #5be88f 0%, #2fcf73 45%, #18b85f 100%)", color: "#fff", border: "1px solid rgba(255,255,255,0.35)", padding: "11px 18px", borderRadius: 14, fontSize: 13.5, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap", flexShrink: 0, textShadow: "0 1px 2px rgba(0,80,30,0.35)", boxShadow: "inset 0 2px 3px rgba(255,255,255,0.55), inset 0 -3px 6px rgba(0,90,40,0.4), 0 8px 22px rgba(40,200,110,0.55), 0 2px 6px rgba(0,0,0,0.15)" },
   btnGhost: { display: "inline-flex", alignItems: "center", gap: 6, background: "linear-gradient(180deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.08) 100%)", color: C.text, border: "1px solid rgba(255,255,255,0.45)", padding: "11px 16px", borderRadius: 14, fontSize: 13, cursor: "pointer", fontWeight: 600, fontFamily: "inherit", whiteSpace: "nowrap", flexShrink: 0, boxShadow: `inset 0 2px 2px rgba(255,255,255,0.5), inset 0 -2px 6px rgba(0,0,0,0.06), 0 8px 20px ${C.shadow}`, backdropFilter: "blur(16px) saturate(150%)", WebkitBackdropFilter: "blur(16px) saturate(150%)" },
+  // Liquid Glass (своя реализация по мотивам 21st.dev, без Tailwind): многослойные
+  // «стеклянные грани» через inset-тени + backdrop blur; рецепт зависит от темы.
+  btnLiquid: { display: "inline-flex", alignItems: "center", gap: 7, padding: "11px 18px", borderRadius: 14, fontSize: 13.5, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap", flexShrink: 0, color: C.text, border: "none",
+    background: C.scheme === "dark" ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.5)",
+    backdropFilter: "blur(18px) saturate(170%)", WebkitBackdropFilter: "blur(18px) saturate(170%)",
+    boxShadow: C.scheme === "dark"
+      ? "0 2px 6px rgba(0,0,0,0.18), inset 2.5px 2.5px 0.5px -3px rgba(255,255,255,0.6), inset -2.5px -2.5px 0.5px -3px rgba(255,255,255,0.45), inset 1px 1px 1px -0.5px rgba(255,255,255,0.5), inset 0 0 6px 6px rgba(255,255,255,0.05), 0 6px 16px rgba(0,0,0,0.28)"
+      : "0 2px 6px rgba(0,0,0,0.08), inset 2.5px 2.5px 0.5px -3px rgba(0,0,0,0.22), inset -2.5px -2.5px 0.5px -3px rgba(0,0,0,0.16), inset 1px 1px 1px -0.5px rgba(0,0,0,0.16), inset 0 0 6px 6px rgba(0,0,0,0.05), 0 6px 16px rgba(31,55,90,0.16)" },
   empty: { padding: "28px 22px", color: C.faint, fontSize: 14, textAlign: "center" },
   mCard: { margin: "10px 12px 0", padding: "14px 16px", background: C.panel2, borderRadius: 16 },
   mTop: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10, gap: 10 },
