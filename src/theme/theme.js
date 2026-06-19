@@ -29,6 +29,8 @@ export const THEMES = {
     mono: 'ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace',
     // Семантические цвета статусов (единые для всех модулей)
     info: "#5b8def", warning: "#e8911c", success: "#2f9e44", successSoft: "#7bd88f",
+    // Доп. акценты для типов операций Реестра (адаптивны к теме)
+    gold: "#d6c14a", violet: "#9c6ade", teal: "#5bd6c9",
   },
   light: {
     scheme: "light",
@@ -49,6 +51,8 @@ export const THEMES = {
     mono: 'ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace',
     // Семантические цвета статусов — затемнены под светлый фон для контраста
     info: "#2f6fdb", warning: "#c47d10", success: "#2f9e44", successSoft: "#3d9e5f",
+    // Доп. акценты для типов операций Реестра — затемнены под светлый фон (контраст)
+    gold: "#a8881a", violet: "#7a4fc0", teal: "#0f9b8e",
   },
 };
 
