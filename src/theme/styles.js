@@ -233,6 +233,9 @@ export const makeStyles = (C) => ({
   fpLink: { display: "inline-flex", alignItems: "center", gap: 7, background: "transparent", border: "none", color: C.blueLink, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", marginLeft: "auto" },
   reqCommentWrap: { display: "flex", flexDirection: "column", gap: 5, marginTop: 12 },
   reqError: { display: "flex", alignItems: "center", gap: 7, marginTop: 10, padding: "9px 12px", background: `${C.danger}1a`, color: C.danger, border: `1px solid ${C.danger}44`, borderRadius: 8, fontSize: 12.5, fontWeight: 600 },
+  // Парный к reqError баннер успеха (единый стиль вместо инлайн-переопределения
+  // reqError зелёным в каждом экране). C.green — тема-зависимый, контраст в light ок.
+  reqSuccess: { display: "flex", alignItems: "center", gap: 7, marginTop: 10, padding: "9px 12px", background: `${C.green}1a`, color: C.green, border: `1px solid ${C.green}44`, borderRadius: 8, fontSize: 12.5, fontWeight: 600 },
   reqTotalBar: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: 14, marginTop: 16, padding: "16px 20px", background: C.panel2, border: `1px solid ${C.line}`, borderRadius: 16, flexWrap: "wrap" },
   reqTotalLabel: { fontSize: 14, fontWeight: 700 },
   reqTotalRight: { display: "flex", alignItems: "center", gap: 18, flexWrap: "wrap" },

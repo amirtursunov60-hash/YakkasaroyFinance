@@ -153,7 +153,7 @@ export function Clients() {
     </section>
 
     {err && <div style={{ ...st.reqError, marginBottom: 14 }}><AlertCircle size={15} /> {err}</div>}
-    {done && <div style={{ ...st.reqError, marginBottom: 14, color: C.green, background: `${C.green}1a`, borderColor: `${C.green}44` }}><CheckCircle2 size={15} /> {done}</div>}
+    {done && <div style={{ ...st.reqSuccess, marginBottom: 14 }}><CheckCircle2 size={15} /> {done}</div>}
 
     <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
       {FILTERS.map(([key, label]) => (
