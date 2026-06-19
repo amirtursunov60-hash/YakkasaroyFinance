@@ -23,8 +23,8 @@ export const makeCss = (C) => `
   .trow{border-top:1px solid ${C.line};}
   .trow:hover{background:${C.rowHover};}
   .locHead:hover{background:${C.rowHover};}
-  .locCard,.ordCard,.tableCard{transition:transform .25s cubic-bezier(.22,.61,.36,1), box-shadow .25s ease;}
-  @media (hover:hover){ .ordCard:hover,.tableCard:hover{transform:translateY(-3px);} }
+  .locCard,.ordCard,.tableCard,.fundCard{transition:transform .25s cubic-bezier(.22,.61,.36,1), box-shadow .25s ease, border-color .25s ease;}
+  @media (hover:hover){ .ordCard:hover,.tableCard:hover,.fundCard:hover{transform:translateY(-3px);} }
   input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
   .pctIn:focus,.amtIn:focus{border-color:${C.green};}
   .itemRow:hover{background:${C.rowHover};}

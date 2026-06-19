@@ -436,33 +436,48 @@ export function Funds() {
 // ---------------------------------------------------------------- Карточка фонда
 function FundCard({ C, st, fund: f, m, color, typeBadge, debtColor, debtLabel, availColor, isFinAdmin, busy, onStatement, onEdit, onLoans, onArchive }) {
   const [confirmArch, setConfirmArch] = useState(false);
+  // Вторичная метрика (Остаток / Долг) — мельче ведущего «Доступно».
   const mini = (label, value, opts = {}) => (
-    <div style={{ minWidth: 0, ...(opts.onClick && f && m.debt !== 0 ? { cursor: "pointer" } : {}) }} onClick={opts.onClick}>
+    <div style={{ minWidth: 0, ...(opts.onClick && m.debt !== 0 ? { cursor: "pointer" } : {}) }} onClick={opts.onClick}>
       <div style={{ fontSize: 10, color: C.faint, textTransform: "uppercase", letterSpacing: 0.3, whiteSpace: "nowrap" }}>{label}</div>
-      <div style={{ fontSize: opts.big ? 15 : 13.5, fontWeight: opts.big ? 800 : 700, color: opts.color || C.text, fontVariantNumeric: "tabular-nums", lineHeight: 1.2, wordBreak: "break-word" }}>
+      <div style={{ fontSize: 14, fontWeight: 700, color: opts.color || C.text, fontVariantNumeric: "tabular-nums", lineHeight: 1.2, wordBreak: "break-word" }}>
         {opts.loading ? <Loader2 size={13} className="spin" /> : value}
       </div>
     </div>
   );
   return (
-    <div style={{ position: "relative", display: "flex", flexDirection: "column", gap: 10,
-      padding: "13px 14px 13px 16px", borderRadius: 14, background: C.panel2, border: `1px solid ${C.line}`, overflow: "hidden" }}>
-      <span style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 4, background: color }} />
-      <div>
-        <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-          <span style={st.fundCode}>{f.code}</span>
+    <div className="fundCard" style={{ position: "relative", display: "flex", flexDirection: "column", gap: 11,
+      padding: "15px 16px 14px 18px", borderRadius: 18,
+      background: `linear-gradient(155deg, ${color}1f 0%, ${C.panel2} 44%)`,
+      border: `1px solid ${color}3a`,
+      boxShadow: `inset 0 1px 0 ${C.glassHi}, 0 8px 22px ${C.shadow}`, overflow: "hidden" }}>
+      {/* мягкое свечение цвета фонда в углу — глубина и идентичность */}
+      <span style={{ position: "absolute", right: -42, top: -42, width: 120, height: 120, borderRadius: "50%",
+        background: `radial-gradient(circle, ${color}3a 0%, transparent 70%)`, pointerEvents: "none" }} />
+      {/* светящаяся грань-акцент слева */}
+      <span style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 4,
+        background: `linear-gradient(${color}, ${color}66)`, boxShadow: `0 0 12px ${color}88` }} />
+      <div style={{ position: "relative" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontSize: 11, fontWeight: 800, color: "#fff", background: color, padding: "2px 8px", borderRadius: 7, letterSpacing: 0.2, flexShrink: 0, boxShadow: `0 2px 6px ${color}66`, fontVariantNumeric: "tabular-nums" }}>{f.code}</span>
           <span style={{ fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.name}</span>
           {f.is_private && <Lock size={12} color={C.faint} style={{ flexShrink: 0, marginLeft: "auto" }} />}
         </div>
-        <div style={{ fontSize: 11, color: C.faint, marginTop: 4, display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+        <div style={{ fontSize: 11, color: C.faint, marginTop: 5, display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
           <span>{STAGE_LABEL[f.stage] || "этап не задан"}</span>
           <span style={typeBadge(f.kind)}>{f.kind === "working" ? "рабочий" : "накопительный"}</span>
           {f.no_transfer && <span style={{ fontSize: 10, fontWeight: 700, color: C.warning, background: `${C.warning}1a`, padding: "2px 7px", borderRadius: 20 }}>без перемещения</span>}
         </div>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, padding: "10px 0", borderTop: `1px solid ${C.line}`, borderBottom: `1px solid ${C.line}` }}>
-        {mini("Остаток", fmt(m.remaining), { color: C.sub })}
-        {mini("Доступно", fmt(m.available), { color: availColor(m.available), big: true })}
+      {/* ведущая цифра карточки — Доступно (свободные деньги фонда) */}
+      <div style={{ position: "relative" }}>
+        <div style={{ fontSize: 10, color: C.faint, textTransform: "uppercase", letterSpacing: 0.4, fontWeight: 700 }}>Доступно</div>
+        <div style={{ fontSize: 25, fontWeight: 800, color: availColor(m.available), fontVariantNumeric: "tabular-nums", lineHeight: 1.1, letterSpacing: "-0.02em", marginTop: 2, wordBreak: "break-word" }}>
+          {fmt(m.available)} <span style={{ fontSize: 13, fontWeight: 600, color: C.faint }}>TJS</span>
+        </div>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, padding: "11px 0 2px", borderTop: `1px solid ${C.line}` }}>
+        {mini("Остаток (к оплате)", fmt(m.remaining), { color: C.sub })}
         {mini("Долг", debtLabel(m.debt), { color: debtColor(m.debt), onClick: m.debt !== 0 ? onLoans : undefined, loading: busy === `loans:${f.id}` })}
       </div>
       <div style={{ display: "flex", gap: 6 }}>
@@ -610,24 +625,28 @@ function FolderCard({ C, st, folder, sub, childCount, color, debtColor, debtLabe
     </div>
   );
   return (
-    <div onClick={onToggle} style={{ gridColumn: "1 / -1", position: "relative", display: "flex", flexDirection: "column", gap: 10,
-      padding: "14px 16px 14px 20px", borderRadius: 16,
-      background: `linear-gradient(135deg, ${color}26, ${C.panel} 70%)`,
-      border: `1px solid ${color}55`, boxShadow: `0 2px 12px ${C.shadow}`, cursor: "pointer", overflow: "hidden" }}>
-      <span style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 6, background: color }} />
-      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+    <div onClick={onToggle} className="fundCard" style={{ gridColumn: "1 / -1", position: "relative", display: "flex", flexDirection: "column", gap: 10,
+      padding: "14px 16px 14px 20px", borderRadius: 18,
+      background: `linear-gradient(135deg, ${color}2e, ${C.panel} 70%)`,
+      border: `1px solid ${color}55`, boxShadow: `inset 0 1px 0 ${C.glassHi}, 0 8px 22px ${C.shadow}`, cursor: "pointer", overflow: "hidden" }}>
+      {/* свечение цвета раздела в углу */}
+      <span style={{ position: "absolute", right: -50, top: -50, width: 150, height: 150, borderRadius: "50%",
+        background: `radial-gradient(circle, ${color}33 0%, transparent 70%)`, pointerEvents: "none" }} />
+      <span style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 6,
+        background: `linear-gradient(${color}, ${color}66)`, boxShadow: `0 0 14px ${color}88` }} />
+      <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
         <ChevronRight size={17} style={{ transform: open ? "rotate(90deg)" : "none", transition: "transform .2s", color, flexShrink: 0 }} />
         <span style={{ display: "inline-flex", padding: 5, borderRadius: 9, background: `${color}2e`, color, flexShrink: 0 }}><Boxes size={15} /></span>
         <b style={{ textTransform: "uppercase", fontSize: 13, letterSpacing: 0.4 }}>{folder.name}</b>
         <span style={{ fontSize: 11, color: C.faint }}>· {childCount} фонд(ов)</span>
         {folder.description && <span style={{ fontSize: 11, color: C.faint, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>· {folder.description}</span>}
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, padding: "10px 0", borderTop: `1px solid ${color}33`, borderBottom: `1px solid ${color}33` }}>
+      <div style={{ position: "relative", display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, padding: "10px 0", borderTop: `1px solid ${color}33`, borderBottom: `1px solid ${color}33` }}>
         {mini("Остаток", fmt(sub.remaining), C.sub)}
         {mini("Доступно", fmt(sub.available), availColor(sub.available))}
         {mini("Долг", debtLabel(sub.debt), debtColor(sub.debt))}
       </div>
-      <div style={{ display: "flex", gap: 6 }}>
+      <div style={{ position: "relative", display: "flex", gap: 6 }}>
         <button style={{ ...st.btnGhost, flex: 1, justifyContent: "center", padding: "7px 8px", fontSize: 12 }} className="btn" disabled={!!busy} onClick={stop(onStatement)}>
           {busy === `stmt:${folder.id}` ? <Loader2 size={13} className="spin" /> : <List size={13} />} Подробно
         </button>
