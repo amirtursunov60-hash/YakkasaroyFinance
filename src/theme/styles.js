@@ -7,7 +7,7 @@
 //   20 — крупные блоки: шапка-герой, модалы, карточки разделов
 // Шкала отступов (padding/margin/gap, ориентир): 4 / 8 / 12 / 16 / 24.
 export const makeStyles = (C) => ({
-  app: { minHeight: "100vh", background: C.pageGrad, backgroundAttachment: "fixed", color: C.text, fontFamily: "'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif", WebkitFontSmoothing: "antialiased", letterSpacing: "-0.01em" },
+  app: { minHeight: "100vh", background: C.pageGrad, backgroundAttachment: "fixed", color: C.text, fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', system-ui, sans-serif", WebkitFontSmoothing: "antialiased", letterSpacing: "-0.01em" },
   topbar: { height: 60, display: "flex", alignItems: "center", gap: 14, padding: "0 16px", background: C.panel, backdropFilter: "blur(24px) saturate(160%)", WebkitBackdropFilter: "blur(24px) saturate(160%)", borderBottom: `1px solid ${C.glassBorder}`, position: "sticky", top: 0, zIndex: 40 },
   burger: { width: 40, height: 40, borderRadius: "50%", background: C.panel2, border: `1px solid ${C.glassBorder}`, color: C.text, cursor: "pointer", display: "grid", placeItems: "center", flexShrink: 0, boxShadow: `inset 0 1px 0 ${C.glassHi}`, backdropFilter: "blur(20px) saturate(160%)", WebkitBackdropFilter: "blur(20px) saturate(160%)" },
   brand: { display: "flex", alignItems: "center", gap: 11 },

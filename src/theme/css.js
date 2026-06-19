@@ -1,6 +1,6 @@
 
 export const makeCss = (C) => `
-  @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
   *{box-sizing:border-box;}
   /* Фон-градиент фиксируем во вьюпорте через ::before. background-attachment:fixed
      на iOS/WebKit (Safari, Яндекс) часто не отрисовывается — верх страницы белеет
