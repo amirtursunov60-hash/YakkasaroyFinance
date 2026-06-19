@@ -726,7 +726,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
   // Три кнопки действий. eq — одинаковая ширина (для мобильного ряда mActions).
   const btnEq = { flex: 1, justifyContent: "center", minWidth: 0, padding: "11px 10px" };
   const CalcBtn = ({ eq }) => (
-    <button style={{ ...st.btnGhost, ...(eq ? btnEq : {}) }} onClick={() => onCalc([...checked])} className="btn" disabled={!!busy || locked}>
+    <button style={{ ...st.btnLiquid, ...(eq ? btnEq : {}) }} onClick={() => onCalc([...checked])} className="btn glass" disabled={!!busy || locked}>
       {calcBusy ? <span className="spin"><RotateCw size={15} /></span> : <Calculator size={15} />} Рассчитать
     </button>
   );
@@ -741,7 +741,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
     );
   };
   const ResetBtn = ({ eq }) => (
-    <button style={{ ...st.btnGhost, ...(eq ? btnEq : {}) }} onClick={sg.isApproved ? onResetApproved : onReset} className="btn" disabled={!!busy || locked}>
+    <button style={{ ...st.btnLiquid, ...(eq ? btnEq : {}) }} onClick={sg.isApproved ? onResetApproved : onReset} className="btn glass" disabled={!!busy || locked}>
       {resetBusy ? <span className="spin"><RotateCw size={14} /></span> : <RotateCcw size={14} />} Сброс
     </button>
   );
@@ -1001,7 +1001,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
           </div>
         ) : (
           <div style={{ ...frow6, ...st.frowTotal }}>
-            <div style={st.fName}><div style={st.actions}><CalcBtn /><ApproveBtn /><ResetBtn /></div></div>
+            <div style={{ ...st.fName, fontSize: 12, fontWeight: 800, justifyContent: "center" }}>Итого по этапу</div>
             <div style={st.fPct} />
             <div />
             <div className="denseNum" style={{ ...st.fNum, fontWeight: 700 }}>{fmt(totals.avail)}</div>
@@ -1016,7 +1016,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
             </div>
           </div>
         ))}
-        {sg.rows.length > 0 && isMobile && <div style={st.mActions}><CalcBtn eq /><ApproveBtn eq /><ResetBtn eq /></div>}
+        {sg.rows.length > 0 && <div style={st.mActions}><CalcBtn eq /><ApproveBtn eq /><ResetBtn eq /></div>}
       </section>
     </div>
   );
