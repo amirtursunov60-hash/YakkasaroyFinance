@@ -15,8 +15,6 @@ import {
 // в разделе «Заявки». Здесь — справочник статей и привязка статьи к
 // фонду/цели по умолчанию (подставляются в форме ЗРС).
 
-const PALETTE = ["#e0463b", "#e8911c", "#9c6ade", "#5b8def", "#5bd6c9", "#d6c14a", "#7bd88f", "#d64ad6", "#2f9e44"];
-
 export function Expenses() {
   const { C, st, isMobile, profile } = useTheme();
   const { period, prevPeriod, loading: periodsLoading, locationId: ctxLocationId } = usePeriod();
@@ -161,7 +159,7 @@ export function Expenses() {
         return (
           <div key={cat.id} style={st.dataCard}>
             <div style={st.locHead} className="locHead" onClick={() => hasChildren && setOpen((o) => ({ ...o, [cat.id]: !o?.[cat.id] }))}>
-              <div style={{ width: 34, height: 34, borderRadius: 10, display: "grid", placeItems: "center", flexShrink: 0, background: `${PALETTE[i % PALETTE.length]}22`, color: PALETTE[i % PALETTE.length] }}><Receipt size={18} /></div>
+              <div style={{ width: 34, height: 34, borderRadius: 10, display: "grid", placeItems: "center", flexShrink: 0, background: `${C.chartPalette[i % C.chartPalette.length]}22`, color: C.chartPalette[i % C.chartPalette.length] }}><Receipt size={18} /></div>
               <div style={st.locTitle}>
                 <div style={st.locName}>{cat.name}</div>
                 <div style={st.locCode}>{cat.code}{hasChildren ? ` · ${cat.children.length} статей` : ""}</div>

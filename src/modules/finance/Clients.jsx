@@ -23,7 +23,7 @@ export function Clients() {
   const { C, st, isMobile, profile } = useTheme();
   // Статусы счёта клиента — семантические токены; «бронь» — категориальный акцент.
   const ST_META = {
-    planned:   { label: "бронь",      color: "#9c6ade" },
+    planned:   { label: "бронь",      color: C.violet },
     issued:    { label: "выставлен",  color: C.info },
     partial:   { label: "предоплата", color: C.warning },   // производный: issued + есть оплаты
     paid:      { label: "оплачен",    color: C.success },

@@ -12,20 +12,22 @@ import { fetchRegister, fetchFunds, fetchIncomeRefs } from "../../lib/api";
 // истины для балансов фондов и счетов ДС. Фильтры: неделя/все, тип операции,
 // фонд, счёт ДС. Суммы — в базовой валюте (TJS).
 
+// Цвет типа операции — токен палитры C (адаптивен к теме dark/light),
+// а не захардкоженный hex: соблюдает «цвета только из C» и контраст в обеих темах.
 const OP_META = {
-  income:           { label: "Доход",              color: "#2f9e44" },
-  income_return:    { label: "Возврат дохода",     color: "#e0463b" },
-  distribution:     { label: "Распределение",      color: "#7bd88f" },
-  request_payment:  { label: "Оплата заявки",      color: "#e8911c" },
-  bill_payment:     { label: "Оплата счёта",       color: "#e8911c" },
-  payroll_payment:  { label: "Выплата ЗП",         color: "#d6c14a" },
-  fund_transfer:    { label: "Перемещение фондов", color: "#5b8def" },
-  fund_loan:        { label: "Заём фонда",         color: "#9c6ade" },
-  fund_loan_return: { label: "Возврат займа",      color: "#9c6ade" },
-  fx_exchange:      { label: "Обмен валют",        color: "#5bd6c9" },
-  cash_transfer:    { label: "Перемещение ДС",     color: "#5b8def" },
-  off_plan:         { label: "Трата вне ФП",       color: "#e0463b" },
-  adjustment:       { label: "Корректировка",      color: "#8b9296" },
+  income:           { label: "Доход",              tone: "success" },
+  income_return:    { label: "Возврат дохода",     tone: "danger" },
+  distribution:     { label: "Распределение",      tone: "successSoft" },
+  request_payment:  { label: "Оплата заявки",      tone: "warning" },
+  bill_payment:     { label: "Оплата счёта",       tone: "warning" },
+  payroll_payment:  { label: "Выплата ЗП",         tone: "gold" },
+  fund_transfer:    { label: "Перемещение фондов", tone: "info" },
+  fund_loan:        { label: "Заём фонда",         tone: "violet" },
+  fund_loan_return: { label: "Возврат займа",      tone: "violet" },
+  fx_exchange:      { label: "Обмен валют",        tone: "teal" },
+  cash_transfer:    { label: "Перемещение ДС",     tone: "info" },
+  off_plan:         { label: "Трата вне ФП",       tone: "danger" },
+  adjustment:       { label: "Корректировка",      tone: "sub" },
 };
 
 export function Register() {
@@ -145,7 +147,8 @@ export function Register() {
     {!rows.length && <div style={{ ...st.locCard, ...st.empty }}><ListChecks size={18} /> Операций по выбранным фильтрам нет</div>}
     <div style={{ display: "grid", gap: 6 }}>
       {rows.map((r) => {
-        const m = OP_META[r.op_type] || { label: r.op_type, color: C.sub };
+        const m = OP_META[r.op_type] || { label: r.op_type, tone: "sub" };
+        const tone = C[m.tone] || C.sub;
         const v = Number(r.cash_amount ?? r.fund_amount) || 0;
         const offPlan = r.op_type === "off_plan";
         return (
@@ -158,7 +161,7 @@ export function Register() {
             <span style={{ fontSize: 11, color: C.faint, width: 88, flexShrink: 0 }}>
               {new Date(r.created_at).toLocaleString("ru", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
             </span>
-            <span style={{ fontSize: 10.5, fontWeight: 700, padding: "3px 9px", borderRadius: 20, whiteSpace: "nowrap", color: m.color, background: `${m.color}1a`, flexShrink: 0 }}>
+            <span style={{ fontSize: 10.5, fontWeight: 700, padding: "3px 9px", borderRadius: 20, whiteSpace: "nowrap", color: tone, background: `${tone}1a`, flexShrink: 0 }}>
               {m.label}
             </span>
             <div style={{ flex: 1, minWidth: isMobile ? "100%" : 0, fontSize: 12.5, color: C.sub, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", order: isMobile ? 5 : 0 }}>

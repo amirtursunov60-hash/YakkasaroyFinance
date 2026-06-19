@@ -27,7 +27,7 @@ export function BillsScreen({ kind, ui }) {
   // Статусы счёта — семантические токены; «на планировании» — категориальный акцент.
   const ST_META = {
     submitted: { label: "подан",            color: C.info },
-    planning:  { label: "на планировании",  color: "#9c6ade" },
+    planning:  { label: "на планировании",  color: C.violet },
     approved:  { label: "одобрен",          color: C.warning },
     rejected:  { label: "отклонён",         color: C.danger },
     paid:      { label: "оплачен",          color: C.success },

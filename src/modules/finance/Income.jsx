@@ -15,8 +15,6 @@ import {
 // Живые данные: дерево видов дохода (income_types), суммы выбранной в шапке
 // недели ФП и предыдущей (incomes), форма ввода операции дохода.
 
-const PALETTE = ["#e8911c", "#7bd88f", "#5bd6c9", "#5b8def", "#d6c14a", "#9c6ade", "#e0463b", "#2f9e44", "#d64ad6"];
-
 export function Income() {
   const { C, st, isMobile, profile } = useTheme();
   const { period, prevPeriod, loading: periodsLoading, locationId: ctxLocationId } = usePeriod();
@@ -166,7 +164,7 @@ export function Income() {
           <div key={loc.id} style={st.dataCard}>
             <div style={st.locHead} className="locHead" onClick={() => hasChildren && setOpen((o) => ({ ...o, [loc.id]: !o?.[loc.id] }))}>
               <div style={{ width: 34, height: 34, borderRadius: 10, display: "grid", placeItems: "center", flexShrink: 0,
-                background: `${PALETTE[i % PALETTE.length]}22`, color: PALETTE[i % PALETTE.length] }}>
+                background: `${C.chartPalette[i % C.chartPalette.length]}22`, color: C.chartPalette[i % C.chartPalette.length] }}>
                 <Store size={18} />
               </div>
               <div style={st.locTitle}>
