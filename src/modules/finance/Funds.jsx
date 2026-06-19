@@ -324,7 +324,7 @@ export function Funds() {
           </div>
         </div>
 
-        <div style={{ display: "grid", gap: 12, gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill, minmax(300px, 1fr))" }}>
+        <div style={{ display: "grid", gap: 12, gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill, minmax(300px, 1fr))" }} className="stagger">
           {rows.map((r) => r.section ? (() => {
             const folder = folders.find((x) => x.id === r.section) || { id: r.section, name: "Раздел" };
             const sub = r.children.reduce((acc, c) => { const mm = metrics(c); acc.remaining += mm.remaining; acc.available += mm.available; acc.debt += mm.debt; return acc; }, { remaining: 0, available: 0, debt: 0 });
