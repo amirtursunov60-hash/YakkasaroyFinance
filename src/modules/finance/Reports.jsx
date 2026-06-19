@@ -202,7 +202,7 @@ export function Reports() {
             </div>
           ))}
           <div style={{ display: "flex", justifyContent: "space-between", paddingTop: 10, fontSize: 14, fontWeight: 800 }}>
-            <span>Итого</span><span style={{ color: C.green }}>{fmt(totals.inc)}</span>
+            <span>Итого</span><span style={{ color: C.money }}>{fmt(totals.inc)}</span>
           </div>
         </div>
         <div style={{ ...st.locCard, padding: 16 }}>
@@ -312,7 +312,7 @@ export function Reports() {
                   <div style={st.fundTop}><span style={st.fundCode}>{f.code}</span><span>{f.name}</span></div>
                   {isMobile && <div style={{ fontSize: 11, color: C.faint }}>баланс {fmt(Number(f.balance || 0))}</div>}
                 </div>
-                <div style={{ ...st.fNum, color: ff.in ? C.green : C.faint }}>{ff.in ? `+${fmt(ff.in)}` : "—"}</div>
+                <div style={{ ...st.fNum, color: ff.in ? C.money : C.faint }}>{ff.in ? `+${fmt(ff.in)}` : "—"}</div>
                 <div style={{ ...st.fNum, color: ff.out ? C.danger : C.faint }}>{ff.out ? `−${fmt(ff.out)}` : "—"}</div>
                 {!isMobile && <div style={{ ...st.fNum, fontWeight: 700 }}>{fmt(Number(f.balance || 0))}</div>}
               </div>

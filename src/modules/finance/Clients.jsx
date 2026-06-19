@@ -218,7 +218,7 @@ export function Clients() {
               <div style={{ display: "grid", gap: 10, padding: "4px 2px 8px" }}>
                 <div style={{ display: "flex", gap: 16, flexWrap: "wrap", fontSize: 12.5, color: C.sub }}>
                   <span>Вид дохода: <b style={{ color: C.text }}>{inv.income_type ? `${inv.income_type.code || ""} ${inv.income_type.name}` : "—"}</b></span>
-                  <span>Оплачено: <b style={{ color: C.green }}>{fmt(paid)}</b></span>
+                  <span>Оплачено: <b style={{ color: C.money }}>{fmt(paid)}</b></span>
                   <span>Остаток: <b style={{ color: rest > 0.009 ? C.warning : C.green }}>{fmt(rest)}</b></span>
                 </div>
                 {inv.comment && <div style={{ fontSize: 13 }}>{inv.comment}</div>}

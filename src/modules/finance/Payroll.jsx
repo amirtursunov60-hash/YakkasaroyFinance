@@ -363,7 +363,7 @@ export function Payroll() {
             {!isMobile && <div style={{ ...st.fNum, fontWeight: 700 }}>{fmt(totals.accrued)}</div>}
             {!isMobile && <div style={{ ...st.fNum, fontWeight: 700, color: C.warning }}>{fmt(totals.advance)}</div>}
             {!isMobile && <div style={{ ...st.fNum, fontWeight: 700, color: C.danger }}>{fmt(totals.deduction)}</div>}
-            <div style={{ ...st.fNum, fontWeight: 800, color: C.green, fontSize: 16 }}>{fmt(totals.payout)}</div>
+            <div style={{ ...st.fNum, fontWeight: 800, color: C.money, fontSize: 16 }}>{fmt(totals.payout)}</div>
             {!isMobile && <div />}
           </div>
           {editable && notInSheet.length > 0 && (
