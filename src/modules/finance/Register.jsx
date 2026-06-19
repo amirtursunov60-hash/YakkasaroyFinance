@@ -145,7 +145,7 @@ export function Register() {
 
     {/* Лента */}
     {!rows.length && <div style={{ ...st.locCard, ...st.empty }}><ListChecks size={18} /> Операций по выбранным фильтрам нет</div>}
-    <div style={{ display: "grid", gap: 6 }}>
+    <div style={{ display: "grid", gap: 6 }} className="stagger">
       {rows.map((r) => {
         const m = OP_META[r.op_type] || { label: r.op_type, tone: "sub" };
         const tone = C[m.tone] || C.sub;

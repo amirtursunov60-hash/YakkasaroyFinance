@@ -74,7 +74,20 @@ export const makeCss = (C) => `
   /* Раскрытие капсулы профиля из аватара */
   @keyframes capsuleGrow{0%{opacity:0;transform:scale(0.12);}55%{opacity:1;}100%{opacity:1;transform:scale(1);}}
   .capsuleIn{animation:capsuleGrow .38s cubic-bezier(.16,1,.3,1);}
-  @media (prefers-reduced-motion: reduce){ main{animation:none;} .pop,.spin,.flashRow,.capsuleIn,.shake{animation:none;} }
+  /* Каскадное появление элементов списков/карточек при загрузке данных */
+  @keyframes riseIn{0%{opacity:0;transform:translateY(8px);}100%{opacity:1;transform:translateY(0);}}
+  .riseIn{animation:riseIn .42s cubic-bezier(.16,1,.3,1) both;}
+  .stagger>*{animation:riseIn .42s cubic-bezier(.16,1,.3,1) both;}
+  .stagger>*:nth-child(1){animation-delay:.03s;}
+  .stagger>*:nth-child(2){animation-delay:.06s;}
+  .stagger>*:nth-child(3){animation-delay:.09s;}
+  .stagger>*:nth-child(4){animation-delay:.12s;}
+  .stagger>*:nth-child(5){animation-delay:.15s;}
+  .stagger>*:nth-child(6){animation-delay:.18s;}
+  .stagger>*:nth-child(7){animation-delay:.21s;}
+  .stagger>*:nth-child(8){animation-delay:.24s;}
+  .stagger>*:nth-child(n+9){animation-delay:.27s;}
+  @media (prefers-reduced-motion: reduce){ main{animation:none;} .pop,.spin,.flashRow,.capsuleIn,.shake{animation:none;} .riseIn,.stagger>*{animation:none;} }
   /* Единое фокус-кольцо для навигации с клавиатуры (доступность) */
   button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{
     outline:2px solid ${C.green}!important;outline-offset:2px;border-radius:4px;
