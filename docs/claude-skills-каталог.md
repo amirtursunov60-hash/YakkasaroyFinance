@@ -41,6 +41,7 @@ Claude Code, Claude.ai, API, а также Codex, Cursor, Gemini CLI, Antigravit
 | `yakkasaroy-dod` | ✅ | Критерии приёмки + мобильная адаптация (собственный) |
 | `excalidraw-diagram` | ✅ | Редактируемые `.excalidraw`-диаграммы (флоучарты, архитектура, ER, sequence) для `docs/` |
 | `audit` / `scan` / `diff` | 🔌🌐 | accesslint: доступность WCAG 2.2 (контраст, семантика, «цвет как единственный сигнал»). ⚠️ Для работы нужен MCP-сервер accesslint + отлаживаемый Chrome (`@accesslint/core` через CDP). Имена общие — возможны мис-срабатывания. |
+| `impeccable` | ✅ (детектор) / 🌐 (часть команд) | Дизайн-линтер антипаттернов UI: режимы **brand** и **product**, команды `audit`/`critique`/`layout`/`typeset`/`bolder`/`quieter`/`colorize`/`polish`… Не навязывает палитру — правит то, что есть. Движок-детектор в комплекте; часть команд зовёт CLI `npx impeccable`, на старте ждёт `PRODUCT.md`/`DESIGN.md` (создаются по `reference/init.md` при первом запуске). Для нас — **product-режим**. |
 
 ---
 
