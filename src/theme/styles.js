@@ -28,9 +28,14 @@ export const makeStyles = (C) => ({
   pmLang: { width: 42, height: 42, borderRadius: "50%", background: C.panel2, border: `1px solid ${C.line}`, color: C.text, cursor: "pointer", display: "grid", placeItems: "center", fontWeight: 700, fontSize: 13, userSelect: "none", flexShrink: 0 },
   pmItem: { display: "flex", alignItems: "center", gap: 11, padding: "10px 10px", borderRadius: 8, fontSize: 13.5, color: C.text, cursor: "pointer", fontWeight: 500 },
   pmDivider: { height: 1, background: C.line, margin: "6px 4px" },
-  themeToggle: { display: "flex", gap: 4, background: C.panel2, borderRadius: 12, padding: 4, margin: "4px 2px 8px" },
-  themeBtn: { flex: 1, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "8px", borderRadius: 8, background: "transparent", border: "none", color: C.sub, fontSize: 12.5, cursor: "pointer", fontFamily: "inherit", fontWeight: 600 },
-  themeBtnOn: { background: C.panel, color: C.text, boxShadow: `0 1px 4px ${C.shadow}` },
+  themeToggle: { display: "flex", gap: 4, background: C.panel2, borderRadius: 12, padding: 4, margin: "4px 2px 8px", border: `1px solid ${C.glassBorder}`, backdropFilter: "blur(16px) saturate(150%)", WebkitBackdropFilter: "blur(16px) saturate(150%)", boxShadow: `inset 0 1px 0 ${C.glassHi}` },
+  themeBtn: { flex: 1, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "8px", borderRadius: 9, background: "transparent", border: "1px solid transparent", color: C.sub, fontSize: 12.5, cursor: "pointer", fontFamily: "inherit", fontWeight: 600, transition: "all .25s cubic-bezier(.16,1,.3,1)" },
+  // Активный сегмент — «стеклянная пилюля» (Liquid Glass): грани через inset-тени
+  // + backdrop blur; рецепт зависит от темы (C.scheme dark/light).
+  themeBtnOn: { color: C.text, background: C.scheme === "dark" ? "rgba(255,255,255,0.10)" : "rgba(255,255,255,0.78)", border: `1px solid ${C.glassBorder}`, backdropFilter: "blur(12px) saturate(160%)", WebkitBackdropFilter: "blur(12px) saturate(160%)",
+    boxShadow: C.scheme === "dark"
+      ? "inset 1.5px 1.5px 0.5px -1.5px rgba(255,255,255,0.7), inset -1.5px -1.5px 0.5px -1.5px rgba(255,255,255,0.5), inset 0 0 4px 4px rgba(255,255,255,0.04), 0 3px 8px rgba(0,0,0,0.3)"
+      : "inset 1.5px 1.5px 0.5px -1.5px rgba(255,255,255,0.95), inset -1.5px -1.5px 0.5px -1.5px rgba(0,0,0,0.12), inset 0 0 4px 4px rgba(0,0,0,0.02), 0 3px 8px rgba(31,55,90,0.12)" },
   modBar: { display: "flex", gap: 4, padding: "8px 16px", background: C.panel, backdropFilter: "blur(20px) saturate(160%)", WebkitBackdropFilter: "blur(20px) saturate(160%)", borderBottom: `1px solid ${C.glassBorder}`, overflowX: "auto", position: "sticky", top: 60, zIndex: 30 },
   mod: { display: "flex", alignItems: "center", gap: 8, padding: "9px 15px", fontSize: 13, fontWeight: 600, color: C.sub, cursor: "pointer", whiteSpace: "nowrap", borderRadius: 980, transition: "all .2s" },
   modActive: { color: C.text, background: C.panel2, border: `1px solid ${C.glassBorder}`, boxShadow: `inset 0 1px 0 ${C.glassHi}` },
