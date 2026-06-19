@@ -39,6 +39,8 @@ Claude Code, Claude.ai, API, а также Codex, Cursor, Gemini CLI, Antigravit
 | `supabase-migration` | ✅ | Миграции БД (собственный скилл проекта) |
 | `yakkasaroy-finance` | ✅ | Инварианты денег/Реестра `fp_register` (собственный) |
 | `yakkasaroy-dod` | ✅ | Критерии приёмки + мобильная адаптация (собственный) |
+| `excalidraw-diagram` | ✅ | Редактируемые `.excalidraw`-диаграммы (флоучарты, архитектура, ER, sequence) для `docs/` |
+| `audit` / `scan` / `diff` | 🔌🌐 | accesslint: доступность WCAG 2.2 (контраст, семантика, «цвет как единственный сигнал»). ⚠️ Для работы нужен MCP-сервер accesslint + отлаживаемый Chrome (`@accesslint/core` через CDP). Имена общие — возможны мис-срабатывания. |
 
 ---
 
