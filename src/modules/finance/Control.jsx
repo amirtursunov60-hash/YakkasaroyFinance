@@ -231,7 +231,7 @@ export function Control() {
             <div style={st.fName}><b>Итого (TJS)</b></div>
             {!isMobile && <div style={st.fPct} />}
             <div style={{ ...st.fNum, fontWeight: 700, color: C.sub }}>{fmt(totals.calc)}</div>
-            <div style={{ ...st.fNum, fontWeight: 800, color: C.green, fontSize: 16 }}>{anyEntered ? fmt(totals.fact) : "—"}</div>
+            <div style={{ ...st.fNum, fontWeight: 800, color: C.money, fontSize: 16 }}>{anyEntered ? fmt(totals.fact) : "—"}</div>
             {!isMobile && (
               <div style={{ ...st.fNum, fontWeight: 800, color: diffTotal === null ? C.faint : Math.abs(diffTotal) < 0.01 ? C.green : C.danger }}>
                 {diffTotal === null ? "—" : fmt(diffTotal)}
