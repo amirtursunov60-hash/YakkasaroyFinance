@@ -31,6 +31,8 @@ export const THEMES = {
     info: "#5b8def", warning: "#e8911c", success: "#2f9e44", successSoft: "#7bd88f",
     // Доп. акценты для типов операций Реестра (адаптивны к теме)
     gold: "#d6c14a", violet: "#9c6ade", teal: "#5bd6c9",
+    // Палитра категориальных графиков (доходы/расходы) — из неё же пресеты фондов
+    chartPalette: ["#3ddc84", "#5b8def", "#e8911c", "#ff6b5e", "#9c6ade", "#5bd6c9", "#d6c14a", "#7bd88f", "#d64ad6"],
   },
   light: {
     scheme: "light",
@@ -53,6 +55,8 @@ export const THEMES = {
     info: "#2f6fdb", warning: "#c47d10", success: "#2f9e44", successSoft: "#3d9e5f",
     // Доп. акценты для типов операций Реестра — затемнены под светлый фон (контраст)
     gold: "#a8881a", violet: "#7a4fc0", teal: "#0f9b8e",
+    // Палитра категориальных графиков — затемнена под светлый фон (контраст)
+    chartPalette: ["#0aa552", "#2f6fdb", "#c47d10", "#dc3b30", "#7a4fc0", "#0f9b8e", "#a8881a", "#3d9e5f", "#b13bb1"],
   },
 };
 

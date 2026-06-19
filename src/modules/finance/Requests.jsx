@@ -356,7 +356,7 @@ export function ItemCard({ C, st, item, itemKind, isExpanded, onToggle, statusMe
         <div style={st.locRight}>
           <div style={st.locSum}>{fmt(amount)} <span style={st.locUnit}>{item.currency?.code || ""}</span></div>
           <div style={{ display: "flex", gap: 4, justifyContent: "flex-end", flexWrap: "wrap" }}>
-            {item.kind === "obligation" && <span style={{ ...st.weekTag, marginLeft: 0, color: "#9c6ade", background: "#9c6ade1a" }}>обязательство</span>}
+            {item.kind === "obligation" && <span style={{ ...st.weekTag, marginLeft: 0, color: C.violet, background: `${C.violet}1a` }}>обязательство</span>}
             <span style={{ ...st.weekTag, marginLeft: 0, color: m.color, background: `${m.color}1a` }}>{m.label}</span>
           </div>
         </div>

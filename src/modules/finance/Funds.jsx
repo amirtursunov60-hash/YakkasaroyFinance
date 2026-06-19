@@ -30,7 +30,9 @@ const STAGE_OPTS = [
   { v: "adjusted", l: "Скорректированный доход" },
 ];
 // Готовые цвета-метки фонда (docs/funds-spec.md §10) — работают в обеих темах.
-const FUND_COLORS = ["#3ddc84", "#5b8def", "#e8911c", "#ff6b5e", "#a78bfa", "#2dd4bf", "#f472b6", "#facc15"];
+// Пресеты цвета фонда — из брендовой палитры (совпадает с C.chartPalette);
+// фонды хранят выбранный цвет конкретным hex, поэтому пресеты статичны.
+const FUND_COLORS = ["#3ddc84", "#5b8def", "#e8911c", "#ff6b5e", "#9c6ade", "#5bd6c9", "#d6c14a", "#d64ad6"];
 
 const OP_LABELS = {
   income: "Доход", income_return: "Возврат дохода", distribution: "Распределение",

@@ -161,7 +161,7 @@ export function CrmModule({ view }) {
 
   // ============ БАЗА КЛИЕНТОВ ============
   if (view === "c_clients") {
-    const TAG_COLOR = { VIP: C.warning, "Повторный": "#5bd6c9", "Новый": C.info };
+    const TAG_COLOR = { VIP: C.warning, "Повторный": C.teal, "Новый": C.info };
     const q = query.trim().toLowerCase();
     const shown = CRM_CLIENTS.filter((c) => !q || c.name.toLowerCase().includes(q) || c.phone.includes(q));
     const totalLtv = CRM_CLIENTS.reduce((a, c) => a + c.total, 0);
