@@ -8,7 +8,8 @@ import tseslint from "typescript-eslint";
 // правил хуков), а стилевое держим как предупреждения, чтобы не блокировать сборку.
 // .ts/.tsx разбираются парсером typescript-eslint.
 export default [
-  { ignores: ["dist/**", "node_modules/**"] },
+  // .claude/skills — вендоренные сторонние скиллы (их скрипты не наш код)
+  { ignores: ["dist/**", "node_modules/**", ".claude/**"] },
   js.configs.recommended,
   // typescript-eslint только для .ts/.tsx, чтобы не трогать существующий .jsx-код
   ...tseslint.configs.recommended.map((c) => ({ ...c, files: ["**/*.{ts,tsx}"] })),
