@@ -376,7 +376,7 @@ export function Directive() {
     </section>
 
     {err && <div style={{ ...st.reqError, marginBottom: 14 }}><AlertCircle size={15} /> {err}</div>}
-    {done && <div style={{ ...st.reqError, marginBottom: 14, color: C.green, background: `${C.green}1a`, borderColor: `${C.green}44` }}><CheckCircle2 size={15} /> {done}</div>}
+    {done && <div style={{ ...st.reqSuccess, marginBottom: 14 }}><CheckCircle2 size={15} /> {done}</div>}
 
     {!rules.length && (
       <div style={{ ...st.locCard, ...st.empty }}>
@@ -410,7 +410,7 @@ export function Directive() {
         )}
         <div style={{ ...st.fpRow, ...st.fpRemainder }}>
           <span style={st.fpLabelBold}>Остаток нераспределённого</span>
-          <span style={{ ...st.fpValBold, color: remainder < -0.01 ? C.danger : C.green }}>{fmt(remainder)}</span>
+          <span style={{ ...st.fpValBold, color: remainder < -0.01 ? C.danger : C.money }}>{fmt(remainder)}</span>
         </div>
       </div>
       <div style={st.fpActions} className="fpActions">
@@ -633,7 +633,7 @@ function RequestReviewControls({ C, st, isMobile, item, funds, isFinAdmin, onApp
         <div style={{ ...st.reqError, marginBottom: 0 }}><AlertCircle size={14} /> {localErr}</div>
       )}
       {done && (
-        <div style={{ ...st.reqError, marginBottom: 0, color: C.green, background: `${C.green}1a`, borderColor: `${C.green}44` }}>
+        <div style={{ ...st.reqSuccess, marginBottom: 0 }}>
           <CheckCircle2 size={14} /> {done}
         </div>
       )}
@@ -773,7 +773,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
     if (isMobile) {
       return (
         <div className="frow" style={{ padding: "12px 12px", borderTop: `1px solid ${C.line}`,
-          background: x.appr > 0 ? `${C.green}0d` : "transparent", ...(child ? { paddingLeft: 22 } : {}) }}>
+          background: x.appr > 0 ? `${C.money}0d` : "transparent", ...(child ? { paddingLeft: 22 } : {}) }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <input type="checkbox" style={cbStyle} checked={checked.has(x.fund.id)}
               disabled={!rowEditable} onChange={() => toggleOne(x.fund.id)} />
@@ -789,14 +789,14 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
             )}
           </div>
           <div style={{ ...st.bar, maxWidth: "100%", marginTop: 9 }}>
-            <div style={{ ...st.barFill, width: `${fill}%`, background: x.appr ? C.green : C.warning }} />
+            <div style={{ ...st.barFill, width: `${fill}%`, background: x.appr ? C.money : C.warning }} />
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginTop: 10 }}>
             <MiniVal label="Доступно" value={fmt(avail)} bold />
             <MiniVal label="Рассчитано" value={fmt(x.calc)} color={x.calc ? C.warning : C.faint} />
             <div style={{ minWidth: 0 }}>
               <div style={{ fontSize: 10, color: C.faint, marginBottom: 2 }}>Одобрено</div>
-              <div className="denseNum" style={{ fontSize: 13, fontWeight: 800, color: x.appr ? C.green : C.faint, whiteSpace: "nowrap" }}>{fmt(x.appr)}</div>
+              <div className="denseNum" style={{ fontSize: 13, fontWeight: 800, color: x.appr ? C.money : C.faint, whiteSpace: "nowrap" }}>{fmt(x.appr)}</div>
               {showPrev && (prev > 0 || x.appr > 0) && (
                 <div style={{ fontSize: 10, fontWeight: 500, color: C.faint, marginTop: 1 }}>
                   пр. {fmt(prev)}<Delta C={C} delta={x.appr - prev} small />
@@ -818,7 +818,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
             <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>{x.fund?.name}</span>
             {x.fund?.is_restricted && <Lock size={12} color={C.faint} />}
           </div>
-          <div style={st.bar}><div style={{ ...st.barFill, width: `${fill}%`, background: x.appr ? C.green : C.warning }} /></div>
+          <div style={st.bar}><div style={{ ...st.barFill, width: `${fill}%`, background: x.appr ? C.money : C.warning }} /></div>
         </div>
         {showBase && (
           <div style={st.fPct}>{pctOfRow(x)}<span style={st.pctSign}>%</span></div>
@@ -842,7 +842,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
           </div>
         )}
         {showResults && (
-          <div className="denseNum" style={{ ...st.fNum, color: x.appr ? C.green : C.faint, fontWeight: x.appr ? 700 : 400 }}>
+          <div className="denseNum" style={{ ...st.fNum, color: x.appr ? C.money : C.faint, fontWeight: x.appr ? 700 : 400 }}>
             <span className={x.appr ? "pop" : ""}>{fmt(x.appr)}</span>
             {showPrev && (prev > 0 || x.appr > 0) && (
               <div style={{ fontSize: 10.5, fontWeight: 500, color: C.faint, marginTop: 2 }}>
@@ -947,12 +947,12 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
                       <ChevronRight size={18} style={{ transform: isOpen ? "rotate(90deg)" : "none", transition: "transform .2s", color: C.faint, flexShrink: 0 }} />
                     </div>
                     <div style={{ ...st.bar, maxWidth: "100%", marginTop: 9 }}>
-                      <div style={{ ...st.barFill, width: `${gFill}%`, background: fsum.appr ? C.green : C.warning }} />
+                      <div style={{ ...st.barFill, width: `${gFill}%`, background: fsum.appr ? C.money : C.warning }} />
                     </div>
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginTop: 10 }}>
                       <MiniVal label="Доступно" value={fmt(fsum.avail)} bold />
                       <MiniVal label="Рассчитано" value={fmt(fsum.calc)} color={fsum.calc ? C.warning : C.faint} bold />
-                      <MiniVal label="Одобрено" value={fmt(fsum.appr)} color={fsum.appr ? C.green : C.faint} bold />
+                      <MiniVal label="Одобрено" value={fmt(fsum.appr)} color={fsum.appr ? C.money : C.faint} bold />
                     </div>
                   </div>
                 ) : (
@@ -973,7 +973,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
                     <div />
                     <div className="denseNum" style={{ ...st.fNum, fontWeight: 700 }}>{fmt(fsum.avail)}</div>
                     <div className="denseNum" style={{ ...st.fNum, color: fsum.calc ? C.warning : C.faint }}>{fmt(fsum.calc)}</div>
-                    <div className="denseNum" style={{ ...st.fNum, color: fsum.appr ? C.green : C.faint, fontWeight: fsum.appr ? 700 : 400 }}>{fmt(fsum.appr)}</div>
+                    <div className="denseNum" style={{ ...st.fNum, color: fsum.appr ? C.money : C.faint, fontWeight: fsum.appr ? 700 : 400 }}>{fmt(fsum.appr)}</div>
                   </div>
                 )}
                 {isOpen && rows.map((x) => <FundRow key={x.fund?.id} x={x} child />)}
@@ -990,7 +990,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
               <MiniVal label="Рассчитано" value={fmt(totals.calc)} color={totals.calc ? C.warning : C.faint} bold />
               <div>
                 <div style={{ fontSize: 10, color: C.faint, marginBottom: 2 }}>Одобрено</div>
-                <div className="denseNum" style={{ fontSize: 13, fontWeight: 800, color: C.green }}>{fmt(totals.appr)}</div>
+                <div className="denseNum" style={{ fontSize: 13, fontWeight: 800, color: C.money }}>{fmt(totals.appr)}</div>
                 {showPrev && (totals.prev > 0 || totals.appr > 0) && (
                   <div style={{ fontSize: 10, fontWeight: 500, color: C.faint, marginTop: 1 }}>
                     пр. {fmt(totals.prev)}<Delta C={C} delta={totals.appr - totals.prev} small />
@@ -1006,7 +1006,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
             <div />
             <div className="denseNum" style={{ ...st.fNum, fontWeight: 700 }}>{fmt(totals.avail)}</div>
             <div className="denseNum" style={{ ...st.fNum, fontWeight: 700, color: totals.calc ? C.warning : C.faint }}>{fmt(totals.calc)}</div>
-            <div className="denseNum" style={{ ...st.fNum, fontWeight: 700, color: C.green }}>
+            <div className="denseNum" style={{ ...st.fNum, fontWeight: 700, color: C.money }}>
               {fmt(totals.appr)}
               {showPrev && (totals.prev > 0 || totals.appr > 0) && (
                 <div style={{ fontSize: 10.5, fontWeight: 500, color: C.faint, marginTop: 2 }}>
@@ -1047,7 +1047,7 @@ function FundCalcModal({ C, st, isMobile, fund, stage, rules, incomeByType, appr
         </div>
         <div style={{ fontSize: 12, color: C.sub, marginBottom: 10 }}>
           Этап «{stage.title}» · своя схема по видам дохода
-          {approved > 0 && <b style={{ color: C.green }}> · уже одобрено {fmt(approved)}</b>}
+          {approved > 0 && <b style={{ color: C.money }}> · уже одобрено {fmt(approved)}</b>}
         </div>
 
         {!isMobile && (
@@ -1112,7 +1112,7 @@ function FundCalcModal({ C, st, isMobile, fund, stage, rules, incomeByType, appr
         {isMobile ? (
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 6, paddingTop: 12, borderTop: `1px solid ${C.line}` }}>
             <b style={{ fontSize: 13 }}>Итого одобрить</b>
-            <b className="denseNum" style={{ fontSize: 16, color: C.green }}>{fmt(total)}</b>
+            <b className="denseNum" style={{ fontSize: 16, color: C.money }}>{fmt(total)}</b>
           </div>
         ) : (
           <div style={{ ...st.frow, ...st.frowTotal, gridTemplateColumns: "1fr 90px 56px 90px 100px" }}>
@@ -1120,7 +1120,7 @@ function FundCalcModal({ C, st, isMobile, fund, stage, rules, incomeByType, appr
             <div style={{ ...st.fNum, fontWeight: 700 }}>{fmt(factTotal)}</div>
             <div style={st.fPct} />
             <div style={st.fNum} />
-            <div style={{ ...st.fNum, fontWeight: 800, color: C.green }}>{fmt(total)}</div>
+            <div style={{ ...st.fNum, fontWeight: 800, color: C.money }}>{fmt(total)}</div>
           </div>
         )}
 
