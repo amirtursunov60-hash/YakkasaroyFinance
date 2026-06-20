@@ -1,6 +1,3 @@
-// Сгенерировано из схемы Supabase: supabase gen types typescript (через MCP).
-// Не редактировать вручную — перегенерировать при изменении схемы БД.
-
 export type Json =
   | string
   | number
@@ -1424,6 +1421,435 @@ export type Database = {
           },
         ]
       }
+      mj_bills: {
+        Row: {
+          company_name: string | null
+          data: Json
+          doc_date: string | null
+          expense_name: string | null
+          id: number
+          marked_payed: boolean | null
+          mj_id: number
+          number: string | null
+          payed_amount: number | null
+          planned_date: string | null
+          remaining_amount: number | null
+          seria: string | null
+          synced_at: string
+          total_amount: number | null
+        }
+        Insert: {
+          company_name?: string | null
+          data: Json
+          doc_date?: string | null
+          expense_name?: string | null
+          id?: never
+          marked_payed?: boolean | null
+          mj_id: number
+          number?: string | null
+          payed_amount?: number | null
+          planned_date?: string | null
+          remaining_amount?: number | null
+          seria?: string | null
+          synced_at?: string
+          total_amount?: number | null
+        }
+        Update: {
+          company_name?: string | null
+          data?: Json
+          doc_date?: string | null
+          expense_name?: string | null
+          id?: never
+          marked_payed?: boolean | null
+          mj_id?: number
+          number?: string | null
+          payed_amount?: number | null
+          planned_date?: string | null
+          remaining_amount?: number | null
+          seria?: string | null
+          synced_at?: string
+          total_amount?: number | null
+        }
+        Relationships: []
+      }
+      mj_companies: {
+        Row: {
+          data: Json
+          id: number
+          is_customer: boolean | null
+          is_private_person: boolean | null
+          is_vendor: boolean | null
+          mj_id: number
+          name: string | null
+          synced_at: string
+        }
+        Insert: {
+          data: Json
+          id?: never
+          is_customer?: boolean | null
+          is_private_person?: boolean | null
+          is_vendor?: boolean | null
+          mj_id: number
+          name?: string | null
+          synced_at?: string
+        }
+        Update: {
+          data?: Json
+          id?: never
+          is_customer?: boolean | null
+          is_private_person?: boolean | null
+          is_vendor?: boolean | null
+          mj_id?: number
+          name?: string | null
+          synced_at?: string
+        }
+        Relationships: []
+      }
+      mj_funds: {
+        Row: {
+          data: Json
+          id: number
+          in_archive: boolean | null
+          mj_id: number
+          name: string | null
+          number: string | null
+          synced_at: string
+        }
+        Insert: {
+          data: Json
+          id?: never
+          in_archive?: boolean | null
+          mj_id: number
+          name?: string | null
+          number?: string | null
+          synced_at?: string
+        }
+        Update: {
+          data?: Json
+          id?: never
+          in_archive?: boolean | null
+          mj_id?: number
+          name?: string | null
+          number?: string | null
+          synced_at?: string
+        }
+        Relationships: []
+      }
+      mj_incomes: {
+        Row: {
+          amount: number | null
+          company_name: string | null
+          data: Json
+          date_operation: string | null
+          id: number
+          income_type_name: string | null
+          mj_id: number
+          payment_type_name: string | null
+          period_mj_id: number | null
+          synced_at: string
+        }
+        Insert: {
+          amount?: number | null
+          company_name?: string | null
+          data: Json
+          date_operation?: string | null
+          id?: never
+          income_type_name?: string | null
+          mj_id: number
+          payment_type_name?: string | null
+          period_mj_id?: number | null
+          synced_at?: string
+        }
+        Update: {
+          amount?: number | null
+          company_name?: string | null
+          data?: Json
+          date_operation?: string | null
+          id?: never
+          income_type_name?: string | null
+          mj_id?: number
+          payment_type_name?: string | null
+          period_mj_id?: number | null
+          synced_at?: string
+        }
+        Relationships: []
+      }
+      mj_invoices: {
+        Row: {
+          company_name: string | null
+          data: Json
+          doc_date: string | null
+          id: number
+          mj_id: number
+          number: string | null
+          payed_amount: number | null
+          remaining_amount: number | null
+          seria: string | null
+          synced_at: string
+          total_amount: number | null
+        }
+        Insert: {
+          company_name?: string | null
+          data: Json
+          doc_date?: string | null
+          id?: never
+          mj_id: number
+          number?: string | null
+          payed_amount?: number | null
+          remaining_amount?: number | null
+          seria?: string | null
+          synced_at?: string
+          total_amount?: number | null
+        }
+        Update: {
+          company_name?: string | null
+          data?: Json
+          doc_date?: string | null
+          id?: never
+          mj_id?: number
+          number?: string | null
+          payed_amount?: number | null
+          remaining_amount?: number | null
+          seria?: string | null
+          synced_at?: string
+          total_amount?: number | null
+        }
+        Relationships: []
+      }
+      mj_periods: {
+        Row: {
+          data: Json
+          date_from: string | null
+          date_to: string | null
+          id: number
+          is_baf_confirmed: boolean | null
+          is_executive_confirmed: boolean | null
+          mj_id: number
+          synced_at: string
+        }
+        Insert: {
+          data: Json
+          date_from?: string | null
+          date_to?: string | null
+          id?: never
+          is_baf_confirmed?: boolean | null
+          is_executive_confirmed?: boolean | null
+          mj_id: number
+          synced_at?: string
+        }
+        Update: {
+          data?: Json
+          date_from?: string | null
+          date_to?: string | null
+          id?: never
+          is_baf_confirmed?: boolean | null
+          is_executive_confirmed?: boolean | null
+          mj_id?: number
+          synced_at?: string
+        }
+        Relationships: []
+      }
+      mj_positions: {
+        Row: {
+          data: Json
+          full_number: string | null
+          functional: string | null
+          id: number
+          in_archive: boolean | null
+          mj_id: number
+          name: string | null
+          person_name: string | null
+          synced_at: string
+        }
+        Insert: {
+          data: Json
+          full_number?: string | null
+          functional?: string | null
+          id?: never
+          in_archive?: boolean | null
+          mj_id: number
+          name?: string | null
+          person_name?: string | null
+          synced_at?: string
+        }
+        Update: {
+          data?: Json
+          full_number?: string | null
+          functional?: string | null
+          id?: never
+          in_archive?: boolean | null
+          mj_id?: number
+          name?: string | null
+          person_name?: string | null
+          synced_at?: string
+        }
+        Relationships: []
+      }
+      mj_purchase_orders: {
+        Row: {
+          confirmed_value: number | null
+          csw_data: string | null
+          csw_situation: string | null
+          csw_solution: string | null
+          data: Json
+          expense_name: string | null
+          fund_name: string | null
+          id: number
+          mj_id: number
+          name: string | null
+          payed_amount: number | null
+          planned_value: number | null
+          position_name: string | null
+          status: number | null
+          synced_at: string
+        }
+        Insert: {
+          confirmed_value?: number | null
+          csw_data?: string | null
+          csw_situation?: string | null
+          csw_solution?: string | null
+          data: Json
+          expense_name?: string | null
+          fund_name?: string | null
+          id?: never
+          mj_id: number
+          name?: string | null
+          payed_amount?: number | null
+          planned_value?: number | null
+          position_name?: string | null
+          status?: number | null
+          synced_at?: string
+        }
+        Update: {
+          confirmed_value?: number | null
+          csw_data?: string | null
+          csw_situation?: string | null
+          csw_solution?: string | null
+          data?: Json
+          expense_name?: string | null
+          fund_name?: string | null
+          id?: never
+          mj_id?: number
+          name?: string | null
+          payed_amount?: number | null
+          planned_value?: number | null
+          position_name?: string | null
+          status?: number | null
+          synced_at?: string
+        }
+        Relationships: []
+      }
+      mj_stat_values: {
+        Row: {
+          amount: number | null
+          data: Json
+          description: string | null
+          id: number
+          is_quota: boolean
+          period_begin: string
+          period_end: string
+          stat_mj_id: number
+          synced_at: string
+        }
+        Insert: {
+          amount?: number | null
+          data: Json
+          description?: string | null
+          id?: never
+          is_quota?: boolean
+          period_begin: string
+          period_end: string
+          stat_mj_id: number
+          synced_at?: string
+        }
+        Update: {
+          amount?: number | null
+          data?: Json
+          description?: string | null
+          id?: never
+          is_quota?: boolean
+          period_begin?: string
+          period_end?: string
+          stat_mj_id?: number
+          synced_at?: string
+        }
+        Relationships: []
+      }
+      mj_stats: {
+        Row: {
+          data: Json
+          id: number
+          max_val: number | null
+          min_val: number | null
+          mj_id: number
+          name: string | null
+          period: number | null
+          position_name: string | null
+          sign: boolean | null
+          stat_type: number | null
+          synced_at: string
+          unit: string | null
+        }
+        Insert: {
+          data: Json
+          id?: never
+          max_val?: number | null
+          min_val?: number | null
+          mj_id: number
+          name?: string | null
+          period?: number | null
+          position_name?: string | null
+          sign?: boolean | null
+          stat_type?: number | null
+          synced_at?: string
+          unit?: string | null
+        }
+        Update: {
+          data?: Json
+          id?: never
+          max_val?: number | null
+          min_val?: number | null
+          mj_id?: number
+          name?: string | null
+          period?: number | null
+          position_name?: string | null
+          sign?: boolean | null
+          stat_type?: number | null
+          synced_at?: string
+          unit?: string | null
+        }
+        Relationships: []
+      }
+      mj_sync_log: {
+        Row: {
+          entities: Json | null
+          error: string | null
+          finished_at: string | null
+          id: number
+          ok: boolean | null
+          started_at: string
+          trigger: string | null
+        }
+        Insert: {
+          entities?: Json | null
+          error?: string | null
+          finished_at?: string | null
+          id?: never
+          ok?: boolean | null
+          started_at?: string
+          trigger?: string | null
+        }
+        Update: {
+          entities?: Json | null
+          error?: string | null
+          finished_at?: string | null
+          id?: never
+          ok?: boolean | null
+          started_at?: string
+          trigger?: string | null
+        }
+        Relationships: []
+      }
       org_divisions: {
         Row: {
           ckp: string | null
@@ -2554,6 +2980,7 @@ export type Database = {
       has_location_access: { Args: { loc: string }; Returns: boolean }
       holds_position: { Args: { pos: string }; Returns: boolean }
       is_fin_admin: { Args: never; Returns: boolean }
+      mj_secret: { Args: { p_name: string }; Returns: string }
       my_role: { Args: never; Returns: Database["public"]["Enums"]["app_role"] }
       redeem_invite: {
         Args: { p_full_name?: string; p_token: string }
