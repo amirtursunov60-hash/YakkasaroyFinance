@@ -10,7 +10,6 @@ import { useScrollLock } from "../../hooks/useScrollLock";
 import { usePeriod, periodTitle } from "../../lib/PeriodCtx";
 import { calcState } from "../../utils/stats";
 import { STAT_STATES } from "../../data/stats";
-import { MjPanel, MjSwitch } from "../manajet/MjPanel";
 import {
   fetchStatistics, fetchStatisticValues, fetchPeriods, fetchOrgDivisions,
   fetchAllPositions, upsertStatisticValue, createStatistic, updateStatistic,
@@ -25,7 +24,6 @@ export function StatsModule({ view }) {
   const isAdmin = ["owner", "fin_director", "ops_director"].includes(profile?.role);
 
   const [loading, setLoading] = useState(true);
-  const [src, setSrc] = useState("ours");   // источник: наши данные / зеркало ManaJet
   const [err, setErr] = useState("");
   const [done, setDone] = useState("");
   const [stats, setStats] = useState([]);
@@ -140,7 +138,6 @@ export function StatsModule({ view }) {
     </>);
   }
 
-  if (src === "manajet") return <MjPanel kind="stats" src={src} setSrc={setSrc} />;
   if (loading) return <div style={st.empty}><Loader2 size={18} className="spin" /> Загрузка…</div>;
 
   // ---------- Общий hero ----------
@@ -187,7 +184,6 @@ export function StatsModule({ view }) {
     const used = divisions.filter((d) => rows.some((r) => r.divCode === d.code));
     const orphan = rows.filter((r) => !divisions.some((d) => d.code === r.divCode));
     return (<>
-      <MjSwitch src={src} setSrc={setSrc} />
       {hero}{banners}
       {rows.length === 0 && <div style={st.empty}>Статистик пока нет{isAdmin ? " — добавьте на вкладке «Все статистики»" : ""}</div>}
       {[...used.map((d) => ({ code: d.code, name: d.name, items: rows.filter((r) => r.divCode === d.code) })),
@@ -222,7 +218,6 @@ export function StatsModule({ view }) {
 
   // ---------- Все статистики: список с вводом значения за неделю ----------
   return (<>
-    <MjSwitch src={src} setSrc={setSrc} />
     {hero}{banners}
     {rows.length === 0 && <div style={st.empty}>Статистик пока нет{isAdmin ? " — нажмите «Новая статистика»" : ""}</div>}
     <div style={st.incList}>

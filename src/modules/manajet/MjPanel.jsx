@@ -2,11 +2,8 @@ import { useState, useEffect, useCallback } from "react";
 import { RefreshCw, Loader2, AlertCircle, Database } from "lucide-react";
 import { useTheme } from "../../theme/theme";
 import { fmt } from "../../utils/format";
-import { calcState } from "../../utils/stats";
-import { STAT_STATES } from "../../data/stats";
 import {
-  triggerMjSync, fetchMjSyncLog, fetchMjPurchaseOrders, fetchMjBills,
-  fetchMjInvoices, fetchMjFunds, fetchMjStats, fetchMjStatValues,
+  triggerMjSync, fetchMjSyncLog, fetchMjPurchaseOrders, fetchMjBills, fetchMjInvoices,
 } from "../../lib/api";
 
 // Встраиваемая ManaJet-панель (read-only зеркало) для рабочих экранов.
@@ -49,7 +46,6 @@ export function MjPanel({ kind, src, setSrc }) {
   const [err, setErr] = useState("");
   const [syncing, setSyncing] = useState("");
   const [rows, setRows] = useState([]);
-  const [statVals, setStatVals] = useState({});
   const [lastSync, setLastSync] = useState(null);
 
   const load = useCallback(async () => {
@@ -60,13 +56,6 @@ export function MjPanel({ kind, src, setSrc }) {
       if (kind === "requests") setRows(await fetchMjPurchaseOrders({}));
       else if (kind === "bills") setRows(await fetchMjBills({}));
       else if (kind === "invoices") setRows(await fetchMjInvoices({}));
-      else if (kind === "funds") setRows(await fetchMjFunds());
-      else if (kind === "stats") {
-        const s = await fetchMjStats(); setRows(s);
-        const vals = await fetchMjStatValues(s.map((x) => x.mj_id));
-        const by = {}; for (const v of vals) (by[v.stat_mj_id] ||= []).push(v);
-        setStatVals(by);
-      }
     } catch (e) {
       setErr("Не удалось загрузить данные ManaJet: " + (e?.message || e));
     } finally { setLoading(false); }
@@ -182,31 +171,6 @@ export function MjPanel({ kind, src, setSrc }) {
       {line("Остаток", fmt(r.remaining_amount || 0), r.remaining_amount > 0 ? C.warning : C.faint)}
     </div>
   )));
-  else if (kind === "funds") body = grid(rows.map((r) => (
-    <div key={r.mj_id} style={card()}>
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
-        <span style={{ fontWeight: 700, fontSize: 14 }}>{r.name}</span>
-        <span style={chip("info")}>{r.number}</span>
-      </div>
-    </div>
-  )));
-  else if (kind === "stats") body = grid(rows.map((r) => {
-    const facts = (statVals[r.mj_id] || []).filter((v) => !v.is_quota);
-    const last = facts[0];
-    const series = facts.slice(0, 4).reverse().map((v) => Number(v.amount));
-    const state = STAT_STATES[calcState(series, r.sign === false)];
-    return (
-      <div key={r.mj_id} style={card()}>
-        <div style={{ display: "flex", justifyContent: "space-between", gap: 8, marginBottom: 6 }}>
-          <span style={{ fontWeight: 700, fontSize: 14, lineHeight: 1.3 }}>{r.name}</span>
-          {state && <span style={{ ...chip("sub"), color: state.color, borderColor: `${state.color}55` }}>{state.label}</span>}
-        </div>
-        {line("Последнее", last ? `${Number(last.amount).toLocaleString("ru-RU")} ${r.unit || ""}` : "—", C.money)}
-        {(r.min_val != null || r.max_val != null) && line("Коридор", `${r.min_val != null ? Number(r.min_val).toLocaleString("ru-RU") : "—"} … ${r.max_val != null ? Number(r.max_val).toLocaleString("ru-RU") : "—"}`)}
-        {r.position_name && line("Пост", r.position_name)}
-      </div>
-    );
-  }));
 
   return (
     <div>

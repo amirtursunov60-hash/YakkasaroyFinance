@@ -1536,6 +1536,14 @@ export async function triggerMjSync(entities = null, cursor = null) {
   return data; // { ok, entities:{name:count}, error, done, cursor }
 }
 
+// Импорт справочников ManaJet (фонды, виды дохода, статьи, статистики) прямо в
+// операционные таблицы по outer_id. Edge Function manajet-import-refs (финадмин).
+export async function triggerMjImportRefs() {
+  const { data, error } = await supabase.functions.invoke("manajet-import-refs", { body: {} });
+  if (error) throw error;
+  return data; // { ok, entities:{funds,income_types,expense_types,statistics}, error }
+}
+
 // Лёгкий журнал последних синхронизаций (для шапки встроенной ManaJet-панели).
 export async function fetchMjSyncLog(limit = 5) {
   const { data, error } = await supabase
