@@ -58,6 +58,63 @@ export type Database = {
           },
         ]
       }
+      battle_plan_items: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          done: boolean
+          id: string
+          is_archived: boolean
+          outer_id: string | null
+          owner_id: string
+          period_id: string | null
+          sort: number
+          target: string | null
+          text: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          done?: boolean
+          id?: string
+          is_archived?: boolean
+          outer_id?: string | null
+          owner_id?: string
+          period_id?: string | null
+          sort?: number
+          target?: string | null
+          text: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          done?: boolean
+          id?: string
+          is_archived?: boolean
+          outer_id?: string | null
+          owner_id?: string
+          period_id?: string | null
+          sort?: number
+          target?: string | null
+          text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "battle_plan_items_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "battle_plan_items_period_id_fkey"
+            columns: ["period_id"]
+            isOneToOne: false
+            referencedRelation: "fp_periods"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bill_attachments: {
         Row: {
           bill_id: string
@@ -2267,6 +2324,73 @@ export type Database = {
           },
         ]
       }
+      tasks: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          due_date: string | null
+          from_id: string | null
+          id: string
+          is_archived: boolean
+          location_id: string | null
+          outer_id: string | null
+          priority: Database["public"]["Enums"]["task_priority"]
+          status: Database["public"]["Enums"]["task_status"]
+          title: string
+          to_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          due_date?: string | null
+          from_id?: string | null
+          id?: string
+          is_archived?: boolean
+          location_id?: string | null
+          outer_id?: string | null
+          priority?: Database["public"]["Enums"]["task_priority"]
+          status?: Database["public"]["Enums"]["task_status"]
+          title: string
+          to_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          due_date?: string | null
+          from_id?: string | null
+          id?: string
+          is_archived?: boolean
+          location_id?: string | null
+          outer_id?: string | null
+          priority?: Database["public"]["Enums"]["task_priority"]
+          status?: Database["public"]["Enums"]["task_status"]
+          title?: string
+          to_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_from_id_fkey"
+            columns: ["from_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_to_id_fkey"
+            columns: ["to_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_location_access: {
         Row: {
           location_id: string
@@ -2483,6 +2607,8 @@ export type Database = {
         | "approved"
         | "rejected"
         | "paid"
+      task_priority: "low" | "mid" | "high"
+      task_status: "new" | "progress" | "done"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2654,6 +2780,8 @@ export const Constants = {
         "fund_return",
       ],
       request_status: ["submitted", "planning", "approved", "rejected", "paid"],
+      task_priority: ["low", "mid", "high"],
+      task_status: ["new", "progress", "done"],
     },
   },
 } as const
