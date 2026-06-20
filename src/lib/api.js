@@ -1527,11 +1527,13 @@ export async function fetchMyRequests(userId) {
 
 // Запустить синхронизацию из ManaJet. entities — массив сущностей или null (все).
 // Вызывает Edge Function под JWT текущего пользователя (проверка роли — в функции).
-export async function triggerMjSync(entities = null) {
-  const body = entities ? { entities } : {};
+export async function triggerMjSync(entities = null, cursor = null) {
+  const body = {};
+  if (entities) body.entities = entities;
+  if (cursor) body.cursor = cursor;
   const { data, error } = await supabase.functions.invoke("manajet-sync", { body });
   if (error) throw error;
-  return data; // { ok, trigger, entities:{name:count}, error }
+  return data; // { ok, entities:{name:count}, error, done, cursor }
 }
 
 // Сводка зеркала: число записей по сущностям + последняя синхронизация.

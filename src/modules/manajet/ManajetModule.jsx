@@ -86,10 +86,15 @@ export function ManajetModule({ view }) {
     const failed = [];
     for (let i = 0; i < SYNC_GROUPS.length; i++) {
       const label = SYNC_GROUPS[i].map((e) => TABLES_RU["mj_" + e] || e).join(", ");
-      setSyncing(`Синхронизация ${i + 1}/${SYNC_GROUPS.length}: ${label}…`);
       try {
-        const res = await triggerMjSync(SYNC_GROUPS[i]);
-        if (res && res.ok === false) throw new Error(res.error || "ошибка");
+        // докачка по курсору, если сущность прервалась по бюджету времени
+        let cursor = null; let guard = 0;
+        do {
+          setSyncing(`Синхронизация ${i + 1}/${SYNC_GROUPS.length}: ${label}${cursor ? " (продолжение…)" : "…"}`);
+          const res = await triggerMjSync(SYNC_GROUPS[i], cursor);
+          if (res && res.ok === false) throw new Error(res.error || "ошибка");
+          cursor = res?.cursor || null;
+        } while (cursor && ++guard < 30);
       } catch (e) {
         failed.push(`${label} (${e?.message || e})`);
       }
