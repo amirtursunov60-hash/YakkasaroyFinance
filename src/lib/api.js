@@ -1536,6 +1536,14 @@ export async function triggerMjSync(entities = null, cursor = null) {
   return data; // { ok, entities:{name:count}, error, done, cursor }
 }
 
+// Лёгкий журнал последних синхронизаций (для шапки встроенной ManaJet-панели).
+export async function fetchMjSyncLog(limit = 5) {
+  const { data, error } = await supabase
+    .from("mj_sync_log").select("*").order("id", { ascending: false }).limit(limit);
+  if (error) throw error;
+  return data || [];
+}
+
 // Сводка зеркала: число записей по сущностям + последняя синхронизация.
 export async function fetchMjOverview() {
   const tables = [

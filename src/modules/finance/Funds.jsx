@@ -9,6 +9,7 @@ import { useTheme } from "../../theme/theme";
 import { useScrollLock } from "../../hooks/useScrollLock";
 import { fmt } from "../../utils/format";
 import { usePeriod, periodTitle } from "../../lib/PeriodCtx";
+import { MjPanel, MjSwitch } from "../manajet/MjPanel";
 import {
   fetchFunds, fetchIncomeRefs, createFund, updateFund, archiveFund,
   fetchFundDebts, fetchFundCommitments, fetchFundJournal, fetchFundLoans,
@@ -48,6 +49,7 @@ export function Funds() {
   const isFinAdmin = ["owner", "fin_director"].includes(profile?.role);
 
   const [loading, setLoading] = useState(true);
+  const [src, setSrc] = useState("ours");   // источник: наши данные / зеркало ManaJet
   const [err, setErr] = useState("");
   const [done, setDone] = useState("");
   const [funds, setFunds] = useState([]);
@@ -208,6 +210,7 @@ export function Funds() {
     finally { setBusy(null); }
   };
 
+  if (src === "manajet") return <MjPanel kind="funds" src={src} setSrc={setSrc} />;
   if (loading || periodsLoading) return <div style={st.empty}><Loader2 size={18} className="spin" /> Загрузка…</div>;
 
   const selStyle = { ...st.reqSelect, minWidth: isMobile ? "100%" : 190 };
@@ -234,6 +237,7 @@ export function Funds() {
   ];
 
   return (<>
+    <MjSwitch src={src} setSrc={setSrc} />
     <section style={st.hero}>
       <div style={st.heroGlow} />
       <div style={st.heroContent}>

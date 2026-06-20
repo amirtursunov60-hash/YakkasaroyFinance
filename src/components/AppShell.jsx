@@ -24,7 +24,6 @@ import { RestStock } from "../modules/restaurant/RestStock";
 import { RestTables } from "../modules/restaurant/RestTables";
 import { StaffModule } from "../modules/staff/StaffModule";
 import { StatsModule } from "../modules/stats/StatsModule";
-import { ManajetModule } from "../modules/manajet/ManajetModule";
 import { makeCss } from "../theme/css";
 import { useTheme } from "../theme/theme";
 import { PeriodProvider, WeekPicker, LocationPicker } from "../lib/PeriodCtx";
@@ -213,8 +212,6 @@ export function App({ onLogout }) {
           {activeModule === "dashboard" && <DashModule view={active} />}
 
           {activeModule === "crm" && <CrmModule view={active} />}
-
-          {activeModule === "manajet" && <ManajetModule view={active} />}
 
           {activeModule === "restaurant" && active === "r_orders" && <RestOrders />}
           {activeModule === "restaurant" && active === "r_tables" && <RestTables />}

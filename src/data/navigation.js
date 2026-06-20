@@ -1,4 +1,4 @@
-import { Wallet, ArrowUpRight, ArrowDownLeft, Layers, FileText, ClipboardList, SlidersHorizontal, Calculator, BarChart3, CalendarDays, List, LayoutGrid, LayoutDashboard, Users, UserPlus, Contact, Network, PiggyBank, FolderKanban, UtensilsCrossed, ConciergeBell, Armchair, Package, Clock, Flame, TrendingUp, Database, Receipt } from "lucide-react";
+import { Wallet, ArrowUpRight, ArrowDownLeft, Layers, FileText, ClipboardList, SlidersHorizontal, Calculator, BarChart3, CalendarDays, List, LayoutGrid, LayoutDashboard, Users, UserPlus, Contact, Network, PiggyBank, FolderKanban, UtensilsCrossed, ConciergeBell, Armchair, Package, Clock, Flame, TrendingUp } from "lucide-react";
 
 
 
@@ -9,19 +9,8 @@ export const MODULES = [
   { key: "crm", icon: Contact, label: "CRM" },
   { key: "orgchart", icon: Network, label: "Организующая схема" },
   { key: "finance", icon: PiggyBank, label: "Финансовое планирование" },
-  { key: "manajet", icon: Database, label: "ManaJet · зеркало" },
   { key: "restaurant", icon: UtensilsCrossed, label: "Ресторан" },
   { key: "projects", icon: FolderKanban, label: "Управление проектами" },
-];
-
-// Зеркало ManaJet (read-only обкатка): обзор + ключевые сущности
-export const NAV_MANAJET = [
-  { key: "mj_overview", icon: LayoutGrid, label: "Обзор" },
-  { key: "mj_requests", icon: ClipboardList, label: "Заявки (ЗРС)" },
-  { key: "mj_bills", icon: FileText, label: "Счета поставщиков" },
-  { key: "mj_invoices", icon: Receipt, label: "Счета клиентам" },
-  { key: "mj_funds", icon: Layers, label: "Фонды" },
-  { key: "mj_stats", icon: BarChart3, label: "Статистики" },
 ];
 
 
@@ -77,4 +66,4 @@ export const NAV_STAFF = [
   { key: "st_invites", icon: UserPlus, label: "Приглашения" },
 ];
 
-export const MODULE_NAV = { finance: NAV_FINANCE, manajet: NAV_MANAJET, restaurant: NAV_RESTAURANT, stats: NAV_STATS, orgchart: NAV_ORG, dashboard: NAV_DASH, crm: NAV_CRM, staff: NAV_STAFF };
+export const MODULE_NAV = { finance: NAV_FINANCE, restaurant: NAV_RESTAURANT, stats: NAV_STATS, orgchart: NAV_ORG, dashboard: NAV_DASH, crm: NAV_CRM, staff: NAV_STAFF };
