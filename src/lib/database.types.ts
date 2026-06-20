@@ -316,6 +316,179 @@ export type Database = {
         }
         Relationships: []
       }
+      crm_clients: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          is_archived: boolean
+          location_id: string | null
+          name: string
+          note: string | null
+          outer_id: string | null
+          phone: string | null
+          tag: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_archived?: boolean
+          location_id?: string | null
+          name: string
+          note?: string | null
+          outer_id?: string | null
+          phone?: string | null
+          tag?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_archived?: boolean
+          location_id?: string | null
+          name?: string
+          note?: string | null
+          outer_id?: string | null
+          phone?: string | null
+          tag?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_clients_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_halls: {
+        Row: {
+          capacity: number | null
+          created_at: string
+          created_by: string | null
+          id: string
+          is_archived: boolean
+          location_id: string | null
+          name: string
+          outer_id: string | null
+          sort: number
+        }
+        Insert: {
+          capacity?: number | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_archived?: boolean
+          location_id?: string | null
+          name: string
+          outer_id?: string | null
+          sort?: number
+        }
+        Update: {
+          capacity?: number | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_archived?: boolean
+          location_id?: string | null
+          name?: string
+          outer_id?: string | null
+          sort?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_halls_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_leads: {
+        Row: {
+          budget: number
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          event_date: string | null
+          event_type: string | null
+          guests: number
+          hall_id: string | null
+          id: string
+          is_archived: boolean
+          location_id: string | null
+          name: string
+          note: string | null
+          outer_id: string | null
+          phone: string | null
+          source: string | null
+          stage: Database["public"]["Enums"]["crm_lead_stage"]
+        }
+        Insert: {
+          budget?: number
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          event_date?: string | null
+          event_type?: string | null
+          guests?: number
+          hall_id?: string | null
+          id?: string
+          is_archived?: boolean
+          location_id?: string | null
+          name: string
+          note?: string | null
+          outer_id?: string | null
+          phone?: string | null
+          source?: string | null
+          stage?: Database["public"]["Enums"]["crm_lead_stage"]
+        }
+        Update: {
+          budget?: number
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          event_date?: string | null
+          event_type?: string | null
+          guests?: number
+          hall_id?: string | null
+          id?: string
+          is_archived?: boolean
+          location_id?: string | null
+          name?: string
+          note?: string | null
+          outer_id?: string | null
+          phone?: string | null
+          source?: string | null
+          stage?: Database["public"]["Enums"]["crm_lead_stage"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_leads_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "crm_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_leads_hall_id_fkey"
+            columns: ["hall_id"]
+            isOneToOne: false
+            referencedRelation: "crm_halls"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_leads_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       currencies: {
         Row: {
           code: string
@@ -2274,6 +2447,7 @@ export type Database = {
       bill_kind: "supply" | "obligation"
       cash_account_type: "cash" | "bank" | "card" | "acquiring"
       client_invoice_status: "planned" | "issued" | "paid" | "cancelled"
+      crm_lead_stage: "new" | "show" | "offer" | "contract" | "won" | "lost"
       distribution_stage: "revenue" | "margin" | "adjusted"
       fund_kind: "working" | "accumulative"
       hat_status: "none" | "learning" | "done"
@@ -2447,6 +2621,7 @@ export const Constants = {
       bill_kind: ["supply", "obligation"],
       cash_account_type: ["cash", "bank", "card", "acquiring"],
       client_invoice_status: ["planned", "issued", "paid", "cancelled"],
+      crm_lead_stage: ["new", "show", "offer", "contract", "won", "lost"],
       distribution_stage: ["revenue", "margin", "adjusted"],
       fund_kind: ["working", "accumulative"],
       hat_status: ["none", "learning", "done"],
