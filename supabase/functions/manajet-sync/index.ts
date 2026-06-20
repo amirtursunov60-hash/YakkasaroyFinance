@@ -88,7 +88,7 @@ Deno.serve(async (req) => {
       all.push(...page);
       if (page.length < take) break;
       skip += take;
-      await sleep(150); // вежливая пауза между страницами
+      await sleep(50);
       if (skip > 60000) break; // предохранитель
     }
     return all;
@@ -131,27 +131,27 @@ Deno.serve(async (req) => {
       return d.length;
     },
     purchase_orders: async () => {
-      const d = await mjAll("PurchaseOrder", 150);
+      const d = await mjAll("PurchaseOrder", 300);
       await upsert("mj_purchase_orders", d.map((x) => ({ mj_id: x.id, name: x.name, status: x.status, fund_name: x.fp_fund?.name ?? null, expense_name: x.fp_expense?.name ?? null, position_name: x.orgboard_position?.name ?? null, planned_value: num(x.planned_value), confirmed_value: num(x.confirmed_value), payed_amount: num(x.payed_amount), csw_data: x.csw_data, csw_situation: x.csw_situation, csw_solution: x.csw_solution, data: x })), "mj_id");
       return d.length;
     },
     bills: async () => {
-      const d = await mjAll("Bill", 150);
+      const d = await mjAll("Bill", 300);
       await upsert("mj_bills", d.map((x) => ({ mj_id: x.id, seria: x.seria, number: x.number, doc_date: x.date, company_name: x.company?.name ?? null, expense_name: x.fp_expense?.name ?? null, total_amount: num(x.total_amount), payed_amount: num(x.payed_amount), remaining_amount: num(x.remaining_amount), marked_payed: x.marked_payed, planned_date: x.planned_date, data: x })), "mj_id");
       return d.length;
     },
     invoices: async () => {
-      const d = await mjAll("Invoice", 150);
+      const d = await mjAll("Invoice", 300);
       await upsert("mj_invoices", d.map((x) => ({ mj_id: x.id, seria: x.seria, number: x.number, doc_date: x.date, company_name: x.company?.name ?? null, total_amount: num(x.total_amount), payed_amount: num(x.payed_amount), remaining_amount: num(x.remaining_amount), data: x })), "mj_id");
       return d.length;
     },
     incomes: async () => {
-      const d = await mjAll("FpIncome", 150, { "filter.date_from": daysAgo(180) });
+      const d = await mjAll("FpIncome", 300, { "filter.date_from": daysAgo(180) });
       await upsert("mj_incomes", d.map((x) => ({ mj_id: x.id, date_operation: x.date_operation, amount: num(x.amount), income_type_name: x.income_type?.name ?? null, company_name: x.company?.name ?? null, payment_type_name: x.fp_payment_type?.name ?? null, period_mj_id: x.fp_plan?.id ?? null, data: x })), "mj_id");
       return d.length;
     },
     stat_values: async () => {
-      const d = await mjAll("StatValue", 300);
+      const d = await mjAll("StatValue", 400);
       // ключ составной (id у StatValue нет) — дедуп внутри пакета
       const seen = new Set<string>();
       const rows = [];

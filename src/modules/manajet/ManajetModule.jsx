@@ -12,15 +12,17 @@ import {
   fetchMjInvoices, fetchMjFunds, fetchMjStats, fetchMjStatValues,
 } from "../../lib/api";
 
-// Сущности синкаются группами — для прогресса и чтобы не упереться в лимит
-// времени одного вызова Edge Function (ManaJet режет большие страницы по 504).
+// Синкаем по одной сущности за вызов — ManaJet отвечает медленно (~6 c/страница),
+// тяжёлые сущности (заявки/счета) поодиночке упираются в лимит времени Edge
+// Function. Справочник контрагентов (≈4700, не помещается в один вызов) в обкатку
+// не тянем — названия и так денормализованы в счета/заявки/инвойсы.
 const SYNC_GROUPS = [
   ["funds", "periods", "stats", "positions"],
-  ["companies"],
   ["purchase_orders"],
   ["bills"],
   ["invoices"],
-  ["incomes", "stat_values"],
+  ["incomes"],
+  ["stat_values"],
 ];
 
 // Статусы заявок (ЗРС / PurchaseOrder) ManaJet: enum [-1,0,2,3]
@@ -35,7 +37,7 @@ const TABLES_RU = {
   mj_funds: "Фонды", mj_periods: "Периоды ФП", mj_purchase_orders: "Заявки (ЗРС)",
   mj_bills: "Счета поставщиков", mj_invoices: "Счета клиентам", mj_incomes: "Доходы",
   mj_stats: "Статистики", mj_stat_values: "Значения статистик",
-  mj_positions: "Посты оргсхемы", mj_companies: "Контрагенты",
+  mj_positions: "Посты оргсхемы",
 };
 
 const dt = (iso) => (iso ? new Date(iso).toLocaleDateString("ru-RU", { day: "2-digit", month: "short", year: "2-digit" }) : "—");
@@ -77,20 +79,24 @@ export function ManajetModule({ view }) {
 
   useEffect(() => { setLoading(true); load(); }, [load]);
 
-  // Полная синхронизация по группам с прогрессом
+  // Синхронизация по группам с прогрессом. Сбой одной группы не прерывает
+  // остальные — собираем список проблемных и показываем сводку.
   const runSync = async () => {
     setErr(""); setSyncing("Запуск…");
-    try {
-      for (let i = 0; i < SYNC_GROUPS.length; i++) {
-        setSyncing(`Синхронизация ${i + 1}/${SYNC_GROUPS.length}: ${SYNC_GROUPS[i].map((e) => TABLES_RU["mj_" + e] || e).join(", ")}…`);
+    const failed = [];
+    for (let i = 0; i < SYNC_GROUPS.length; i++) {
+      const label = SYNC_GROUPS[i].map((e) => TABLES_RU["mj_" + e] || e).join(", ");
+      setSyncing(`Синхронизация ${i + 1}/${SYNC_GROUPS.length}: ${label}…`);
+      try {
         const res = await triggerMjSync(SYNC_GROUPS[i]);
-        if (res && res.ok === false) throw new Error(res.error || "ошибка синхронизации");
+        if (res && res.ok === false) throw new Error(res.error || "ошибка");
+      } catch (e) {
+        failed.push(`${label} (${e?.message || e})`);
       }
-      setSyncing(""); await load();
-    } catch (e) {
-      setSyncing(""); setErr("Синхронизация прервана: " + (e?.message || e));
-      await load();
     }
+    setSyncing("");
+    if (failed.length) setErr("Не загрузились: " + failed.join("; "));
+    await load();
   };
 
   const lastSync = overview.log?.[0];
