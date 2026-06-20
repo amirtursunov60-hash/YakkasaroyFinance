@@ -1397,3 +1397,58 @@ export async function upsertStatisticValue(statisticId, periodId, value, isQuota
     .insert({ statistic_id: statisticId, period_id: periodId, value, is_quota: isQuota });
   if (error) throw error;
 }
+
+// ---------------------------------------------------------------- CRM банкетов
+// Воронка заявок, база клиентов, залы (миграция 20260620200000_crm_banquets).
+// Брони залов — производная от заявок (зал + дата + этап), отдельной таблицы нет.
+
+export async function fetchCrmHalls() {
+  const { data, error } = await supabase
+    .from("crm_halls")
+    .select("id, name, location_id, capacity, sort")
+    .eq("is_archived", false).order("sort");
+  if (error) throw error;
+  return data;
+}
+
+export async function fetchCrmLeads() {
+  const { data, error } = await supabase
+    .from("crm_leads")
+    .select(`id, name, phone, event_type, event_date, guests, budget, stage, source, note,
+      hall_id, location_id, client_id, hall:crm_halls(name)`)
+    .eq("is_archived", false)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return data;
+}
+
+export async function createCrmLead(row) {
+  const { data, error } = await supabase.from("crm_leads").insert(row).select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function updateCrmLead(id, patch) {
+  const { error } = await supabase.from("crm_leads").update(patch).eq("id", id);
+  if (error) throw error;
+}
+
+export async function setCrmLeadStage(id, stage) {
+  const { error } = await supabase.from("crm_leads").update({ stage }).eq("id", id);
+  if (error) throw error;
+}
+
+export async function fetchCrmClients() {
+  const { data, error } = await supabase
+    .from("crm_clients")
+    .select("id, name, phone, tag, location_id, note")
+    .eq("is_archived", false).order("name");
+  if (error) throw error;
+  return data;
+}
+
+export async function createCrmClient(row) {
+  const { data, error } = await supabase.from("crm_clients").insert(row).select().single();
+  if (error) throw error;
+  return data;
+}
