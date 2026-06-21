@@ -14,9 +14,9 @@ export default function SwitcherDemo() {
   const [theme, setTheme] = useState<Theme>("dark");
 
   // Выставляем --c-* из нашей палитры, чтобы Tailwind-классы (bg-panel и т.п.)
-  // взяли цвета темы. dim в демо мапим на dark (в THEMES пока light/dark).
+  // и сам свитчер взяли цвета активной темы (light / dark / dim).
   useEffect(() => {
-    applyThemeVars(THEMES[theme === "dim" ? "dark" : theme]);
+    applyThemeVars(THEMES[theme]);
   }, [theme]);
 
   return (

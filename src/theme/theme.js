@@ -58,6 +58,26 @@ export const THEMES = {
     // Палитра категориальных графиков — затемнена под светлый фон (контраст)
     chartPalette: ["#0aa552", "#2f6fdb", "#c47d10", "#dc3b30", "#7a4fc0", "#0f9b8e", "#a8881a", "#3d9e5f", "#b13bb1"],
   },
+  // «Dim» — мягкий тёмный режим (сине-серые поверхности вместо почти чёрного),
+  // как третий вариант темы. Акценты/статусы те же, что в dark.
+  dim: {
+    scheme: "dark",
+    pageGrad: "linear-gradient(160deg, #1b2836 0%, #1d2c3c 26%, #1b2b31 52%, #182530 80%, #16212d 100%)",
+    bg: "transparent",
+    panel: "rgba(42, 54, 68, 0.60)", panel2: "rgba(255,255,255,0.05)", line: "rgba(255,255,255,0.11)",
+    glassBorder: "rgba(255,255,255,0.15)", glassHi: "rgba(255,255,255,0.20)",
+    green: "#3ddc84", greenSoft: "#2bb673", text: "#e9eef3", sub: "#aab6c2", faint: "#74808d",
+    money: "#2fbf6f",
+    inputBg: "rgba(255,255,255,0.06)", rowChild: "rgba(255,255,255,0.02)", rowHover: "rgba(255,255,255,0.05)",
+    navHover: "rgba(255,255,255,0.06)", heroGrad: "linear-gradient(135deg, rgba(61,220,132,0.15) 0%, rgba(40,140,200,0.12) 50%, rgba(255,255,255,0.04) 100%)",
+    heroLabel: "#c8e6d6", heroStat: "#a8c4d4", barBg: "rgba(255,255,255,0.11)", danger: "#ff6b5e",
+    blueLink: "#7fb4ff", menuHover: "rgba(255,255,255,0.07)", shadow: "rgba(0,0,0,0.40)",
+    solid: "#1c2733", solid2: "#23303e",
+    mono: 'ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace',
+    info: "#5b8def", warning: "#e8911c", success: "#2f9e44", successSoft: "#7bd88f",
+    gold: "#d6c14a", violet: "#9c6ade", teal: "#5bd6c9",
+    chartPalette: ["#3ddc84", "#5b8def", "#e8911c", "#ff6b5e", "#9c6ade", "#5bd6c9", "#d6c14a", "#7bd88f", "#d64ad6"],
+  },
 };
 
 // Мост палитры → CSS-переменные (--c-*) для Tailwind/shadcn. Вызывается при

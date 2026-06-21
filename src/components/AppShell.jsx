@@ -1,5 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from "react";
-import { X, Menu, User2, Settings, LogOut, Sun, Moon, Volume2, VolumeX, List } from "lucide-react";
+import { X, Menu, User2, Settings, LogOut, Volume2, VolumeX, List } from "lucide-react";
+import { ThemeSwitcher } from "./ui/apple-liquid-glass-switcher";
+import "./ui/switcher.css";
 import { Stub } from "./common";
 import { MODULES, MODULE_NAV } from "../data/navigation";
 import { avatarColor } from "../utils/format";
@@ -140,9 +142,9 @@ export function App({ onLogout }) {
                       {lang === "ru" ? "RU" : "ТҶ"}
                     </div>
                   </div>
-                  <div style={st.themeToggle}>
-                    <button style={{ ...st.themeBtn, ...(theme === "light" ? st.themeBtnOn : {}) }} onClick={() => setTheme("light")}><Sun size={14} /> Light</button>
-                    <button style={{ ...st.themeBtn, ...(theme === "dark" ? st.themeBtnOn : {}) }} onClick={() => setTheme("dark")}><Moon size={14} /> Dark</button>
+                  {/* Тема: liquid-glass свитчер (light / dark / dim), Tailwind-компонент */}
+                  <div className="tw-scope" style={{ display: "flex", justifyContent: "center", padding: "6px 0 10px" }}>
+                    <ThemeSwitcher value={theme} onValueChange={setTheme} />
                   </div>
                   <div style={st.themeToggle}>
                     <button style={{ ...st.themeBtn, ...(sound ? st.themeBtnOn : {}) }} onClick={() => setSound(true)}><Volume2 size={14} /> Звук вкл</button>
