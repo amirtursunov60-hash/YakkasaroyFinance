@@ -7,6 +7,23 @@ export type StatState =
   | "emergency"    // Чрезвычайное положение
   | "danger";      // Опасность
 
+// Справочник состояний ХМС: метка для UI и цвет индикатора. Фиксированные
+// определения (Приложение А ТЗ v2) — не данные из БД, а доменные константы.
+export const STAT_STATES: Record<StatState, { label: string; color: string }> = {
+  power: { label: "Власть", color: "#1fd65f" },
+  affluence: { label: "Изобилие", color: "#7bd88f" },
+  normal: { label: "Норма", color: "#5b8def" },
+  emergency: { label: "Чрезвычайное положение", color: "#e8911c" },
+  danger: { label: "Опасность", color: "#ff6b5e" },
+  nonexistence: { label: "Несуществование", color: "#8b9296" },
+};
+
+// Коэффициенты состояния для расчёта ЗП по баллам (Этап 3 ТЗ): эффективные
+// баллы = баллы поста × коэффициент состояния статистики.
+export const STATE_COEF: Record<StatState, number> = {
+  power: 1.3, affluence: 1.15, normal: 1.0, emergency: 0.85, danger: 0.7, nonexistence: 0.9,
+};
+
 // Автоопределение состояния по тренду последних 4 недель
 export function calcState(values: number[] | null | undefined, invert?: boolean): StatState {
   if (!values || values.length < 4) return "nonexistence";

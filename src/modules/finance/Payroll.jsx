@@ -1,11 +1,10 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { Check, Save, Banknote, Loader2, AlertCircle, CheckCircle2, Plus, X, Trash2, Download, RotateCcw, FileSpreadsheet } from "lucide-react";
 import { Stat } from "../../components/common";
-import { STATE_COEF } from "../../data/payroll";
-import { STAT_STATES } from "../../data/stats";
 import { useTheme } from "../../theme/theme";
 import { useScrollLock } from "../../hooks/useScrollLock";
 import { fmt } from "../../utils/format";
+import { STAT_STATES, STATE_COEF } from "../../utils/stats";
 import { usePeriod, periodTitle } from "../../lib/PeriodCtx";
 import {
   fetchPayrollSheet, createPayrollSheet, updatePayrollSheet,
