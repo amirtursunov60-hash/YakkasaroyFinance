@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { X, Menu, User2, Settings, LogOut, Volume2, VolumeX, List } from "lucide-react";
 import { ThemeSwitcher } from "./ui/apple-liquid-glass-switcher";
+import { GlassSegment } from "./ui/glass-segment";
 import "./ui/switcher.css";
 import { Stub } from "./common";
 import { MODULES, MODULE_NAV } from "../data/navigation";
@@ -159,9 +160,17 @@ export function App({ onLogout }) {
                   <div className="tw-scope switcher-app" style={{ display: "flex", justifyContent: "center", padding: "6px 0 10px" }}>
                     <ThemeSwitcher value={theme} onValueChange={setTheme} />
                   </div>
-                  <div style={st.themeToggle}>
-                    <button style={{ ...st.themeBtn, ...(sound ? st.themeBtnOn : {}) }} onClick={() => setSound(true)}><Volume2 size={14} /> Звук вкл</button>
-                    <button style={{ ...st.themeBtn, ...(!sound ? st.themeBtnOn : {}) }} onClick={() => setSound(false)}><VolumeX size={14} /> Выкл</button>
+                  <div style={{ margin: "4px 2px 8px" }}>
+                    <GlassSegment
+                      block
+                      ariaLabel="Звук"
+                      value={sound ? "on" : "off"}
+                      onChange={(v) => setSound(v === "on")}
+                      options={[
+                        { value: "on", label: "Звук вкл", icon: <Volume2 size={14} /> },
+                        { value: "off", label: "Выкл", icon: <VolumeX size={14} /> },
+                      ]}
+                    />
                   </div>
                   <div style={st.pmDivider} />
                   <div style={st.pmItem} className="pmi"><User2 size={16} color={C.sub} /> Профиль</div>

@@ -46,6 +46,17 @@ export const makeCss = (C) => {
     -webkit-backdrop-filter: blur(2px);
     box-shadow: ${pillShadow};
   }
+  /* Переиспользуемый стеклянный сегмент (GlassSegment): трек + скользящая пилюля.
+     Тот же per-theme рецепт, что у свитчера/вкладок. */
+  .gseg{ position:relative; display:inline-flex; align-items:center; gap:4px; padding:4px; border-radius:99px; background:${mix(g.c, "12%")}; backdrop-filter:blur(8px) saturate(${g.sat}); -webkit-backdrop-filter:blur(8px) saturate(${g.sat}); box-shadow:${trackShadow}; }
+  .gseg--block{ display:flex; width:100%; }
+  .gseg--block .gseg__opt{ flex:1; }
+  .gseg__pill{ position:absolute; top:4px; height:calc(100% - 8px); border-radius:99px; background:${mix(g.c, "36%")}; backdrop-filter:blur(2px); -webkit-backdrop-filter:blur(2px); box-shadow:${pillShadow}; transition:left .35s cubic-bezier(.34,1.1,.4,1), width .35s cubic-bezier(.34,1.1,.4,1), opacity .2s; pointer-events:none; z-index:0; }
+  .gseg__opt{ position:relative; z-index:1; display:inline-flex; align-items:center; justify-content:center; gap:6px; border:none; background:transparent; cursor:pointer; font-family:inherit; font-weight:600; white-space:nowrap; color:${C.sub}; transition:color .2s, transform .12s; }
+  .gseg__opt.is-on{ color:${C.text}; }
+  .gseg__opt:active{ transform:scale(0.96); }
+  .gseg--md .gseg__opt{ height:38px; padding:0 16px; font-size:12.5px; }
+  .gseg--sm .gseg__opt{ height:30px; padding:0 13px; font-size:12px; }
   .frow:hover{background:${C.rowHover};}
   .trow{border-top:1px solid ${C.line};}
   .trow:hover{background:${C.rowHover};}
