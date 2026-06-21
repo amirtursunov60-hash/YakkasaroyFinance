@@ -56,6 +56,9 @@
   margin: 0 auto;
   border: none;
   border-radius: 99em;
+  /* На 5% меньше оригинала (просьба заказчика) — масштабом, пропорции точные */
+  transform: scale(0.95);
+  transform-origin: center;
   background-color: color-mix(in srgb, var(--c-glass) 12%, transparent);
   backdrop-filter: blur(8px) url(#switcher) saturate(var(--saturation));
   -webkit-backdrop-filter: blur(8px) saturate(var(--saturation));
