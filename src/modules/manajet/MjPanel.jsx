@@ -4,21 +4,17 @@ import { useTheme } from "../../theme/theme";
 import { fmt } from "../../utils/format";
 import {
   triggerMjSync, fetchMjSyncLog, fetchMjPurchaseOrders, fetchMjBills, fetchMjInvoices,
+  fetchMjPositions, fetchMjPersons,
 } from "../../lib/api";
 
 // Встраиваемая ManaJet-панель (read-only зеркало) для рабочих экранов.
 // Переключатель «Наши данные / ManaJet» + список нужного типа + кнопка синка.
 
-// Синк по одной сущности за вызов (ManaJet медленный ~6–15 с/страница, лимит
-// Edge Function ~150 с); докачка по курсору. Контрагенты в обкатку не тянем.
-const SYNC_GROUPS = [
-  ["funds", "periods", "stats", "positions"],
-  ["purchase_orders"], ["bills"], ["invoices"], ["incomes"], ["stat_values"],
-];
-const RU = {
-  funds: "Фонды", periods: "Периоды", stats: "Статистики", positions: "Посты",
-  purchase_orders: "Заявки", bills: "Счета поставщиков", invoices: "Счета клиентам",
-  incomes: "Доходы", stat_values: "Значения статистик",
+// Какие сущности ManaJet синкать для каждого вида (ManaJet медленный ~6–15 с/
+// страница, лимит Edge Function ~150 с — поэтому по одной, с докачкой по курсору).
+const KIND_SYNC = {
+  requests: ["purchase_orders"], bills: ["bills"], invoices: ["invoices"],
+  positions: ["positions"], persons: ["persons"],
 };
 const PO_STATUS = {
   "-1": { label: "Отклонена", tone: "danger" }, 0: { label: "На рассмотрении", tone: "warning" },
@@ -56,29 +52,30 @@ export function MjPanel({ kind, src, setSrc }) {
       if (kind === "requests") setRows(await fetchMjPurchaseOrders({}));
       else if (kind === "bills") setRows(await fetchMjBills({}));
       else if (kind === "invoices") setRows(await fetchMjInvoices({}));
+      else if (kind === "positions") setRows(await fetchMjPositions());
+      else if (kind === "persons") setRows(await fetchMjPersons());
     } catch (e) {
       setErr("Не удалось загрузить данные ManaJet: " + (e?.message || e));
     } finally { setLoading(false); }
   }, [kind]);
   useEffect(() => { setLoading(true); load(); }, [load]);
 
+  // Синкаем только сущности активного вида (с докачкой по курсору).
   const runSync = async () => {
-    setErr(""); setSyncing("Запуск…");
-    const failed = [];
-    for (let i = 0; i < SYNC_GROUPS.length; i++) {
-      const label = SYNC_GROUPS[i].map((e) => RU[e] || e).join(", ");
-      try {
-        let cursor = null; let guard = 0;
-        do {
-          setSyncing(`Обновление ${i + 1}/${SYNC_GROUPS.length}: ${label}${cursor ? " (продолжение…)" : "…"}`);
-          const res = await triggerMjSync(SYNC_GROUPS[i], cursor);
-          if (res && res.ok === false) throw new Error(res.error || "ошибка");
-          cursor = res?.cursor || null;
-        } while (cursor && ++guard < 40);
-      } catch (e) { failed.push(`${label} (${e?.message || e})`); }
+    setErr(""); setSyncing("Обновление…");
+    const entities = KIND_SYNC[kind] || [];
+    try {
+      let cursor = null; let guard = 0;
+      do {
+        setSyncing(cursor ? "Обновление (продолжение…)" : "Обновление из ManaJet…");
+        const res = await triggerMjSync(entities, cursor);
+        if (res && res.ok === false) throw new Error(res.error || "ошибка");
+        cursor = res?.cursor || null;
+      } while (cursor && ++guard < 60);
+    } catch (e) {
+      setErr("Обновление не удалось: " + (e?.message || e));
     }
     setSyncing("");
-    if (failed.length) setErr("Не загрузились: " + failed.join("; "));
     await load();
   };
 
@@ -169,6 +166,27 @@ export function MjPanel({ kind, src, setSrc }) {
       {line("Сумма", fmt(r.total_amount || 0))}
       {line("Оплачено", fmt(r.payed_amount || 0), C.money)}
       {line("Остаток", fmt(r.remaining_amount || 0), r.remaining_amount > 0 ? C.warning : C.faint)}
+    </div>
+  )));
+  else if (kind === "positions") body = (
+    <div style={{ ...card(), padding: "6px 4px" }}>
+      {rows.map((r) => {
+        const depth = Math.max(0, String(r.full_number || "").split(".").length - 1);
+        return (
+          <div key={r.mj_id} style={{ display: "flex", alignItems: "baseline", gap: 8, padding: "6px 10px", paddingLeft: 10 + depth * 18, borderBottom: `1px solid ${C.line}`, opacity: r.in_archive ? 0.5 : 1 }}>
+            <span style={{ ...st.code, minWidth: 64 }}>{r.full_number}</span>
+            <span style={{ fontWeight: 600, fontSize: 13.5 }}>{r.name}</span>
+            {r.person_name && <span style={{ fontSize: 12.5, color: C.money }}>· {r.person_name}</span>}
+            {r.functional && <span style={{ fontSize: 12, color: C.faint, marginLeft: "auto", maxWidth: "45%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={r.functional}>{r.functional}</span>}
+          </div>
+        );
+      })}
+    </div>
+  );
+  else if (kind === "persons") body = grid(rows.map((r) => (
+    <div key={r.mj_id} style={{ ...card(), display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
+      <span style={{ fontWeight: 600, fontSize: 14, opacity: r.is_disabled ? 0.5 : 1 }}>{r.name || [r.last_name, r.first_name].filter(Boolean).join(" ") || "—"}</span>
+      {r.is_disabled && <span style={chip("sub")}>отключён</span>}
     </div>
   )));
 

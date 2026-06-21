@@ -1622,6 +1622,24 @@ export async function fetchMjStats() {
   return data;
 }
 
+// Посты оргсхемы ManaJet (read-only зеркало) — сортировка по full_number.
+export async function fetchMjPositions() {
+  const { data, error } = await supabase.from("mj_positions")
+    .select("mj_id, full_number, name, person_name, functional, in_archive")
+    .order("full_number");
+  if (error) throw error;
+  return data;
+}
+
+// Сотрудники ManaJet (read-only зеркало mj_persons).
+export async function fetchMjPersons() {
+  const { data, error } = await supabase.from("mj_persons")
+    .select("mj_id, name, first_name, last_name, is_disabled")
+    .order("name");
+  if (error) throw error;
+  return data;
+}
+
 export async function fetchMjStatValues(statIds = [], limit = 600) {
   let qb = supabase.from("mj_stat_values")
     .select("stat_mj_id, period_begin, period_end, is_quota, amount")

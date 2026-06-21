@@ -1649,6 +1649,39 @@ export type Database = {
         }
         Relationships: []
       }
+      mj_persons: {
+        Row: {
+          data: Json
+          first_name: string | null
+          id: number
+          is_disabled: boolean | null
+          last_name: string | null
+          mj_id: number
+          name: string | null
+          synced_at: string
+        }
+        Insert: {
+          data: Json
+          first_name?: string | null
+          id?: never
+          is_disabled?: boolean | null
+          last_name?: string | null
+          mj_id: number
+          name?: string | null
+          synced_at?: string
+        }
+        Update: {
+          data?: Json
+          first_name?: string | null
+          id?: never
+          is_disabled?: boolean | null
+          last_name?: string | null
+          mj_id?: number
+          name?: string | null
+          synced_at?: string
+        }
+        Relationships: []
+      }
       mj_positions: {
         Row: {
           data: Json
