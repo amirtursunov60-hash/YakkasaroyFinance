@@ -16,8 +16,8 @@ export const THEMES = {
     // Стеклянные поверхности
     panel: "rgba(28, 34, 44, 0.55)", panel2: "rgba(255,255,255,0.06)", line: "rgba(255,255,255,0.10)",
     glassBorder: "rgba(255,255,255,0.14)", glassHi: "rgba(255,255,255,0.22)",
-    // «green» — ключ бренд-акцента; цвет авторский из оригинала (--c-action dark = голубой)
-    green: "#03d5ff", greenSoft: "#03d5ff", onAccent: "#04130a", text: "#f5f8fa", sub: "#a8b2bd", faint: "#6b7682",
+    // «green» — фирменный бренд-акцент Яккасарой (зелёный)
+    green: "#3ddc84", greenSoft: "#2bb673", onAccent: "#04130a", text: "#f5f8fa", sub: "#a8b2bd", faint: "#6b7682",
     // money — отдельный зелёный для денежных сумм (приход/рост), чтобы брендовый
     // green не означал «всё сразу»: бренд/кнопки/активная вкладка ≠ деньги.
     money: "#2fbf6f",
@@ -43,8 +43,8 @@ export const THEMES = {
     // заметнее бордеры и зебра — плотные данные читаются без «мыла».
     panel: "rgba(255, 255, 255, 0.55)", panel2: "rgba(255,255,255,0.45)", line: "rgba(15,40,70,0.16)",
     glassBorder: "rgba(255,255,255,0.85)", glassHi: "rgba(255,255,255,0.95)",
-    // бренд-акцент авторский из оригинала (--c-action light = синий)
-    green: "#0052f5", greenSoft: "#0052f5", onAccent: "#ffffff", text: "#0b1722", sub: "#45525e", faint: "#717c87",
+    // бренд-акцент Яккасарой (зелёный)
+    green: "#0aa552", greenSoft: "#0aa552", onAccent: "#04130a", text: "#0b1722", sub: "#45525e", faint: "#717c87",
     money: "#0a8f48", // деньги (приход/рост) — чуть глубже брендового зелёного
     inputBg: "rgba(255,255,255,0.65)", rowChild: "rgba(15,40,70,0.035)", rowHover: "rgba(255,255,255,0.6)",
     navHover: "rgba(255,255,255,0.5)", heroGrad: "rgba(255, 255, 255, 0.55)",
@@ -68,8 +68,8 @@ export const THEMES = {
     bg: "transparent",
     panel: "rgba(42, 54, 68, 0.60)", panel2: "rgba(255,255,255,0.05)", line: "rgba(255,255,255,0.11)",
     glassBorder: "rgba(255,255,255,0.15)", glassHi: "rgba(255,255,255,0.20)",
-    // бренд-акцент dim — тёмный индиго (выбор заказчика вместо розового)
-    green: "#1e3a8f", greenSoft: "#1e3a8f", onAccent: "#ffffff", text: "#e9eef3", sub: "#aab6c2", faint: "#74808d",
+    // бренд-акцент Яккасарой (зелёный)
+    green: "#3ddc84", greenSoft: "#2bb673", onAccent: "#04130a", text: "#e9eef3", sub: "#aab6c2", faint: "#74808d",
     money: "#2fbf6f",
     inputBg: "rgba(255,255,255,0.06)", rowChild: "rgba(255,255,255,0.02)", rowHover: "rgba(255,255,255,0.05)",
     navHover: "rgba(255,255,255,0.06)", heroGrad: "rgba(42, 54, 68, 0.60)",
