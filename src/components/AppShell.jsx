@@ -101,9 +101,7 @@ export function App({ onLogout }) {
         </div>
         <WeekPicker />
         <LocationPicker />
-        {/* Быстрая кнопка «Реестр»: на телефоне скрыта — Реестр доступен
-            вкладкой в навигации, а в шапке не помещается (горизонт. скролл). */}
-        {!isMobile && (() => {
+        {(() => {
           const regActive = activeModule === "finance" && active === "register";
           return (
             <button className="btn" title="Реестр операций"
