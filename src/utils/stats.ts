@@ -41,6 +41,22 @@ export function calcState(values: number[] | null | undefined, invert?: boolean)
 }
 
 
+// Выполнение квоты (плана) статистики за период: процент факта к плану и флаг
+// «план выполнен». Для invert-статистик (рост — это плохо: расходы, жалобы)
+// план считается выполненным, когда факт не выше квоты.
+export interface QuotaAchievement { pct: number; met: boolean }
+export function quotaAchievement(
+  fact: number | null | undefined,
+  quota: number | null | undefined,
+  invert?: boolean,
+): QuotaAchievement | null {
+  if (fact == null || quota == null || quota === 0) return null;
+  const pct = (fact / quota) * 100;
+  const met = invert ? fact <= quota : fact >= quota;
+  return { pct, met };
+}
+
+
 export function weekLabels(n: number): string[] {
   const out: string[] = [];
   const end = new Date(2026, 5, 10);

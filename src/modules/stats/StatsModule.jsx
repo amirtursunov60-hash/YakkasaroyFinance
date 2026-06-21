@@ -8,7 +8,7 @@ import { Stat } from "../../components/common";
 import { useTheme } from "../../theme/theme";
 import { useScrollLock } from "../../hooks/useScrollLock";
 import { usePeriod, periodTitle } from "../../lib/PeriodCtx";
-import { calcState, STAT_STATES } from "../../utils/stats";
+import { calcState, STAT_STATES, quotaAchievement } from "../../utils/stats";
 import {
   fetchStatistics, fetchStatisticValues, fetchPeriods, fetchOrgDivisions,
   fetchAllPositions, upsertStatisticValue, createStatistic, updateStatistic,
@@ -58,10 +58,15 @@ export function StatsModule({ view }) {
   // Модель строки: хронологический ряд факта, состояние, дельта, текущая квота
   const rows = useMemo(() => stats.map((s) => {
     const series = [];
+    const quotaSeries = [];   // план, выровненный по неделям факта (null где плана нет)
     for (const p of periodsAsc) {
       const cell = values[s.id]?.[p.id];
-      if (cell && cell.value != null) series.push(Number(cell.value));
+      if (cell && cell.value != null) {
+        series.push(Number(cell.value));
+        quotaSeries.push(cell.quota != null ? Number(cell.quota) : null);
+      }
     }
+    const hasQuota = quotaSeries.some((q) => q != null);
     const state = calcState(series, s.invert);
     const n = series.length;
     const last = n ? series[n - 1] : null;
@@ -76,8 +81,9 @@ export function StatsModule({ view }) {
     const divName = s.position?.division?.name || "Без отделения";
     const owner = s.owner?.full_name || s.position?.name || "—";
     const curCell = periodId ? values[s.id]?.[periodId] : null;
-    return { s, series, state, last, delta, divCode, divName, owner,
-      curValue: curCell?.value ?? null, curQuota: curCell?.quota ?? null };
+    const achievement = quotaAchievement(curCell?.value, curCell?.quota, s.invert);
+    return { s, series, quotaSeries, hasQuota, state, last, delta, divCode, divName, owner,
+      curValue: curCell?.value ?? null, curQuota: curCell?.quota ?? null, achievement };
   }), [stats, values, periodsAsc, periodId]);
 
   const summary = useMemo(() => {
@@ -111,6 +117,23 @@ export function StatsModule({ view }) {
       </span>
     );
   };
+  // Бейдж выполнения квоты (плана) за текущую неделю
+  const QuotaBadge = ({ a }) => {
+    if (!a) return null;
+    const col = a.met ? C.green : C.warning;
+    return (
+      <span style={{ fontSize: 10.5, fontWeight: 700, padding: "3px 9px", borderRadius: 20, whiteSpace: "nowrap", color: col, background: `${col}1a` }}>
+        план {a.pct.toFixed(0)}%
+      </span>
+    );
+  };
+  // Легенда «факт / план» под графиком (когда у статистики есть план)
+  const ChartLegend = ({ color }) => (
+    <div style={{ display: "flex", gap: 14, marginTop: 6, fontSize: 11, color: C.sub }}>
+      <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}><span style={{ width: 14, height: 2.5, borderRadius: 2, background: color }} /> Факт</span>
+      <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}><span style={{ width: 14, height: 0, borderTop: `2px dashed ${C.faint}` }} /> План (квота)</span>
+    </div>
+  );
 
   // ---------- Справочник состояний (статичный — без данных) ----------
   if (view === "s_ref") {
@@ -199,11 +222,13 @@ export function StatsModule({ view }) {
                     <Badge code={r.state} />
                   </div>
                   <div style={{ fontSize: 11, color: C.faint, marginBottom: 10 }}>{r.owner}</div>
-                  {r.series.length ? <div style={{ color: C.text }}><StatChart values={r.series} color={m.color} height={95} /></div>
-                    : <div style={{ fontSize: 12, color: C.faint, padding: "24px 0", textAlign: "center" }}>нет данных</div>}
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginTop: 8 }}>
+                  {r.series.length ? (<>
+                    <div style={{ color: C.text }}><StatChart values={r.series} quota={r.hasQuota ? r.quotaSeries : undefined} color={m.color} height={95} /></div>
+                    {r.hasQuota && <ChartLegend color={m.color} />}
+                  </>) : <div style={{ fontSize: 12, color: C.faint, padding: "24px 0", textAlign: "center" }}>нет данных</div>}
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginTop: 8, gap: 8 }}>
                     <span style={{ fontSize: 17, fontWeight: 800, fontVariantNumeric: "tabular-nums" }}>{ru(r.last)} <span style={{ fontSize: 11, fontWeight: 600, color: C.sub }}>{r.s.unit}</span></span>
-                    <Delta d={r.delta} />
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}><QuotaBadge a={r.achievement} /><Delta d={r.delta} /></div>
                   </div>
                 </div>
               );
@@ -234,16 +259,26 @@ export function StatsModule({ view }) {
               </div>
               <div style={st.locRight}>
                 <div style={st.locSum}>{ru(r.last)} <span style={st.locUnit}>{s.unit}</span></div>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}><Delta d={r.delta} /><Badge code={r.state} /></div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}><QuotaBadge a={r.achievement} /><Delta d={r.delta} /><Badge code={r.state} /></div>
               </div>
               <span style={{ ...st.locChevron, transform: isOpen ? "rotate(90deg)" : "none" }}><ChevronRight size={18} /></span>
             </div>
             {isOpen && (
               <div style={{ ...st.locBody, padding: "16px 18px" }}>
-                {r.series.length ? <div style={{ color: C.text }}><StatChart values={r.series} color={m.color} height={150} /></div>
-                  : <div style={{ fontSize: 12.5, color: C.faint, padding: "20px 0", textAlign: "center" }}>Значений ещё нет — внесите за неделю ниже</div>}
+                {r.series.length ? (<>
+                  <div style={{ color: C.text }}><StatChart values={r.series} quota={r.hasQuota ? r.quotaSeries : undefined} color={m.color} height={150} /></div>
+                  {r.hasQuota && <ChartLegend color={m.color} />}
+                </>) : <div style={{ fontSize: 12.5, color: C.faint, padding: "20px 0", textAlign: "center" }}>Значений ещё нет — внесите за неделю ниже</div>}
                 {r.curQuota != null && (
-                  <div style={{ fontSize: 11.5, color: C.faint, marginTop: 10 }}>Квота на неделю: <b style={{ color: C.text }}>{ru(r.curQuota)} {s.unit}</b></div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", fontSize: 12, marginTop: 12 }}>
+                    <span style={{ color: C.sub }}>План недели <b style={{ color: C.text }}>{ru(r.curQuota)} {s.unit}</b></span>
+                    <span style={{ color: C.sub }}>· Факт <b style={{ color: C.text }}>{ru(r.curValue)} {s.unit}</b></span>
+                    {r.achievement && (
+                      <span style={{ fontWeight: 700, color: r.achievement.met ? C.green : C.warning }}>
+                        · выполнение {r.achievement.pct.toFixed(0)}% {r.achievement.met ? "✓" : ""}
+                      </span>
+                    )}
+                  </div>
                 )}
                 <ValueEntry C={C} st={st} isMobile={isMobile} stat={s} periodId={periodId}
                   curValue={r.curValue} curQuota={r.curQuota}
