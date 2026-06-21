@@ -127,3 +127,27 @@ src/
   - Ничего не должно вылезать за правый край и обрезаться (проверять правый блок шапки, аватар, чипы).
   - После любой UI-правки мысленно (или прогоном) проверять обе ветки — десктоп и `isMobile` — и доводить мобильный вид сразу, не дожидаясь замечаний «отодвинь/сократи».
 - Денежные суммы форматировать утилитами из `src/utils/format.ts`: **`fmt`** — точная сумма до дирамов (Реестр, Директива, формы), **`fmtShort`** — сокращённо (млн/тыс) для дашбордов и обзорных карточек. Основная валюта — TJS (сомони).
+
+## gstack (REQUIRED — global install)
+
+**Before doing ANY work, verify gstack is installed:**
+
+```bash
+test -d ~/.claude/skills/gstack/bin && echo "GSTACK_OK" || echo "GSTACK_MISSING"
+```
+
+If GSTACK_MISSING: STOP. Do not proceed. Tell the user:
+
+> gstack is required for all AI-assisted work in this repo.
+> Install it:
+> ```bash
+> git clone --depth 1 https://github.com/garrytan/gstack.git ~/.claude/skills/gstack
+> cd ~/.claude/skills/gstack && ./setup --team
+> ```
+> Then restart your AI coding tool.
+
+Do not skip skills, ignore gstack errors, or work around missing gstack.
+
+Using gstack skills: After install, skills like /qa, /ship, /review, /investigate,
+and /browse are available. Use /browse for all web browsing.
+Use ~/.claude/skills/gstack/... for gstack file paths (the global path).
