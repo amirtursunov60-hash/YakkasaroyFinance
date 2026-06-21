@@ -10,8 +10,8 @@ import React from "react";
 export const THEMES = {
   dark: {
     scheme: "dark",
-    // Фон страницы — насыщенный градиент, чтобы стекло «играло»
-    pageGrad: "linear-gradient(160deg, #0b1c33 0%, #0e2340 35%, #0a1c34 70%, #081420 100%)",
+    // Фон страницы — плоский сплошной (минимализм, как в демо)
+    pageGrad: "#0a0d12",
     bg: "transparent",
     // Стеклянные поверхности
     panel: "rgba(28, 34, 44, 0.55)", panel2: "rgba(255,255,255,0.06)", line: "rgba(255,255,255,0.10)",
@@ -36,7 +36,7 @@ export const THEMES = {
   },
   light: {
     scheme: "light",
-    pageGrad: "linear-gradient(160deg, #d6e4f8 0%, #cfe0f3 35%, #dbe8fa 70%, #e6f0fb 100%)",
+    pageGrad: "#eef2f6",
     bg: "transparent",
     // Контраст усилен (дизайн-ревью): графитовые подписи вместо светло-серых,
     // заметнее бордеры и зебра — плотные данные читаются без «мыла».
@@ -62,7 +62,7 @@ export const THEMES = {
   // как третий вариант темы. Акценты/статусы те же, что в dark.
   dim: {
     scheme: "dark",
-    pageGrad: "linear-gradient(160deg, #1b2836 0%, #1d2c3c 38%, #18232f 72%, #16212d 100%)",
+    pageGrad: "#18212e",
     bg: "transparent",
     panel: "rgba(42, 54, 68, 0.60)", panel2: "rgba(255,255,255,0.05)", line: "rgba(255,255,255,0.11)",
     glassBorder: "rgba(255,255,255,0.15)", glassHi: "rgba(255,255,255,0.20)",
