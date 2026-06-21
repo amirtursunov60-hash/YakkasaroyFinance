@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { ClipboardList, Calculator, CalendarDays, Check, RotateCcw, RotateCw, Lock, Unlock, Ban, ArrowRightLeft, Loader2, AlertCircle, CheckCircle2, X, Landmark, ChevronRight, Scale, TrendingUp, TrendingDown, Banknote, Wallet, Coins } from "lucide-react";
+import { ClipboardList, Calculator, CalendarDays, Check, RotateCcw, RotateCw, Lock, Unlock, Ban, ArrowRightLeft, Loader2, AlertCircle, CheckCircle2, X, Landmark, ChevronRight, Scale, Banknote, Wallet, Coins, List, LayoutList } from "lucide-react";
 import { Stat, ConfirmModal } from "../../components/common";
 import { useTheme } from "../../theme/theme";
 import { useScrollLock } from "../../hooks/useScrollLock";
@@ -11,9 +11,10 @@ import {
   fetchFunds, fetchDefaultRules,
   fetchPeriodIncome, fetchPeriodDistribution, distributeStage, setPeriodStatus, closePeriod, reopenPeriod, resetDistribution,
   fetchRequests, decideRequest, fetchPeriodOverrides, savePeriodOverrides,
-  fetchIncomeTypeRules, fetchIncomeByType, fetchFundFolders,
+  fetchIncomeTypeRules, fetchIncomeByType, fetchFundFolders, fetchBills,
 } from "../../lib/api";
 import { ItemCard, reqStatusMeta, RequestStatusChips, requestCounts, matchRequestFilter, RequesterAvatar } from "./Requests";
+import { payableTotals } from "./directiveSummary";
 
 
 // ---------------------------------------------------------------- DIRECTIVE
@@ -44,13 +45,12 @@ export function Directive() {
   const [income, setIncome] = useState(0);
   const [prevIncome, setPrevIncome] = useState(0);
   const [regRows, setRegRows] = useState([]);     // распределение из Реестра
-  const [prevDist, setPrevDist] = useState([]);   // распределение прошлой недели (для сравнения)
-  const compare = false;  // режим сравнения отключён (кнопку «Сравнить» убрали по просьбе заказчика)
   const [calculated, setCalculated] = useState({}); // { stage: { fund_id: сумма } }
   const [pcts, setPcts] = useState({});             // правки процентов { ruleId: число }
   const [busy, setBusy] = useState(null);           // 'block'|'close'|'transfer'|`calc:х`|`appr:х`
   const [transferOpen, setTransferOpen] = useState(false);
   const [weekReqs, setWeekReqs] = useState([]);   // заявки недели — рассмотрение в Директиве
+  const [bills, setBills] = useState([]);         // счета (одобренные) — для строки «На оплату»
   const [fundRules, setFundRules] = useState({});     // правила по видам дохода { fundId: [rules] }
   const [folders, setFolders] = useState([]);         // папки фондов
   const [incomeByType, setIncomeByType] = useState({}); // факт дохода недели по видам
@@ -87,21 +87,23 @@ export function Directive() {
   useEffect(() => { loadRefs(); }, [loadRefs]);
 
   const reloadPeriodData = useCallback(async () => {
-    if (!periodId) { setIncome(0); setPrevIncome(0); setRegRows([]); setPrevDist([]); return; }
-    const [inc, pinc, rows, prows] = await Promise.all([
+    if (!periodId) { setIncome(0); setPrevIncome(0); setRegRows([]); return; }
+    const [inc, pinc, rows] = await Promise.all([
       fetchPeriodIncome(periodId),
       prevPeriod ? fetchPeriodIncome(prevPeriod.id) : Promise.resolve(0),
       fetchPeriodDistribution(periodId),
-      prevPeriod ? fetchPeriodDistribution(prevPeriod.id) : Promise.resolve([]),
     ]);
-    setIncome(inc); setPrevIncome(pinc); setRegRows(rows); setPrevDist(prows);
+    setIncome(inc); setPrevIncome(pinc); setRegRows(rows);
   }, [periodId, prevPeriod]);
 
-  // Заявки недели — для рассмотрения прямо в Директиве (одобрение/отклонение/оплата).
+  // Заявки недели (рассмотрение в Директиве) + счета (для строки «На оплату»
+  // в итоге ФП). Счета не привязаны к неделе — берём одобренные к выплате.
   const reloadRequests = useCallback(async () => {
-    if (!periodId) { setWeekReqs([]); return; }
-    try { setWeekReqs(await fetchRequests(periodId)); }
-    catch { /* список заявок не критичен для распределения */ }
+    if (!periodId) { setWeekReqs([]); setBills([]); return; }
+    try {
+      const [reqs, bls] = await Promise.all([fetchRequests(periodId), fetchBills(periodId, null, null)]);
+      setWeekReqs(reqs); setBills(bls);
+    } catch { /* список заявок/счетов не критичен для распределения */ }
   }, [periodId]);
 
   useEffect(() => {
@@ -127,14 +129,8 @@ export function Directive() {
   const fundById = useMemo(() => Object.fromEntries(funds.map((f) => [f.id, f])), [funds]);
   const pctOf = (r) => (pcts[r.id] !== undefined ? pcts[r.id] : Number(r.percent ?? 0));
 
-  // Одобрено прошлой недели по фондам (все этапы) — для колонки сравнения
-  const prevByFund = useMemo(() => {
-    const m = {};
-    prevDist.forEach((r) => { m[r.fund_id] = (m[r.fund_id] || 0) + r.amount; });
-    return m;
-  }, [prevDist]);
-  const prevTotal = useMemo(() => Object.values(prevByFund).reduce((a, v) => a + v, 0), [prevByFund]);
-  const canCompare = !!prevPeriod;
+  // «На оплату» — одобренные, но ещё не оплаченные заявки + счета (итог ФП).
+  const payable = useMemo(() => payableTotals(weekReqs, bills), [weekReqs, bills]);
 
   // -------- одобренное по этапам из Реестра.
   // Перенесённые остатки (stage:remainder) и легаси-строки без этапа показываем
@@ -397,7 +393,7 @@ export function Directive() {
     {stagesView.map((sg) => (
       <LevelCard key={sg.key} sg={sg} C={C} st={st} isMobile={isMobile}
         pctOf={pctOf} setPcts={setPcts} busy={busy} locked={isClosed || !period}
-        folders={folders} compare={compare && canCompare} prevByFund={prevByFund}
+        folders={folders}
         stageFact={typeStageBase[sg.key] || {}}
         onCalc={(ids) => doCalc(sg, ids)} onApprove={(ids) => doApprove(sg, ids)}
         onReset={() => doReset(sg)} onResetApproved={() => doResetApproved(sg)}
@@ -409,15 +405,16 @@ export function Directive() {
       <div style={st.fpRows}>
         <div style={st.fpRow}><span style={st.fpLabelBold}>Сумма к распределению на ФП</span><span style={st.fpValBold}>{fmt(income)}</span></div>
         <div style={st.fpRow}><span style={st.fpLabel}>Распределено по фондам (Реестр)</span><span style={st.fpVal}>{fmt(approvedTotal)}</span></div>
-        {compare && canCompare && (
-          <div style={st.fpRow}>
-            <span style={st.fpLabel}>Прошлая неделя · доход / распределено</span>
-            <span style={st.fpVal}>
-              {fmt(prevIncome)} / {fmt(prevTotal)}
-              <Delta C={C} delta={approvedTotal - prevTotal} />
-            </span>
+        <div style={st.fpRow}>
+          <span style={st.fpLabel}>На оплату — одобрено к выплате</span>
+          <div style={{ ...st.fpVal, textAlign: "right", color: payable.total > 0 ? C.warning : C.text }}
+            title="Одобренные, но ещё не оплаченные заявки и счета поставщиков">
+            {fmt(payable.total)}
+            <div style={{ fontSize: 11, color: C.faint, fontWeight: 500, marginTop: 2 }}>
+              заявки {fmt(payable.requests)} · счета {fmt(payable.bills)}
+            </div>
           </div>
-        )}
+        </div>
         <div style={{ ...st.fpRow, ...st.fpRemainder }}>
           <span style={st.fpLabelBold}>Остаток нераспределённого</span>
           <span style={{ ...st.fpValBold, color: remainder < -0.01 ? C.danger : C.money }}>{fmt(remainder)}</span>
@@ -482,6 +479,7 @@ function RequestsReview({ C, st, isMobile, profile, requests, funds, periodId, b
 
   const [filter, setFilter] = useState("review");   // по умолчанию — «К рассмотрению на ФП»
   const [expanded, setExpanded] = useState({});
+  const [view, setView] = useState("detailed");      // «Подробно» (карточки ЗРС) | «Список» (компактно)
 
   const counts = useMemo(() => requestCounts(requests), [requests]);
   const shown = useMemo(
@@ -535,6 +533,7 @@ function RequestsReview({ C, st, isMobile, profile, requests, funds, periodId, b
         <h3 style={st.reqSectionTitle}>Заявки к рассмотрению</h3>
         <span style={st.reqSectionSub}>от поста · формат ЗРС · поданные на эту неделю</span>
         {blocked && <span style={st.reqBlockedTag}><Lock size={12} /> Подача закрыта</span>}
+        <ViewToggle C={C} isMobile={isMobile} view={view} setView={setView} />
       </div>
 
       <RequestStatusChips C={C} counts={counts} filter={filter} setFilter={setFilter} />
@@ -548,19 +547,81 @@ function RequestsReview({ C, st, isMobile, profile, requests, funds, periodId, b
               : "Нет заявок с таким статусом"}
         </div>
       ) : shown.map((r) => {
-        return (
+        const controls = (
+          <RequestReviewControls C={C} st={st} isMobile={isMobile} item={r}
+            funds={funds} isFinAdmin={isFinAdmin}
+            onApprove={doApprove} onReject={doReject} onReset={doReset} />
+        );
+        const toggle = () => setExpanded((e) => ({ ...e, [r.id]: !e[r.id] }));
+        return view === "list" ? (
+          <CompactRequestRow key={r.id} C={C} st={st} item={r} statusMeta={ST_META}
+            expanded={!!expanded[r.id]} onToggle={toggle}>
+            {controls}
+          </CompactRequestRow>
+        ) : (
           <ItemCard key={r.id} C={C} st={st} item={r} itemKind="request" hideFund
-            isExpanded={!!expanded[r.id]}
-            onToggle={() => setExpanded((e) => ({ ...e, [r.id]: !e[r.id] }))}
+            isExpanded={!!expanded[r.id]} onToggle={toggle}
             statusMeta={ST_META} profileId={profile?.id} onAttachmentsChanged={onReload}
             avatar={<RequesterAvatar requester={r.requester} size={60} round />}>
-            <RequestReviewControls C={C} st={st} isMobile={isMobile} item={r}
-              funds={funds} isFinAdmin={isFinAdmin}
-              onApprove={doApprove} onReject={doReject} onReset={doReset} />
+            {controls}
           </ItemCard>
         );
       })}
     </section>
+  );
+}
+
+
+// ---------------------------------------------------------------- Переключатель вида списка заявок
+// «Список» — компактные строки; «Подробно» — карточки с ЗРС (как в ManaJet).
+function ViewToggle({ C, isMobile, view, setView }) {
+  const opts = [["list", "Список", List], ["detailed", "Подробно", LayoutList]];
+  return (
+    <div style={{ display: "flex", gap: 4, marginLeft: "auto" }}>
+      {opts.map(([key, label, Icon]) => {
+        const active = view === key;
+        return (
+          <button key={key} className="btn" onClick={() => setView(key)} title={label}
+            style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "6px 11px", borderRadius: 999,
+              fontSize: 12, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap",
+              border: `1px solid ${active ? `${C.green}66` : C.line}`,
+              background: active ? `${C.green}1f` : C.panel2, color: active ? C.green : C.sub }}>
+            <Icon size={13} /> {!isMobile && label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+
+// ---------------------------------------------------------------- Компактная строка заявки («Список»)
+// Слим-строка: аватар · №/статья · пост·заявитель · сумма · статус; по клику
+// раскрывает те же контролы рассмотрения (фонд/сумма/Одобрить/Отклонить/Сброс).
+function CompactRequestRow({ C, st, item, statusMeta, expanded, onToggle, children }) {
+  const m = statusMeta[item.status] || {};
+  const amount = Number(item.approved_amount ?? item.planned_amount);
+  return (
+    <div style={{ ...st.locCard, marginBottom: 6 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", cursor: "pointer" }}
+        className="locHead" onClick={onToggle}>
+        <RequesterAvatar requester={item.requester} size={30} round />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontWeight: 700, fontSize: 13.5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            №{item.number} · {item.expense_type ? `${item.expense_type.code || ""} ${item.expense_type.name}` : "—"}
+          </div>
+          <div style={{ fontSize: 11.5, color: C.faint, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {item.position ? `${item.position.code} ${item.position.name}` : "пост не указан"}{item.requester ? ` · ${item.requester.full_name}` : ""}
+          </div>
+        </div>
+        <div style={{ textAlign: "right", flexShrink: 0 }}>
+          <div className="denseNum" style={{ fontWeight: 800, fontSize: 13.5 }}>{fmt(amount)} <span style={st.locUnit}>{item.currency?.code || ""}</span></div>
+          <span style={{ ...st.weekTag, marginLeft: 0, color: m.color, background: `${m.color}1a` }}>{m.label}</span>
+        </div>
+        <span style={{ ...st.locChevron, transform: expanded ? "rotate(90deg)" : "none" }}><ChevronRight size={16} /></span>
+      </div>
+      {expanded && <div style={{ ...st.locBody, padding: "8px 14px 12px" }}>{children}</div>}
+    </div>
   );
 }
 
@@ -670,26 +731,11 @@ function RequestReviewControls({ C, st, isMobile, item, funds, isFinAdmin, onApp
 }
 
 
-// ---------------------------------------------------------------- Дельта неделя-к-неделе
-// Стрелка с разницей сумм относительно прошлой недели (зелёный рост / красный спад).
-function Delta({ C, delta, small }) {
-  if (Math.abs(delta) < 0.01) return <span style={{ marginLeft: 6, fontSize: small ? 10 : 11, color: C.faint }}>=</span>;
-  const up = delta > 0;
-  return (
-    <span style={{ marginLeft: 6, fontSize: small ? 10 : 11, fontWeight: 700, color: up ? C.green : C.danger,
-      whiteSpace: "nowrap", display: "inline-flex", alignItems: "center", gap: 1, verticalAlign: "middle" }}>
-      {up ? <TrendingUp size={small ? 11 : 12} /> : <TrendingDown size={small ? 11 : 12} />}
-      {up ? "+" : "−"}{fmt(Math.abs(delta))}
-    </span>
-  );
-}
-
-
 // ---------------------------------------------------------------- Этап распределения
 // Фонды этапа сгруппированы по папкам (fund_folders) — как в ManaJet.
 // Слева у каждого фонда галочка: отмеченные фонды считаются при «Рассчитать»
 // (если не отмечено ничего — считаются все). Уже одобренные не пересчитываются.
-function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders, compare, prevByFund, stageFact, onCalc, onApprove, onReset, onResetApproved, onOpenCalc }) {
+function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders, stageFact, onCalc, onApprove, onReset, onResetApproved, onOpenCalc }) {
   const [openFolders, setOpenFolders] = useState({});
   const [checked, setChecked] = useState(() => new Set());
   const [collapsed, setCollapsed] = useState(true); // по умолчанию этап свёрнут
@@ -712,8 +758,6 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
   });
   const toggleAll = () => setChecked(allChecked ? new Set() : new Set(selectable));
   const hasApprovable = sg.rows.some((x) => x.calc > 0 && !(x.appr > 0));
-  const showPrev = compare && !!prevByFund;
-  const prevOf = (id) => (prevByFund?.[id] || 0);
 
   // Эффективный % фонда от базы этапа: обычный фонд — его правило; фонд «по видам»
   // — доля рассчитанной по каскаду суммы в базе этапа (число, а не «по видам»).
@@ -763,8 +807,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
 
   const totals = sg.rows.reduce((t, x) => ({
     avail: t.avail + Number(x.fund?.balance || 0), calc: t.calc + x.calc, appr: t.appr + x.appr,
-    prev: t.prev + prevOf(x.fund?.id),
-  }), { avail: 0, calc: 0, appr: 0, prev: 0 });
+  }), { avail: 0, calc: 0, appr: 0 });
 
   // Подпись-значение для мобильной карточки фонда
   const MiniVal = ({ label, value, color, bold }) => (
@@ -783,7 +826,6 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
     const fill = barVal > 0 ? Math.min(100, (barVal / barBase) * 100) : 0;
     const hasTypeRules = x.typeRules?.length > 0;
     const rowEditable = !locked && !(x.appr > 0);
-    const prev = prevOf(x.fund?.id);
 
     if (isMobile) {
       return (
@@ -812,11 +854,6 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
             <div style={{ minWidth: 0 }}>
               <div style={{ fontSize: 10, color: C.faint, marginBottom: 2 }}>Одобрено</div>
               <div className="denseNum" style={{ fontSize: 13, fontWeight: 800, color: x.appr ? C.money : C.faint, whiteSpace: "nowrap" }}>{fmt(x.appr)}</div>
-              {showPrev && (prev > 0 || x.appr > 0) && (
-                <div style={{ fontSize: 10, fontWeight: 500, color: C.faint, marginTop: 1 }}>
-                  пр. {fmt(prev)}<Delta C={C} delta={x.appr - prev} small />
-                </div>
-              )}
             </div>
           </div>
         </div>
@@ -859,11 +896,6 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
         {showResults && (
           <div className="denseNum" style={{ ...st.fNum, color: x.appr ? C.money : C.faint, fontWeight: x.appr ? 700 : 400 }}>
             <span className={x.appr ? "pop" : ""}>{fmt(x.appr)}</span>
-            {showPrev && (prev > 0 || x.appr > 0) && (
-              <div style={{ fontSize: 10.5, fontWeight: 500, color: C.faint, marginTop: 2 }}>
-                пр. {fmt(prev)}<Delta C={C} delta={x.appr - prev} small />
-              </div>
-            )}
           </div>
         )}
       </div>
@@ -1006,11 +1038,6 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
               <div>
                 <div style={{ fontSize: 10, color: C.faint, marginBottom: 2 }}>Одобрено</div>
                 <div className="denseNum" style={{ fontSize: 13, fontWeight: 800, color: C.money }}>{fmt(totals.appr)}</div>
-                {showPrev && (totals.prev > 0 || totals.appr > 0) && (
-                  <div style={{ fontSize: 10, fontWeight: 500, color: C.faint, marginTop: 1 }}>
-                    пр. {fmt(totals.prev)}<Delta C={C} delta={totals.appr - totals.prev} small />
-                  </div>
-                )}
               </div>
             </div>
           </div>
@@ -1023,11 +1050,6 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
             <div className="denseNum" style={{ ...st.fNum, fontWeight: 700, color: totals.calc ? C.warning : C.faint }}>{fmt(totals.calc)}</div>
             <div className="denseNum" style={{ ...st.fNum, fontWeight: 700, color: C.money }}>
               {fmt(totals.appr)}
-              {showPrev && (totals.prev > 0 || totals.appr > 0) && (
-                <div style={{ fontSize: 10.5, fontWeight: 500, color: C.faint, marginTop: 2 }}>
-                  пр. {fmt(totals.prev)}<Delta C={C} delta={totals.appr - totals.prev} small />
-                </div>
-              )}
             </div>
           </div>
         ))}
