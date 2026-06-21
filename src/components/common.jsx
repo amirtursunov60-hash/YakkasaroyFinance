@@ -1,4 +1,4 @@
-import { Construction } from "lucide-react";
+import { Construction, X, Loader2 } from "lucide-react";
 import { useTheme } from "../theme/theme";
 
 
@@ -18,4 +18,29 @@ export function Stat({ label, value, unit, accent, tone }) {
     : (tone === "success" || accent) ? C.green
     : C.text;
   return <div><div style={st.statLabel}>{label}</div><div style={{ ...st.statValue, color }}>{value} <span style={st.statUnit}>{unit}</span></div></div>;
+}
+
+// Тематический модал подтверждения вместо системного window.confirm.
+// danger — для необратимых/денежных операций (красная кнопка действия).
+export function ConfirmModal({ C, st, title, message, confirmLabel = "Подтвердить", cancelLabel = "Отмена", danger, busy, onConfirm, onClose }) {
+  const confirmStyle = danger
+    ? { ...st.btnGhost, color: C.danger, borderColor: `${C.danger}66`, fontWeight: 700 }
+    : st.btnGreen;
+  return (
+    <div style={st.mdOverlay} onClick={() => !busy && onClose()}>
+      <div style={{ ...st.mdCard, width: "min(440px, 100%)" }} onClick={(e) => e.stopPropagation()}>
+        <div style={st.mdHead}>
+          <div style={st.mdTitle}>{title}</div>
+          <button style={st.iconBtn} className="btn" onClick={onClose} disabled={busy}><X size={17} /></button>
+        </div>
+        <div style={{ fontSize: 13.5, color: C.sub, lineHeight: 1.6 }}>{message}</div>
+        <div style={st.mdActions}>
+          <button style={st.btnGhost} className="btn" onClick={onClose} disabled={busy}>{cancelLabel}</button>
+          <button style={{ ...confirmStyle, opacity: busy ? 0.7 : 1 }} className="btn" onClick={onConfirm} disabled={busy}>
+            {busy ? <Loader2 size={15} className="spin" /> : null}{confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }

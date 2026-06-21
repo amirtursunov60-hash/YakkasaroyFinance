@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { ClipboardList, Calculator, CalendarDays, Check, RotateCcw, RotateCw, Lock, Unlock, Ban, ArrowRightLeft, Loader2, AlertCircle, CheckCircle2, X, Landmark, ChevronRight, Scale, TrendingUp, TrendingDown, Banknote, Wallet, Coins } from "lucide-react";
-import { Stat } from "../../components/common";
+import { Stat, ConfirmModal } from "../../components/common";
 import { useTheme } from "../../theme/theme";
 import { useScrollLock } from "../../hooks/useScrollLock";
 import { fmt } from "../../utils/format";
@@ -55,6 +55,14 @@ export function Directive() {
   const [folders, setFolders] = useState([]);         // папки фондов
   const [incomeByType, setIncomeByType] = useState({}); // факт дохода недели по видам
   const [calcFund, setCalcFund] = useState(null);     // { fund, stage } — модал-калькулятор
+  const [confirm, setConfirm] = useState(null);       // { title, message, confirmLabel, danger, run } — модал подтверждения
+
+  // Запуск действия из модала подтверждения: показываем спиннер на кнопке, по завершении закрываем
+  const runConfirm = async () => {
+    if (!confirm?.run || confirm.busy) return;
+    setConfirm((c) => ({ ...c, busy: true }));
+    try { await confirm.run(); } finally { setConfirm(null); }
+  };
 
   const isClosed = period?.status === "closed";
   const requestsBlocked = period?.status === "planning";
@@ -257,26 +265,32 @@ export function Directive() {
   // Сброс уже одобренного этапа: суммы списываются из фондов (удаление из Реестра).
   // Если в этап попал перенесённый остаток (stage:remainder) — сбрасывается и он.
   // Старые распределения без метки этапа сбрасываются только целиком.
-  const doResetApproved = async (sg) => {
+  const doResetApproved = (sg) => {
     if (busy) return;
     const hasLegacy = regRows.some((r) => !r.stage);
     const hasRemainder = sg.sources?.has("remainder");
-    const msg = hasLegacy
-      ? "Это распределение проведено без разбивки по этапам — будет сброшено ВСЁ распределение периода, суммы спишутся из фондов. Продолжить?"
-      : `Сбросить одобренный этап «${sg.title}»${hasRemainder ? " (включая перенесённый остаток)" : ""}? Суммы будут списаны из фондов.`;
-    if (!window.confirm(msg)) return;
-    setBusy(`reset:${sg.key}`); setErr(""); setDone("");
-    try {
-      if (hasLegacy) await resetDistribution(periodId, "all");
-      else {
-        if (sg.sources?.has(sg.key)) await resetDistribution(periodId, sg.key);
-        if (hasRemainder) await resetDistribution(periodId, "remainder");
-      }
-      await Promise.all([reloadPeriodData(), loadRefs()]);
-      setCalculated({});
-      setDone(hasLegacy ? "Распределение периода сброшено — можно рассчитать и одобрить заново" : `${sg.title}: одобрение сброшено`);
-    } catch (e) { setErr(e?.message || String(e)); }
-    finally { setBusy(null); }
+    setConfirm({
+      title: hasLegacy ? "Сбросить всё распределение периода?" : `Сбросить этап «${sg.title}»?`,
+      message: hasLegacy
+        ? "Это распределение проведено без разбивки по этапам — будет сброшено ВСЁ распределение периода, суммы спишутся из фондов."
+        : `Суммы будут списаны из фондов${hasRemainder ? " (включая перенесённый остаток)" : ""}.`,
+      confirmLabel: "Сбросить",
+      danger: true,
+      run: async () => {
+        setBusy(`reset:${sg.key}`); setErr(""); setDone("");
+        try {
+          if (hasLegacy) await resetDistribution(periodId, "all");
+          else {
+            if (sg.sources?.has(sg.key)) await resetDistribution(periodId, sg.key);
+            if (hasRemainder) await resetDistribution(periodId, "remainder");
+          }
+          await Promise.all([reloadPeriodData(), loadRefs()]);
+          setCalculated({});
+          setDone(hasLegacy ? "Распределение периода сброшено — можно рассчитать и одобрить заново" : `${sg.title}: одобрение сброшено`);
+        } catch (e) { setErr(e?.message || String(e)); }
+        finally { setBusy(null); }
+      },
+    });
   };
 
   const toggleRequests = async () => {
@@ -290,35 +304,48 @@ export function Directive() {
   };
 
   // Переключатель: закрытая неделя открывается обратно, открытая — закрывается
-  const doToggleClose = async () => {
+  const doToggleClose = () => {
     if (busy || !period) return;
     setErr(""); setDone("");
     if (isClosed) {
-      if (!window.confirm("Открыть неделю заново? Протокол Директивы будет удалён, операции периода снова разрешены.")) return;
-      setBusy("close");
-      try {
-        await reopenPeriod(periodId);
-        await Promise.all([reloadPeriods(true), reloadPeriodData()]);
-        setDone("Неделя открыта заново — операции периода разрешены");
-      } catch (e) { setErr(e?.message || String(e)); }
-      finally { setBusy(null); }
+      setConfirm({
+        title: "Открыть неделю заново?",
+        message: "Протокол Директивы будет удалён, операции периода снова разрешены.",
+        confirmLabel: "Открыть неделю",
+        danger: true,
+        run: async () => {
+          setBusy("close");
+          try {
+            await reopenPeriod(periodId);
+            await Promise.all([reloadPeriods(true), reloadPeriodData()]);
+            setDone("Неделя открыта заново — операции периода разрешены");
+          } catch (e) { setErr(e?.message || String(e)); }
+          finally { setBusy(null); }
+        },
+      });
       return;
     }
-    if (!window.confirm("Закрыть период ФП? Все операции периода будут заблокированы, протокол Директивы сохранится.")) return;
-    setBusy("close");
-    try {
-      const protocol = {
-        income,
-        allocations: regRows.map((r) => ({
-          stage: r.stage, fund: fundById[r.fund_id]?.code, name: fundById[r.fund_id]?.name, amount: r.amount,
-        })),
-        remainder,
-      };
-      await closePeriod(periodId, protocol);
-      await Promise.all([reloadPeriods(true), reloadPeriodData()]);
-      setDone("Период закрыт, протокол Директивы сохранён. Следующая неделя создана — выберите её в шапке.");
-    } catch (e) { setErr(e?.message || String(e)); }
-    finally { setBusy(null); }
+    setConfirm({
+      title: "Закрыть период ФП?",
+      message: "Все операции периода будут заблокированы, протокол Директивы сохранится.",
+      confirmLabel: "Закрыть период",
+      run: async () => {
+        setBusy("close");
+        try {
+          const protocol = {
+            income,
+            allocations: regRows.map((r) => ({
+              stage: r.stage, fund: fundById[r.fund_id]?.code, name: fundById[r.fund_id]?.name, amount: r.amount,
+            })),
+            remainder,
+          };
+          await closePeriod(periodId, protocol);
+          await Promise.all([reloadPeriods(true), reloadPeriodData()]);
+          setDone("Период закрыт, протокол Директивы сохранён. Следующая неделя создана — выберите её в шапке.");
+        } catch (e) { setErr(e?.message || String(e)); }
+        finally { setBusy(null); }
+      },
+    });
   };
 
   // Одобрение фонда из калькулятора по видам дохода
@@ -452,6 +479,11 @@ export function Directive() {
         busy={busy === `calcappr:${calcFund.fund.id}`} locked={isClosed || !period}
         onClose={() => setCalcFund(null)}
         onApprove={(amount) => doApproveFund(calcFund.fund, calcFund.stage.key, amount)} />
+    )}
+    {confirm && (
+      <ConfirmModal C={C} st={st} title={confirm.title} message={confirm.message}
+        confirmLabel={confirm.confirmLabel} danger={confirm.danger} busy={confirm.busy}
+        onConfirm={runConfirm} onClose={() => !confirm.busy && setConfirm(null)} />
     )}
   </>);
 }
