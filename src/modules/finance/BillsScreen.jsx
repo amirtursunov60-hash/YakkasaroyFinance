@@ -10,6 +10,7 @@ import {
   fetchBills, insertBill, decideBill, payBill, createCounterparty,
   fetchExpenseTypes, fetchIncomeRefs, fetchFunds, fetchCounterparties,
 } from "../../lib/api";
+import { BILL_FILTERS, billMatchesFilter, billFilterCounts } from "./billFilters";
 
 
 // ---------------------------------------------------------------- BILLS
@@ -19,7 +20,6 @@ import {
 //  - obligation «Обязательства» — оборудование, услуги, ремонт.
 // Повторяющиеся счета дублируются кнопкой «Повторить». Оплата — fp_pay_bill.
 
-const FILTERS = [["all", "Все"], ["submitted", "Поданы"], ["approved", "Одобрены"], ["paid", "Оплачены"], ["rejected", "Отклонены"]];
 const shortPeriod = (p) => p ? `${p.starts_on.slice(8, 10)}.${p.starts_on.slice(5, 7)}–${p.ends_on.slice(8, 10)}.${p.ends_on.slice(5, 7)}` : null;
 
 export function BillsScreen({ kind, ui }) {
@@ -138,7 +138,11 @@ export function BillsScreen({ kind, ui }) {
     setShowForm(true);
   };
 
-  const filtered = filter === "all" ? bills : bills.filter((b) => b.status === filter);
+  const today = new Date().toISOString().slice(0, 10);
+  const filterCounts = useMemo(() => billFilterCounts(bills, today), [bills, today]);
+  const filtered = bills.filter((b) => billMatchesFilter(b, filter, today));
+  // Цвет чипа-фильтра: статусы — из ST_META, «Просрочено» — danger, «Все» — бренд.
+  const filterColor = (key) => key === "overdue" ? C.danger : key === "all" ? C.green : (ST_META[key]?.color || C.sub);
 
   if (loading || periodsLoading) return <div style={st.empty}><Loader2 size={18} className="spin" /> Загрузка…</div>;
 
@@ -173,18 +177,21 @@ export function BillsScreen({ kind, ui }) {
     )}
 
     <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
-      {FILTERS.map(([key, label]) => (
-        <button key={key} className="btn"
-          style={{
-            ...st.weekTag, cursor: "pointer", border: "none", fontFamily: "inherit", marginLeft: 0,
-            padding: "5px 12px", fontSize: 12,
-            color: filter === key ? "#04130a" : (ST_META[key]?.color || C.sub),
-            background: filter === key ? (ST_META[key]?.color || C.green) : `${ST_META[key]?.color || C.sub}1a`,
-          }}
-          onClick={() => setFilter(key)}>
-          {label} · {key === "all" ? bills.length : bills.filter((b) => b.status === key).length}
-        </button>
-      ))}
+      {BILL_FILTERS.map(({ key, label }) => {
+        const col = filterColor(key);
+        return (
+          <button key={key} className="btn"
+            style={{
+              ...st.weekTag, cursor: "pointer", border: "none", fontFamily: "inherit", marginLeft: 0,
+              padding: "5px 12px", fontSize: 12,
+              color: filter === key ? "#04130a" : col,
+              background: filter === key ? col : `${col}1a`,
+            }}
+            onClick={() => setFilter(key)}>
+            {label} · {filterCounts[key]}
+          </button>
+        );
+      })}
     </div>
 
     {!filtered.length && (
@@ -196,7 +203,6 @@ export function BillsScreen({ kind, ui }) {
     {filtered.map((b) => {
       const m = ST_META[b.status] || {};
       const isExp = !!expanded[b.id];
-      const today = new Date().toISOString().slice(0, 10);
       const isOverdue = b.due_on && b.due_on < today && !["paid", "rejected"].includes(b.status);
       return (
         <div key={b.id} style={{ ...st.dataCard, marginBottom: 10 }}>
