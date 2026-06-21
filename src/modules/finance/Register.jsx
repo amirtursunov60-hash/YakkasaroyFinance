@@ -145,7 +145,9 @@ export function Register() {
 
     {/* Лента */}
     {!rows.length && <div style={{ ...st.locCard, ...st.empty }}><ListChecks size={18} /> Операций по выбранным фильтрам нет</div>}
-    <div style={{ display: "grid", gap: 6 }} className="stagger">
+    {/* minmax(0,1fr): иначе строка с nowrap-описанием раздувает грид-трек
+        шире экрана и появляется горизонтальный скролл на телефоне. */}
+    <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 6 }} className="stagger">
       {rows.map((r) => {
         const m = OP_META[r.op_type] || { label: r.op_type, tone: "sub" };
         const tone = C[m.tone] || C.sub;
