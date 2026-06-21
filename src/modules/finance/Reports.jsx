@@ -152,7 +152,7 @@ export function Reports() {
               <option value={8}>8 недель</option>
               <option value={12}>12 недель</option>
             </select>
-            <button style={st.btnGhost} className="btn" onClick={exportCsv}>
+            <button style={st.btnGhost} className="btn" onClick={exportCsv} title="Экспорт CSV" aria-label="Экспорт CSV">
               <Download size={15} /> {!isMobile && "Экспорт CSV"}
             </button>
           </div>
