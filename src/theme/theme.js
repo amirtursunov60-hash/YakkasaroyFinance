@@ -10,8 +10,8 @@ import React from "react";
 export const THEMES = {
   dark: {
     scheme: "dark",
-    // Фон страницы — плоский сплошной (минимализм, как в демо)
-    pageGrad: "#0a0d12",
+    // Фон страницы — плоский сплошной, цвет как в оригинале liquid-glass (--c-bg dark)
+    pageGrad: "#1b1b1d",
     bg: "transparent",
     // Стеклянные поверхности
     panel: "rgba(28, 34, 44, 0.55)", panel2: "rgba(255,255,255,0.06)", line: "rgba(255,255,255,0.10)",
@@ -36,7 +36,7 @@ export const THEMES = {
   },
   light: {
     scheme: "light",
-    pageGrad: "#eef2f6",
+    pageGrad: "#e8e8e9", // фон как в оригинале liquid-glass (--c-bg light)
     bg: "transparent",
     // Контраст усилен (дизайн-ревью): графитовые подписи вместо светло-серых,
     // заметнее бордеры и зебра — плотные данные читаются без «мыла».
@@ -62,7 +62,7 @@ export const THEMES = {
   // как третий вариант темы. Акценты/статусы те же, что в dark.
   dim: {
     scheme: "dark",
-    pageGrad: "#18212e",
+    pageGrad: "#152433", // фон как в оригинале liquid-glass (--c-bg dim)
     bg: "transparent",
     panel: "rgba(42, 54, 68, 0.60)", panel2: "rgba(255,255,255,0.05)", line: "rgba(255,255,255,0.11)",
     glassBorder: "rgba(255,255,255,0.15)", glassHi: "rgba(255,255,255,0.20)",
