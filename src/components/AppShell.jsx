@@ -93,7 +93,7 @@ export function App({ onLogout }) {
           <div style={{
             display: "grid", placeItems: "center", flexShrink: 0,
             width: 40, height: 40, borderRadius: "50%",
-            background: C.green,
+            background: "#0f1c15",
             border: `1px solid ${C.green}3a`,
             boxShadow: `0 4px 14px ${C.green}40, inset 0 1px 0 rgba(255,255,255,0.35)`,
           }}>
