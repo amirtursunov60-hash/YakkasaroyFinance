@@ -142,8 +142,8 @@ export function App({ onLogout }) {
                       {lang === "ru" ? "RU" : "ТҶ"}
                     </div>
                   </div>
-                  {/* Тема: liquid-glass свитчер (light / dark / dim), Tailwind-компонент */}
-                  <div className="tw-scope" style={{ display: "flex", justifyContent: "center", padding: "6px 0 10px" }}>
+                  {/* Тема: liquid-glass свитчер (light / dark / dim) — стекло 1:1 из оригинала */}
+                  <div className="tw-scope switcher-app" style={{ display: "flex", justifyContent: "center", padding: "6px 0 10px" }}>
                     <ThemeSwitcher value={theme} onValueChange={setTheme} />
                   </div>
                   <div style={st.themeToggle}>

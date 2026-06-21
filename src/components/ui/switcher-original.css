@@ -317,12 +317,6 @@
   }
 }
 
-/* Гасим протёкшие правила app-стилей (switcher.css) в демо — CSS бандлится
-   общим: у app-версии «пилюля» висит на ::before и иконка фикс-высоты 26px,
-   в точной копии они не нужны (здесь пилюля — оригинальный ::after). */
-.switcher-demo-root .switcher::before { content: none; }
-.switcher-demo-root .switcher__icon { height: auto; }
-
 /* //////////////////////////////////////////
 /  Article Styles //////////////////////// */
 
