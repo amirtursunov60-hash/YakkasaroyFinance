@@ -8,8 +8,7 @@ import { Stat } from "../../components/common";
 import { useTheme } from "../../theme/theme";
 import { useScrollLock } from "../../hooks/useScrollLock";
 import { usePeriod, periodTitle } from "../../lib/PeriodCtx";
-import { calcState } from "../../utils/stats";
-import { STAT_STATES } from "../../data/stats";
+import { calcState, STAT_STATES } from "../../utils/stats";
 import {
   fetchStatistics, fetchStatisticValues, fetchPeriods, fetchOrgDivisions,
   fetchAllPositions, upsertStatisticValue, createStatistic, updateStatistic,

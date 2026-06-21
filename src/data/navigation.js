@@ -9,7 +9,9 @@ export const MODULES = [
   { key: "crm", icon: Contact, label: "CRM" },
   { key: "orgchart", icon: Network, label: "Организующая схема" },
   { key: "finance", icon: PiggyBank, label: "Финансовое планирование" },
-  { key: "restaurant", icon: UtensilsCrossed, label: "Ресторан" },
+  // «Ресторан» скрыт из меню: по ТЗ v2 §4.11 модуль не входит в продукт (его
+  // заменит интеграция iiko). Экраны и моки сохранены как дизайн-референс
+  // (src/modules/restaurant, src/data/restaurant.js), но из сайдбара убраны.
   { key: "projects", icon: FolderKanban, label: "Управление проектами" },
 ];
 

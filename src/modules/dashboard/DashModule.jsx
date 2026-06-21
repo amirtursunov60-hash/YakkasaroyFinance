@@ -4,10 +4,9 @@ import {
 } from "lucide-react";
 import { StatChart } from "../../components/charts/StatChart";
 import { Stat } from "../../components/common";
-import { STAT_STATES } from "../../data/stats";
 import { useTheme } from "../../theme/theme";
 import { fmt } from "../../utils/format";
-import { calcState } from "../../utils/stats";
+import { calcState, STAT_STATES } from "../../utils/stats";
 import {
   fetchTasks, createTask, setTaskStatus, fetchBattlePlan, createBattleItem,
   setBattleDone, fetchPeopleBrief, fetchStatistics, fetchStatisticValues,
