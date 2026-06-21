@@ -16,6 +16,7 @@ export const MODULES = [
 
 // Разделы (сайдбар) для каждого модуля
 export const NAV_FINANCE = [
+  { key: "overview", icon: LayoutDashboard, label: "Сводка владельца" },
   { key: "control", icon: Wallet, label: "Контроль средств" },
   { key: "income", icon: ArrowUpRight, label: "Доходы" },
   { key: "expense", icon: ArrowDownLeft, label: "Расходы" },
