@@ -8,6 +8,11 @@ import { supabase } from "./lib/supabase";
 import { getProfile, signOut } from "./lib/auth";
 import { redeemInvite } from "./lib/api";
 import { isSoundOn, setSoundOn } from "./lib/feedback";
+import SwitcherDemo from "./components/ui/switcher-demo";
+
+// ЭКСПЕРИМЕНТ (ветка claude/experiment-tailwind-switcher): демо liquid-glass
+// свитчера по адресу <app>/#switcher — рабочее приложение не затрагивается.
+const isSwitcherDemo = typeof window !== "undefined" && window.location.hash.replace("#", "") === "switcher";
 
 // Токен приглашения из ссылки (?invite=…) сохраняем до завершения регистрации
 const url = new URL(window.location.href);
@@ -20,6 +25,11 @@ if (inviteParam) {
 
 
 export default function YakkasaroyFinance() {
+  if (isSwitcherDemo) return <SwitcherDemo />;
+  return <YakkasaroyApp />;
+}
+
+function YakkasaroyApp() {
   const [theme, setTheme] = useState("dark");
   const [lang, setLang] = useState("ru");
   const [sound, setSoundState] = useState(isSoundOn());   // звук/вибрация отдачи (по умолчанию выкл)
