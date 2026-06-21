@@ -1,5 +1,6 @@
-import { Construction } from "lucide-react";
+import { Construction, AlertTriangle, X, Loader2 } from "lucide-react";
 import { useTheme } from "../theme/theme";
+import { useScrollLock } from "../hooks/useScrollLock";
 
 
 export function Stub({ label }) {
@@ -18,4 +19,46 @@ export function Stat({ label, value, unit, accent, tone }) {
     : (tone === "success" || accent) ? C.green
     : C.text;
   return <div><div style={st.statLabel}>{label}</div><div style={{ ...st.statValue, color }}>{value} <span style={st.statUnit}>{unit}</span></div></div>;
+}
+
+// Тематический модал подтверждения — замена системного window.confirm.
+// tone: "danger" (красная кнопка, для необратимых действий) | "warning" | "default" (зелёная).
+// Оверлей и «Отмена» вызывают onCancel; основное действие — onConfirm. busy блокирует кнопки.
+export function ConfirmModal({ title, message, confirmLabel = "Подтвердить", cancelLabel = "Отмена", tone = "default", busy = false, onConfirm, onCancel }) {
+  const { C, st, isMobile } = useTheme();
+  useScrollLock();
+  const accent = tone === "danger" ? C.danger : tone === "warning" ? C.warning : C.green;
+  const baseBtn = { display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7,
+    padding: "11px 18px", borderRadius: 14, fontSize: 13.5, fontWeight: 700, cursor: "pointer",
+    fontFamily: "inherit", whiteSpace: "nowrap", border: "1px solid rgba(255,255,255,0.25)",
+    ...(isMobile ? { flex: 1 } : {}) };
+  const confirmBtn = tone === "default"
+    ? { ...st.btnGreen, ...(isMobile ? { flex: 1, justifyContent: "center" } : {}) }
+    : { ...baseBtn, background: accent, color: "#fff" };
+
+  return (
+    <div style={st.mdOverlay} onClick={() => !busy && onCancel?.()}>
+      <div style={{ ...st.mdCard, width: "min(440px, 100%)" }} onClick={(e) => e.stopPropagation()}>
+        <div style={st.mdHead}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+            <div style={{ width: 34, height: 34, borderRadius: 10, display: "grid", placeItems: "center",
+              background: `${accent}22`, color: accent, flexShrink: 0 }}>
+              <AlertTriangle size={18} />
+            </div>
+            <div style={st.mdTitle}>{title}</div>
+          </div>
+          <button style={st.iconBtn} className="btn" onClick={() => !busy && onCancel?.()} aria-label="Закрыть"><X size={17} /></button>
+        </div>
+        {message && <div style={{ fontSize: 13.5, lineHeight: 1.5, color: C.sub }}>{message}</div>}
+        <div style={{ ...st.mdActions, ...(isMobile ? { flexDirection: "row" } : {}) }}>
+          <button style={{ ...st.btnGhost, ...(isMobile ? { flex: 1, justifyContent: "center" } : {}) }}
+            className="btn" onClick={() => onCancel?.()} disabled={busy}>{cancelLabel}</button>
+          <button style={{ ...confirmBtn, opacity: busy ? 0.7 : 1 }} className="btn"
+            onClick={() => onConfirm?.()} disabled={busy}>
+            {busy ? <Loader2 size={15} className="spin" /> : <AlertTriangle size={15} />} {confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
