@@ -19,6 +19,8 @@ export const makeCss = (C) => `
   }
   .nav:hover{background:${C.navHover};}
   .mod:hover{color:${C.text};}
+  .modbar::-webkit-scrollbar{display:none;}
+  .modbar{scrollbar-width:none;-ms-overflow-style:none;}
   .frow:hover{background:${C.rowHover};}
   .trow{border-top:1px solid ${C.line};}
   .trow:hover{background:${C.rowHover};}

@@ -31,9 +31,14 @@ export const makeStyles = (C) => ({
   themeToggle: { display: "flex", gap: 4, background: C.panel2, borderRadius: 12, padding: 4, margin: "4px 2px 8px" },
   themeBtn: { flex: 1, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "8px", borderRadius: 8, background: "transparent", border: "none", color: C.sub, fontSize: 12.5, cursor: "pointer", fontFamily: "inherit", fontWeight: 600 },
   themeBtnOn: { background: C.panel, color: C.text, boxShadow: `0 1px 4px ${C.shadow}` },
-  modBar: { display: "flex", gap: 4, padding: "8px 16px", background: C.panel, backdropFilter: "blur(20px) saturate(160%)", WebkitBackdropFilter: "blur(20px) saturate(160%)", borderBottom: `1px solid ${C.glassBorder}`, overflowX: "auto", position: "sticky", top: 60, zIndex: 30 },
-  mod: { display: "flex", alignItems: "center", gap: 8, padding: "9px 15px", fontSize: 13, fontWeight: 600, color: C.sub, cursor: "pointer", whiteSpace: "nowrap", borderRadius: 980, transition: "all .2s" },
-  modActive: { color: C.text, background: C.panel2, border: `1px solid ${C.glassBorder}`, boxShadow: `inset 0 1px 0 ${C.glassHi}` },
+  // Лента вкладок раздела как свитчер: стеклянный трек-капсула на всю ширину,
+  // со скользящей пилюлей (modPill) под активной вкладкой; не влезшие вкладки —
+  // горизонтальным скроллом внутри трека (скроллбар скрыт классом .modbar).
+  modBar: { position: "sticky", top: 60, zIndex: 30, display: "flex", alignItems: "center", gap: 4, height: 60, boxSizing: "border-box", margin: "8px 8px 0", padding: "0 6px", borderRadius: 99, background: C.panel, backdropFilter: "blur(20px) saturate(160%)", WebkitBackdropFilter: "blur(20px) saturate(160%)", border: `1px solid ${C.glassBorder}`, boxShadow: `inset 0 1px 0 ${C.glassHi}, 0 8px 24px ${C.shadow}`, overflowX: "auto", overflowY: "hidden" },
+  mod: { position: "relative", zIndex: 1, flexShrink: 0, display: "flex", alignItems: "center", gap: 8, padding: "0 16px", height: "100%", fontSize: 13, fontWeight: 600, color: C.sub, cursor: "pointer", whiteSpace: "nowrap", transition: "color .2s" },
+  modActive: { color: C.text },
+  // Скользящая стеклянная пилюля под активной вкладкой (left/width — из замера в AppShell)
+  modPill: { position: "absolute", top: 6, height: "calc(100% - 12px)", borderRadius: 99, background: `${C.green}26`, border: `1px solid ${C.glassBorder}`, boxShadow: `inset 0 1px 0 ${C.glassHi}, 0 3px 12px ${C.shadow}`, backdropFilter: "blur(2px)", WebkitBackdropFilter: "blur(2px)", transition: "left .35s cubic-bezier(.34,1.1,.4,1), width .35s cubic-bezier(.34,1.1,.4,1), opacity .2s", pointerEvents: "none", zIndex: 0 },
   body: { display: "flex" },
   sidebar: { width: 252, padding: "12px 14px 24px", display: "flex", flexDirection: "column", gap: 3, minHeight: "calc(100vh - 60px)", flexShrink: 0 },
   sidebarMobile: { position: "fixed", top: 0, left: 0, bottom: 0, width: 280, background: C.solid, backdropFilter: "blur(40px) saturate(180%)", WebkitBackdropFilter: "blur(40px) saturate(180%)", borderRight: `1px solid ${C.glassBorder}`, zIndex: 50, transform: "translateX(-100%)", transition: "transform .3s cubic-bezier(.22,.61,.36,1)", minHeight: "100vh", boxShadow: `0 0 60px ${C.shadow}` },

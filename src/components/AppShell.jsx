@@ -69,6 +69,19 @@ export function App({ onLogout }) {
     const t = setTimeout(center, 220);  // повтор после загрузки шрифтов/раскладки
     return () => { cancelAnimationFrame(r); clearTimeout(t); };
   }, [active, activeModule, isMobile]);
+  // Замер активной вкладки → позиция/ширина скользящей пилюли (в координатах ленты)
+  const [pill, setPill] = useState({ left: 0, width: 0, ready: false });
+  useEffect(() => {
+    const measure = () => {
+      const el = activeNavRef.current;
+      if (!el) return;
+      setPill({ left: el.offsetLeft, width: el.offsetWidth, ready: true });
+    };
+    const r = requestAnimationFrame(measure);
+    const t = setTimeout(measure, 240);  // повтор после загрузки шрифтов/раскладки
+    window.addEventListener("resize", measure);
+    return () => { cancelAnimationFrame(r); clearTimeout(t); window.removeEventListener("resize", measure); };
+  }, [active, activeModule, isMobile, navList.length]);
   const pick = (key) => { setActive(key); setMenuOpen(false); };
   // Раздел по умолчанию при переходе в модуль: Финансы → Директива, Ресторан → Меню
   const DEFAULT_SECTION = { finance: "directive", restaurant: "r_menu" };
@@ -164,7 +177,8 @@ export function App({ onLogout }) {
         </div>
       </header>
 
-      <nav ref={navBarRef} style={st.modBar}>
+      <nav ref={navBarRef} style={st.modBar} className="modbar">
+        <div style={{ ...st.modPill, left: pill.left, width: pill.width, opacity: pill.ready ? 1 : 0 }} />
         {navList.map((n) => { const Icon = n.icon; const on = active === n.key; return (
           <div key={n.key} ref={on ? activeNavRef : null} style={{ ...st.mod, ...(on ? st.modActive : {}) }} className="mod" onClick={() => pick(n.key)}>
             <Icon size={17} strokeWidth={2} color={on ? C.green : C.sub} /><span>{n.label}</span>
