@@ -50,6 +50,7 @@ export const NAV_ORG = [
 ];
 
 export const NAV_DASH = [
+  { key: "d_owner", icon: BarChart3, label: "Сводка собственника" },
   { key: "d_home", icon: LayoutDashboard, label: "Мой кабинет" },
   { key: "d_battle", icon: Flame, label: "Боевое планирование" },
   { key: "d_tasks", icon: ClipboardList, label: "Задачи" },
