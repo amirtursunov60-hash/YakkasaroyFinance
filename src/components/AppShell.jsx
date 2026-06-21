@@ -83,29 +83,27 @@ export function App({ onLogout }) {
     <div style={st.app}>
       <style>{css}</style>
 
-      <header className="appTop" style={{ ...st.topbar, ...(isMobile ? { gap: 8, padding: "0 10px" } : {}) }}>
+      <header className="appTop" style={{ ...st.topbar, ...(isMobile ? { gap: 6, padding: "0 8px" } : {}) }}>
         {isMobile && (
           <button style={st.burger} onClick={() => setMenuOpen(true)}><Menu size={20} /></button>
         )}
-        {/* Бренд-лого: на телефоне скрыто — слева уже бургер-меню (иначе шапка
-            не помещается в 390px и появляется горизонтальный скролл). */}
-        {!isMobile && (
-          <div style={st.brand}>
-            <div style={{
-              display: "grid", placeItems: "center", flexShrink: 0,
-              width: 40, height: 40, borderRadius: "50%",
-              background: `linear-gradient(135deg, #14271d, #0b1611)`,
-              border: `1px solid ${C.green}3a`,
-              boxShadow: `0 4px 14px ${C.green}55, inset 0 1px 0 rgba(255,255,255,0.35)`,
-            }}>
-              <img src="/icons/logo-mark.png" alt="Яккасарой"
-                style={{ width: "84%", height: "84%", objectFit: "contain" }} />
-            </div>
+        <div style={{ ...st.brand, ...(isMobile ? { gap: 7 } : {}) }}>
+          <div style={{
+            display: "grid", placeItems: "center", flexShrink: 0,
+            width: 40, height: 40, borderRadius: "50%",
+            background: `linear-gradient(135deg, #14271d, #0b1611)`,
+            border: `1px solid ${C.green}3a`,
+            boxShadow: `0 4px 14px ${C.green}55, inset 0 1px 0 rgba(255,255,255,0.35)`,
+          }}>
+            <img src="/icons/logo-mark.png" alt="Яккасарой"
+              style={{ width: "84%", height: "84%", objectFit: "contain" }} />
           </div>
-        )}
+        </div>
         <WeekPicker />
         <LocationPicker />
-        {(() => {
+        {/* Быстрая кнопка «Реестр»: на телефоне скрыта — Реестр доступен
+            вкладкой в навигации, а в шапке не помещается (горизонт. скролл). */}
+        {!isMobile && (() => {
           const regActive = activeModule === "finance" && active === "register";
           return (
             <button className="btn" title="Реестр операций"
