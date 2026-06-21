@@ -77,7 +77,7 @@ export const makeStyles = (C) => ({
   cardWrap: { overflowX: "auto", borderRadius: 22, border: `1px solid ${C.glassBorder}`, marginBottom: 18, WebkitOverflowScrolling: "touch", boxShadow: `inset 0 1px 0 ${C.glassHi}, 0 10px 30px ${C.shadow}` },
   // Контейнер данных финэкранов — непрозрачный «банковский» фон для читаемости
   // плотных таблиц. Стекло остаётся для навигации и герой-карточек.
-  card: { background: C.solid, borderRadius: 22, border: `1px solid ${C.glassBorder}`, boxShadow: `0 10px 30px ${C.shadow}` },
+  card: { background: C.solid, borderRadius: 22, border: `1px solid ${C.glassBorder}`, boxShadow: `inset 0 1px 0 ${C.glassHi}, 0 10px 30px ${C.shadow}` },
   cardHead: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "18px 22px" },
   cardTitle: { fontSize: 17, fontWeight: 800 }, cardTotal: { fontSize: 16, fontWeight: 700, color: C.sub }, unit: { fontSize: 12, color: C.faint },
   subHead: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "11px 22px", background: C.panel2 },
@@ -141,7 +141,7 @@ export const makeStyles = (C) => ({
   locCard: { background: C.panel, border: `1px solid ${C.glassBorder}`, borderRadius: 18, overflow: "hidden", boxShadow: `inset 0 1px 0 ${C.glassHi}, 0 8px 24px ${C.shadow}`, backdropFilter: "blur(20px) saturate(160%)", WebkitBackdropFilter: "blur(20px) saturate(160%)" },
   // Непрозрачный вариант карточки для плотных данных (Доходы/Расходы/Счета) —
   // «банковский» фон; locCard (стекло) остаётся для обзорных модулей.
-  dataCard: { background: C.solid, border: `1px solid ${C.glassBorder}`, borderRadius: 18, overflow: "hidden", boxShadow: `0 8px 24px ${C.shadow}` },
+  dataCard: { background: C.solid, border: `1px solid ${C.glassBorder}`, borderRadius: 18, overflow: "hidden", boxShadow: `inset 0 1px 0 ${C.glassHi}, 0 8px 24px ${C.shadow}` },
   locHead: { display: "flex", alignItems: "center", gap: 14, padding: "16px 18px", cursor: "pointer", userSelect: "none", transition: "background .15s" },
   locDot: { width: 10, height: 10, borderRadius: 4, flexShrink: 0 },
   locTitle: { flex: 1, minWidth: 0 },
@@ -164,7 +164,7 @@ export const makeStyles = (C) => ({
 
   // ---- Модальная форма ----
   mdOverlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 70, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 },
-  mdCard: { width: "min(560px, 100%)", maxHeight: "92vh", overflowY: "auto", background: C.solid, border: `1px solid ${C.glassBorder}`, borderRadius: 20, padding: "20px 22px 18px", boxShadow: `0 24px 60px ${C.shadow}` },
+  mdCard: { width: "min(560px, 100%)", maxHeight: "92vh", overflowY: "auto", background: C.solid, border: `1px solid ${C.glassBorder}`, borderRadius: 20, padding: "20px 22px 18px", boxShadow: `inset 0 1px 0 ${C.glassHi}, 0 24px 60px ${C.shadow}` },
   mdHead: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, gap: 10 },
   mdTitle: { fontSize: 17, fontWeight: 800 },
   mdGrid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 },
