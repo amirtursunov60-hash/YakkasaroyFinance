@@ -120,7 +120,7 @@ function PeopleView({ C, st, isMobile, isFinAdmin, profile, people, positions, l
                 : <div style={{ ...st.avatar, background: `${avatarColor(p.full_name)}26`, color: avatarColor(p.full_name) }}>{initials}</div>}
               {(profile?.id === p.id || isFinAdmin) && (
                 <label className="btn" title="Сменить аватар" onClick={(e) => e.stopPropagation()}
-                  style={{ position: "absolute", right: -2, bottom: -2, width: 19, height: 19, borderRadius: "50%", background: C.green, color: "#04130a", display: "grid", placeItems: "center", cursor: busy ? "default" : "pointer", border: `2px solid ${C.panel}` }}>
+                  style={{ position: "absolute", right: -2, bottom: -2, width: 19, height: 19, borderRadius: "50%", background: C.green, color: C.onAccent, display: "grid", placeItems: "center", cursor: busy ? "default" : "pointer", border: `2px solid ${C.panel}` }}>
                   {busy === `avatar:${p.id}` ? <Loader2 size={10} className="spin" /> : <Camera size={11} />}
                   <input type="file" accept="image/*" hidden disabled={!!busy}
                     onChange={(e) => { const f = e.target.files?.[0]; if (f) act(`avatar:${p.id}`, () => uploadAvatar(p.id, f), "Аватар обновлён"); e.target.value = ""; }} />
@@ -198,7 +198,7 @@ function PeopleView({ C, st, isMobile, isFinAdmin, profile, people, positions, l
                           style={{
                             ...st.weekTag, marginLeft: 0, border: "none", fontFamily: "inherit",
                             cursor: isFinAdmin ? "pointer" : "default", padding: "5px 12px",
-                            color: on ? "#04130a" : C.sub, background: on ? C.green : `${C.sub}1a`,
+                            color: on ? C.onAccent : C.sub, background: on ? C.green : `${C.sub}1a`,
                           }}
                           onClick={() => isFinAdmin && act(`loc:${p.id}:${l.id}`,
                             () => setLocationAccess(p.id, l.id, !on),

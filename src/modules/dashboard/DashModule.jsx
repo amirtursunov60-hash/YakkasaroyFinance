@@ -153,7 +153,7 @@ export function DashModule({ view }) {
 
   const BpRow = ({ b }) => (
     <div style={{ display: "flex", alignItems: "flex-start", gap: 12, padding: "10px 0", borderBottom: `1px solid ${C.line}` }}>
-      <button onClick={() => toggleBp(b)} className="btn" disabled={busy === `bp:${b.id}`} style={{ width: 24, height: 24, borderRadius: 8, flexShrink: 0, cursor: "pointer", display: "grid", placeItems: "center", border: `1.5px solid ${b.done ? C.green : C.line}`, background: b.done ? C.green : "transparent", color: "#04130a", marginTop: 1 }}>
+      <button onClick={() => toggleBp(b)} className="btn" disabled={busy === `bp:${b.id}`} style={{ width: 24, height: 24, borderRadius: 8, flexShrink: 0, cursor: "pointer", display: "grid", placeItems: "center", border: `1.5px solid ${b.done ? C.green : C.line}`, background: b.done ? C.green : "transparent", color: C.onAccent, marginTop: 1 }}>
         {b.done && <Check size={15} strokeWidth={3} />}
       </button>
       <div style={{ flex: 1, minWidth: 0 }}>

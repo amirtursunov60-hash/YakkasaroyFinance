@@ -122,7 +122,7 @@ export const makeLg = (C) => ({
   input: { width: "100%", background: "transparent", border: "none", outline: "none", color: C.text, fontSize: 15, fontFamily: "inherit" },
   passWrap: { display: "flex", alignItems: "center", gap: 10 },
   eye: { color: C.sub, cursor: "pointer", display: "flex", flexShrink: 0 },
-  btn: { width: "100%", background: C.green, color: "#04130a", border: "none", padding: "14px", borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", marginTop: 6, display: "flex", alignItems: "center", justifyContent: "center", minHeight: 50 },
+  btn: { width: "100%", background: C.green, color: C.onAccent, border: "none", padding: "14px", borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", marginTop: 6, display: "flex", alignItems: "center", justifyContent: "center", minHeight: 50 },
   error: { fontSize: 13, color: C.danger, background: `${C.danger}1a`, border: `1px solid ${C.danger}44`, borderRadius: 12, padding: "10px 12px", marginBottom: 12, textAlign: "center" },
   note: { fontSize: 11, color: C.faint, textAlign: "center", marginTop: 16, lineHeight: 1.5 },
 });
