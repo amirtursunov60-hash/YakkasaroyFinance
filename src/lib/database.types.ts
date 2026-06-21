@@ -2551,11 +2551,15 @@ export type Database = {
           is_archived: boolean
           is_auto: boolean
           location_id: string | null
+          max_val: number | null
+          min_val: number | null
           name: string
           outer_id: string | null
           owner_id: string | null
           position_id: string | null
+          sign: boolean | null
           source: string | null
+          stat_type: number | null
           unit: string | null
         }
         Insert: {
@@ -2564,11 +2568,15 @@ export type Database = {
           is_archived?: boolean
           is_auto?: boolean
           location_id?: string | null
+          max_val?: number | null
+          min_val?: number | null
           name: string
           outer_id?: string | null
           owner_id?: string | null
           position_id?: string | null
+          sign?: boolean | null
           source?: string | null
+          stat_type?: number | null
           unit?: string | null
         }
         Update: {
@@ -2577,11 +2585,15 @@ export type Database = {
           is_archived?: boolean
           is_auto?: boolean
           location_id?: string | null
+          max_val?: number | null
+          min_val?: number | null
           name?: string
           outer_id?: string | null
           owner_id?: string | null
           position_id?: string | null
+          sign?: boolean | null
           source?: string | null
+          stat_type?: number | null
           unit?: string | null
         }
         Relationships: [
@@ -2980,6 +2992,7 @@ export type Database = {
       has_location_access: { Args: { loc: string }; Returns: boolean }
       holds_position: { Args: { pos: string }; Returns: boolean }
       is_fin_admin: { Args: never; Returns: boolean }
+      mj_cron_sync: { Args: { p_entities: string[] }; Returns: number }
       mj_secret: { Args: { p_name: string }; Returns: string }
       my_role: { Args: never; Returns: Database["public"]["Enums"]["app_role"] }
       redeem_invite: {
