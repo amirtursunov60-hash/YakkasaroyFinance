@@ -57,6 +57,11 @@ export const makeCss = (C) => {
   .gseg__opt:active{ transform:scale(0.96); }
   .gseg--md .gseg__opt{ height:38px; padding:0 16px; font-size:12.5px; }
   .gseg--sm .gseg__opt{ height:30px; padding:0 13px; font-size:12px; }
+  /* Стеклянный «лоток» для цветных фильтр-чипов: тот же стеклянный трек, что у
+     сегмента, но без скользящей пилюли — активный чип заливается СТАТУС-цветом
+     (легенда статусов сохраняется). Скролл внутри, скроллбар скрыт. */
+  .chiptray{ display:inline-flex; align-items:center; gap:4px; padding:4px; max-width:100%; border-radius:99px; overflow-x:auto; scrollbar-width:none; -ms-overflow-style:none; background:${mix(g.c, "12%")}; backdrop-filter:blur(8px) saturate(${g.sat}); -webkit-backdrop-filter:blur(8px) saturate(${g.sat}); box-shadow:${trackShadow}; }
+  .chiptray::-webkit-scrollbar{ display:none; }
   .frow:hover{background:${C.rowHover};}
   .trow{border-top:1px solid ${C.line};}
   .trow:hover{background:${C.rowHover};}
