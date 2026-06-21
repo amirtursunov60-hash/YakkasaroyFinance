@@ -118,7 +118,9 @@
 .theme-provider[data-theme="light"] { background: #eef2f6; color: #1b2230; }
 .theme-provider[data-theme="dark"] { background: #0a0d12; color: #e6e9ee; }
 .theme-provider[data-theme="dim"] { background: #18212e; color: #d7dee7; }
-.theme-provider .switcher { position: sticky; top: 14px; }
+/* В демо — крупный свитчер, чтобы хорошо разглядеть стекло и «течение». */
+.theme-provider .switcher { position: sticky; top: 14px; --size: 92px; --gap: 10px; }
+.theme-provider .switcher .switcher__icon { width: 52px; height: 52px; }
 
 .article { max-width: 680px; width: 100%; line-height: 1.7; }
 .article h1 { font-size: 2.1rem; font-weight: 800; margin: 6px 0 14px; }
