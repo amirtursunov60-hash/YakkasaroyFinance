@@ -64,34 +64,35 @@ export function Login({ onEnter }) {
       <div style={lg.center}>
         <div style={lg.card}>
           <div style={lg.title}>{inviteMode ? "Регистрация по приглашению" : "Вход в кабинет"}</div>
-          {inviteMode && (
+          <form onSubmit={(e) => { e.preventDefault(); submit(); }}>
+            {inviteMode && (
+              <div style={lg.field}>
+                <label style={lg.label}>Фамилия и имя</label>
+                <input style={lg.input} value={name} onChange={(e) => setName(e.target.value)}
+                  placeholder="Иванов Иван" autoFocus autoComplete="name" name="name" />
+              </div>
+            )}
             <div style={lg.field}>
-              <label style={lg.label}>Фамилия и имя</label>
-              <input style={lg.input} value={name} onChange={(e) => setName(e.target.value)}
-                placeholder="Иванов Иван" autoFocus
-                onKeyDown={(e) => e.key === "Enter" && submit()} />
+              <label style={lg.label}>Email</label>
+              <input style={lg.input} value={email} onChange={(e) => setEmail(e.target.value)}
+                placeholder="example@mail.ru" type="email" autoComplete="email" name="email" autoFocus={!inviteMode} />
             </div>
-          )}
-          <div style={lg.field}>
-            <label style={lg.label}>Email</label>
-            <input style={lg.input} value={email} onChange={(e) => setEmail(e.target.value)}
-              placeholder="example@mail.ru" type="email" autoFocus
-              onKeyDown={(e) => e.key === "Enter" && submit()} />
-          </div>
-          <div style={lg.field}>
-            <label style={lg.label}>Пароль</label>
-            <div style={lg.passWrap}>
-              <input style={{ ...lg.input, border: "none", padding: 0 }} value={pass}
-                onChange={(e) => setPass(e.target.value)} placeholder="••••••••"
-                type={show ? "text" : "password"} onKeyDown={(e) => e.key === "Enter" && submit()} />
-              <span style={lg.eye} onClick={() => setShow(!show)}>{show ? <EyeOff size={18} /> : <Eye size={18} />}</span>
+            <div style={lg.field}>
+              <label style={lg.label}>Пароль</label>
+              <div style={lg.passWrap}>
+                <input style={{ ...lg.input, border: "none", padding: 0 }} value={pass}
+                  onChange={(e) => setPass(e.target.value)} placeholder="••••••••"
+                  autoComplete={inviteMode ? "new-password" : "current-password"} name="password"
+                  type={show ? "text" : "password"} />
+                <span style={lg.eye} onClick={() => setShow(!show)}>{show ? <EyeOff size={18} /> : <Eye size={18} />}</span>
+              </div>
             </div>
-          </div>
-          {err && <div style={lg.error}>{err}</div>}
-          {info && <div style={{ ...lg.error, color: C.green, background: `${C.green}1a`, borderColor: `${C.green}44` }}>{info}</div>}
-          <button style={{ ...lg.btn, opacity: busy ? 0.7 : 1 }} className="btn" onClick={submit} disabled={busy}>
-            {busy ? <span className="spin"><Loader2 size={17} /></span> : inviteMode ? "Зарегистрироваться" : "Войти"}
-          </button>
+            {err && <div style={lg.error}>{err}</div>}
+            {info && <div style={{ ...lg.error, color: C.green, background: `${C.green}1a`, borderColor: `${C.green}44` }}>{info}</div>}
+            <button type="submit" style={{ ...lg.btn, opacity: busy ? 0.7 : 1 }} className="btn" disabled={busy}>
+              {busy ? <span className="spin"><Loader2 size={17} /></span> : inviteMode ? "Зарегистрироваться" : "Войти"}
+            </button>
+          </form>
           {inviteMode && (
             <div style={{ ...lg.note, cursor: "pointer", textDecoration: "underline" }} onClick={() => setInviteMode(false)}>
               У меня уже есть аккаунт — войти

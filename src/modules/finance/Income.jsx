@@ -26,6 +26,7 @@ export function Income() {
   const [open, setOpen] = useState(null);         // раскрытые папки; null = ещё не инициализировано
   const [showForm, setShowForm] = useState(false);
   const isFinAdmin = ["owner", "fin_director"].includes(profile?.role);
+  const isClosed = period?.status === "closed";
   const [rulesByType, setRulesByType] = useState({}); // схемы распределения по видам дохода
   const [funds, setFunds] = useState([]);
   const [schemeType, setSchemeType] = useState(null); // вид дохода для модала «Схема»
@@ -143,11 +144,19 @@ export function Income() {
             <Trend cur={totals.cur} prev={totals.prev} big /> к прошлому периоду · было {fmt(totals.prev)}
           </div>
         </div>
-        <button style={st.btnGreen} className="btn" onClick={() => setShowForm(true)}>
+        <button style={{ ...st.btnGreen, opacity: isClosed ? 0.5 : 1, cursor: isClosed ? "not-allowed" : "pointer" }}
+          className="btn" onClick={() => !isClosed && setShowForm(true)} disabled={isClosed}
+          title={isClosed ? "Период закрыт Директивой — ввод дохода недоступен" : "Добавить операцию дохода"}>
           <Plus size={15} /> Добавить доход
         </button>
       </div>
     </section>
+
+    {isClosed && (
+      <div style={st.reqError}>
+        <AlertCircle size={15} /> Период закрыт Директивой — ввод дохода недоступен. Открыть неделю можно в Директиве.
+      </div>
+    )}
 
     {/* Дерево видов дохода */}
     {!tree.length && !loadError && (
