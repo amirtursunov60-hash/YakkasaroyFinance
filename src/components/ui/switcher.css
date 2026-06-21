@@ -32,8 +32,10 @@
   border: 1px solid var(--c-line, rgba(255, 255, 255, 0.18));
   border-radius: 999px;
   background: var(--c-panel2, rgba(255, 255, 255, 0.08));
-  backdrop-filter: blur(14px) saturate(160%);
-  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  /* url(#switcher) — SVG-фильтр «жидкого стекла» (преломление фона), как в
+     оригинале; blur — фрост. Webkit url-фильтр в backdrop не тянет → fallback blur. */
+  backdrop-filter: url(#switcher) blur(10px) saturate(180%);
+  -webkit-backdrop-filter: blur(13px) saturate(180%);
   box-shadow: inset 0 1px 0 var(--c-line, rgba(255, 255, 255, 0.28)), 0 10px 34px rgba(0, 0, 0, 0.20);
   isolation: isolate;
 }
@@ -81,9 +83,11 @@
   border-radius: 999px;
   background: color-mix(in srgb, var(--c-green, #ffffff) 16%, transparent);
   box-shadow: inset 0 1px 0 var(--c-line, rgba(255, 255, 255, 0.45)), 0 3px 12px rgba(0, 0, 0, 0.22);
-  backdrop-filter: blur(3px);
+  /* url(#toggler) — преломление фона под «пилюлей»: при скольжении стекло
+     «течёт» (вместе с scaleToggle-растяжением). */
+  backdrop-filter: url(#toggler) blur(2px);
   -webkit-backdrop-filter: blur(3px);
-  transition: translate 0.38s cubic-bezier(0.5, 1.5, 0.45, 0.95);
+  transition: translate 0.42s cubic-bezier(0.34, 1.3, 0.4, 1);
   z-index: 0;
 }
 .switcher:has([c-option="1"]:checked)::before { translate: 0 0; animation: scaleToggle 0.38s; }
