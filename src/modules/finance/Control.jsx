@@ -202,6 +202,16 @@ export function Control() {
                     <Icon size={15} color={C.green} />
                     <span>{a.name}</span>
                     {saved && <CheckCircle2 size={13} color={ok || (saved && Math.abs(Number(saved.difference)) < 0.01) ? C.green : C.danger} />}
+                    {/* «Подробно» (выписка) прямо в строке на телефоне —
+                        вместо отдельного дублирующего ряда снизу. */}
+                    {isMobile && (
+                      <button style={{ width: 28, height: 28, borderRadius: 8, display: "grid", placeItems: "center",
+                          flexShrink: 0, marginLeft: "auto", border: `1px solid ${C.line}`, background: C.panel2,
+                          color: C.sub, cursor: "pointer" }}
+                        className="btn" disabled={!!busy} title="Выписка по счёту" onClick={() => openStatement(a)}>
+                        {busy === `stmt:${a.id}` ? <Loader2 size={13} className="spin" /> : <List size={13} />}
+                      </button>
+                    )}
                   </div>
                   <div style={{ fontSize: 11.5, color: C.faint, marginTop: 2 }}>
                     {TYPE_META[a.type]?.label}{a.location ? ` · ${a.location.name}` : ""}
@@ -244,16 +254,6 @@ export function Control() {
             {!isMobile && <div />}
           </div>
         </>)}
-        {isMobile && shownAccounts.length > 0 && (
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 10 }}>
-            {shownAccounts.map((a) => (
-              <button key={a.id} style={{ ...st.btnGhost, padding: "6px 10px", fontSize: 12 }} className="btn"
-                disabled={!!busy} onClick={() => openStatement(a)}>
-                <List size={13} /> {a.name}
-              </button>
-            ))}
-          </div>
-        )}
       </section>
     </div>
 
