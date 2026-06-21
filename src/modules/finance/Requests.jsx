@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { ClipboardList, FileText, Check, Ban, Banknote, Loader2, AlertCircle, CheckCircle2, ChevronRight, X, Network, Plus } from "lucide-react";
+import { ClipboardList, FileText, Check, Ban, Banknote, Loader2, AlertCircle, CheckCircle2, ChevronRight, X, Network, Plus, Copy } from "lucide-react";
 import { Stat } from "../../components/common";
 import { useTheme } from "../../theme/theme";
 import { useScrollLock } from "../../hooks/useScrollLock";
@@ -13,6 +13,7 @@ import {
   fetchFunds, fetchIncomeRefs,
   fetchExpenseTypes, insertRequest, createPositionAndAssign, fetchMyPositions, fetchOrgDivisions,
 } from "../../lib/api";
+import { requestPrefill } from "./requestCopy";
 
 
 // ---------------------------------------------------------------- REQUESTS
@@ -93,8 +94,17 @@ export function Requests() {
   const [expanded, setExpanded] = useState({});
   const [decide, setDecide] = useState(null);   // { item, itemKind: 'request'|'bill', action }
   const [showForm, setShowForm] = useState(false);
+  const [prefillReq, setPrefillReq] = useState(null);       // предзаполнение формы для «Копировать»
   const [busy, setBusy] = useState(null);
   const [reqFilter, setReqFilter] = useState("approved");   // здесь оплачиваем — по умолчанию «Одобрено»
+
+  // «Копировать заявку» — открыть форму ЗРС, предзаполненную данными заявки
+  // (для быстрого повтора регулярных). Пост — свой, период/точка — из шапки.
+  const copyRequest = (item) => {
+    setErr("");
+    setPrefillReq(requestPrefill(item, myPositions));
+    setShowForm(true);
+  };
 
   const loadStatic = useCallback(async () => {
     try {
@@ -210,17 +220,20 @@ export function Requests() {
         </div>
       );
     }
-    // заявка-ЗРС: только оплата одобренной (рассмотрение — в Директиве)
-    if (canPay && item.status === "approved") {
-      return (
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+    // заявка-ЗРС: оплата одобренной (рассмотрение — в Директиве) + копирование
+    // (повтор регулярной заявки) — доступно на любом статусе.
+    return (
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        {canPay && item.status === "approved" && (
           <button style={st.btnGreen} className="btn" disabled={!!busy} onClick={() => setDecide({ item, itemKind, action: "pay" })}>
             <Banknote size={14} /> Оплатить
           </button>
-        </div>
-      );
-    }
-    return null;
+        )}
+        <button style={st.btnGhost} className="btn" disabled={!!busy} onClick={() => copyRequest(item)} title="Создать новую заявку с этими же данными">
+          <Copy size={14} /> Копировать
+        </button>
+      </div>
+    );
   };
 
   return (<>
@@ -232,7 +245,7 @@ export function Requests() {
             <div style={st.heroLabel}>Заявки · рассмотрение финкомитетом</div>
             <div style={st.heroTitle}>{period ? periodTitle(period) : "Период не создан"}</div>
           </div>
-          <button style={st.btnGreen} className="btn" onClick={() => { setErr(""); setShowForm(true); }}>
+          <button style={st.btnGreen} className="btn" onClick={() => { setErr(""); setPrefillReq(null); setShowForm(true); }}>
             <Plus size={15} /> {isMobile ? "Заявка (ЗРС)" : "Подать заявку (ЗРС)"}
           </button>
         </div>
@@ -307,10 +320,10 @@ export function Requests() {
         st={st} isMobile={isMobile} profile={profile}
         tree={tree} refs={refs} funds={funds}
         periods={periods} locationId={ctxLocationId} currentPeriodId={periodId}
-        myPositions={myPositions} divisions={divisions}
+        myPositions={myPositions} divisions={divisions} prefill={prefillReq}
         onPositionsChanged={async () => setMyPositions(await fetchMyPositions(profile.id))}
-        onClose={() => setShowForm(false)}
-        onSaved={() => { setShowForm(false); loadItems(); setDone("Заявка подана — рассмотрите её ниже"); }}
+        onClose={() => { setShowForm(false); setPrefillReq(null); }}
+        onSaved={() => { setShowForm(false); setPrefillReq(null); loadItems(); setDone(prefillReq ? "Копия заявки подана — рассмотрите её ниже" : "Заявка подана — рассмотрите её ниже"); }}
       />
     )}
   </>);
@@ -406,15 +419,18 @@ const Field = ({ st, label, full, children }) => (
   </div>
 );
 
-function RequestForm({ st, isMobile, profile, tree, refs, funds, periods, locationId, currentPeriodId, myPositions, divisions, onPositionsChanged, onClose, onSaved }) {
+function RequestForm({ st, isMobile, profile, tree, refs, funds, periods, locationId, currentPeriodId, myPositions, divisions, prefill, onPositionsChanged, onClose, onSaved }) {
   useScrollLock();
   // Валюта — базовая (TJS) по умолчанию, в форме не показывается;
   // точка берётся из выбора в шапке приложения (поле в форме убрано).
   const baseCur = refs.currencies.find((c) => c.is_base) || refs.currencies[0];
+  // При «Копировать» поля приходят из prefill; период — всегда текущая неделя.
   const [f, setF] = useState({
-    positionId: myPositions[0]?.id || "", typeId: "", purpose: "",
-    periodId: currentPeriodId || "", amount: "", fundId: "",
-    cswData: "", cswSituation: "", cswSolution: "", tags: "",
+    positionId: prefill?.positionId || myPositions[0]?.id || "",
+    typeId: prefill?.typeId || "", purpose: prefill?.purpose || "",
+    periodId: currentPeriodId || "", amount: prefill?.amount || "", fundId: prefill?.fundId || "",
+    cswData: prefill?.cswData || "", cswSituation: prefill?.cswSituation || "",
+    cswSolution: prefill?.cswSolution || "", tags: prefill?.tags || "",
   });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
@@ -509,7 +525,7 @@ function RequestForm({ st, isMobile, profile, tree, refs, funds, periods, locati
     <div style={st.mdOverlay} onClick={onClose}>
       <div style={st.mdCard} onClick={(e) => e.stopPropagation()}>
         <div style={st.mdHead}>
-          <div style={st.mdTitle}>Заявка на расход средств (ЗРС)</div>
+          <div style={st.mdTitle}>{prefill ? "Копия заявки (ЗРС)" : "Заявка на расход средств (ЗРС)"}</div>
           <button style={st.iconBtn} onClick={onClose}><X size={17} /></button>
         </div>
 
