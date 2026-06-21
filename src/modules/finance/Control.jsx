@@ -123,7 +123,11 @@ export function Control() {
 
   if (loading || periodsLoading) return <div style={st.empty}><Loader2 size={18} className="spin" /> Загрузка…</div>;
 
-  const GRID = isMobile ? "1fr 105px 120px" : "1fr 70px 140px 170px 140px 90px";
+  // minmax(0,…) — чтобы колонка-имя могла сжиматься уже своего контента
+  // (иначе на телефоне строка не влезает в ширину экрана). minWidth строки
+  // (унаследованный из st.frow=720) на мобайле сбрасываем ниже.
+  const GRID = isMobile ? "minmax(0,1fr) 105px 120px" : "1fr 70px 140px 170px 140px 90px";
+  const frowFit = isMobile ? { minWidth: 0 } : null;
 
   return (<>
     <section style={st.hero}>
@@ -176,7 +180,7 @@ export function Control() {
 
         {!shownAccounts.length && <div style={st.empty}>Счетов ДС пока нет — добавьте кассу или банковский счёт</div>}
         {shownAccounts.length > 0 && (<>
-          <div style={{ ...st.frow, ...st.frowHead, gridTemplateColumns: GRID }}>
+          <div style={{ ...st.frow, ...st.frowHead, gridTemplateColumns: GRID, ...frowFit }}>
             <div style={st.fName}>Счёт / касса</div>
             {!isMobile && <div style={st.fPct}>Валюта</div>}
             <div style={st.fNum}>Расчёт</div>
@@ -192,7 +196,7 @@ export function Control() {
             const ok = d !== null && Math.abs(d) < 0.01;
             const saved = recons[a.id];
             return (
-              <div key={a.id} style={{ ...st.frow, gridTemplateColumns: GRID }} className="frow">
+              <div key={a.id} style={{ ...st.frow, gridTemplateColumns: GRID, ...frowFit }} className="frow">
                 <div style={st.fName}>
                   <div style={st.fundTop}>
                     <Icon size={15} color={C.green} />
@@ -227,7 +231,7 @@ export function Control() {
               </div>
             );
           })}
-          <div style={{ ...st.frow, ...st.frowTotal, gridTemplateColumns: GRID }}>
+          <div style={{ ...st.frow, ...st.frowTotal, gridTemplateColumns: GRID, ...frowFit }}>
             <div style={st.fName}><b>Итого (TJS)</b></div>
             {!isMobile && <div style={st.fPct} />}
             <div style={{ ...st.fNum, fontWeight: 700, color: C.sub }}>{fmt(totals.calc)}</div>
