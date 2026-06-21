@@ -68,13 +68,13 @@ export const THEMES = {
     bg: "transparent",
     panel: "rgba(42, 54, 68, 0.60)", panel2: "rgba(255,255,255,0.05)", line: "rgba(255,255,255,0.11)",
     glassBorder: "rgba(255,255,255,0.15)", glassHi: "rgba(255,255,255,0.20)",
-    // бренд-акцент авторский из оригинала (--c-action dim = розовый)
-    green: "#ff48a9", greenSoft: "#ff48a9", onAccent: "#ffffff", text: "#d5dbe2", sub: "#aab6c2", faint: "#74808d",
+    // бренд-акцент dim — тёмный индиго (выбор заказчика вместо розового)
+    green: "#1e3a8f", greenSoft: "#1e3a8f", onAccent: "#ffffff", text: "#d5dbe2", sub: "#aab6c2", faint: "#74808d",
     money: "#2fbf6f",
     inputBg: "rgba(255,255,255,0.06)", rowChild: "rgba(255,255,255,0.02)", rowHover: "rgba(255,255,255,0.05)",
     navHover: "rgba(255,255,255,0.06)", heroGrad: "rgba(42, 54, 68, 0.60)",
     heroLabel: "#c8e6d6", heroStat: "#a8c4d4", barBg: "rgba(255,255,255,0.11)", danger: "#ff6b5e",
-    blueLink: "#ff48a9", menuHover: "rgba(255,255,255,0.07)", shadow: "rgba(0,0,0,0.40)",
+    blueLink: "#5b8def", menuHover: "rgba(255,255,255,0.07)", shadow: "rgba(0,0,0,0.40)",
     solid: "#1c2733", solid2: "#23303e",
     mono: 'ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace',
     info: "#5b8def", warning: "#e8911c", success: "#2f9e44", successSoft: "#7bd88f",

@@ -33,10 +33,10 @@
 }
 .switcher-app:has(input[value="dim"]:checked) {
   --c-light: #99deff;
-  --c-dark: #20001b;
-  --c-glass: hsl(335 250% 74% / 1);
+  --c-dark: #001022;
+  --c-glass: hsl(222 65% 70% / 1);
   --c-content: #d5dbe2;
-  --c-action: #ff48a9;
+  --c-action: #1e3a8f;
   --glass-reflex-dark: 2;
   --glass-reflex-light: 0.7;
   --saturation: 200%;
