@@ -112,7 +112,7 @@ export function Login({ onEnter }) {
 
 export const makeLg = (C) => ({
   screen: { minHeight: "100vh", background: C.bg, color: C.text, fontFamily: "'Inter',system-ui,sans-serif", position: "relative", overflow: "hidden" },
-  glow: { position: "absolute", inset: 0, background: "radial-gradient(120% 80% at 50% 120%, rgba(91,141,239,0.30) 0%, rgba(40,120,200,0.16) 35%, rgba(14,16,17,0) 70%)", pointerEvents: "none" },
+  glow: { display: "none" },
   top: { position: "relative", height: 72, display: "flex", alignItems: "center", padding: "0 28px", borderBottom: `1px solid ${C.line}`, background: "rgba(14,16,17,0.6)" },
   center: { position: "relative", display: "flex", justifyContent: "center", alignItems: "center", minHeight: "calc(100vh - 72px)", padding: 20 },
   card: { width: "100%", maxWidth: 400, background: C.panel, border: `1px solid ${C.line}`, borderRadius: 20, padding: "30px 26px", boxShadow: "0 20px 60px rgba(0,0,0,0.5)" },

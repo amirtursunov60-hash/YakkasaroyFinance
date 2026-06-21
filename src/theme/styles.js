@@ -47,7 +47,7 @@ export const makeStyles = (C) => ({
   main: { flex: 1, padding: "8px 8px 24px", minWidth: 0, width: "100%", maxWidth: 1080, margin: "0 auto" },
   // hero
   hero: { position: "relative", borderRadius: 20, overflow: "hidden", background: C.heroGrad, border: `1px solid ${C.line}`, marginBottom: 22 },
-  heroGlow: { position: "absolute", left: "8%", bottom: "-70%", width: "60%", height: "200%", background: "radial-gradient(circle, rgba(91,141,239,0.40) 0%, rgba(91,141,239,0.10) 45%, rgba(91,141,239,0) 65%)", filter: "blur(14px)" },
+  heroGlow: { display: "none" },
   heroContent: { position: "relative", padding: "24px 28px" },
   heroTop: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 22 },
   heroLabel: { fontSize: 12, color: C.heroLabel, opacity: 0.95, marginBottom: 6 },
@@ -125,7 +125,7 @@ export const makeStyles = (C) => ({
   // ---- Шапка-«герой» с крупным числом (Доходы/Расходы/дашборд) ----
   // Та же градиентная оболочка, что и st.hero — общий визуальный паттерн.
   incHero: { position: "relative", overflow: "hidden", background: C.panel, border: `1px solid ${C.glassBorder}`, borderRadius: 24, padding: "24px 24px", marginBottom: 16, boxShadow: `inset 0 1px 0 ${C.glassHi}, 0 10px 30px ${C.shadow}`, backdropFilter: "blur(20px) saturate(160%)", WebkitBackdropFilter: "blur(20px) saturate(160%)" },
-  incHeroGlow: { position: "absolute", left: "8%", bottom: "-70%", width: "60%", height: "200%", background: "radial-gradient(circle, rgba(91,141,239,0.40) 0%, rgba(91,141,239,0.10) 45%, rgba(91,141,239,0) 65%)", filter: "blur(14px)", pointerEvents: "none" },
+  incHeroGlow: { display: "none" },
   incHeroInner: { position: "relative", display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 16, flexWrap: "wrap" },
   incHeroLabel: { fontSize: 12.5, color: C.heroLabel, letterSpacing: 0.3, marginBottom: 10 },
   incHeroValue: { fontSize: 38, fontWeight: 800, letterSpacing: -0.5, lineHeight: 1, fontVariantNumeric: "tabular-nums" },

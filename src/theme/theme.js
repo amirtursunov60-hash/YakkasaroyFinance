@@ -22,7 +22,7 @@ export const THEMES = {
     // green не означал «всё сразу»: бренд/кнопки/активная вкладка ≠ деньги.
     money: "#2fbf6f",
     inputBg: "rgba(255,255,255,0.07)", rowChild: "rgba(255,255,255,0.02)", rowHover: "rgba(255,255,255,0.05)",
-    navHover: "rgba(255,255,255,0.06)", heroGrad: "linear-gradient(135deg, rgba(91,141,239,0.15) 0%, rgba(40,140,200,0.10) 55%, rgba(255,255,255,0.03) 100%)",
+    navHover: "rgba(255,255,255,0.06)", heroGrad: "rgba(28, 34, 44, 0.55)",
     heroLabel: "#c8e6d6", heroStat: "#a8c4d4", barBg: "rgba(255,255,255,0.10)", danger: "#ff6b5e",
     blueLink: "#03d5ff", menuHover: "rgba(255,255,255,0.07)", shadow: "rgba(0,0,0,0.45)",
     solid: "#141a24", solid2: "#1b2330",
@@ -47,7 +47,7 @@ export const THEMES = {
     green: "#0052f5", greenSoft: "#0052f5", onAccent: "#ffffff", text: "#222244", sub: "#45525e", faint: "#717c87",
     money: "#0a8f48", // деньги (приход/рост) — чуть глубже брендового зелёного
     inputBg: "rgba(255,255,255,0.65)", rowChild: "rgba(15,40,70,0.035)", rowHover: "rgba(255,255,255,0.6)",
-    navHover: "rgba(255,255,255,0.5)", heroGrad: "linear-gradient(135deg, rgba(47,111,219,0.16) 0%, rgba(40,120,210,0.10) 55%, rgba(255,255,255,0.35) 100%)",
+    navHover: "rgba(255,255,255,0.5)", heroGrad: "rgba(255, 255, 255, 0.55)",
     heroLabel: "#1a6e46", heroStat: "#2a6f7d", barBg: "rgba(15,40,70,0.12)", danger: "#dc3b30",
     blueLink: "#0052f5", menuHover: "rgba(255,255,255,0.55)", shadow: "rgba(31,55,90,0.16)",
     solid: "#ffffff", solid2: "#eef3f9",
@@ -72,7 +72,7 @@ export const THEMES = {
     green: "#ff48a9", greenSoft: "#ff48a9", onAccent: "#ffffff", text: "#d5dbe2", sub: "#aab6c2", faint: "#74808d",
     money: "#2fbf6f",
     inputBg: "rgba(255,255,255,0.06)", rowChild: "rgba(255,255,255,0.02)", rowHover: "rgba(255,255,255,0.05)",
-    navHover: "rgba(255,255,255,0.06)", heroGrad: "linear-gradient(135deg, rgba(91,141,239,0.14) 0%, rgba(40,140,200,0.10) 55%, rgba(255,255,255,0.04) 100%)",
+    navHover: "rgba(255,255,255,0.06)", heroGrad: "rgba(42, 54, 68, 0.60)",
     heroLabel: "#c8e6d6", heroStat: "#a8c4d4", barBg: "rgba(255,255,255,0.11)", danger: "#ff6b5e",
     blueLink: "#ff48a9", menuHover: "rgba(255,255,255,0.07)", shadow: "rgba(0,0,0,0.40)",
     solid: "#1c2733", solid2: "#23303e",
