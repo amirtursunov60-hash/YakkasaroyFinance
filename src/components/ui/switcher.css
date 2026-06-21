@@ -1,0 +1,124 @@
+/* Стили liquid-glass свитчера. Tailwind подключён глобально в src/index.css,
+   здесь — только @keyframes (из присланного сниппета) и реконструированный
+   стеклянный вид + стили демо-страницы. */
+
+@keyframes scaleToggle {
+  0% { scale: 1 1; }
+  50% { scale: 1.1 1; }
+  100% { scale: 1 1; }
+}
+@keyframes scaleToggle2 {
+  0% { scale: 1 1; }
+  50% { scale: 1.2 1; }
+  100% { scale: 1 1; }
+}
+@keyframes scaleToggle3 {
+  0% { scale: 1 1; }
+  50% { scale: 1.1 1; }
+  100% { scale: 1 1; }
+}
+
+/* ---- Liquid glass theme switcher (реконструкция) ---- */
+.switcher {
+  --size: 46px;
+  --gap: 5px;
+  position: relative;
+  display: inline-flex;
+  gap: var(--gap);
+  padding: var(--gap);
+  margin: 0;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 10px 34px rgba(0, 0, 0, 0.28);
+  isolation: isolate;
+}
+.switcher__legend {
+  position: absolute;
+  width: 1px; height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.switcher__option {
+  position: relative;
+  z-index: 1;
+  width: var(--size);
+  height: var(--size);
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  cursor: pointer;
+  --c: rgba(255, 255, 255, 0.55);
+}
+.switcher__input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.switcher__icon {
+  width: 26px;
+  height: 26px;
+  transition: scale 0.2s;
+}
+.switcher__option:has(.switcher__input:checked) { --c: #ffffff; }
+.switcher__option:has(.switcher__input:checked) .switcher__icon { scale: 1.08; }
+
+/* Скользящая стеклянная «пилюля» под активной опцией */
+.switcher::before {
+  content: "";
+  position: absolute;
+  top: var(--gap);
+  left: var(--gap);
+  width: var(--size);
+  height: var(--size);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 3px 12px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  transition: translate 0.38s cubic-bezier(0.5, 1.5, 0.45, 0.95);
+  z-index: 0;
+}
+.switcher:has([c-option="1"]:checked)::before { translate: 0 0; animation: scaleToggle 0.38s; }
+.switcher:has([c-option="2"]:checked)::before { translate: calc(var(--size) + var(--gap)) 0; animation: scaleToggle2 0.38s; }
+.switcher:has([c-option="3"]:checked)::before { translate: calc((var(--size) + var(--gap)) * 2) 0; animation: scaleToggle3 0.38s; }
+
+.switcher__filter { position: absolute; width: 0; height: 0; overflow: hidden; }
+
+/* ---- Demo page ---- */
+.theme-provider {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 28px 16px 72px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, system-ui, sans-serif;
+  transition: background 0.45s ease, color 0.45s ease;
+}
+.theme-provider[data-theme="light"] { background: #eef2f6; color: #1b2230; }
+.theme-provider[data-theme="dark"] { background: #0a0d12; color: #e6e9ee; }
+.theme-provider[data-theme="dim"] { background: #18212e; color: #d7dee7; }
+.theme-provider .switcher { position: sticky; top: 14px; }
+
+.article { max-width: 680px; width: 100%; line-height: 1.7; }
+.article h1 { font-size: 2.1rem; font-weight: 800; margin: 6px 0 14px; }
+.article h2 { font-size: 1.4rem; font-weight: 700; margin: 28px 0 10px; }
+.article p { margin: 12px 0; }
+.article a { color: #3ddc84; text-decoration: underline; }
+.article figure { margin: 22px 0; }
+.article img { width: 100%; border-radius: 16px; display: block; }
+.article figcaption { font-size: 0.85rem; opacity: 0.7; margin-top: 6px; }
+.article blockquote {
+  border-left: 3px solid #3ddc84;
+  padding: 4px 0 4px 16px;
+  margin: 20px 0;
+  font-style: italic;
+  opacity: 0.92;
+}
+.article .box { background: rgba(127, 127, 127, 0.14); border-radius: 14px; padding: 16px 18px; }

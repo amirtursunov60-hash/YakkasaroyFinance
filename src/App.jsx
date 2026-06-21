@@ -3,11 +3,16 @@ import { App } from "./components/AppShell";
 import { Login } from "./components/Login";
 import { useIsMobile } from "./hooks/useIsMobile";
 import { makeStyles } from "./theme/styles";
-import { THEMES, ThemeCtx } from "./theme/theme";
+import { THEMES, ThemeCtx, applyThemeVars } from "./theme/theme";
 import { supabase } from "./lib/supabase";
 import { getProfile, signOut } from "./lib/auth";
 import { redeemInvite } from "./lib/api";
 import { isSoundOn, setSoundOn } from "./lib/feedback";
+import SwitcherDemo from "@/components/ui/switcher-demo";
+
+// Демо фундамента Tailwind/shadcn по адресу <app>/#switcher — изолировано,
+// рабочее приложение не затрагивает.
+const isSwitcherDemo = typeof window !== "undefined" && window.location.hash.replace("#", "") === "switcher";
 
 // Токен приглашения из ссылки (?invite=…) сохраняем до завершения регистрации
 const url = new URL(window.location.href);
@@ -20,6 +25,11 @@ if (inviteParam) {
 
 
 export default function YakkasaroyFinance() {
+  if (isSwitcherDemo) return <SwitcherDemo />;
+  return <YakkasaroyApp />;
+}
+
+function YakkasaroyApp() {
   const [theme, setTheme] = useState("dark");
   const [lang, setLang] = useState("ru");
   const [sound, setSoundState] = useState(isSoundOn());   // звук/вибрация отдачи (по умолчанию выкл)
@@ -30,6 +40,8 @@ export default function YakkasaroyFinance() {
   const isMobile = useIsMobile();
   const C = THEMES[theme];
   const st = useMemo(() => makeStyles(C), [C]);
+  // Мост палитры → CSS-переменные (--c-*) для Tailwind/shadcn (один источник цвета).
+  useEffect(() => { applyThemeVars(C); }, [C]);
 
   // следим за сессией: при входе/выходе обновляем профиль
   useEffect(() => {
