@@ -20,7 +20,40 @@ export const makeCss = (C) => `
   .nav:hover{background:${C.navHover};}
   .mod:hover{color:${C.text};}
   .modbar::-webkit-scrollbar{display:none;}
-  .modbar{scrollbar-width:none;-ms-overflow-style:none;}
+  /* Трек вкладок — тот же стеклянный рецепт, что у свитчера (многослойные блики
+     --c-light/--c-dark + блюр), нейтральное стекло (бело/чёрные грани работают
+     в любой теме). Скроллбар скрыт. */
+  .modbar{
+    scrollbar-width:none;-ms-overflow-style:none;
+    background: rgba(190,190,195,0.12);
+    backdrop-filter: blur(8px) saturate(150%);
+    -webkit-backdrop-filter: blur(8px) saturate(150%);
+    box-shadow:
+      inset 0 0 0 1px rgba(255,255,255,0.10),
+      inset 1.8px 3px 0 -2px rgba(255,255,255,0.90),
+      inset -2px -2px 0 -2px rgba(255,255,255,0.80),
+      inset -3px -8px 1px -6px rgba(255,255,255,0.60),
+      inset -0.3px -1px 4px 0 rgba(0,0,0,0.12),
+      inset -1.5px 2.5px 0 -2px rgba(0,0,0,0.20),
+      inset 0 3px 4px -2px rgba(0,0,0,0.20),
+      inset 2px -6.5px 1px -4px rgba(0,0,0,0.10),
+      0 1px 5px 0 rgba(0,0,0,0.10),
+      0 6px 16px 0 rgba(0,0,0,0.08);
+  }
+  /* Пилюля — стекло как у свитчера (::after), нейтральное, без зелёного */
+  .modpill{
+    background: rgba(190,190,195,0.34);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    box-shadow:
+      inset 0 0 0 1px rgba(255,255,255,0.10),
+      inset 2px 1px 0 -1px rgba(255,255,255,0.90),
+      inset -1.5px -1px 0 -1px rgba(255,255,255,0.80),
+      inset -2px -6px 1px -5px rgba(255,255,255,0.60),
+      inset -1px 2px 3px -1px rgba(0,0,0,0.20),
+      inset 0 -4px 1px -2px rgba(0,0,0,0.10),
+      0 3px 6px 0 rgba(0,0,0,0.08);
+  }
   .frow:hover{background:${C.rowHover};}
   .trow{border-top:1px solid ${C.line};}
   .trow:hover{background:${C.rowHover};}
