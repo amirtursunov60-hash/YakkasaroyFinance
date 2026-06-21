@@ -48,9 +48,9 @@ const themeOptions: { value: Theme; cOption: string; icon: React.ReactNode }[] =
 
 export function ThemeSwitcher({ defaultValue = "light", value, onValueChange }: ThemeSwitcherProps) {
   const [internalValue, setInternalValue] = useState(defaultValue);
-  const [previousOption, setPreviousOption] = useState<string | null>(
-    themeOptions.find((opt) => opt.value === (value ?? internalValue))?.cOption || null,
-  );
+  // cOption предыдущей выбранной опции — нужен CSS, чтобы растянуть «пилюлю»
+  // тем сильнее, чем дальше прыжок (1→3 «течёт» больше, чем 1→2), как в оригинале.
+  const [previousOption, setPreviousOption] = useState<string | null>(null);
 
   const activeValue = value ?? internalValue;
 
@@ -65,13 +65,10 @@ export function ThemeSwitcher({ defaultValue = "light", value, onValueChange }: 
     else setInternalValue(newValue);
   };
 
-  // previousOption хранит cOption; для data-previous он же и нужен.
-  void previousOption;
-
   return (
     <fieldset
       className="switcher"
-      data-previous={themeOptions.find((o) => o.value === activeValue)?.cOption}
+      data-previous={previousOption ?? undefined}
     >
       <legend className="switcher__legend">Choose theme</legend>
 

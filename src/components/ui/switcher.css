@@ -2,19 +2,17 @@
    здесь — только @keyframes (из присланного сниппета) и реконструированный
    стеклянный вид + стили демо-страницы. */
 
-@keyframes scaleToggle {
+/* Растяжение «пилюли» при скольжении — тем сильнее, чем дальше прыжок
+   (эффект «течения» жидкого стекла). Степень выбирается по дистанции
+   между предыдущей и текущей опцией (data-previous + :has(:checked)). */
+@keyframes scaleToggle1 {
   0% { scale: 1 1; }
-  50% { scale: 1.1 1; }
+  50% { scale: 1.28 1; }
   100% { scale: 1 1; }
 }
 @keyframes scaleToggle2 {
   0% { scale: 1 1; }
-  50% { scale: 1.2 1; }
-  100% { scale: 1 1; }
-}
-@keyframes scaleToggle3 {
-  0% { scale: 1 1; }
-  50% { scale: 1.1 1; }
+  50% { scale: 1.6 1; }
   100% { scale: 1 1; }
 }
 
@@ -90,9 +88,19 @@
   transition: translate 0.42s cubic-bezier(0.34, 1.3, 0.4, 1);
   z-index: 0;
 }
-.switcher:has([c-option="1"]:checked)::before { translate: 0 0; animation: scaleToggle 0.38s; }
-.switcher:has([c-option="2"]:checked)::before { translate: calc(var(--size) + var(--gap)) 0; animation: scaleToggle2 0.38s; }
-.switcher:has([c-option="3"]:checked)::before { translate: calc((var(--size) + var(--gap)) * 2) 0; animation: scaleToggle3 0.38s; }
+/* Позиция «пилюли» — по выбранной опции */
+.switcher:has([c-option="1"]:checked)::before { translate: 0 0; }
+.switcher:has([c-option="2"]:checked)::before { translate: calc(var(--size) + var(--gap)) 0; }
+.switcher:has([c-option="3"]:checked)::before { translate: calc((var(--size) + var(--gap)) * 2) 0; }
+
+/* Растяжение — по дистанции прыжка (|текущая − предыдущая|). Дистанция 1 */
+.switcher[data-previous="1"]:has([c-option="2"]:checked)::before,
+.switcher[data-previous="2"]:has([c-option="1"]:checked)::before,
+.switcher[data-previous="2"]:has([c-option="3"]:checked)::before,
+.switcher[data-previous="3"]:has([c-option="2"]:checked)::before { animation: scaleToggle1 0.42s; }
+/* Дистанция 2 (через всю шкалу) — «течёт» сильнее */
+.switcher[data-previous="1"]:has([c-option="3"]:checked)::before,
+.switcher[data-previous="3"]:has([c-option="1"]:checked)::before { animation: scaleToggle2 0.42s; }
 
 .switcher__filter { position: absolute; width: 0; height: 0; overflow: hidden; }
 
