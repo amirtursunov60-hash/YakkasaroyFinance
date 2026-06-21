@@ -26,6 +26,8 @@ export const THEMES = {
     heroLabel: "#c8e6d6", heroStat: "#a8c4d4", barBg: "rgba(255,255,255,0.10)", danger: "#ff6b5e",
     blueLink: "#7fb4ff", menuHover: "rgba(255,255,255,0.07)", shadow: "rgba(0,0,0,0.45)",
     solid: "#141a24", solid2: "#1b2330",
+    // Параметры «жидкого стекла» свитчера для этой темы (трек/пилюля вкладок берут их же)
+    glass: { c: "#bbbbbc", light: "#fff", dark: "#000", rl: 0.3, rd: 2, sat: "150%" },
     // Моноширинный шрифт для денежных сумм (плотные поверхности данных)
     mono: 'ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace',
     // Семантические цвета статусов (единые для всех модулей)
@@ -51,6 +53,7 @@ export const THEMES = {
     heroLabel: "#1a6e46", heroStat: "#2a6f7d", barBg: "rgba(15,40,70,0.12)", danger: "#dc3b30",
     blueLink: "#1565e0", menuHover: "rgba(255,255,255,0.55)", shadow: "rgba(31,55,90,0.16)",
     solid: "#ffffff", solid2: "#eef3f9",
+    glass: { c: "#bbbbbc", light: "#fff", dark: "#000", rl: 1, rd: 1, sat: "150%" },
     // Моноширинный шрифт для денежных сумм (плотные поверхности данных)
     mono: 'ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace',
     // Семантические цвета статусов — затемнены под светлый фон для контраста
@@ -76,6 +79,7 @@ export const THEMES = {
     heroLabel: "#c8e6d6", heroStat: "#a8c4d4", barBg: "rgba(255,255,255,0.11)", danger: "#ff6b5e",
     blueLink: "#7fb4ff", menuHover: "rgba(255,255,255,0.07)", shadow: "rgba(0,0,0,0.40)",
     solid: "#1c2733", solid2: "#23303e",
+    glass: { c: "hsl(222 65% 70% / 1)", light: "#99deff", dark: "#001022", rl: 0.7, rd: 2, sat: "200%" },
     mono: 'ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace',
     info: "#5b8def", warning: "#e8911c", success: "#2f9e44", successSoft: "#7bd88f",
     gold: "#d6c14a", violet: "#9c6ade", teal: "#5bd6c9",
