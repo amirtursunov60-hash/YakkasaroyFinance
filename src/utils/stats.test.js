@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { calcState, weekLabels } from "./stats";
+import { calcState, weekLabels, quotaAchievement } from "./stats";
 
 // Состояния ХМС по тренду последних 4 недель (Власть/Изобилие/Норма/ЧП/Опасность).
 // Несуществование — когда данных меньше 4 недель.
@@ -34,6 +34,26 @@ describe("calcState", () => {
   it("invert: для обратных статистик спад трактуется как рост", () => {
     // расходы падают — для invert-статистики это власть
     expect(calcState([140, 120, 110, 100], true)).toBe("power");
+  });
+});
+
+describe("quotaAchievement", () => {
+  it("null, если нет факта, плана или план = 0", () => {
+    expect(quotaAchievement(null, 100)).toBeNull();
+    expect(quotaAchievement(100, null)).toBeNull();
+    expect(quotaAchievement(100, 0)).toBeNull();
+  });
+
+  it("обычная статистика: план выполнен, когда факт ≥ плана", () => {
+    expect(quotaAchievement(120, 100, false)).toEqual({ pct: 120, met: true });
+    expect(quotaAchievement(90, 100, false)).toEqual({ pct: 90, met: false });
+    expect(quotaAchievement(100, 100, false)).toEqual({ pct: 100, met: true });
+  });
+
+  it("invert-статистика: план выполнен, когда факт ≤ плана", () => {
+    // расходы/жалобы: меньше плана — хорошо
+    expect(quotaAchievement(80, 100, true)).toEqual({ pct: 80, met: true });
+    expect(quotaAchievement(130, 100, true)).toEqual({ pct: 130, met: false });
   });
 });
 
