@@ -60,6 +60,16 @@ export const THEMES = {
   },
 };
 
+// Мост палитры → CSS-переменные (--c-*) для Tailwind/shadcn. Вызывается при
+// смене темы: и инлайн-`st` (берёт C напрямую), и классы Tailwind (через
+// @theme в index.css) получают один и тот же цвет. Имена синхронны с @theme.
+const TW_VAR_KEYS = ["bg", "panel", "panel2", "line", "text", "sub", "faint", "green", "money", "danger", "info", "warning", "success"];
+export function applyThemeVars(C) {
+  if (typeof document === "undefined" || !C) return;
+  const r = document.documentElement.style;
+  for (const k of TW_VAR_KEYS) r.setProperty(`--c-${k}`, C[k]);
+}
+
 export const ThemeCtx = React.createContext({ C: THEMES.dark, st: null, theme: "dark", setTheme: () => {}, lang: "ru", setLang: () => {}, isMobile: false });
 
 export const useTheme = () => React.useContext(ThemeCtx);

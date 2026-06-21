@@ -9,3 +9,48 @@ html, body {
   overscroll-behavior: none;
   -webkit-text-size-adjust: 100%;
 }
+
+/* ============================================================================
+   Tailwind v4 — БЕЗ preflight, чтобы глобальный reset НЕ сбрасывал инлайн-стили
+   текущих экранов (оформление ядра — в src/theme/). Подключены только слои
+   theme (токены) и utilities (классы) + tw-animate-css.
+   ============================================================================ */
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+@import "tw-animate-css";
+
+/* Мост палитры: семантические цвета Tailwind ссылаются на CSS-переменные,
+   которые App.jsx выставляет из активной темы (THEMES → applyThemeVars).
+   ЕДИНЫЙ источник правды по цвету — и инлайн-`st`, и классы Tailwind
+   (bg-panel, text-money, border-line…) берут один и тот же цвет и следуют
+   переключению темы (dark/light). */
+@theme inline {
+  --color-bg: var(--c-bg);
+  --color-panel: var(--c-panel);
+  --color-panel2: var(--c-panel2);
+  --color-line: var(--c-line);
+  --color-text: var(--c-text);
+  --color-sub: var(--c-sub);
+  --color-faint: var(--c-faint);
+  --color-brand: var(--c-green);
+  --color-money: var(--c-money);
+  --color-danger: var(--c-danger);
+  --color-info: var(--c-info);
+  --color-warning: var(--c-warning);
+  --color-success: var(--c-success);
+}
+
+/* Базовый сброс ТОЛЬКО для поддеревьев на Tailwind/shadcn (класс .tw-scope),
+   повторяет нужное из preflight (border-box + дефолт рамки для утилиты
+   `border`), не затрагивая существующие экраны. Новые Tailwind-компоненты
+   рендерим внутри элемента с className="tw-scope". */
+@layer base {
+  .tw-scope,
+  .tw-scope *,
+  .tw-scope ::before,
+  .tw-scope ::after {
+    box-sizing: border-box;
+    border: 0 solid var(--c-line, currentColor);
+  }
+}
