@@ -6,6 +6,11 @@ import { useTheme } from "../../theme/theme";
 import { fmt } from "../../utils/format";
 import { usePeriod, periodTitle, periodTitleShort } from "../../lib/PeriodCtx";
 import { fetchReportData, fetchFundFlows, fetchFunds, fetchIncomeRefs } from "../../lib/api";
+import {
+  expenseAmount, expenseLocation, marginPct,
+  filterIncomesByLocation, filterExpensesByLocation,
+  aggregateByWeek, sumTotals, expensesByType, aggregateByLocation,
+} from "../../lib/reports";
 
 
 // ---------------------------------------------------------------- REPORTS
@@ -68,42 +73,19 @@ export function Reports() {
   }, [range, periodId, periodsLoading]);
   useEffect(() => { load(); }, [load]);
 
-  // -------- агрегаты (с учётом переключателя «вся сеть / точка»)
-  const expAmount = (r) => -(Number(r.fund_amount ?? r.cash_amount) || 0);
-  const expLocation = (r) => r.request?.location_id || r.bill?.location_id || null;
-  const fIncomes = useMemo(() => ctxLocationId
-    ? data.incomes.filter((i) => i.location_id === ctxLocationId) : data.incomes, [data, ctxLocationId]);
-  const fExpenses = useMemo(() => ctxLocationId
-    ? data.expenses.filter((e) => expLocation(e) === ctxLocationId) : data.expenses, [data, ctxLocationId]);
+  // -------- агрегаты (с учётом переключателя «вся сеть / точка»). Чистая логика —
+  // в lib/reports.ts (там же unit-тесты), здесь только мемоизация по данным экрана.
+  const fIncomes = useMemo(() => filterIncomesByLocation(data.incomes, ctxLocationId), [data, ctxLocationId]);
+  const fExpenses = useMemo(() => filterExpensesByLocation(data.expenses, ctxLocationId), [data, ctxLocationId]);
 
-  const byWeek = useMemo(() => range.map((p) => {
-    const inc = fIncomes.filter((i) => i.period_id === p.id)
-      .reduce((a, i) => a + (i.is_return ? -i.amount_base : Number(i.amount_base)), 0);
-    const exp = fExpenses.filter((e) => e.period_id === p.id)
-      .reduce((a, e) => a + expAmount(e), 0);
-    return { period: p, inc, exp, net: inc - exp };
-  }), [range, fIncomes, fExpenses]);
+  const byWeek = useMemo(() => aggregateByWeek(range, fIncomes, fExpenses), [range, fIncomes, fExpenses]);
+  const totals = useMemo(() => sumTotals(byWeek), [byWeek]);
+  const margin = marginPct(totals.inc, totals.exp);
+  const expByType = useMemo(() => expensesByType(fExpenses), [fExpenses]);
+  const byLocation = useMemo(() => aggregateByLocation(locations, data.incomes, data.expenses), [locations, data]);
 
-  const totals = useMemo(() => byWeek.reduce(
-    (t, w) => ({ inc: t.inc + w.inc, exp: t.exp + w.exp }), { inc: 0, exp: 0 }), [byWeek]);
-  const margin = totals.inc > 0 ? ((totals.inc - totals.exp) / totals.inc) * 100 : 0;
-
-  const expByType = useMemo(() => {
-    const m = {};
-    for (const e of fExpenses) m[e.op_type] = (m[e.op_type] || 0) + expAmount(e);
-    return m;
-  }, [fExpenses]);
-
-  const byLocation = useMemo(() => locations.map((l) => {
-    const inc = data.incomes.filter((i) => i.location_id === l.id)
-      .reduce((a, i) => a + (i.is_return ? -i.amount_base : Number(i.amount_base)), 0);
-    const exp = data.expenses.filter((e) => expLocation(e) === l.id)
-      .reduce((a, e) => a + expAmount(e), 0);
-    return { loc: l, inc, exp, profit: inc - exp, margin: inc > 0 ? ((inc - exp) / inc) * 100 : 0 };
-  }).filter((x) => x.inc > 0 || x.exp > 0).sort((a, b) => b.profit - a.profit), [locations, data]);
-
-  const noLocExp = useMemo(() => data.expenses.filter((e) => !expLocation(e))
-    .reduce((a, e) => a + expAmount(e), 0), [data]);
+  const noLocExp = useMemo(() => data.expenses.filter((e) => !expenseLocation(e))
+    .reduce((a, e) => a + expenseAmount(e), 0), [data]);
 
   // -------- экспорт CSV текущей вкладки
   const exportCsv = () => {
