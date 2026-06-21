@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { ClipboardList, Calculator, CalendarDays, Check, RotateCcw, RotateCw, Lock, Unlock, Ban, ArrowRightLeft, Loader2, AlertCircle, CheckCircle2, X, Landmark, ChevronRight, Scale, TrendingUp, TrendingDown, Banknote, Wallet, Coins } from "lucide-react";
-import { Stat } from "../../components/common";
+import { Stat, ConfirmModal } from "../../components/common";
 import { useTheme } from "../../theme/theme";
 import { useScrollLock } from "../../hooks/useScrollLock";
 import { fmt } from "../../utils/format";
@@ -55,6 +55,16 @@ export function Directive() {
   const [folders, setFolders] = useState([]);         // папки фондов
   const [incomeByType, setIncomeByType] = useState({}); // факт дохода недели по видам
   const [calcFund, setCalcFund] = useState(null);     // { fund, stage } — модал-калькулятор
+  const [confirm, setConfirm] = useState(null);       // { title, message, tone, confirmLabel, resolve } — модал подтверждения
+
+  // Тематическая замена window.confirm: возвращает Promise<boolean>, разрешается
+  // при выборе в модале (Подтвердить → true, Отмена/закрытие → false).
+  const askConfirm = useCallback((opts) => new Promise((resolve) => {
+    setConfirm({ ...opts, resolve });
+  }), []);
+  const resolveConfirm = useCallback((value) => {
+    setConfirm((c) => { c?.resolve(value); return null; });
+  }, []);
 
   const isClosed = period?.status === "closed";
   const requestsBlocked = period?.status === "planning";
@@ -264,7 +274,7 @@ export function Directive() {
     const msg = hasLegacy
       ? "Это распределение проведено без разбивки по этапам — будет сброшено ВСЁ распределение периода, суммы спишутся из фондов. Продолжить?"
       : `Сбросить одобренный этап «${sg.title}»${hasRemainder ? " (включая перенесённый остаток)" : ""}? Суммы будут списаны из фондов.`;
-    if (!window.confirm(msg)) return;
+    if (!(await askConfirm({ title: hasLegacy ? "Сбросить всё распределение" : "Сбросить одобренный этап", message: msg, tone: "danger", confirmLabel: "Сбросить" }))) return;
     setBusy(`reset:${sg.key}`); setErr(""); setDone("");
     try {
       if (hasLegacy) await resetDistribution(periodId, "all");
@@ -294,7 +304,7 @@ export function Directive() {
     if (busy || !period) return;
     setErr(""); setDone("");
     if (isClosed) {
-      if (!window.confirm("Открыть неделю заново? Протокол Директивы будет удалён, операции периода снова разрешены.")) return;
+      if (!(await askConfirm({ title: "Открыть неделю заново", message: "Протокол Директивы будет удалён, операции периода снова разрешены.", tone: "danger", confirmLabel: "Открыть неделю" }))) return;
       setBusy("close");
       try {
         await reopenPeriod(periodId);
@@ -304,7 +314,7 @@ export function Directive() {
       finally { setBusy(null); }
       return;
     }
-    if (!window.confirm("Закрыть период ФП? Все операции периода будут заблокированы, протокол Директивы сохранится.")) return;
+    if (!(await askConfirm({ title: "Закрыть период ФП", message: "Все операции периода будут заблокированы, протокол Директивы сохранится.", tone: "warning", confirmLabel: "Закрыть период" }))) return;
     setBusy("close");
     try {
       const protocol = {
@@ -452,6 +462,11 @@ export function Directive() {
         busy={busy === `calcappr:${calcFund.fund.id}`} locked={isClosed || !period}
         onClose={() => setCalcFund(null)}
         onApprove={(amount) => doApproveFund(calcFund.fund, calcFund.stage.key, amount)} />
+    )}
+    {confirm && (
+      <ConfirmModal title={confirm.title} message={confirm.message} tone={confirm.tone}
+        confirmLabel={confirm.confirmLabel} busy={!!busy}
+        onConfirm={() => resolveConfirm(true)} onCancel={() => resolveConfirm(false)} />
     )}
   </>);
 }
