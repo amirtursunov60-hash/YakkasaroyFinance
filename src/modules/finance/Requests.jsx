@@ -6,6 +6,7 @@ import { useScrollLock } from "../../hooks/useScrollLock";
 import { fmt, avatarColor } from "../../utils/format";
 import { usePeriod, periodTitle } from "../../lib/PeriodCtx";
 import { AttachmentsBlock } from "../../components/AttachmentsBlock";
+import { MjPanel, MjSwitch } from "../manajet/MjPanel";
 import { feedbackSuccess, feedbackError } from "../../lib/feedback";
 import {
   fetchRequests, decideRequest, payRequest,
@@ -95,6 +96,7 @@ export function Requests() {
   const [showForm, setShowForm] = useState(false);
   const [busy, setBusy] = useState(null);
   const [reqFilter, setReqFilter] = useState("approved");   // здесь оплачиваем — по умолчанию «Одобрено»
+  const [src, setSrc] = useState("ours");                   // источник: наши данные / зеркало ManaJet
 
   const loadStatic = useCallback(async () => {
     try {
@@ -186,6 +188,7 @@ export function Requests() {
     finally { setBusy(null); }
   };
 
+  if (src === "manajet") return <MjPanel kind="requests" src={src} setSrc={setSrc} />;
   if (loading || periodsLoading) return <div style={st.empty}><Loader2 size={18} className="spin" /> Загрузка…</div>;
 
   // Счета поставщиков: одобрение/отклонение/оплата. Заявки-ЗРС рассматриваются
@@ -224,6 +227,7 @@ export function Requests() {
   };
 
   return (<>
+    <MjSwitch src={src} setSrc={setSrc} />
     <section style={st.hero}>
       <div style={st.heroGlow} />
       <div style={st.heroContent}>

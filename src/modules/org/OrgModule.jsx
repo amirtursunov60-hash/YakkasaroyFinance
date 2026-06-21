@@ -8,6 +8,7 @@ import { useTheme } from "../../theme/theme";
 import { useScrollLock } from "../../hooks/useScrollLock";
 import { avatarColor } from "../../utils/format";
 import { orgCounts, nextHatStatus } from "../../utils/org";
+import { MjPanel, MjSwitch } from "../manajet/MjPanel";
 import {
   fetchOrgChart, fetchPeopleBrief,
   createDivision, updateDivision, deleteDivision,
@@ -34,6 +35,7 @@ export function OrgModule({ view }) {
   const canDiv = isFinAdmin;                                     // отделения
 
   const [loading, setLoading] = useState(true);
+  const [src, setSrc] = useState("ours");   // наши данные / зеркало ManaJet
   const [err, setErr] = useState("");
   const [done, setDone] = useState("");
   const [busy, setBusy] = useState(null);
@@ -81,6 +83,7 @@ export function OrgModule({ view }) {
     [divisions, C.green],
   );
 
+  if (src === "manajet") return <MjPanel kind="positions" src={src} setSrc={setSrc} />;
   if (loading) return <div style={st.empty}><Loader2 size={18} className="spin" /> Загрузка…</div>;
 
   const banner = (<>
@@ -276,6 +279,7 @@ export function OrgModule({ view }) {
   );
 
   return (<>
+    <MjSwitch src={src} setSrc={setSrc} />
     {view === "o_hats" ? hatsView : chartView}
     {modal?.type === "division" && (
       <DivisionModal C={C} st={st} division={modal.division}

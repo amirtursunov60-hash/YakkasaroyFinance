@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { BillsScreen } from "./BillsScreen";
+import { MjPanel, MjSwitch } from "../manajet/MjPanel";
 
 // Счета поставщиков: фирмы, поставляющие продукты и хозтовары (ТЗ v2 §4.1.6)
 const UI = {
@@ -13,5 +15,10 @@ const UI = {
 };
 
 export function Suppliers() {
-  return <BillsScreen kind="supply" ui={UI} />;
+  const [src, setSrc] = useState("ours");
+  if (src === "manajet") return <MjPanel kind="bills" src={src} setSrc={setSrc} />;
+  return (<>
+    <MjSwitch src={src} setSrc={setSrc} />
+    <BillsScreen kind="supply" ui={UI} />
+  </>);
 }

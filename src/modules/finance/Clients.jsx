@@ -5,6 +5,7 @@ import { useTheme } from "../../theme/theme";
 import { useScrollLock } from "../../hooks/useScrollLock";
 import { fmt } from "../../utils/format";
 import { usePeriod } from "../../lib/PeriodCtx";
+import { MjPanel, MjSwitch } from "../manajet/MjPanel";
 import {
   fetchInvoices, fetchInvoicePayments, insertInvoice, cancelInvoice, payInvoice,
   fetchIncomeTypes, fetchIncomeRefs, fetchCounterparties, createCounterparty, isoDate,
@@ -35,6 +36,7 @@ export function Clients() {
   const canSubmit = ["owner", "fin_director", "accountant", "location_manager", "ops_director"].includes(profile?.role);
 
   const [loading, setLoading] = useState(true);
+  const [src, setSrc] = useState("ours");   // источник: наши данные / зеркало ManaJet
   const [err, setErr] = useState("");
   const [done, setDone] = useState("");
   const [invoices, setInvoices] = useState([]);
@@ -126,9 +128,11 @@ export function Clients() {
 
   const filtered = invoices.filter((i) => filter === "all" ? true : i.status === filter);
 
+  if (src === "manajet") return <MjPanel kind="invoices" src={src} setSrc={setSrc} />;
   if (loading || periodsLoading) return <div style={st.empty}><Loader2 size={18} className="spin" /> Загрузка…</div>;
 
   return (<>
+    <MjSwitch src={src} setSrc={setSrc} />
     <section style={st.hero}>
       <div style={st.heroGlow} />
       <div style={st.heroContent}>
