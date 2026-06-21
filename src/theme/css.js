@@ -1,5 +1,14 @@
 
-export const makeCss = (C) => `
+export const makeCss = (C) => {
+  // Стекло свитчера/вкладок — per-theme (как в .switcher-app): блики --c-light/
+  // --c-dark с множителями rl/rd, цвет стекла glass.c, насыщенность glass.sat.
+  const g = C.glass || { c: "#bbbbbc", light: "#fff", dark: "#000", rl: 1, rd: 1, sat: "150%" };
+  const mix = (col, pct) => `color-mix(in srgb, ${col} calc(${pct}), transparent)`;
+  const L = (p) => mix(g.light, `${g.rl} * ${p}%`);
+  const D = (p) => mix(g.dark, `${g.rd} * ${p}%`);
+  const trackShadow = `inset 0 0 0 1px ${L(10)}, inset 1.8px 3px 0 -2px ${L(90)}, inset -2px -2px 0 -2px ${L(80)}, inset -3px -8px 1px -6px ${L(60)}, inset -0.3px -1px 4px 0 ${D(12)}, inset -1.5px 2.5px 0 -2px ${D(20)}, inset 0 3px 4px -2px ${D(20)}, inset 2px -6.5px 1px -4px ${D(10)}, 0 1px 5px 0 ${D(10)}, 0 6px 16px 0 ${D(8)}`;
+  const pillShadow = `inset 0 0 0 1px ${L(10)}, inset 2px 1px 0 -1px ${L(90)}, inset -1.5px -1px 0 -1px ${L(80)}, inset -2px -6px 1px -5px ${L(60)}, inset -1px 2px 3px -1px ${D(20)}, inset 0 -4px 1px -2px ${D(10)}, 0 3px 6px 0 ${D(8)}`;
+  return `
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
   *{box-sizing:border-box;}
   /* Фон-градиент фиксируем во вьюпорте через ::before. background-attachment:fixed
@@ -19,6 +28,24 @@ export const makeCss = (C) => `
   }
   .nav:hover{background:${C.navHover};}
   .mod:hover{color:${C.text};}
+  .modbar::-webkit-scrollbar{display:none;}
+  /* Трек вкладок — тот же стеклянный рецепт, что у свитчера (многослойные блики
+     --c-light/--c-dark + блюр), нейтральное стекло (бело/чёрные грани работают
+     в любой теме). Скроллбар скрыт. */
+  .modbar{
+    scrollbar-width:none;-ms-overflow-style:none;
+    background: ${mix(g.c, "12%")};
+    backdrop-filter: blur(8px) saturate(${g.sat});
+    -webkit-backdrop-filter: blur(8px) saturate(${g.sat});
+    box-shadow: ${trackShadow};
+  }
+  /* Пилюля — стекло как у свитчера (::after), per-theme, без зелёного */
+  .modpill{
+    background: ${mix(g.c, "36%")};
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    box-shadow: ${pillShadow};
+  }
   .frow:hover{background:${C.rowHover};}
   .trow{border-top:1px solid ${C.line};}
   .trow:hover{background:${C.rowHover};}
@@ -99,3 +126,4 @@ export const makeCss = (C) => `
     .heroTitle{font-size:21px;}
   }
 `;
+};

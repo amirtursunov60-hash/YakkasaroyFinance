@@ -1,6 +1,197 @@
-/* Стили liquid-glass свитчера. Tailwind подключён глобально в src/index.css,
-   здесь — только @keyframes (из присланного сниппета) и реконструированный
-   стеклянный вид + стили демо-страницы. */
+/* ============================================================================
+   In-app liquid-glass свитчер тем (меню профиля). Стекло — ТОЧНО из оригинала
+   (CodePen DenDionigi/JodwNzX): значения теней/фильтра/«пилюли» байт-в-байт.
+   Отличия от первоисточника (осознанные адаптации под приложение):
+   1) Цветовые переменные заданы на обёртке `.switcher-app`, а НЕ на `body` —
+      свитчер не перекрашивает фон приложения (берём только его собственные
+      токены: --c-glass/--c-light/--c-dark/--c-content/--c-action/--saturation/
+      --glass-reflex-*; авторские цвета сохранены 1:1, включая розовый в dim).
+   2) Позиционирование: вместо `position: fixed` сверху экрана — `relative`
+      внутри выпадающего меню профиля.
+   Демо #switcher использует отдельный switcher-original.css (там body 1:1).
+   ============================================================================ */
+
+.switcher-app {
+  --c-glass: #bbbbbc;
+  --c-light: #fff;
+  --c-dark: #000;
+  --c-content: #224;
+  --c-action: #0052f5;
+  --glass-reflex-dark: 1;
+  --glass-reflex-light: 1;
+  --saturation: 150%;
+}
+.switcher-app:has(input[value="dark"]:checked) {
+  --c-glass: #bbbbbc;
+  --c-light: #fff;
+  --c-dark: #000;
+  --c-content: #e1e1e1;
+  --c-action: #03d5ff;
+  --glass-reflex-dark: 2;
+  --glass-reflex-light: 0.3;
+  --saturation: 150%;
+}
+.switcher-app:has(input[value="dim"]:checked) {
+  --c-light: #99deff;
+  --c-dark: #001022;
+  --c-glass: hsl(222 65% 70% / 1);
+  --c-content: #d5dbe2;
+  --c-action: #1e3a8f;
+  --glass-reflex-dark: 2;
+  --glass-reflex-light: 0.7;
+  --saturation: 200%;
+}
+
+.switcher-app .switcher {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 244px;
+  max-width: 100%;
+  height: 70px;
+  box-sizing: border-box;
+  padding: 8px 12px 10px;
+  margin: 0 auto;
+  border: none;
+  border-radius: 99em;
+  /* На 5% меньше оригинала (просьба заказчика) — масштабом, пропорции точные */
+  transform: scale(0.95);
+  transform-origin: center;
+  background-color: color-mix(in srgb, var(--c-glass) 12%, transparent);
+  backdrop-filter: blur(8px) url(#switcher) saturate(var(--saturation));
+  -webkit-backdrop-filter: blur(8px) saturate(var(--saturation));
+  box-shadow: inset 0 0 0 1px
+      color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 10%), transparent),
+    inset 1.8px 3px 0px -2px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 90%), transparent),
+    inset -2px -2px 0px -2px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 80%), transparent),
+    inset -3px -8px 1px -6px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 60%), transparent),
+    inset -0.3px -1px 4px 0px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 12%), transparent),
+    inset -1.5px 2.5px 0px -2px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 20%), transparent),
+    inset 0px 3px 4px -2px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 20%), transparent),
+    inset 2px -6.5px 1px -4px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 10%), transparent),
+    0px 1px 5px 0px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 10%), transparent),
+    0px 6px 16px 0px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 8%), transparent);
+  transition: background-color 400ms cubic-bezier(1, 0, 0.4, 1),
+    box-shadow 400ms cubic-bezier(1, 0, 0.4, 1);
+}
+
+.switcher-app .switcher__legend {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  border: 0;
+  padding: 0;
+  white-space: nowrap;
+  clip-path: inset(100%);
+  clip: rect(0 0 0 0);
+  overflow: hidden;
+}
+
+.switcher-app .switcher__input {
+  clip: rect(0 0 0 0);
+  clip-path: inset(100%);
+  height: 1px;
+  width: 1px;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+}
+
+.switcher-app .switcher__icon {
+  display: block;
+  width: 100%;
+  height: auto;
+  transition: scale 200ms cubic-bezier(0.5, 0, 0, 1);
+}
+
+.switcher-app .switcher__filter {
+  position: absolute;
+  width: 0;
+  height: 0;
+  z-index: -1;
+}
+
+.switcher-app .switcher__option {
+  --c: var(--c-content);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0 16px;
+  width: 68px;
+  height: 100%;
+  box-sizing: border-box;
+  border-radius: 99em;
+  opacity: 1;
+  transition: all 160ms;
+}
+.switcher-app .switcher__option:hover {
+  --c: var(--c-action);
+  cursor: pointer;
+}
+.switcher-app .switcher__option:hover .switcher__icon {
+  scale: 1.2;
+}
+.switcher-app .switcher__option:has(input:checked) {
+  --c: var(--c-content);
+  cursor: auto;
+}
+.switcher-app .switcher__option:has(input:checked) .switcher__icon {
+  scale: 1;
+}
+
+.switcher-app .switcher::after {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 4px;
+  display: block;
+  width: 84px;
+  height: calc(100% - 10px);
+  border-radius: 99em;
+  background-color: color-mix(in srgb, var(--c-glass) 36%, transparent);
+  z-index: -1;
+  box-shadow: inset 0 0 0 1px
+      color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 10%), transparent),
+    inset 2px 1px 0px -1px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 90%), transparent),
+    inset -1.5px -1px 0px -1px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 80%), transparent),
+    inset -2px -6px 1px -5px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 60%), transparent),
+    inset -1px 2px 3px -1px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 20%), transparent),
+    inset 0px -4px 1px -2px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 10%), transparent),
+    0px 3px 6px 0px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 8%), transparent);
+}
+
+.switcher-app .switcher:has(input[c-option="1"]:checked)::after {
+  translate: 0 0;
+  transform-origin: right;
+  transition: background-color 400ms cubic-bezier(1, 0, 0.4, 1),
+    box-shadow 400ms cubic-bezier(1, 0, 0.4, 1),
+    translate 400ms cubic-bezier(1, 0, 0.4, 1);
+  animation: scaleToggle 440ms ease;
+}
+.switcher-app .switcher:has(input[c-option="2"]:checked)::after {
+  translate: 76px 0;
+  transition: background-color 400ms cubic-bezier(1, 0, 0.4, 1),
+    box-shadow 400ms cubic-bezier(1, 0, 0.4, 1),
+    translate 400ms cubic-bezier(1, 0, 0.4, 1);
+  animation: scaleToggle2 440ms ease;
+}
+.switcher-app .switcher[c-previous="1"]:has(input[c-option="2"]:checked)::after {
+  transform-origin: left;
+}
+.switcher-app .switcher[c-previous="3"]:has(input[c-option="2"]:checked)::after {
+  transform-origin: right;
+}
+.switcher-app .switcher:has(input[c-option="3"]:checked)::after {
+  translate: 152px 0;
+  transform-origin: left;
+  transition: background-color 400ms cubic-bezier(1, 0, 0.4, 1),
+    box-shadow 400ms cubic-bezier(1, 0, 0.4, 1),
+    translate 400ms cubic-bezier(1, 0, 0.4, 1);
+  animation: scaleToggle3 440ms ease;
+}
 
 @keyframes scaleToggle {
   0% { scale: 1 1; }
@@ -17,108 +208,3 @@
   50% { scale: 1.1 1; }
   100% { scale: 1 1; }
 }
-
-/* ---- Liquid glass theme switcher (реконструкция) ---- */
-.switcher {
-  --size: 46px;
-  --gap: 5px;
-  position: relative;
-  display: inline-flex;
-  gap: var(--gap);
-  padding: var(--gap);
-  margin: 0;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(14px) saturate(160%);
-  -webkit-backdrop-filter: blur(14px) saturate(160%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 10px 34px rgba(0, 0, 0, 0.28);
-  isolation: isolate;
-}
-.switcher__legend {
-  position: absolute;
-  width: 1px; height: 1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
-}
-.switcher__option {
-  position: relative;
-  z-index: 1;
-  width: var(--size);
-  height: var(--size);
-  display: grid;
-  place-items: center;
-  border-radius: 999px;
-  cursor: pointer;
-  --c: rgba(255, 255, 255, 0.55);
-}
-.switcher__input {
-  position: absolute;
-  inset: 0;
-  margin: 0;
-  opacity: 0;
-  cursor: pointer;
-}
-.switcher__icon {
-  width: 26px;
-  height: 26px;
-  transition: scale 0.2s;
-}
-.switcher__option:has(.switcher__input:checked) { --c: #ffffff; }
-.switcher__option:has(.switcher__input:checked) .switcher__icon { scale: 1.08; }
-
-/* Скользящая стеклянная «пилюля» под активной опцией */
-.switcher::before {
-  content: "";
-  position: absolute;
-  top: var(--gap);
-  left: var(--gap);
-  width: var(--size);
-  height: var(--size);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.16);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 3px 12px rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(3px);
-  -webkit-backdrop-filter: blur(3px);
-  transition: translate 0.38s cubic-bezier(0.5, 1.5, 0.45, 0.95);
-  z-index: 0;
-}
-.switcher:has([c-option="1"]:checked)::before { translate: 0 0; animation: scaleToggle 0.38s; }
-.switcher:has([c-option="2"]:checked)::before { translate: calc(var(--size) + var(--gap)) 0; animation: scaleToggle2 0.38s; }
-.switcher:has([c-option="3"]:checked)::before { translate: calc((var(--size) + var(--gap)) * 2) 0; animation: scaleToggle3 0.38s; }
-
-.switcher__filter { position: absolute; width: 0; height: 0; overflow: hidden; }
-
-/* ---- Demo page ---- */
-.theme-provider {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 24px;
-  padding: 28px 16px 72px;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, system-ui, sans-serif;
-  transition: background 0.45s ease, color 0.45s ease;
-}
-.theme-provider[data-theme="light"] { background: #eef2f6; color: #1b2230; }
-.theme-provider[data-theme="dark"] { background: #0a0d12; color: #e6e9ee; }
-.theme-provider[data-theme="dim"] { background: #18212e; color: #d7dee7; }
-.theme-provider .switcher { position: sticky; top: 14px; }
-
-.article { max-width: 680px; width: 100%; line-height: 1.7; }
-.article h1 { font-size: 2.1rem; font-weight: 800; margin: 6px 0 14px; }
-.article h2 { font-size: 1.4rem; font-weight: 700; margin: 28px 0 10px; }
-.article p { margin: 12px 0; }
-.article a { color: #3ddc84; text-decoration: underline; }
-.article figure { margin: 22px 0; }
-.article img { width: 100%; border-radius: 16px; display: block; }
-.article figcaption { font-size: 0.85rem; opacity: 0.7; margin-top: 6px; }
-.article blockquote {
-  border-left: 3px solid #3ddc84;
-  padding: 4px 0 4px 16px;
-  margin: 20px 0;
-  font-style: italic;
-  opacity: 0.92;
-}
-.article .box { background: rgba(127, 127, 127, 0.14); border-radius: 14px; padding: 16px 18px; }

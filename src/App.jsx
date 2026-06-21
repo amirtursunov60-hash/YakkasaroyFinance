@@ -102,7 +102,7 @@ function YakkasaroyApp() {
               Попросите владельца или директора прислать ссылку-приглашение
               (Сотрудники → Приглашения) и откройте её.
             </div>
-            <button onClick={handleLogout} style={{ background: C.green, color: "#04130a",
+            <button onClick={handleLogout} style={{ background: C.green, color: C.onAccent,
               border: "none", padding: "12px 22px", borderRadius: 12, fontSize: 14,
               fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
               Выйти

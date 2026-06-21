@@ -1,5 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from "react";
-import { X, Menu, User2, Settings, LogOut, Sun, Moon, Volume2, VolumeX, List } from "lucide-react";
+import { X, Menu, User2, Settings, LogOut, Volume2, VolumeX, List } from "lucide-react";
+import { ThemeSwitcher } from "./ui/apple-liquid-glass-switcher";
+import "./ui/switcher.css";
 import { Stub } from "./common";
 import { MODULES, MODULE_NAV } from "../data/navigation";
 import { avatarColor } from "../utils/format";
@@ -67,6 +69,19 @@ export function App({ onLogout }) {
     const t = setTimeout(center, 220);  // повтор после загрузки шрифтов/раскладки
     return () => { cancelAnimationFrame(r); clearTimeout(t); };
   }, [active, activeModule, isMobile]);
+  // Замер активной вкладки → позиция/ширина скользящей пилюли (в координатах ленты)
+  const [pill, setPill] = useState({ left: 0, width: 0, ready: false });
+  useEffect(() => {
+    const measure = () => {
+      const el = activeNavRef.current;
+      if (!el) return;
+      setPill({ left: el.offsetLeft, width: el.offsetWidth, ready: true });
+    };
+    const r = requestAnimationFrame(measure);
+    const t = setTimeout(measure, 240);  // повтор после загрузки шрифтов/раскладки
+    window.addEventListener("resize", measure);
+    return () => { cancelAnimationFrame(r); clearTimeout(t); window.removeEventListener("resize", measure); };
+  }, [active, activeModule, isMobile, navList.length]);
   const pick = (key) => { setActive(key); setMenuOpen(false); };
   // Раздел по умолчанию при переходе в модуль: Финансы → Директива, Ресторан → Меню
   const DEFAULT_SECTION = { finance: "directive", restaurant: "r_menu" };
@@ -91,9 +106,9 @@ export function App({ onLogout }) {
           <div style={{
             display: "grid", placeItems: "center", flexShrink: 0,
             width: 40, height: 40, borderRadius: "50%",
-            background: `linear-gradient(135deg, #14271d, #0b1611)`,
+            background: "#0f1c15",
             border: `1px solid ${C.green}3a`,
-            boxShadow: `0 4px 14px ${C.green}55, inset 0 1px 0 rgba(255,255,255,0.35)`,
+            boxShadow: `0 4px 14px ${C.green}40, inset 0 1px 0 rgba(255,255,255,0.35)`,
           }}>
             <img src="/icons/logo-mark.png" alt="Яккасарой"
               style={{ width: "84%", height: "84%", objectFit: "contain" }} />
@@ -140,9 +155,9 @@ export function App({ onLogout }) {
                       {lang === "ru" ? "RU" : "ТҶ"}
                     </div>
                   </div>
-                  <div style={st.themeToggle}>
-                    <button style={{ ...st.themeBtn, ...(theme === "light" ? st.themeBtnOn : {}) }} onClick={() => setTheme("light")}><Sun size={14} /> Light</button>
-                    <button style={{ ...st.themeBtn, ...(theme === "dark" ? st.themeBtnOn : {}) }} onClick={() => setTheme("dark")}><Moon size={14} /> Dark</button>
+                  {/* Тема: liquid-glass свитчер (light / dark / dim) — стекло 1:1 из оригинала */}
+                  <div className="tw-scope switcher-app" style={{ display: "flex", justifyContent: "center", padding: "6px 0 10px" }}>
+                    <ThemeSwitcher value={theme} onValueChange={setTheme} />
                   </div>
                   <div style={st.themeToggle}>
                     <button style={{ ...st.themeBtn, ...(sound ? st.themeBtnOn : {}) }} onClick={() => setSound(true)}><Volume2 size={14} /> Звук вкл</button>
@@ -162,10 +177,11 @@ export function App({ onLogout }) {
         </div>
       </header>
 
-      <nav ref={navBarRef} style={st.modBar}>
+      <nav ref={navBarRef} style={st.modBar} className="modbar">
+        <div className="modpill" style={{ ...st.modPill, left: pill.left, width: pill.width, opacity: pill.ready ? 1 : 0 }} />
         {navList.map((n) => { const Icon = n.icon; const on = active === n.key; return (
           <div key={n.key} ref={on ? activeNavRef : null} style={{ ...st.mod, ...(on ? st.modActive : {}) }} className="mod" onClick={() => pick(n.key)}>
-            <Icon size={17} strokeWidth={2} color={on ? C.green : C.sub} /><span>{n.label}</span>
+            <Icon size={17} strokeWidth={2} color={on ? C.text : C.sub} /><span>{n.label}</span>
           </div>); })}
       </nav>
 

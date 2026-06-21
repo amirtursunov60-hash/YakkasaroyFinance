@@ -48,6 +48,7 @@ const themeOptions: { value: Theme; cOption: string; icon: React.ReactNode }[] =
 
 export function ThemeSwitcher({ defaultValue = "light", value, onValueChange }: ThemeSwitcherProps) {
   const [internalValue, setInternalValue] = useState(defaultValue);
+  // Состояние из оригинала (CodePen DenDionigi/JodwNzX) — без изменений логики.
   const [previousOption, setPreviousOption] = useState<string | null>(
     themeOptions.find((opt) => opt.value === (value ?? internalValue))?.cOption || null,
   );
@@ -65,8 +66,7 @@ export function ThemeSwitcher({ defaultValue = "light", value, onValueChange }: 
     else setInternalValue(newValue);
   };
 
-  // previousOption хранит cOption; для data-previous он же и нужен.
-  void previousOption;
+  void previousOption; // в оригинале хранится в state; на data-previous идёт активная опция
 
   return (
     <fieldset

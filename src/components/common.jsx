@@ -12,10 +12,14 @@ export function FolderIcon({ color = "#e8911c" }) { return <svg width="16" heigh
 
 // tone: "danger" | "warning" | "success" — для сводных значений со знаком/здоровьем
 // (дефицит, расхождение, нетто). accent — устаревший «зелёный акцент», = tone:"success".
+// Отрицательное значение (строка с ведущим «-»/«−») всегда красное — кроме явного
+// tone "warning". Так минус везде читается как красный без правки каждого вызова.
 export function Stat({ label, value, unit, accent, tone }) {
   const { C, st } = useTheme();
+  const negative = typeof value === "string" && /^\s*[-−]/.test(value);
   const color = tone === "danger" ? C.danger
     : tone === "warning" ? C.warning
+    : negative ? C.danger
     : (tone === "success" || accent) ? C.green
     : C.text;
   return <div><div style={st.statLabel}>{label}</div><div style={{ ...st.statValue, color }}>{value} <span style={st.statUnit}>{unit}</span></div></div>;
