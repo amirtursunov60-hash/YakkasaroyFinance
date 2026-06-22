@@ -104,18 +104,22 @@ export function App({ onLogout }) {
         {isMobile && (
           <button style={st.burger} className="btn glass-pill-btn" onClick={() => setMenuOpen(true)}><Menu size={20} /></button>
         )}
-        <div style={{ ...st.brand, ...(isMobile ? { gap: 7 } : {}) }}>
-          <div style={{
-            display: "grid", placeItems: "center", flexShrink: 0,
-            width: 40, height: 40, borderRadius: "50%",
-            background: "#0f1c15",
-            border: `1px solid rgba(255,255,255,0.10)`,
-            boxShadow: `inset 0 1px 0 rgba(255,255,255,0.35)`,
-          }}>
-            <img src="/icons/logo-mark.png" alt="Яккасарой"
-              style={{ width: "84%", height: "84%", objectFit: "contain" }} />
+        {/* Логотип скрыт на телефоне: его роль выполняет гамбургер-меню, а место
+            в шапке нужно остальным элементам (иначе шапка не помещается). */}
+        {!isMobile && (
+          <div style={st.brand}>
+            <div style={{
+              display: "grid", placeItems: "center", flexShrink: 0,
+              width: 40, height: 40, borderRadius: "50%",
+              background: "#0f1c15",
+              border: `1px solid rgba(255,255,255,0.10)`,
+              boxShadow: `inset 0 1px 0 rgba(255,255,255,0.35)`,
+            }}>
+              <img src="/icons/logo-mark.png" alt="Яккасарой"
+                style={{ width: "84%", height: "84%", objectFit: "contain" }} />
+            </div>
           </div>
-        </div>
+        )}
         <WeekPicker />
         <LocationPicker />
         {(() => {
