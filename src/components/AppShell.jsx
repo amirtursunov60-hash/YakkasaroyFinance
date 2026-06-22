@@ -33,10 +33,12 @@ import { makeCss } from "../theme/css";
 import { useTheme } from "../theme/theme";
 import { PeriodProvider, WeekPicker, LocationPicker } from "../lib/PeriodCtx";
 import { GlobalSearch, NotifyBell } from "./TopWidgets";
+import { useIsWide } from "../hooks/useIsMobile";
 
 
 export function App({ onLogout }) {
   const { C, st, theme, setTheme, lang, setLang, sound, setSound, isMobile, profile } = useTheme();
+  const isWide = useIsWide(); // поиск в шапке — только на десктопе (не в альбомной на телефоне)
   const ROLE_LABELS = {
     owner: "Владелец",
     fin_director: "Финансовый директор",
@@ -104,22 +106,18 @@ export function App({ onLogout }) {
         {isMobile && (
           <button style={st.burger} className="btn glass-pill-btn" onClick={() => setMenuOpen(true)}><Menu size={20} /></button>
         )}
-        {/* Логотип скрыт на телефоне: его роль выполняет гамбургер-меню, а место
-            в шапке нужно остальным элементам (иначе шапка не помещается). */}
-        {!isMobile && (
-          <div style={st.brand}>
-            <div style={{
-              display: "grid", placeItems: "center", flexShrink: 0,
-              width: 40, height: 40, borderRadius: "50%",
-              background: "#0f1c15",
-              border: `1px solid rgba(255,255,255,0.10)`,
-              boxShadow: `inset 0 1px 0 rgba(255,255,255,0.35)`,
-            }}>
-              <img src="/icons/logo-mark.png" alt="Яккасарой"
-                style={{ width: "84%", height: "84%", objectFit: "contain" }} />
-            </div>
+        <div style={{ ...st.brand, ...(isMobile ? { gap: 7 } : {}) }}>
+          <div style={{
+            display: "grid", placeItems: "center", flexShrink: 0,
+            width: 40, height: 40, borderRadius: "50%",
+            background: "#0f1c15",
+            border: `1px solid rgba(255,255,255,0.10)`,
+            boxShadow: `inset 0 1px 0 rgba(255,255,255,0.35)`,
+          }}>
+            <img src="/icons/logo-mark.png" alt="Яккасарой"
+              style={{ width: "84%", height: "84%", objectFit: "contain" }} />
           </div>
-        )}
+        </div>
         <WeekPicker />
         <LocationPicker />
         {(() => {
@@ -140,7 +138,7 @@ export function App({ onLogout }) {
             </button>
           );
         })()}
-        {!isMobile && <GlobalSearch onGo={(m, sec) => { setActiveModule(m); setActive(sec); }} />}
+        {isWide && <GlobalSearch onGo={(m, sec) => { setActiveModule(m); setActive(sec); }} />}
         <div style={{ ...st.topRight, ...(isMobile ? { gap: 6, marginLeft: "auto", flexShrink: 0 } : {}) }}>
           <NotifyBell onGo={(m, sec) => { setActiveModule(m); setActive(sec); }} />
           {!isMobile && <div style={st.user}><div style={st.uName}>{userName}</div><div style={st.uRole}>{userRole}</div></div>}
