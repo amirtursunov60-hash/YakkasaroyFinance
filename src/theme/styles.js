@@ -8,8 +8,8 @@
 // Шкала отступов (padding/margin/gap, ориентир): 4 / 8 / 12 / 16 / 24.
 export const makeStyles = (C) => ({
   app: { minHeight: "100vh", background: C.pageGrad, backgroundAttachment: "fixed", color: C.text, fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', system-ui, sans-serif", WebkitFontSmoothing: "antialiased", letterSpacing: "-0.01em" },
-  topbar: { height: 60, display: "flex", alignItems: "center", gap: 14, padding: "0 16px", background: C.panel, backdropFilter: "blur(24px) saturate(160%)", WebkitBackdropFilter: "blur(24px) saturate(160%)", borderBottom: `1px solid ${C.glassBorder}`, position: "sticky", top: 0, zIndex: 40 },
-  burger: { width: 40, height: 40, borderRadius: "50%", background: C.panel2, border: `1px solid ${C.glassBorder}`, color: C.text, cursor: "pointer", display: "grid", placeItems: "center", flexShrink: 0, boxShadow: `inset 0 1px 0 ${C.glassHi}`, backdropFilter: "blur(20px) saturate(160%)", WebkitBackdropFilter: "blur(20px) saturate(160%)" },
+  topbar: { height: 60, display: "flex", alignItems: "center", gap: 14, padding: "0 16px", borderBottom: `1px solid ${C.glassBorder}`, position: "sticky", top: 0, zIndex: 40 },
+  burger: { width: 40, height: 40, borderRadius: "50%", color: C.text, cursor: "pointer", display: "grid", placeItems: "center", flexShrink: 0 },
   brand: { display: "flex", alignItems: "center", gap: 11 },
   logo: { width: 36, height: 36, borderRadius: 11, background: C.green, color: C.onAccent, display: "grid", placeItems: "center", boxShadow: `0 4px 14px ${C.green}40` },
   brandTxt: { fontSize: 18, fontWeight: 800, letterSpacing: -0.4 }, brandThin: { color: C.sub, fontWeight: 500 },
@@ -18,7 +18,7 @@ export const makeStyles = (C) => ({
   topRight: { display: "flex", alignItems: "center", gap: 14, marginLeft: "auto" },
   user: { textAlign: "right" }, uName: { fontSize: 13, fontWeight: 700 }, uRole: { fontSize: 11, color: C.sub },
   iconBtn: { width: 40, height: 40, borderRadius: "50%", background: C.panel2, border: `1px solid ${C.glassBorder}`, color: C.sub, cursor: "pointer", display: "grid", placeItems: "center", boxShadow: `inset 0 1px 0 ${C.glassHi}`, backdropFilter: "blur(20px) saturate(160%)", WebkitBackdropFilter: "blur(20px) saturate(160%)" },
-  avatar: { width: 40, height: 40, borderRadius: "50%", background: C.green, color: C.onAccent, display: "grid", placeItems: "center", fontWeight: 800, fontSize: 13, cursor: "pointer", userSelect: "none", boxShadow: `0 4px 14px ${C.green}40` },
+  avatar: { width: 40, height: 40, borderRadius: "50%", background: C.green, color: C.onAccent, display: "grid", placeItems: "center", fontWeight: 800, fontSize: 13, cursor: "pointer", userSelect: "none", boxShadow: `inset 0 1px 0 rgba(255,255,255,0.35)` },
   profileWrap: { position: "relative" },
   profileOverlay: { position: "fixed", inset: 0, zIndex: 60, background: "rgba(0,0,0,0.4)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)" },
   profileMenu: { position: "absolute", top: 48, right: 0, width: 240, background: C.solid, backdropFilter: "blur(28px) saturate(180%)", WebkitBackdropFilter: "blur(28px) saturate(180%)", border: `1px solid ${C.glassBorder}`, borderRadius: 16, padding: 8, zIndex: 61, boxShadow: `inset 0 1px 0 ${C.glassHi}, 0 16px 40px ${C.shadow}` },
@@ -62,7 +62,7 @@ export const makeStyles = (C) => ({
   weekBtn: { display: "inline-flex", alignItems: "center", gap: 10, background: C.panel2, border: `1px solid ${C.glassBorder}`, color: C.text, cursor: "pointer", padding: "10px 16px", borderRadius: 14, fontFamily: "inherit", boxShadow: `inset 0 1px 0 ${C.glassHi}`, backdropFilter: "blur(20px) saturate(160%)", WebkitBackdropFilter: "blur(20px) saturate(160%)" },
   // Селектор недели ФП в шапке (общий для всех разделов)
   topWeekWrap: { position: "relative", flexShrink: 0 },
-  topWeekBtn: { display: "inline-flex", alignItems: "center", gap: 7, height: 40, background: C.panel, border: `1px solid ${C.line}`, color: C.text, cursor: "pointer", padding: "0 11px", borderRadius: 12, fontFamily: "inherit", fontSize: 13, fontWeight: 700, whiteSpace: "nowrap", fontVariantNumeric: "tabular-nums", boxShadow: `0 4px 14px ${C.green}55, inset 0 1px 0 rgba(255,255,255,0.35)` },
+  topWeekBtn: { display: "inline-flex", alignItems: "center", gap: 7, height: 40, color: C.text, cursor: "pointer", padding: "0 14px", borderRadius: 99, fontFamily: "inherit", fontSize: 13, fontWeight: 700, whiteSpace: "nowrap", fontVariantNumeric: "tabular-nums" },
   weekOverlay: { position: "fixed", inset: 0, zIndex: 60 },
   weekMenu: { position: "absolute", top: 50, left: 0, zIndex: 61, width: 260, maxHeight: 320, overflowY: "auto", background: C.solid, backdropFilter: "blur(28px) saturate(180%)", WebkitBackdropFilter: "blur(28px) saturate(180%)", border: `1px solid ${C.glassBorder}`, borderRadius: 16, padding: 8, boxShadow: `inset 0 1px 0 ${C.glassHi}, 0 16px 40px ${C.shadow}` },
   weekMenuHead: { fontSize: 11, textTransform: "uppercase", letterSpacing: 0.5, color: C.faint, fontWeight: 700, padding: "6px 10px 10px" },
@@ -77,7 +77,7 @@ export const makeStyles = (C) => ({
   cardWrap: { overflowX: "auto", borderRadius: 22, border: `1px solid ${C.glassBorder}`, marginBottom: 18, WebkitOverflowScrolling: "touch", boxShadow: `inset 0 1px 0 ${C.glassHi}, 0 10px 30px ${C.shadow}` },
   // Контейнер данных финэкранов — непрозрачный «банковский» фон для читаемости
   // плотных таблиц. Стекло остаётся для навигации и герой-карточек.
-  card: { background: C.solid, borderRadius: 22, border: `1px solid ${C.glassBorder}`, boxShadow: `0 10px 30px ${C.shadow}` },
+  card: { background: C.panel, borderRadius: 22, border: `1px solid ${C.glassBorder}`, boxShadow: `inset 0 1px 0 ${C.glassHi}, 0 10px 30px ${C.shadow}`, backdropFilter: "blur(20px) saturate(160%)", WebkitBackdropFilter: "blur(20px) saturate(160%)" },
   cardHead: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "18px 22px" },
   cardTitle: { fontSize: 17, fontWeight: 800 }, cardTotal: { fontSize: 16, fontWeight: 700, color: C.sub }, unit: { fontSize: 12, color: C.faint },
   subHead: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "11px 22px", background: C.panel2 },
@@ -115,7 +115,7 @@ export const makeStyles = (C) => ({
   cAct: { display: "flex", gap: 5, justifyContent: "flex-end", alignItems: "center" },
   miniBtn: { width: 28, height: 28, borderRadius: 8, background: C.panel2, border: `1px solid ${C.line}`, color: C.sub, cursor: "pointer", display: "grid", placeItems: "center" },
   // buttons
-  btnGreen: { display: "inline-flex", alignItems: "center", gap: 7, background: "linear-gradient(180deg, #5be88f 0%, #2fcf73 45%, #18b85f 100%)", color: "#fff", border: "1px solid rgba(255,255,255,0.35)", padding: "11px 18px", borderRadius: 14, fontSize: 13.5, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap", flexShrink: 0, textShadow: "0 1px 2px rgba(0,80,30,0.35)", boxShadow: "inset 0 2px 3px rgba(255,255,255,0.55), inset 0 -3px 6px rgba(0,90,40,0.4), 0 8px 22px rgba(40,200,110,0.55), 0 2px 6px rgba(0,0,0,0.15)" },
+  btnGreen: { display: "inline-flex", alignItems: "center", gap: 7, background: `color-mix(in srgb, ${C.green} 60%, transparent)`, color: "#fff", border: "1px solid rgba(255,255,255,0.30)", padding: "11px 18px", borderRadius: 14, fontSize: 13.5, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap", flexShrink: 0, textShadow: "0 1px 2px rgba(0,70,28,0.45)", boxShadow: `inset 0 1px 0 rgba(255,255,255,0.55), inset 0 -3px 8px ${C.green}55, 0 6px 18px ${C.green}40, 0 2px 6px rgba(0,0,0,0.18)`, backdropFilter: "blur(8px) saturate(160%)", WebkitBackdropFilter: "blur(8px) saturate(160%)" },
   btnGhost: { display: "inline-flex", alignItems: "center", gap: 6, background: "linear-gradient(180deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.08) 100%)", color: C.text, border: "1px solid rgba(255,255,255,0.45)", padding: "11px 16px", borderRadius: 14, fontSize: 13, cursor: "pointer", fontWeight: 600, fontFamily: "inherit", whiteSpace: "nowrap", flexShrink: 0, boxShadow: `inset 0 2px 2px rgba(255,255,255,0.5), inset 0 -2px 6px rgba(0,0,0,0.06), 0 8px 20px ${C.shadow}`, backdropFilter: "blur(16px) saturate(150%)", WebkitBackdropFilter: "blur(16px) saturate(150%)" },
   empty: { padding: "28px 22px", color: C.faint, fontSize: 14, textAlign: "center" },
   mCard: { margin: "10px 12px 0", padding: "14px 16px", background: C.panel2, borderRadius: 16 },
@@ -141,7 +141,7 @@ export const makeStyles = (C) => ({
   locCard: { background: C.panel, border: `1px solid ${C.glassBorder}`, borderRadius: 18, overflow: "hidden", boxShadow: `inset 0 1px 0 ${C.glassHi}, 0 8px 24px ${C.shadow}`, backdropFilter: "blur(20px) saturate(160%)", WebkitBackdropFilter: "blur(20px) saturate(160%)" },
   // Непрозрачный вариант карточки для плотных данных (Доходы/Расходы/Счета) —
   // «банковский» фон; locCard (стекло) остаётся для обзорных модулей.
-  dataCard: { background: C.solid, border: `1px solid ${C.glassBorder}`, borderRadius: 18, overflow: "hidden", boxShadow: `0 8px 24px ${C.shadow}` },
+  dataCard: { background: C.panel, border: `1px solid ${C.glassBorder}`, borderRadius: 18, overflow: "hidden", boxShadow: `inset 0 1px 0 ${C.glassHi}, 0 8px 24px ${C.shadow}`, backdropFilter: "blur(20px) saturate(160%)", WebkitBackdropFilter: "blur(20px) saturate(160%)" },
   locHead: { display: "flex", alignItems: "center", gap: 14, padding: "16px 18px", cursor: "pointer", userSelect: "none", transition: "background .15s" },
   locDot: { width: 10, height: 10, borderRadius: 4, flexShrink: 0 },
   locTitle: { flex: 1, minWidth: 0 },
@@ -164,7 +164,7 @@ export const makeStyles = (C) => ({
 
   // ---- Модальная форма ----
   mdOverlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 70, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 },
-  mdCard: { width: "min(560px, 100%)", maxHeight: "92vh", overflowY: "auto", background: C.solid, border: `1px solid ${C.glassBorder}`, borderRadius: 20, padding: "20px 22px 18px", boxShadow: `0 24px 60px ${C.shadow}` },
+  mdCard: { width: "min(560px, 100%)", maxHeight: "92vh", overflowY: "auto", background: C.panel, border: `1px solid ${C.glassBorder}`, borderRadius: 20, padding: "20px 22px 18px", boxShadow: `inset 0 1px 0 ${C.glassHi}, 0 24px 60px ${C.shadow}`, backdropFilter: "blur(24px) saturate(160%)", WebkitBackdropFilter: "blur(24px) saturate(160%)" },
   mdHead: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, gap: 10 },
   mdTitle: { fontSize: 17, fontWeight: 800 },
   mdGrid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 },

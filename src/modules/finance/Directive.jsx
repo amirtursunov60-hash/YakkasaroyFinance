@@ -7,6 +7,7 @@ import { fmt } from "../../utils/format";
 import { feedbackSuccess, feedbackError } from "../../lib/feedback";
 import { cascadeTypeStageBase, calcTypeRulesAmount } from "../../lib/distribution";
 import { usePeriod, periodTitle } from "../../lib/PeriodCtx";
+import { GlassSegment } from "../../components/ui/glass-segment";
 import {
   fetchFunds, fetchDefaultRules,
   fetchPeriodIncome, fetchPeriodDistribution, distributeStage, setPeriodStatus, closePeriod, reopenPeriod, resetDistribution,
@@ -533,7 +534,7 @@ function RequestsReview({ C, st, isMobile, profile, requests, funds, periodId, b
         <h3 style={st.reqSectionTitle}>Заявки к рассмотрению</h3>
         <span style={st.reqSectionSub}>от поста · формат ЗРС · поданные на эту неделю</span>
         {blocked && <span style={st.reqBlockedTag}><Lock size={12} /> Подача закрыта</span>}
-        <ViewToggle C={C} isMobile={isMobile} view={view} setView={setView} />
+        <ViewToggle isMobile={isMobile} view={view} setView={setView} />
       </div>
 
       <RequestStatusChips C={C} counts={counts} filter={filter} setFilter={setFilter} />
@@ -574,22 +575,19 @@ function RequestsReview({ C, st, isMobile, profile, requests, funds, periodId, b
 
 // ---------------------------------------------------------------- Переключатель вида списка заявок
 // «Список» — компактные строки; «Подробно» — карточки с ЗРС (как в ManaJet).
-function ViewToggle({ C, isMobile, view, setView }) {
-  const opts = [["list", "Список", List], ["detailed", "Подробно", LayoutList]];
+function ViewToggle({ isMobile, view, setView }) {
   return (
-    <div style={{ display: "flex", gap: 4, marginLeft: "auto" }}>
-      {opts.map(([key, label, Icon]) => {
-        const active = view === key;
-        return (
-          <button key={key} className="btn" onClick={() => setView(key)} title={label}
-            style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "6px 11px", borderRadius: 999,
-              fontSize: 12, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap",
-              border: `1px solid ${active ? `${C.green}66` : C.line}`,
-              background: active ? `${C.green}1f` : C.panel2, color: active ? C.green : C.sub }}>
-            <Icon size={13} /> {!isMobile && label}
-          </button>
-        );
-      })}
+    <div style={{ marginLeft: "auto" }}>
+      <GlassSegment
+        size="sm"
+        ariaLabel="Вид списка заявок"
+        value={view}
+        onChange={setView}
+        options={[
+          { value: "list", label: isMobile ? undefined : "Список", icon: <List size={13} /> },
+          { value: "detailed", label: isMobile ? undefined : "Подробно", icon: <LayoutList size={13} /> },
+        ]}
+      />
     </div>
   );
 }

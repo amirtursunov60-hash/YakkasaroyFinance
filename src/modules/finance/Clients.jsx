@@ -159,19 +159,22 @@ export function Clients() {
     {err && <div style={{ ...st.reqError, marginBottom: 14 }}><AlertCircle size={15} /> {err}</div>}
     {done && <div style={{ ...st.reqSuccess, marginBottom: 14 }}><CheckCircle2 size={15} /> {done}</div>}
 
-    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
-      {FILTERS.map(([key, label]) => (
-        <button key={key} className="btn"
-          style={{
-            ...st.weekTag, cursor: "pointer", border: "none", fontFamily: "inherit", marginLeft: 0,
-            padding: "5px 12px", fontSize: 12,
-            color: filter === key ? "#04130a" : (ST_META[key]?.color || C.sub),
-            background: filter === key ? (ST_META[key]?.color || C.green) : `${ST_META[key]?.color || C.sub}1a`,
-          }}
-          onClick={() => setFilter(key)}>
-          {label} · {key === "all" ? invoices.length : invoices.filter((i) => i.status === key).length}
-        </button>
-      ))}
+    <div className="chiptray" style={{ marginBottom: 12 }}>
+      {FILTERS.map(([key, label]) => {
+        const active = filter === key;
+        const col = ST_META[key]?.color || C.green;
+        return (
+          <button key={key} className="btn"
+            style={{
+              flexShrink: 0, border: "none", cursor: "pointer", fontFamily: "inherit",
+              padding: "6px 13px", borderRadius: 99, fontSize: 12, fontWeight: 700, whiteSpace: "nowrap",
+              color: active ? "#04130a" : col, background: active ? col : "transparent",
+            }}
+            onClick={() => setFilter(key)}>
+            {label} · {key === "all" ? invoices.length : invoices.filter((i) => i.status === key).length}
+          </button>
+        );
+      })}
     </div>
 
     {!filtered.length && (

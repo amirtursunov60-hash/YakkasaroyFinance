@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { X, Menu, User2, Settings, LogOut, Volume2, VolumeX, List } from "lucide-react";
 import { ThemeSwitcher } from "./ui/apple-liquid-glass-switcher";
+import { GlassSegment } from "./ui/glass-segment";
 import "./ui/switcher.css";
 import { Stub } from "./common";
 import { MODULES, MODULE_NAV } from "../data/navigation";
@@ -98,17 +99,17 @@ export function App({ onLogout }) {
     <div style={st.app}>
       <style>{css}</style>
 
-      <header className="appTop" style={{ ...st.topbar, ...(isMobile ? { gap: 8, padding: "0 10px" } : {}) }}>
+      <header className="appTop glass-surface" style={{ ...st.topbar, ...(isMobile ? { gap: 8, padding: "0 10px" } : {}) }}>
         {isMobile && (
-          <button style={st.burger} onClick={() => setMenuOpen(true)}><Menu size={20} /></button>
+          <button style={st.burger} className="btn glass-pill-btn" onClick={() => setMenuOpen(true)}><Menu size={20} /></button>
         )}
         <div style={{ ...st.brand, ...(isMobile ? { gap: 7 } : {}) }}>
           <div style={{
             display: "grid", placeItems: "center", flexShrink: 0,
             width: 40, height: 40, borderRadius: "50%",
             background: "#0f1c15",
-            border: `1px solid ${C.green}3a`,
-            boxShadow: `0 4px 14px ${C.green}40, inset 0 1px 0 rgba(255,255,255,0.35)`,
+            border: `1px solid rgba(255,255,255,0.10)`,
+            boxShadow: `inset 0 1px 0 rgba(255,255,255,0.35)`,
           }}>
             <img src="/icons/logo-mark.png" alt="Яккасарой"
               style={{ width: "84%", height: "84%", objectFit: "contain" }} />
@@ -119,15 +120,15 @@ export function App({ onLogout }) {
         {(() => {
           const regActive = activeModule === "finance" && active === "register";
           return (
-            <button className="btn" title="Реестр операций"
+            <button className="btn glass-pill-btn" title="Реестр операций"
               onClick={() => { setActiveModule("finance"); setActive("register"); }}
               style={{
                 display: "inline-flex", alignItems: "center", gap: 7, flexShrink: 0,
-                height: 38, padding: isMobile ? "0 9px" : "0 12px", borderRadius: 10,
+                height: 38, padding: isMobile ? "0 11px" : "0 14px", borderRadius: 99,
                 cursor: "pointer", fontSize: 13, fontWeight: 600,
                 color: regActive ? C.green : C.text,
-                border: `1px solid ${regActive ? C.green + "66" : C.line}`,
-                background: regActive ? `${C.green}1a` : C.panel2,
+                border: regActive ? `1px solid ${C.green}66` : undefined,
+                background: regActive ? `${C.green}1a` : undefined,
               }}>
               <List size={18} />
               {!isMobile && <span>Реестр</span>}
@@ -159,9 +160,17 @@ export function App({ onLogout }) {
                   <div className="tw-scope switcher-app" style={{ display: "flex", justifyContent: "center", padding: "6px 0 10px" }}>
                     <ThemeSwitcher value={theme} onValueChange={setTheme} />
                   </div>
-                  <div style={st.themeToggle}>
-                    <button style={{ ...st.themeBtn, ...(sound ? st.themeBtnOn : {}) }} onClick={() => setSound(true)}><Volume2 size={14} /> Звук вкл</button>
-                    <button style={{ ...st.themeBtn, ...(!sound ? st.themeBtnOn : {}) }} onClick={() => setSound(false)}><VolumeX size={14} /> Выкл</button>
+                  <div style={{ margin: "4px 2px 8px" }}>
+                    <GlassSegment
+                      block
+                      ariaLabel="Звук"
+                      value={sound ? "on" : "off"}
+                      onChange={(v) => setSound(v === "on")}
+                      options={[
+                        { value: "on", label: "Звук вкл", icon: <Volume2 size={14} /> },
+                        { value: "off", label: "Выкл", icon: <VolumeX size={14} /> },
+                      ]}
+                    />
                   </div>
                   <div style={st.pmDivider} />
                   <div style={st.pmItem} className="pmi"><User2 size={16} color={C.sub} /> Профиль</div>

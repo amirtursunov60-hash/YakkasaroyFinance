@@ -28,6 +28,8 @@ export const makeCss = (C) => {
   }
   .nav:hover{background:${C.navHover};}
   .mod:hover{color:${C.text};}
+  /* G5 — единое фокус-кольцо для клавиатуры (доступность) на интерактивных контролах */
+  .btn:focus-visible, .mod:focus-visible, .gseg__opt:focus-visible, .chiptray button:focus-visible, .nav:focus-visible{ outline:2px solid ${C.green}; outline-offset:2px; border-radius:12px; }
   .modbar::-webkit-scrollbar{display:none;}
   /* Трек вкладок — тот же стеклянный рецепт, что у свитчера (многослойные блики
      --c-light/--c-dark + блюр), нейтральное стекло (бело/чёрные грани работают
@@ -46,6 +48,26 @@ export const makeCss = (C) => {
     -webkit-backdrop-filter: blur(2px);
     box-shadow: ${pillShadow};
   }
+  /* Переиспользуемый стеклянный сегмент (GlassSegment): трек + скользящая пилюля.
+     Тот же per-theme рецепт, что у свитчера/вкладок. */
+  .gseg{ position:relative; display:inline-flex; align-items:center; gap:4px; padding:4px; border-radius:99px; background:${mix(g.c, "12%")}; backdrop-filter:blur(8px) saturate(${g.sat}); -webkit-backdrop-filter:blur(8px) saturate(${g.sat}); box-shadow:${trackShadow}; }
+  .gseg--block{ display:flex; width:100%; }
+  .gseg--block .gseg__opt{ flex:1; }
+  .gseg__pill{ position:absolute; top:4px; height:calc(100% - 8px); border-radius:99px; background:${mix(g.c, "36%")}; backdrop-filter:blur(2px); -webkit-backdrop-filter:blur(2px); box-shadow:${pillShadow}; transition:left .35s cubic-bezier(.34,1.1,.4,1), width .35s cubic-bezier(.34,1.1,.4,1), opacity .2s; pointer-events:none; z-index:0; }
+  .gseg__opt{ position:relative; z-index:1; display:inline-flex; align-items:center; justify-content:center; gap:6px; border:none; background:transparent; cursor:pointer; font-family:inherit; font-weight:600; white-space:nowrap; color:${C.sub}; transition:color .2s, transform .12s; }
+  .gseg__opt.is-on{ color:${C.text}; }
+  .gseg__opt:active{ transform:scale(0.96); }
+  .gseg--md .gseg__opt{ height:38px; padding:0 16px; font-size:12.5px; }
+  .gseg--sm .gseg__opt{ height:30px; padding:0 13px; font-size:12px; }
+  /* Стеклянный «лоток» для цветных фильтр-чипов: тот же стеклянный трек, что у
+     сегмента, но без скользящей пилюли — активный чип заливается СТАТУС-цветом
+     (легенда статусов сохраняется). Скролл внутри, скроллбар скрыт. */
+  .chiptray{ display:inline-flex; align-items:center; gap:4px; padding:4px; max-width:100%; border-radius:99px; overflow-x:auto; scrollbar-width:none; -ms-overflow-style:none; background:${mix(g.c, "12%")}; backdrop-filter:blur(8px) saturate(${g.sat}); -webkit-backdrop-filter:blur(8px) saturate(${g.sat}); box-shadow:${trackShadow}; }
+  .chiptray::-webkit-scrollbar{ display:none; }
+  /* Универсальная стеклянная поверхность (фон как у трека вкладок): аватар и т.п. */
+  .glass-surface{ background:${mix(g.c, "12%")}; backdrop-filter:blur(8px) saturate(${g.sat}); -webkit-backdrop-filter:blur(8px) saturate(${g.sat}); box-shadow:${trackShadow}; }
+  /* Кнопка-«пилюля»: тот же стеклянный рецепт, что у скользящей пилюли сегмента */
+  .glass-pill-btn{ background:${mix(g.c, "36%")}; backdrop-filter:blur(6px) saturate(${g.sat}); -webkit-backdrop-filter:blur(6px) saturate(${g.sat}); box-shadow:${pillShadow}; border:none; }
   .frow:hover{background:${C.rowHover};}
   .trow{border-top:1px solid ${C.line};}
   .trow:hover{background:${C.rowHover};}

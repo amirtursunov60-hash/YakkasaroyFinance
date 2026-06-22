@@ -176,16 +176,16 @@ export function BillsScreen({ kind, ui }) {
       <div style={st.stockAlert}><AlertTriangle size={16} /> Просрочено {sums.overdueN} счёт(ов) на {fmt(sums.overdue)} TJS — портятся отношения и условия поставщиков</div>
     )}
 
-    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
+    <div className="chiptray" style={{ marginBottom: 12 }}>
       {BILL_FILTERS.map(({ key, label }) => {
+        const active = filter === key;
         const col = filterColor(key);
         return (
           <button key={key} className="btn"
             style={{
-              ...st.weekTag, cursor: "pointer", border: "none", fontFamily: "inherit", marginLeft: 0,
-              padding: "5px 12px", fontSize: 12,
-              color: filter === key ? "#04130a" : col,
-              background: filter === key ? col : `${col}1a`,
+              flexShrink: 0, border: "none", cursor: "pointer", fontFamily: "inherit",
+              padding: "6px 13px", borderRadius: 99, fontSize: 12, fontWeight: 700, whiteSpace: "nowrap",
+              color: active ? "#04130a" : col, background: active ? col : "transparent",
             }}
             onClick={() => setFilter(key)}>
             {label} · {filterCounts[key]}
