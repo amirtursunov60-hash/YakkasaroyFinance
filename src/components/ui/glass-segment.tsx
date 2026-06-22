@@ -23,7 +23,8 @@ interface GlassSegmentProps<T extends string> {
 export function GlassSegment<T extends string>({
   options, value, onChange, size = "md", block = false, ariaLabel,
 }: GlassSegmentProps<T>) {
-  const activeRef = useRef<HTMLButtonElement>(null);
+  const activeRef = useRef<HTMLButtonElement | null>(null);
+  const btnRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const [pill, setPill] = useState({ left: 0, width: 0, ready: false });
 
   useEffect(() => {
@@ -38,20 +39,39 @@ export function GlassSegment<T extends string>({
     return () => { cancelAnimationFrame(r); clearTimeout(t); window.removeEventListener("resize", measure); };
   }, [value, options.length, block, size]);
 
+  // Клавиатура для паттерна radiogroup: ←/→ (и ↑/↓) переключают опцию,
+  // Home/End — на крайние. Фокус едет вместе с выбором (roving tabindex).
+  const move = (idx: number) => {
+    const next = options[(idx + options.length) % options.length];
+    if (!next || next.value === value) { btnRefs.current[idx]?.focus(); return; }
+    onChange(next.value);
+    btnRefs.current[(idx + options.length) % options.length]?.focus();
+  };
+  const onKeyDown = (e: React.KeyboardEvent, i: number) => {
+    switch (e.key) {
+      case "ArrowRight": case "ArrowDown": e.preventDefault(); move(i + 1); break;
+      case "ArrowLeft": case "ArrowUp": e.preventDefault(); move(i - 1); break;
+      case "Home": e.preventDefault(); move(0); break;
+      case "End": e.preventDefault(); move(options.length - 1); break;
+    }
+  };
+
   return (
     <div className={`gseg gseg--${size}${block ? " gseg--block" : ""}`} role="radiogroup" aria-label={ariaLabel}>
       <div className="gseg__pill" style={{ left: pill.left, width: pill.width, opacity: pill.ready ? 1 : 0 }} />
-      {options.map((o) => {
+      {options.map((o, i) => {
         const on = o.value === value;
         return (
           <button
             key={o.value}
-            ref={on ? activeRef : null}
+            ref={(el) => { btnRefs.current[i] = el; if (on) activeRef.current = el; }}
             type="button"
             role="radio"
             aria-checked={on}
+            tabIndex={on ? 0 : -1}
             className={`gseg__opt${on ? " is-on" : ""}`}
             onClick={() => onChange(o.value)}
+            onKeyDown={(e) => onKeyDown(e, i)}
           >
             {o.icon}{o.label && <span>{o.label}</span>}
           </button>

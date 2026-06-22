@@ -136,7 +136,7 @@ export const makeCss = (C) => {
   .stagger>*:nth-child(7){animation-delay:.21s;}
   .stagger>*:nth-child(8){animation-delay:.24s;}
   .stagger>*:nth-child(n+9){animation-delay:.27s;}
-  @media (prefers-reduced-motion: reduce){ main{animation:none;} .pop,.spin,.flashRow,.capsuleIn,.shake{animation:none;} .riseIn,.stagger>*{animation:none;} }
+  @media (prefers-reduced-motion: reduce){ main{animation:none;} .pop,.spin,.flashRow,.capsuleIn,.shake{animation:none;} .riseIn,.stagger>*{animation:none;} .gseg__pill,.modpill{transition:none;} .locCard,.ordCard,.tableCard,.glass,.glassG{transition:none;} }
   /* Единое фокус-кольцо для навигации с клавиатуры (доступность) */
   button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{
     outline:2px solid ${C.green}!important;outline-offset:2px;border-radius:4px;
@@ -146,6 +146,10 @@ export const makeCss = (C) => {
     .fpActions .fpBtn{justify-content:center;width:100%;}
     .fpActions .fpLink{margin-left:0;justify-content:center;}
     .heroTitle{font-size:21px;}
+    /* Перф-бюджет стекла: на телефоне блюр дешевле (несколько backdrop-filter
+       в видимой области ложатся на GPU тяжело). Блики/тени сохраняются. */
+    .modbar,.gseg,.chiptray,.glass-surface{ backdrop-filter:blur(4px) saturate(${g.sat}); -webkit-backdrop-filter:blur(4px) saturate(${g.sat}); }
+    .modpill,.gseg__pill,.glass-pill-btn{ backdrop-filter:blur(2px); -webkit-backdrop-filter:blur(2px); }
   }
 `;
 };
