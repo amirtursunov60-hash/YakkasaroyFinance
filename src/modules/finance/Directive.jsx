@@ -1074,7 +1074,7 @@ function FundCalcModal({ C, st, isMobile, fund, stage, rules, incomeByType, appr
   const factTotal = rules.reduce((a, r) => a + (incomeByType[r.income_type?.id] || 0), 0);
 
   return (
-    <div style={st.mdOverlay} onClick={onClose}>
+    <div style={st.mdOverlay} data-modal="1" onClick={onClose}>
       <div style={{ ...st.mdCard, width: "min(560px, 100%)" }} onClick={(e) => e.stopPropagation()}>
         <div style={st.mdHead}>
           <div style={st.mdTitle}>Одобрение · {fund.code} {fund.name}</div>
@@ -1179,7 +1179,7 @@ function TransferModal({ C, st, funds, remainder, busy, onClose, onTransfer }) {
   useScrollLock();
   const [fundId, setFundId] = useState(funds.find((f) => f.code === "FD6")?.id || funds[0]?.id || "");
   return (
-    <div style={st.mdOverlay} onClick={onClose}>
+    <div style={st.mdOverlay} data-modal="1" onClick={onClose}>
       <div style={{ ...st.mdCard, width: "min(420px, 100%)" }} onClick={(e) => e.stopPropagation()}>
         <div style={st.mdHead}>
           <div style={st.mdTitle}>Перенести остаток в фонд</div>

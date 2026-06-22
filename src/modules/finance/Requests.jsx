@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { ClipboardList, FileText, Check, Ban, Banknote, Loader2, AlertCircle, CheckCircle2, ChevronRight, X, Network, Plus, Copy } from "lucide-react";
 import { Stat } from "../../components/common";
+import { InfoHint } from "../../components/InfoHint";
 import { useTheme } from "../../theme/theme";
 import { useScrollLock } from "../../hooks/useScrollLock";
 import { fmt, avatarColor } from "../../utils/format";
@@ -526,10 +527,12 @@ function RequestForm({ st, isMobile, profile, tree, refs, funds, periods, locati
   );
 
   return (
-    <div style={st.mdOverlay} onClick={onClose}>
+    <div style={st.mdOverlay} data-modal="1" onClick={onClose}>
       <div style={st.mdCard} onClick={(e) => e.stopPropagation()}>
         <div style={st.mdHead}>
-          <div style={st.mdTitle}>{prefill ? "Копия заявки (ЗРС)" : "Заявка на расход средств (ЗРС)"}</div>
+          <div style={{ ...st.mdTitle, display: "inline-flex", alignItems: "center", gap: 6 }}>
+            {prefill ? "Копия заявки (ЗРС)" : "Заявка на расход средств (ЗРС)"}<InfoHint term="ЗРС" />
+          </div>
           <button style={st.iconBtn} onClick={onClose} aria-label="Закрыть"><X size={17} /></button>
         </div>
 
@@ -650,7 +653,7 @@ export function DecideModal({ C, st, decide, funds, accounts, busy, onClose, onC
   const accs = accounts.filter((a) => a.currency_id === item.currency?.id);
 
   return (
-    <div style={st.mdOverlay} onClick={onClose}>
+    <div style={st.mdOverlay} data-modal="1" onClick={onClose}>
       <div style={{ ...st.mdCard, width: "min(440px, 100%)" }} onClick={(e) => e.stopPropagation()}>
         <div style={st.mdHead}>
           <div style={st.mdTitle}>{titles[action]} №{item.number}</div>

@@ -31,7 +31,7 @@ export function GlobalSearch({ onGo }) {
     <div style={{ ...st.searchWrap, position: "relative" }}>
       {busy ? <Loader2 size={16} color={C.faint} className="spin" /> : <Search size={16} color={C.faint} />}
       <input style={st.search} placeholder="Поиск: контрагенты, заявки, счета…"
-        value={q} onChange={(e) => setQ(e.target.value)} />
+        aria-label="Поиск" type="search" value={q} onChange={(e) => setQ(e.target.value)} />
       {results !== null && (<>
         <div style={st.weekOverlay} onClick={() => { setResults(null); setQ(""); }} />
         <div style={{ ...st.weekMenu, top: 42, left: 0, width: 320 }}>

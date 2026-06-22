@@ -382,7 +382,7 @@ function StatFormModal({ C, st, isMobile, positions, stat, busy, onArchive, onCl
   };
 
   return (
-    <div style={st.mdOverlay} onClick={onClose}>
+    <div style={st.mdOverlay} data-modal="1" onClick={onClose}>
       <div style={{ ...st.mdCard, width: "min(460px, 100%)" }} onClick={(e) => e.stopPropagation()}>
         <div style={st.mdHead}>
           <div style={st.mdTitle}>{isEdit ? "Редактировать статистику" : "Новая статистика"}</div>

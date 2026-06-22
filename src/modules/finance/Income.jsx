@@ -304,7 +304,7 @@ function SchemeModal({ C, st, type, rules, funds, onChanged, onClose }) {
   };
 
   return (
-    <div style={st.mdOverlay} onClick={onClose}>
+    <div style={st.mdOverlay} data-modal="1" onClick={onClose}>
       <div style={{ ...st.mdCard, width: "min(560px, 100%)" }} onClick={(e) => e.stopPropagation()}>
         <div style={st.mdHead}>
           <div style={st.mdTitle}>Схема · {type.code ? `${type.code} ` : ""}{type.name}</div>
@@ -427,7 +427,7 @@ function IncomeForm({ refs, tree, byParent, locationOf, period, ctxLocationId, p
   };
 
   return (
-    <div style={st.mdOverlay} onClick={onClose}>
+    <div style={st.mdOverlay} data-modal="1" onClick={onClose}>
       <div style={st.mdCard} onClick={(e) => e.stopPropagation()}>
         <div style={st.mdHead}>
           <div style={st.mdTitle}>Операция дохода</div>

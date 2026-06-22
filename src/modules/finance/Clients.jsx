@@ -345,7 +345,7 @@ function InvoiceForm({ C, st, isMobile, profile, groups, refs, counterparties, o
   };
 
   return (
-    <div style={st.mdOverlay} onClick={onClose}>
+    <div style={st.mdOverlay} data-modal="1" onClick={onClose}>
       <div style={st.mdCard} onClick={(e) => e.stopPropagation()}>
         <div style={st.mdHead}>
           <div style={st.mdTitle}>Счёт клиенту · банкет</div>
@@ -453,7 +453,7 @@ function PayModal({ C, st, inv, rest, accounts, payTypes, busy, onClose, onConfi
   };
 
   return (
-    <div style={st.mdOverlay} onClick={onClose}>
+    <div style={st.mdOverlay} data-modal="1" onClick={onClose}>
       <div style={{ ...st.mdCard, width: "min(440px, 100%)" }} onClick={(e) => e.stopPropagation()}>
         <div style={st.mdHead}>
           <div style={st.mdTitle}>Оплата · №{inv.number} {inv.counterparty?.name}</div>

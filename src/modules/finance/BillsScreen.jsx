@@ -350,7 +350,7 @@ function BillForm({ C, st, isMobile, profile, kind, ui, groups, refs, funds, cou
   };
 
   return (
-    <div style={st.mdOverlay} onClick={onClose}>
+    <div style={st.mdOverlay} data-modal="1" onClick={onClose}>
       <div style={st.mdCard} onClick={(e) => e.stopPropagation()}>
         <div style={st.mdHead}>
           <div style={st.mdTitle}>{ui.formTitle}</div>
@@ -454,7 +454,7 @@ function BillDecideModal({ C, st, decide, funds, accounts, busy, onClose, onConf
   const accs = accounts.filter((a) => a.currency_id === bill.currency?.id);
 
   return (
-    <div style={st.mdOverlay} onClick={onClose}>
+    <div style={st.mdOverlay} data-modal="1" onClick={onClose}>
       <div style={{ ...st.mdCard, width: "min(440px, 100%)" }} onClick={(e) => e.stopPropagation()}>
         <div style={st.mdHead}>
           <div style={st.mdTitle}>{titles[action]} №{bill.number}</div>

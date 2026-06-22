@@ -4,6 +4,7 @@ import {
   Loader2, AlertCircle, CheckCircle2, Star,
 } from "lucide-react";
 import { Stat } from "../../components/common";
+import { InfoHint } from "../../components/InfoHint";
 import { useTheme } from "../../theme/theme";
 import { useScrollLock } from "../../hooks/useScrollLock";
 import { avatarColor } from "../../utils/format";
@@ -372,7 +373,7 @@ function DivisionModal({ C, st, division, onClose, onSaved }) {
   };
 
   return (
-    <div style={st.mdOverlay} onClick={onClose}>
+    <div style={st.mdOverlay} data-modal="1" onClick={onClose}>
       <div style={{ ...st.mdCard, width: "min(440px, 100%)" }} onClick={(e) => e.stopPropagation()}>
         <div style={st.mdHead}>
           <div style={st.mdTitle}>{edit ? "Изменить отделение" : "Новое отделение"}</div>
@@ -449,7 +450,7 @@ function PositionModal({ C, st, isMobile, divisions, position, division, onClose
   };
 
   return (
-    <div style={st.mdOverlay} onClick={onClose}>
+    <div style={st.mdOverlay} data-modal="1" onClick={onClose}>
       <div style={{ ...st.mdCard, width: "min(520px, 100%)", maxHeight: "90vh", overflowY: "auto" }} onClick={(e) => e.stopPropagation()}>
         <div style={st.mdHead}>
           <div style={st.mdTitle}>{edit ? "Изменить пост" : "Новый пост"}</div>
@@ -540,10 +541,12 @@ function HatModal({ st, position, onClose, onSaved }) {
   };
 
   return (
-    <div style={st.mdOverlay} onClick={onClose}>
+    <div style={st.mdOverlay} data-modal="1" onClick={onClose}>
       <div style={{ ...st.mdCard, width: "min(520px, 100%)", maxHeight: "90vh", overflowY: "auto" }} onClick={(e) => e.stopPropagation()}>
         <div style={st.mdHead}>
-          <div style={st.mdTitle}>Шляпа · {position.name}</div>
+          <div style={{ ...st.mdTitle, display: "inline-flex", alignItems: "center", gap: 6 }}>
+            Шляпа · {position.name}<InfoHint term="шляпа" />
+          </div>
           <button style={st.iconBtn} onClick={onClose} aria-label="Закрыть"><X size={17} /></button>
         </div>
         {err && <div role="alert" style={{ ...st.reqError, marginBottom: 12 }}><AlertCircle size={15} /> {err}</div>}

@@ -202,10 +202,14 @@ export function LocationPicker() {
 
   return (
     <div style={st.topWeekWrap}>
-      <button style={st.topWeekBtn} className="btn glass-pill-btn" onClick={() => setOpen((v) => !v)}>
-        <MapPin size={15} color={location ? C.warning : C.green} />
+      <button
+        style={{ ...st.topWeekBtn, ...(isMobile ? { width: 40, padding: 0, gap: 0, justifyContent: "center" } : {}) }}
+        className="btn glass-pill-btn" onClick={() => setOpen((v) => !v)}
+        aria-label={isMobile ? `Точка: ${location ? location.name : "вся сеть"}` : undefined}
+      >
+        <MapPin size={isMobile ? 17 : 15} color={location ? C.warning : C.green} />
         {!isMobile && <span>{label}</span>}
-        <ChevronDown size={14} style={{ transform: open ? "rotate(180deg)" : "none", transition: "transform .2s" }} />
+        {!isMobile && <ChevronDown size={14} style={{ transform: open ? "rotate(180deg)" : "none", transition: "transform .2s" }} />}
       </button>
       {open && (<>
         <div style={st.weekOverlay} onClick={() => setOpen(false)} />

@@ -9,4 +9,17 @@ export default defineConfig({
     alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) },
   },
   server: { port: 5173, open: true },
+  build: {
+    rollupOptions: {
+      output: {
+        // Разбиваем тяжёлые зависимости в отдельные чанки: лучше кэш между
+        // деплоями и меньше парсинга при первичной загрузке (особенно на мобиле).
+        manualChunks: {
+          react: ["react", "react-dom"],
+          supabase: ["@supabase/supabase-js"],
+          icons: ["lucide-react"],
+        },
+      },
+    },
+  },
 });
