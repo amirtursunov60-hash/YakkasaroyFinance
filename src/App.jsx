@@ -8,6 +8,7 @@ import { supabase } from "./lib/supabase";
 import { getProfile, signOut } from "./lib/auth";
 import { redeemInvite } from "./lib/api";
 import { isSoundOn, setSoundOn } from "./lib/feedback";
+import { enablePeekZoom } from "./lib/peekZoom";
 import SwitcherDemo from "@/components/ui/switcher-demo";
 
 // Демо фундамента Tailwind/shadcn по адресу <app>/#switcher — изолировано,
@@ -42,6 +43,8 @@ function YakkasaroyApp() {
   const st = useMemo(() => makeStyles(C), [C]);
   // Мост палитры → CSS-переменные (--c-*) для Tailwind/shadcn (один источник цвета).
   useEffect(() => { applyThemeVars(C); }, [C]);
+  // «Зум-лупа»: пинч-зум разрешён, но возвращается к размеру экрана после жеста.
+  useEffect(() => enablePeekZoom(), []);
 
   // следим за сессией: при входе/выходе обновляем профиль
   useEffect(() => {
