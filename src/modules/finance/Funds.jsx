@@ -266,7 +266,7 @@ export function Funds() {
       </div>
     </section>
 
-    {err && <div style={{ ...st.reqError, marginBottom: 14 }}><AlertCircle size={15} /> {err}</div>}
+    {err && <div role="alert" style={{ ...st.reqError, marginBottom: 14 }}><AlertCircle size={15} /> {err}</div>}
     {done && <div style={{ ...st.reqSuccess, marginBottom: 14 }}><CheckCircle2 size={15} /> {done}</div>}
 
     {/* Операция с фондами: перемещение / заём / приход / возврат */}
@@ -521,7 +521,7 @@ function FundStatementModal({ C, st, statement, period, onAllTime, onClose }) {
       <div style={{ ...st.mdCard, width: "min(560px, 100%)" }} onClick={(e) => e.stopPropagation()}>
         <div style={st.mdHead}>
           <div style={st.mdTitle}>{title}</div>
-          <button style={st.iconBtn} onClick={onClose}><X size={17} /></button>
+          <button style={st.iconBtn} onClick={onClose} aria-label="Закрыть"><X size={17} /></button>
         </div>
         <div style={{ fontSize: 12.5, color: C.sub, marginBottom: 12, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
           <span>{allTime ? "Последние операции (все периоды)" : `Неделя ${period ? periodTitle(period) : "—"}`}</span>
@@ -568,7 +568,7 @@ function FundLoansModal({ C, st, data, nameOf, isFinAdmin, busy, onReturn, onClo
       <div style={{ ...st.mdCard, width: "min(520px, 100%)" }} onClick={(e) => e.stopPropagation()}>
         <div style={st.mdHead}>
           <div style={st.mdTitle}>{fund.code} · займы</div>
-          <button style={st.iconBtn} onClick={onClose}><X size={17} /></button>
+          <button style={st.iconBtn} onClick={onClose} aria-label="Закрыть"><X size={17} /></button>
         </div>
         <div style={{ fontSize: 12.5, color: C.sub, marginBottom: 12 }}>
           «−» фонду должны (кредитор) · «+» фонд должен (заёмщик)
@@ -699,7 +699,7 @@ function FolderFormModal({ C, st, folder, onClose, onSaved }) {
       <div style={{ ...st.mdCard, width: "min(420px, 100%)" }} onClick={(e) => e.stopPropagation()}>
         <div style={st.mdHead}>
           <div style={st.mdTitle}>{isEdit ? "Редактировать раздел" : "Новый раздел"}</div>
-          <button style={st.iconBtn} onClick={onClose}><X size={17} /></button>
+          <button style={st.iconBtn} onClick={onClose} aria-label="Закрыть"><X size={17} /></button>
         </div>
         <div style={{ display: "grid", gap: 10 }}>
           <div style={st.reqField}>
@@ -723,7 +723,7 @@ function FolderFormModal({ C, st, folder, onClose, onSaved }) {
             </div>
           </div>
         </div>
-        {err && <div style={st.reqError}><AlertCircle size={15} /> {err}</div>}
+        {err && <div role="alert" style={st.reqError}><AlertCircle size={15} /> {err}</div>}
         <div style={st.mdActions}>
           <button style={st.btnGhost} className="btn" onClick={onClose}>Отмена</button>
           <button style={{ ...st.btnGreen, opacity: busy ? 0.7 : 1 }} className="btn" onClick={submit} disabled={busy}>
@@ -779,7 +779,7 @@ function FundFormModal({ C, st, refs, folders, fund, onClose, onSaved }) {
       <div style={{ ...st.mdCard, width: "min(460px, 100%)", maxHeight: "92vh", overflowY: "auto" }} onClick={(e) => e.stopPropagation()}>
         <div style={st.mdHead}>
           <div style={st.mdTitle}>{isEdit ? `Редактировать ${fund.code}` : "Новый фонд"}</div>
-          <button style={st.iconBtn} onClick={onClose}><X size={17} /></button>
+          <button style={st.iconBtn} onClick={onClose} aria-label="Закрыть"><X size={17} /></button>
         </div>
         <div style={{ display: "grid", gap: 10 }}>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
@@ -849,7 +849,7 @@ function FundFormModal({ C, st, refs, folders, fund, onClose, onSaved }) {
             Запрет перемещения (нельзя вручную перемещать/изымать средства)
           </label>
         </div>
-        {err && <div style={st.reqError}><AlertCircle size={15} /> {err}</div>}
+        {err && <div role="alert" style={st.reqError}><AlertCircle size={15} /> {err}</div>}
         <div style={st.mdActions}>
           <button style={st.btnGhost} className="btn" onClick={onClose}>Отмена</button>
           <button style={{ ...st.btnGreen, opacity: busy ? 0.7 : 1 }} className="btn" onClick={submit} disabled={busy}>

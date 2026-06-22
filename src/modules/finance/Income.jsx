@@ -308,7 +308,7 @@ function SchemeModal({ C, st, type, rules, funds, onChanged, onClose }) {
       <div style={{ ...st.mdCard, width: "min(560px, 100%)" }} onClick={(e) => e.stopPropagation()}>
         <div style={st.mdHead}>
           <div style={st.mdTitle}>Схема · {type.code ? `${type.code} ` : ""}{type.name}</div>
-          <button style={st.iconBtn} onClick={onClose}><X size={17} /></button>
+          <button style={st.iconBtn} onClick={onClose} aria-label="Закрыть"><X size={17} /></button>
         </div>
         <div style={{ fontSize: 12, color: C.sub, marginBottom: 10 }}>
           Сколько процентов от этого дохода в какой фонд — Директива посчитает суммы автоматически.
@@ -322,7 +322,7 @@ function SchemeModal({ C, st, type, rules, funds, onChanged, onClose }) {
               <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.fund?.name}</span>
               <span style={{ ...st.weekTag, marginLeft: 0 }}>{STAGE_OPTS.find(([k]) => k === r.stage)?.[1]}</span>
               <b>{r.percent ? `${Number(r.percent)}%` : fmt(Number(r.fixed_amount))}</b>
-              <button style={{ ...st.iconBtn, color: C.danger, padding: 4 }} className="btn" disabled={busy} onClick={() => del(r)}>
+              <button style={{ ...st.iconBtn, color: C.danger, padding: 4 }} className="btn" disabled={busy} onClick={() => del(r)} aria-label="Удалить">
                 <Trash2 size={13} />
               </button>
             </div>
@@ -345,7 +345,7 @@ function SchemeModal({ C, st, type, rules, funds, onChanged, onClose }) {
             </button>
           </div>
         </div>
-        {err && <div style={st.reqError}><AlertCircle size={15} /> {err}</div>}
+        {err && <div role="alert" style={st.reqError}><AlertCircle size={15} /> {err}</div>}
       </div>
     </div>
   );
@@ -431,7 +431,7 @@ function IncomeForm({ refs, tree, byParent, locationOf, period, ctxLocationId, p
       <div style={st.mdCard} onClick={(e) => e.stopPropagation()}>
         <div style={st.mdHead}>
           <div style={st.mdTitle}>Операция дохода</div>
-          <button style={st.iconBtn} onClick={onClose}><X size={17} /></button>
+          <button style={st.iconBtn} onClick={onClose} aria-label="Закрыть"><X size={17} /></button>
         </div>
 
         <div style={{ ...st.mdGrid, ...(isMobile ? { gridTemplateColumns: "1fr" } : {}) }}>
@@ -492,7 +492,7 @@ function IncomeForm({ refs, tree, byParent, locationOf, period, ctxLocationId, p
           </label>
         </div>
 
-        {err && <div style={st.reqError}><AlertCircle size={15} /> {err}</div>}
+        {err && <div role="alert" style={st.reqError}><AlertCircle size={15} /> {err}</div>}
 
         <div style={st.mdActions}>
           <button style={st.btnGhost} className="btn" onClick={onClose}>Отмена</button>

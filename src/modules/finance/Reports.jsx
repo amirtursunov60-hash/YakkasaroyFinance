@@ -148,7 +148,7 @@ export function Reports() {
       </div>
     </section>
 
-    {err && <div style={{ ...st.reqError, marginBottom: 14 }}><AlertCircle size={15} /> {err}</div>}
+    {err && <div role="alert" style={{ ...st.reqError, marginBottom: 14 }}><AlertCircle size={15} /> {err}</div>}
 
     <div style={st.reqTabs}>
       {TABS.map((t) => (

@@ -382,7 +382,7 @@ export function Directive() {
       </div>
     </section>
 
-    {err && <div style={{ ...st.reqError, marginBottom: 14 }}><AlertCircle size={15} /> {err}</div>}
+    {err && <div role="alert" style={{ ...st.reqError, marginBottom: 14 }}><AlertCircle size={15} /> {err}</div>}
     {done && <div style={{ ...st.reqSuccess, marginBottom: 14 }}><CheckCircle2 size={15} /> {done}</div>}
 
     {!rules.length && (
@@ -1078,7 +1078,7 @@ function FundCalcModal({ C, st, isMobile, fund, stage, rules, incomeByType, appr
       <div style={{ ...st.mdCard, width: "min(560px, 100%)" }} onClick={(e) => e.stopPropagation()}>
         <div style={st.mdHead}>
           <div style={st.mdTitle}>Одобрение · {fund.code} {fund.name}</div>
-          <button style={st.iconBtn} onClick={onClose}><X size={17} /></button>
+          <button style={st.iconBtn} onClick={onClose} aria-label="Закрыть"><X size={17} /></button>
         </div>
         <div style={{ fontSize: 12, color: C.sub, marginBottom: 10 }}>
           Этап «{stage.title}» · своя схема по видам дохода
@@ -1183,7 +1183,7 @@ function TransferModal({ C, st, funds, remainder, busy, onClose, onTransfer }) {
       <div style={{ ...st.mdCard, width: "min(420px, 100%)" }} onClick={(e) => e.stopPropagation()}>
         <div style={st.mdHead}>
           <div style={st.mdTitle}>Перенести остаток в фонд</div>
-          <button style={st.iconBtn} onClick={onClose}><X size={17} /></button>
+          <button style={st.iconBtn} onClick={onClose} aria-label="Закрыть"><X size={17} /></button>
         </div>
         <div style={{ ...st.reqField, marginBottom: 12 }}>
           <span style={st.reqFieldLbl}>Сумма остатка</span>

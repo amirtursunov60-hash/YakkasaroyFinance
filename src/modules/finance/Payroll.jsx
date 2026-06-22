@@ -218,7 +218,7 @@ export function Payroll() {
       </div>
     </section>
 
-    {err && <div style={{ ...st.reqError, marginBottom: 14 }}><AlertCircle size={15} /> {err}</div>}
+    {err && <div role="alert" style={{ ...st.reqError, marginBottom: 14 }}><AlertCircle size={15} /> {err}</div>}
     {done && <div style={{ ...st.reqSuccess, marginBottom: 14 }}><CheckCircle2 size={15} /> {done}</div>}
 
     {!sheet && (
@@ -401,7 +401,7 @@ function PayModal({ C, st, total, accounts, busy, onClose, onConfirm }) {
       <div style={{ ...st.mdCard, width: "min(420px, 100%)" }} onClick={(e) => e.stopPropagation()}>
         <div style={st.mdHead}>
           <div style={st.mdTitle}>Выплата зарплаты</div>
-          <button style={st.iconBtn} onClick={onClose}><X size={17} /></button>
+          <button style={st.iconBtn} onClick={onClose} aria-label="Закрыть"><X size={17} /></button>
         </div>
         <div style={{ ...st.reqField, marginBottom: 12 }}>
           <span style={st.reqFieldLbl}>Сумма к выплате</span>

@@ -156,7 +156,7 @@ export function Clients() {
       </div>
     </section>
 
-    {err && <div style={{ ...st.reqError, marginBottom: 14 }}><AlertCircle size={15} /> {err}</div>}
+    {err && <div role="alert" style={{ ...st.reqError, marginBottom: 14 }}><AlertCircle size={15} /> {err}</div>}
     {done && <div style={{ ...st.reqSuccess, marginBottom: 14 }}><CheckCircle2 size={15} /> {done}</div>}
 
     <div className="chiptray" style={{ marginBottom: 12 }}>
@@ -349,7 +349,7 @@ function InvoiceForm({ C, st, isMobile, profile, groups, refs, counterparties, o
       <div style={st.mdCard} onClick={(e) => e.stopPropagation()}>
         <div style={st.mdHead}>
           <div style={st.mdTitle}>Счёт клиенту · банкет</div>
-          <button style={st.iconBtn} onClick={onClose}><X size={17} /></button>
+          <button style={st.iconBtn} onClick={onClose} aria-label="Закрыть"><X size={17} /></button>
         </div>
 
         <div style={{ ...st.mdGrid, ...(isMobile ? { gridTemplateColumns: "1fr" } : {}) }}>
@@ -418,7 +418,7 @@ function InvoiceForm({ C, st, isMobile, profile, groups, refs, counterparties, o
           </label>
         </div>
 
-        {err && <div style={st.reqError}><AlertCircle size={15} /> {err}</div>}
+        {err && <div role="alert" style={st.reqError}><AlertCircle size={15} /> {err}</div>}
 
         <div style={st.mdActions}>
           <button style={st.btnGhost} className="btn" onClick={onClose}>Отмена</button>
@@ -457,7 +457,7 @@ function PayModal({ C, st, inv, rest, accounts, payTypes, busy, onClose, onConfi
       <div style={{ ...st.mdCard, width: "min(440px, 100%)" }} onClick={(e) => e.stopPropagation()}>
         <div style={st.mdHead}>
           <div style={st.mdTitle}>Оплата · №{inv.number} {inv.counterparty?.name}</div>
-          <button style={st.iconBtn} onClick={onClose}><X size={17} /></button>
+          <button style={st.iconBtn} onClick={onClose} aria-label="Закрыть"><X size={17} /></button>
         </div>
 
         <div style={{ fontSize: 13, color: C.sub, marginBottom: 12 }}>
@@ -490,7 +490,7 @@ function PayModal({ C, st, inv, rest, accounts, payTypes, busy, onClose, onConfi
           </div>
         </div>
 
-        {err && <div style={st.reqError}><AlertCircle size={15} /> {err}</div>}
+        {err && <div role="alert" style={st.reqError}><AlertCircle size={15} /> {err}</div>}
 
         <div style={st.mdActions}>
           <button style={st.btnGhost} className="btn" onClick={onClose}>Отмена</button>

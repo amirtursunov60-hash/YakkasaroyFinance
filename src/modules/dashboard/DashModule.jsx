@@ -127,7 +127,7 @@ export function DashModule({ view }) {
   const P_META = { high: { label: "срочно", color: C.danger }, mid: { label: "обычный", color: C.warning }, low: { label: "низкий", color: C.faint } };
 
   const banners = (<>
-    {err && <div style={{ ...st.reqError, marginBottom: 14 }}><AlertCircle size={15} /> {err}</div>}
+    {err && <div role="alert" style={{ ...st.reqError, marginBottom: 14 }}><AlertCircle size={15} /> {err}</div>}
     {done && <div style={{ ...st.reqSuccess, marginBottom: 14 }}><CheckCircle2 size={15} /> {done}</div>}
   </>);
 

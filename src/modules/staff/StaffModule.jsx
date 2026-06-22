@@ -72,7 +72,7 @@ export function StaffModule({ view }) {
   if (loading) return <div style={st.empty}><Loader2 size={18} className="spin" /> Загрузка…</div>;
 
   const banner = (<>
-    {err && <div style={{ ...st.reqError, marginBottom: 14 }}><AlertCircle size={15} /> {err}</div>}
+    {err && <div role="alert" style={{ ...st.reqError, marginBottom: 14 }}><AlertCircle size={15} /> {err}</div>}
     {done && <div style={{ ...st.reqError, marginBottom: 14, color: C.green, background: `${C.green}1a`, borderColor: `${C.green}44` }}><CheckCircle2 size={15} /> {done}</div>}
   </>);
 
@@ -312,7 +312,7 @@ function InvitesView({ C, st, isMobile, profile, canInvite, invites, positions, 
                   {!isMobile && (copied === inv.id ? " Скопировано" : " Ссылка")}
                 </button>
               )}
-              <button style={{ ...st.iconBtn, color: C.danger }} className="btn" disabled={!!busy}
+              <button style={{ ...st.iconBtn, color: C.danger }} className="btn" disabled={!!busy} aria-label="Удалить приглашение"
                 onClick={() => window.confirm("Удалить приглашение? Ссылка перестанет работать.") &&
                   act(`del:${inv.id}`, () => deleteInvite(inv.id), "Приглашение удалено")}>
                 {busy === `del:${inv.id}` ? <Loader2 size={14} className="spin" /> : <Trash2 size={14} />}

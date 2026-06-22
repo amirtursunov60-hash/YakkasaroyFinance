@@ -63,7 +63,7 @@ export function CrmModule({ view }) {
   if (loading) return <div style={st.empty}><Loader2 size={18} className="spin" /> Загрузка…</div>;
 
   const banners = (<>
-    {err && <div style={{ ...st.reqError, marginBottom: 14 }}><AlertCircle size={15} /> {err}</div>}
+    {err && <div role="alert" style={{ ...st.reqError, marginBottom: 14 }}><AlertCircle size={15} /> {err}</div>}
     {done && <div style={{ ...st.reqSuccess, marginBottom: 14 }}><CheckCircle2 size={15} /> {done}</div>}
   </>);
 

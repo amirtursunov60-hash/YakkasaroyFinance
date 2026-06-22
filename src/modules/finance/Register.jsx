@@ -119,7 +119,7 @@ export function Register() {
       </div>
     </section>
 
-    {err && <div style={{ ...st.reqError, marginBottom: 14 }}><AlertCircle size={15} /> {err}</div>}
+    {err && <div role="alert" style={{ ...st.reqError, marginBottom: 14 }}><AlertCircle size={15} /> {err}</div>}
 
     {/* Фильтры */}
     <section style={{ ...st.fpCard, marginTop: 0, marginBottom: 16 }}>

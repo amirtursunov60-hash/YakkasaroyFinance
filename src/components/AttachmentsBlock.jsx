@@ -54,7 +54,7 @@ export function AttachmentsBlock({ kind, parentId, attachments = [], canUpload, 
           </label>
         )}
       </div>
-      {err && <div style={{ display: "flex", gap: 5, alignItems: "center", color: C.danger, fontSize: 12, marginTop: 5 }}><AlertCircle size={12} /> {err}</div>}
+      {err && <div role="alert" style={{ display: "flex", gap: 5, alignItems: "center", color: C.danger, fontSize: 12, marginTop: 5 }}><AlertCircle size={12} /> {err}</div>}
     </div>
   );
 }
