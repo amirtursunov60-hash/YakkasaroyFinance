@@ -10,6 +10,7 @@ import { redeemInvite } from "./lib/api";
 import { isSoundOn, setSoundOn } from "./lib/feedback";
 import { enablePeekZoom } from "./lib/peekZoom";
 import { enableEscClose } from "./lib/escClose";
+import { enableModalBackClose } from "./lib/modalBackClose";
 import SwitcherDemo from "@/components/ui/switcher-demo";
 
 // Демо фундамента Tailwind/shadcn по адресу <app>/#switcher — изолировано,
@@ -48,6 +49,8 @@ function YakkasaroyApp() {
   useEffect(() => enablePeekZoom(), []);
   // Esc закрывает верхний открытый модал.
   useEffect(() => enableEscClose(), []);
+  // Кнопка «Назад» (телефон) закрывает верхний модал, а не уводит со страницы.
+  useEffect(() => enableModalBackClose(), []);
 
   // следим за сессией: при входе/выходе обновляем профиль
   useEffect(() => {
