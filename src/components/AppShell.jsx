@@ -146,7 +146,7 @@ export function App({ onLogout }) {
             {profileOpen && (
               <>
                 <div style={st.profileOverlay} onClick={() => setProfileOpen(false)} />
-                <div style={st.profileMenu}>
+                <div style={{ ...st.profileMenu, ...(isMobile ? { position: "fixed", top: "calc(env(safe-area-inset-top) + 52px)", right: 10, left: "auto", width: "min(280px, calc(100vw - 20px))" } : {}) }}>
                   <div style={st.pmHead}>
                     <div>
                       <div style={st.pmName}>{userName}</div>
