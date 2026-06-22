@@ -818,6 +818,10 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
   // Фонд: на десктопе — строка таблицы, на телефоне — карточка (название без
   // обрезки в заголовке, под ним бар и три значения Доступно/Рассчитано/Одобрено)
   const FundRow = ({ x, child }) => {
+    // Защита от краша: строку без объекта фонда (фонд архивирован/отсутствует в
+    // справочнике, но правило на него ссылается) не рендерим — иначе обращение к
+    // x.fund.id в чекбоксе роняло весь экран («белый экран» при раскрытии этапа).
+    if (!x.fund) return null;
     const avail = Number(x.fund?.balance || 0);
     const barVal = x.appr || x.calc;
     const barBase = avail > 0 ? avail : (barVal || 1);
