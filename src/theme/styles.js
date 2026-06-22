@@ -18,7 +18,7 @@ export const makeStyles = (C) => ({
   topRight: { display: "flex", alignItems: "center", gap: 14, marginLeft: "auto" },
   user: { textAlign: "right" }, uName: { fontSize: 13, fontWeight: 700 }, uRole: { fontSize: 11, color: C.sub },
   iconBtn: { width: 40, height: 40, borderRadius: "50%", background: C.panel2, border: `1px solid ${C.glassBorder}`, color: C.sub, cursor: "pointer", display: "grid", placeItems: "center", boxShadow: `inset 0 1px 0 ${C.glassHi}`, backdropFilter: "blur(20px) saturate(160%)", WebkitBackdropFilter: "blur(20px) saturate(160%)" },
-  avatar: { width: 40, height: 40, borderRadius: "50%", background: C.green, color: C.onAccent, display: "grid", placeItems: "center", fontWeight: 800, fontSize: 13, cursor: "pointer", userSelect: "none", boxShadow: `inset 0 1px 0 rgba(255,255,255,0.35)` },
+  avatar: { width: 40, height: 40, borderRadius: "50%", color: C.onAccent, display: "grid", placeItems: "center", fontWeight: 800, fontSize: 13, cursor: "pointer", userSelect: "none" },
   profileWrap: { position: "relative" },
   profileOverlay: { position: "fixed", inset: 0, zIndex: 60, background: "rgba(0,0,0,0.4)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)" },
   profileMenu: { position: "absolute", top: 48, right: 0, width: 240, background: C.solid, backdropFilter: "blur(28px) saturate(180%)", WebkitBackdropFilter: "blur(28px) saturate(180%)", border: `1px solid ${C.glassBorder}`, borderRadius: 16, padding: 8, zIndex: 61, boxShadow: `inset 0 1px 0 ${C.glassHi}, 0 16px 40px ${C.shadow}` },

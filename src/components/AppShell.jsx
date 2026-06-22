@@ -142,7 +142,7 @@ export function App({ onLogout }) {
           <div style={st.profileWrap}>
             {profile?.avatar_url
               ? <img src={profile.avatar_url} alt={userName} className="ava" onClick={() => setProfileOpen((o) => !o)} style={{ ...st.avatar, background: "none", objectFit: "cover", cursor: "pointer" }} />
-              : <div style={{ ...st.avatar, background: `${avatarColor(userName)}26`, color: avatarColor(userName) }} className="ava" onClick={() => setProfileOpen((o) => !o)}>{initials}</div>}
+              : <div style={{ ...st.avatar, color: avatarColor(userName) }} className="ava glass-surface" onClick={() => setProfileOpen((o) => !o)}>{initials}</div>}
             {profileOpen && (
               <>
                 <div style={st.profileOverlay} onClick={() => setProfileOpen(false)} />

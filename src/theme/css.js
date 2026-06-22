@@ -64,6 +64,8 @@ export const makeCss = (C) => {
      (легенда статусов сохраняется). Скролл внутри, скроллбар скрыт. */
   .chiptray{ display:inline-flex; align-items:center; gap:4px; padding:4px; max-width:100%; border-radius:99px; overflow-x:auto; scrollbar-width:none; -ms-overflow-style:none; background:${mix(g.c, "12%")}; backdrop-filter:blur(8px) saturate(${g.sat}); -webkit-backdrop-filter:blur(8px) saturate(${g.sat}); box-shadow:${trackShadow}; }
   .chiptray::-webkit-scrollbar{ display:none; }
+  /* Универсальная стеклянная поверхность (фон как у трека вкладок): аватар и т.п. */
+  .glass-surface{ background:${mix(g.c, "12%")}; backdrop-filter:blur(8px) saturate(${g.sat}); -webkit-backdrop-filter:blur(8px) saturate(${g.sat}); box-shadow:${trackShadow}; }
   .frow:hover{background:${C.rowHover};}
   .trow{border-top:1px solid ${C.line};}
   .trow:hover{background:${C.rowHover};}
