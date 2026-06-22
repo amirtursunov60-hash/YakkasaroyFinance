@@ -101,7 +101,7 @@ export function App({ onLogout }) {
 
       <header className="appTop glass-surface" style={{ ...st.topbar, ...(isMobile ? { gap: 8, padding: "0 10px" } : {}) }}>
         {isMobile && (
-          <button style={st.burger} onClick={() => setMenuOpen(true)}><Menu size={20} /></button>
+          <button style={st.burger} className="btn glass-pill-btn" onClick={() => setMenuOpen(true)}><Menu size={20} /></button>
         )}
         <div style={{ ...st.brand, ...(isMobile ? { gap: 7 } : {}) }}>
           <div style={{
@@ -120,15 +120,15 @@ export function App({ onLogout }) {
         {(() => {
           const regActive = activeModule === "finance" && active === "register";
           return (
-            <button className="btn" title="Реестр операций"
+            <button className="btn glass-pill-btn" title="Реестр операций"
               onClick={() => { setActiveModule("finance"); setActive("register"); }}
               style={{
                 display: "inline-flex", alignItems: "center", gap: 7, flexShrink: 0,
-                height: 38, padding: isMobile ? "0 9px" : "0 12px", borderRadius: 10,
+                height: 38, padding: isMobile ? "0 11px" : "0 14px", borderRadius: 99,
                 cursor: "pointer", fontSize: 13, fontWeight: 600,
                 color: regActive ? C.green : C.text,
-                border: `1px solid ${regActive ? C.green + "66" : C.line}`,
-                background: regActive ? `${C.green}1a` : C.panel2,
+                border: regActive ? `1px solid ${C.green}66` : undefined,
+                background: regActive ? `${C.green}1a` : undefined,
               }}>
               <List size={18} />
               {!isMobile && <span>Реестр</span>}

@@ -66,6 +66,8 @@ export const makeCss = (C) => {
   .chiptray::-webkit-scrollbar{ display:none; }
   /* Универсальная стеклянная поверхность (фон как у трека вкладок): аватар и т.п. */
   .glass-surface{ background:${mix(g.c, "12%")}; backdrop-filter:blur(8px) saturate(${g.sat}); -webkit-backdrop-filter:blur(8px) saturate(${g.sat}); box-shadow:${trackShadow}; }
+  /* Кнопка-«пилюля»: тот же стеклянный рецепт, что у скользящей пилюли сегмента */
+  .glass-pill-btn{ background:${mix(g.c, "36%")}; backdrop-filter:blur(6px) saturate(${g.sat}); -webkit-backdrop-filter:blur(6px) saturate(${g.sat}); box-shadow:${pillShadow}; border:none; }
   .frow:hover{background:${C.rowHover};}
   .trow{border-top:1px solid ${C.line};}
   .trow:hover{background:${C.rowHover};}

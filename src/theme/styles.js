@@ -9,7 +9,7 @@
 export const makeStyles = (C) => ({
   app: { minHeight: "100vh", background: C.pageGrad, backgroundAttachment: "fixed", color: C.text, fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', system-ui, sans-serif", WebkitFontSmoothing: "antialiased", letterSpacing: "-0.01em" },
   topbar: { height: 60, display: "flex", alignItems: "center", gap: 14, padding: "0 16px", borderBottom: `1px solid ${C.glassBorder}`, position: "sticky", top: 0, zIndex: 40 },
-  burger: { width: 40, height: 40, borderRadius: "50%", background: C.panel2, border: `1px solid ${C.glassBorder}`, color: C.text, cursor: "pointer", display: "grid", placeItems: "center", flexShrink: 0, boxShadow: `inset 0 1px 0 ${C.glassHi}`, backdropFilter: "blur(20px) saturate(160%)", WebkitBackdropFilter: "blur(20px) saturate(160%)" },
+  burger: { width: 40, height: 40, borderRadius: "50%", color: C.text, cursor: "pointer", display: "grid", placeItems: "center", flexShrink: 0 },
   brand: { display: "flex", alignItems: "center", gap: 11 },
   logo: { width: 36, height: 36, borderRadius: 11, background: C.green, color: C.onAccent, display: "grid", placeItems: "center", boxShadow: `0 4px 14px ${C.green}40` },
   brandTxt: { fontSize: 18, fontWeight: 800, letterSpacing: -0.4 }, brandThin: { color: C.sub, fontWeight: 500 },
@@ -62,7 +62,7 @@ export const makeStyles = (C) => ({
   weekBtn: { display: "inline-flex", alignItems: "center", gap: 10, background: C.panel2, border: `1px solid ${C.glassBorder}`, color: C.text, cursor: "pointer", padding: "10px 16px", borderRadius: 14, fontFamily: "inherit", boxShadow: `inset 0 1px 0 ${C.glassHi}`, backdropFilter: "blur(20px) saturate(160%)", WebkitBackdropFilter: "blur(20px) saturate(160%)" },
   // Селектор недели ФП в шапке (общий для всех разделов)
   topWeekWrap: { position: "relative", flexShrink: 0 },
-  topWeekBtn: { display: "inline-flex", alignItems: "center", gap: 7, height: 40, background: C.panel, border: `1px solid ${C.line}`, color: C.text, cursor: "pointer", padding: "0 11px", borderRadius: 12, fontFamily: "inherit", fontSize: 13, fontWeight: 700, whiteSpace: "nowrap", fontVariantNumeric: "tabular-nums", boxShadow: `inset 0 1px 0 ${C.glassHi}` },
+  topWeekBtn: { display: "inline-flex", alignItems: "center", gap: 7, height: 40, color: C.text, cursor: "pointer", padding: "0 14px", borderRadius: 99, fontFamily: "inherit", fontSize: 13, fontWeight: 700, whiteSpace: "nowrap", fontVariantNumeric: "tabular-nums" },
   weekOverlay: { position: "fixed", inset: 0, zIndex: 60 },
   weekMenu: { position: "absolute", top: 50, left: 0, zIndex: 61, width: 260, maxHeight: 320, overflowY: "auto", background: C.solid, backdropFilter: "blur(28px) saturate(180%)", WebkitBackdropFilter: "blur(28px) saturate(180%)", border: `1px solid ${C.glassBorder}`, borderRadius: 16, padding: 8, boxShadow: `inset 0 1px 0 ${C.glassHi}, 0 16px 40px ${C.shadow}` },
   weekMenuHead: { fontSize: 11, textTransform: "uppercase", letterSpacing: 0.5, color: C.faint, fontWeight: 700, padding: "6px 10px 10px" },

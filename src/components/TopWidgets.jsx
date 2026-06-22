@@ -73,7 +73,7 @@ export function NotifyBell({ onGo }) {
   useEffect(() => { refresh(); }, [refresh]);
 
   return (
-    <button style={{ ...st.iconBtn, position: "relative" }} className="btn"
+    <button style={{ ...st.iconBtn, position: "relative", background: undefined, border: undefined, boxShadow: undefined, backdropFilter: undefined, WebkitBackdropFilter: undefined }} className="btn glass-pill-btn"
       title={count ? `К рассмотрению: ${count}` : "Уведомления"}
       onClick={() => count && onGo("finance", "requests")}>
       <Bell size={17} />
