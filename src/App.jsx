@@ -9,6 +9,7 @@ import { getProfile, signOut } from "./lib/auth";
 import { redeemInvite } from "./lib/api";
 import { isSoundOn, setSoundOn } from "./lib/feedback";
 import { enablePeekZoom } from "./lib/peekZoom";
+import { enableEscClose } from "./lib/escClose";
 import SwitcherDemo from "@/components/ui/switcher-demo";
 
 // Демо фундамента Tailwind/shadcn по адресу <app>/#switcher — изолировано,
@@ -45,6 +46,8 @@ function YakkasaroyApp() {
   useEffect(() => { applyThemeVars(C); }, [C]);
   // «Зум-лупа»: пинч-зум разрешён, но возвращается к размеру экрана после жеста.
   useEffect(() => enablePeekZoom(), []);
+  // Esc закрывает верхний открытый модал.
+  useEffect(() => enableEscClose(), []);
 
   // следим за сессией: при входе/выходе обновляем профиль
   useEffect(() => {

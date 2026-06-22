@@ -252,7 +252,7 @@ function ExpenseTypeBindModal({ C, st, type, funds, onClose, onSaved }) {
   };
 
   return (
-    <div style={st.mdOverlay} onClick={onClose}>
+    <div style={st.mdOverlay} data-modal="1" onClick={onClose}>
       <div style={{ ...st.mdCard, width: "min(440px, 100%)" }} onClick={(e) => e.stopPropagation()}>
         <div style={st.mdHead}>
           <div style={st.mdTitle}>Привязка статьи</div>

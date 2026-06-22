@@ -308,7 +308,7 @@ function CashTransferModal({ C, st, accounts, periodId, onClose, onSaved }) {
   };
 
   return (
-    <div style={st.mdOverlay} onClick={onClose}>
+    <div style={st.mdOverlay} data-modal="1" onClick={onClose}>
       <div style={{ ...st.mdCard, width: "min(420px, 100%)" }} onClick={(e) => e.stopPropagation()}>
         <div style={st.mdHead}>
           <div style={st.mdTitle}>Перемещение между счетами ДС</div>
@@ -356,7 +356,7 @@ function StatementModal({ C, st, statement, period, onAllTime, onClose }) {
   useScrollLock();
   const { account, rows, allTime } = statement;
   return (
-    <div style={st.mdOverlay} onClick={onClose}>
+    <div style={st.mdOverlay} data-modal="1" onClick={onClose}>
       <div style={{ ...st.mdCard, width: "min(560px, 100%)" }} onClick={(e) => e.stopPropagation()}>
         <div style={st.mdHead}>
           <div style={st.mdTitle}>{account.name} · выписка</div>
@@ -424,7 +424,7 @@ function AddAccountModal({ C, st, refs, onClose, onSaved }) {
   };
 
   return (
-    <div style={st.mdOverlay} onClick={onClose}>
+    <div style={st.mdOverlay} data-modal="1" onClick={onClose}>
       <div style={{ ...st.mdCard, width: "min(420px, 100%)" }} onClick={(e) => e.stopPropagation()}>
         <div style={st.mdHead}>
           <div style={st.mdTitle}>Новый счёт ДС</div>

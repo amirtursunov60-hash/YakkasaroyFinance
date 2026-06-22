@@ -517,7 +517,7 @@ function FundStatementModal({ C, st, statement, period, onAllTime, onClose }) {
   useScrollLock();
   const { rows, allTime, title } = statement;
   return (
-    <div style={st.mdOverlay} onClick={onClose}>
+    <div style={st.mdOverlay} data-modal="1" onClick={onClose}>
       <div style={{ ...st.mdCard, width: "min(560px, 100%)" }} onClick={(e) => e.stopPropagation()}>
         <div style={st.mdHead}>
           <div style={st.mdTitle}>{title}</div>
@@ -564,7 +564,7 @@ function FundLoansModal({ C, st, data, nameOf, isFinAdmin, busy, onReturn, onClo
   const { fund, rows } = data;
   const [ret, setRet] = useState(null); // { op, val }
   return (
-    <div style={st.mdOverlay} onClick={onClose}>
+    <div style={st.mdOverlay} data-modal="1" onClick={onClose}>
       <div style={{ ...st.mdCard, width: "min(520px, 100%)" }} onClick={(e) => e.stopPropagation()}>
         <div style={st.mdHead}>
           <div style={st.mdTitle}>{fund.code} · займы</div>
@@ -695,7 +695,7 @@ function FolderFormModal({ C, st, folder, onClose, onSaved }) {
   };
 
   return (
-    <div style={st.mdOverlay} onClick={onClose}>
+    <div style={st.mdOverlay} data-modal="1" onClick={onClose}>
       <div style={{ ...st.mdCard, width: "min(420px, 100%)" }} onClick={(e) => e.stopPropagation()}>
         <div style={st.mdHead}>
           <div style={st.mdTitle}>{isEdit ? "Редактировать раздел" : "Новый раздел"}</div>
@@ -775,7 +775,7 @@ function FundFormModal({ C, st, refs, folders, fund, onClose, onSaved }) {
   };
 
   return (
-    <div style={st.mdOverlay} onClick={onClose}>
+    <div style={st.mdOverlay} data-modal="1" onClick={onClose}>
       <div style={{ ...st.mdCard, width: "min(460px, 100%)", maxHeight: "92vh", overflowY: "auto" }} onClick={(e) => e.stopPropagation()}>
         <div style={st.mdHead}>
           <div style={st.mdTitle}>{isEdit ? `Редактировать ${fund.code}` : "Новый фонд"}</div>

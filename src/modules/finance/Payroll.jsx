@@ -397,7 +397,7 @@ function PayModal({ C, st, total, accounts, busy, onClose, onConfirm }) {
   useScrollLock();
   const [accountId, setAccountId] = useState("");
   return (
-    <div style={st.mdOverlay} onClick={onClose}>
+    <div style={st.mdOverlay} data-modal="1" onClick={onClose}>
       <div style={{ ...st.mdCard, width: "min(420px, 100%)" }} onClick={(e) => e.stopPropagation()}>
         <div style={st.mdHead}>
           <div style={st.mdTitle}>Выплата зарплаты</div>

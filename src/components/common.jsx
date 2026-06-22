@@ -41,7 +41,7 @@ export function ConfirmModal({ title, message, confirmLabel = "Подтверд�
     : { ...baseBtn, background: accent, color: "#fff" };
 
   return (
-    <div style={st.mdOverlay} onClick={() => !busy && onCancel?.()}>
+    <div style={st.mdOverlay} data-modal="1" onClick={() => !busy && onCancel?.()}>
       <div style={{ ...st.mdCard, width: "min(440px, 100%)" }} onClick={(e) => e.stopPropagation()}>
         <div style={st.mdHead}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
