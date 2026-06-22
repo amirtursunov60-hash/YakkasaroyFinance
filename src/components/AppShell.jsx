@@ -6,6 +6,7 @@ import "./ui/switcher.css";
 import { Stub } from "./common";
 import { MODULES, MODULE_NAV } from "../data/navigation";
 import { avatarColor } from "../utils/format";
+import { feedbackSuccess } from "../lib/feedback";
 import { CrmModule } from "../modules/crm/CrmModule";
 import { DashModule } from "../modules/dashboard/DashModule";
 import { OwnerDashboard } from "../modules/dashboard/OwnerDashboard";
@@ -165,7 +166,7 @@ export function App({ onLogout }) {
                       block
                       ariaLabel="Звук"
                       value={sound ? "on" : "off"}
-                      onChange={(v) => setSound(v === "on")}
+                      onChange={(v) => { const on = v === "on"; setSound(on); if (on) feedbackSuccess(); }}
                       options={[
                         { value: "on", label: "Звук вкл", icon: <Volume2 size={14} /> },
                         { value: "off", label: "Выкл", icon: <VolumeX size={14} /> },
