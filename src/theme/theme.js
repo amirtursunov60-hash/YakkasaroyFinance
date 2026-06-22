@@ -17,7 +17,8 @@ export const THEMES = {
     panel: "rgba(28, 34, 44, 0.55)", panel2: "rgba(255,255,255,0.06)", line: "rgba(255,255,255,0.10)",
     glassBorder: "rgba(255,255,255,0.14)", glassHi: "rgba(255,255,255,0.22)",
     // «green» — фирменный бренд-акцент Яккасарой (зелёный)
-    green: "#3ddc84", greenSoft: "#2bb673", onAccent: "#04130a", text: "#f5f8fa", sub: "#a8b2bd", faint: "#6b7682",
+    // faint поднят до WCAG AA (~4.7:1 на pageGrad): используется и для плейсхолдеров (input::placeholder)
+    green: "#3ddc84", greenSoft: "#2bb673", onAccent: "#04130a", text: "#f5f8fa", sub: "#a8b2bd", faint: "#7e8794",
     // money — отдельный зелёный для денежных сумм (приход/рост), чтобы брендовый
     // green не означал «всё сразу»: бренд/кнопки/активная вкладка ≠ деньги.
     money: "#2fbf6f",
@@ -46,7 +47,7 @@ export const THEMES = {
     panel: "rgba(255, 255, 255, 0.55)", panel2: "rgba(255,255,255,0.45)", line: "rgba(15,40,70,0.16)",
     glassBorder: "rgba(255,255,255,0.85)", glassHi: "rgba(255,255,255,0.95)",
     // бренд-акцент Яккасарой (зелёный)
-    green: "#0aa552", greenSoft: "#0aa552", onAccent: "#04130a", text: "#0b1722", sub: "#45525e", faint: "#717c87",
+    green: "#0aa552", greenSoft: "#0aa552", onAccent: "#04130a", text: "#0b1722", sub: "#45525e", faint: "#5c6670",
     money: "#0a8f48", // деньги (приход/рост) — чуть глубже брендового зелёного
     inputBg: "rgba(255,255,255,0.65)", rowChild: "rgba(15,40,70,0.035)", rowHover: "rgba(255,255,255,0.6)",
     navHover: "rgba(255,255,255,0.5)", heroGrad: "rgba(255, 255, 255, 0.55)",
@@ -72,7 +73,7 @@ export const THEMES = {
     panel: "rgba(42, 54, 68, 0.60)", panel2: "rgba(255,255,255,0.05)", line: "rgba(255,255,255,0.11)",
     glassBorder: "rgba(255,255,255,0.15)", glassHi: "rgba(255,255,255,0.20)",
     // бренд-акцент Яккасарой (зелёный)
-    green: "#3ddc84", greenSoft: "#2bb673", onAccent: "#04130a", text: "#e9eef3", sub: "#aab6c2", faint: "#74808d",
+    green: "#3ddc84", greenSoft: "#2bb673", onAccent: "#04130a", text: "#e9eef3", sub: "#aab6c2", faint: "#818b98",
     money: "#2fbf6f",
     inputBg: "rgba(255,255,255,0.06)", rowChild: "rgba(255,255,255,0.02)", rowHover: "rgba(255,255,255,0.05)",
     navHover: "rgba(255,255,255,0.06)", heroGrad: "rgba(42, 54, 68, 0.60)",
