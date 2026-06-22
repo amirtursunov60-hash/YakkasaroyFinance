@@ -99,7 +99,7 @@ export function App({ onLogout }) {
     <div style={st.app}>
       <style>{css}</style>
 
-      <header className="appTop" style={{ ...st.topbar, ...(isMobile ? { gap: 8, padding: "0 10px" } : {}) }}>
+      <header className="appTop glass-surface" style={{ ...st.topbar, ...(isMobile ? { gap: 8, padding: "0 10px" } : {}) }}>
         {isMobile && (
           <button style={st.burger} onClick={() => setMenuOpen(true)}><Menu size={20} /></button>
         )}
@@ -142,7 +142,7 @@ export function App({ onLogout }) {
           <div style={st.profileWrap}>
             {profile?.avatar_url
               ? <img src={profile.avatar_url} alt={userName} className="ava" onClick={() => setProfileOpen((o) => !o)} style={{ ...st.avatar, background: "none", objectFit: "cover", cursor: "pointer" }} />
-              : <div style={{ ...st.avatar, color: avatarColor(userName) }} className="ava glass-surface" onClick={() => setProfileOpen((o) => !o)}>{initials}</div>}
+              : <div style={{ ...st.avatar, background: `${avatarColor(userName)}26`, color: avatarColor(userName) }} className="ava" onClick={() => setProfileOpen((o) => !o)}>{initials}</div>}
             {profileOpen && (
               <>
                 <div style={st.profileOverlay} onClick={() => setProfileOpen(false)} />
