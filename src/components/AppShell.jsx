@@ -6,6 +6,7 @@ import "./ui/switcher.css";
 import { Stub } from "./common";
 import { MODULES, MODULE_NAV } from "../data/navigation";
 import { avatarColor } from "../utils/format";
+import { feedbackSuccess } from "../lib/feedback";
 import { CrmModule } from "../modules/crm/CrmModule";
 import { DashModule } from "../modules/dashboard/DashModule";
 import { OwnerDashboard } from "../modules/dashboard/OwnerDashboard";
@@ -32,10 +33,12 @@ import { makeCss } from "../theme/css";
 import { useTheme } from "../theme/theme";
 import { PeriodProvider, WeekPicker, LocationPicker } from "../lib/PeriodCtx";
 import { GlobalSearch, NotifyBell } from "./TopWidgets";
+import { useIsWide } from "../hooks/useIsMobile";
 
 
 export function App({ onLogout }) {
   const { C, st, theme, setTheme, lang, setLang, sound, setSound, isMobile, profile } = useTheme();
+  const isWide = useIsWide(); // поиск в шапке — только на десктопе (не в альбомной на телефоне)
   const ROLE_LABELS = {
     owner: "Владелец",
     fin_director: "Финансовый директор",
@@ -135,7 +138,7 @@ export function App({ onLogout }) {
             </button>
           );
         })()}
-        {!isMobile && <GlobalSearch onGo={(m, sec) => { setActiveModule(m); setActive(sec); }} />}
+        {isWide && <GlobalSearch onGo={(m, sec) => { setActiveModule(m); setActive(sec); }} />}
         <div style={{ ...st.topRight, ...(isMobile ? { gap: 6, marginLeft: "auto", flexShrink: 0 } : {}) }}>
           <NotifyBell onGo={(m, sec) => { setActiveModule(m); setActive(sec); }} />
           {!isMobile && <div style={st.user}><div style={st.uName}>{userName}</div><div style={st.uRole}>{userRole}</div></div>}
@@ -146,7 +149,7 @@ export function App({ onLogout }) {
             {profileOpen && (
               <>
                 <div style={st.profileOverlay} onClick={() => setProfileOpen(false)} />
-                <div style={st.profileMenu}>
+                <div style={{ ...st.profileMenu, ...(isMobile ? { position: "fixed", top: "calc(env(safe-area-inset-top) + 52px)", right: 10, left: "auto", width: "min(280px, calc(100vw - 20px))" } : {}) }}>
                   <div style={st.pmHead}>
                     <div>
                       <div style={st.pmName}>{userName}</div>
@@ -165,7 +168,7 @@ export function App({ onLogout }) {
                       block
                       ariaLabel="Звук"
                       value={sound ? "on" : "off"}
-                      onChange={(v) => setSound(v === "on")}
+                      onChange={(v) => { const on = v === "on"; setSound(on); if (on) feedbackSuccess(); }}
                       options={[
                         { value: "on", label: "Звук вкл", icon: <Volume2 size={14} /> },
                         { value: "off", label: "Выкл", icon: <VolumeX size={14} /> },
