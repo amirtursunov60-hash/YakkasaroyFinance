@@ -28,6 +28,8 @@ export const makeCss = (C) => {
   }
   .nav:hover{background:${C.navHover};}
   .mod:hover{color:${C.text};}
+  /* G5 — единое фокус-кольцо для клавиатуры (доступность) на интерактивных контролах */
+  .btn:focus-visible, .mod:focus-visible, .gseg__opt:focus-visible, .chiptray button:focus-visible, .nav:focus-visible{ outline:2px solid ${C.green}; outline-offset:2px; border-radius:12px; }
   .modbar::-webkit-scrollbar{display:none;}
   /* Трек вкладок — тот же стеклянный рецепт, что у свитчера (многослойные блики
      --c-light/--c-dark + блюр), нейтральное стекло (бело/чёрные грани работают
