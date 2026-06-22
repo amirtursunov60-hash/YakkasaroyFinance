@@ -149,7 +149,7 @@ export function Control() {
       </div>
     </section>
 
-    {err && <div style={{ ...st.reqError, marginBottom: 14 }}><AlertCircle size={15} /> {err}</div>}
+    {err && <div role="alert" style={{ ...st.reqError, marginBottom: 14 }}><AlertCircle size={15} /> {err}</div>}
     {done && <div style={{ ...st.reqSuccess, marginBottom: 14 }}><CheckCircle2 size={15} /> {done}</div>}
     {diffTotal !== null && Math.abs(diffTotal) > 0.01 && (
       <div style={st.stockAlert}><AlertTriangle size={16} /> Расхождение {fmt(diffTotal)} TJS между фактом и расчётом — проверьте кассы и неучтённые операции</div>
@@ -312,7 +312,7 @@ function CashTransferModal({ C, st, accounts, periodId, onClose, onSaved }) {
       <div style={{ ...st.mdCard, width: "min(420px, 100%)" }} onClick={(e) => e.stopPropagation()}>
         <div style={st.mdHead}>
           <div style={st.mdTitle}>Перемещение между счетами ДС</div>
-          <button style={st.iconBtn} onClick={onClose}><X size={17} /></button>
+          <button style={st.iconBtn} onClick={onClose} aria-label="Закрыть"><X size={17} /></button>
         </div>
         <div style={{ display: "grid", gap: 10 }}>
           <div style={st.reqField}>
@@ -338,7 +338,7 @@ function CashTransferModal({ C, st, accounts, periodId, onClose, onSaved }) {
               value={comment} onChange={(e) => setComment(e.target.value)} />
           </div>
         </div>
-        {err && <div style={st.reqError}><AlertCircle size={15} /> {err}</div>}
+        {err && <div role="alert" style={st.reqError}><AlertCircle size={15} /> {err}</div>}
         <div style={st.mdActions}>
           <button style={st.btnGhost} className="btn" onClick={onClose}>Отмена</button>
           <button style={{ ...st.btnGreen, opacity: busy ? 0.7 : 1 }} className="btn" onClick={submit} disabled={busy}>
@@ -360,7 +360,7 @@ function StatementModal({ C, st, statement, period, onAllTime, onClose }) {
       <div style={{ ...st.mdCard, width: "min(560px, 100%)" }} onClick={(e) => e.stopPropagation()}>
         <div style={st.mdHead}>
           <div style={st.mdTitle}>{account.name} · выписка</div>
-          <button style={st.iconBtn} onClick={onClose}><X size={17} /></button>
+          <button style={st.iconBtn} onClick={onClose} aria-label="Закрыть"><X size={17} /></button>
         </div>
         <div style={{ fontSize: 12.5, color: C.sub, marginBottom: 12, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
           <span>{allTime ? "Последние операции (все периоды)" : `Неделя ${period ? periodTitle(period) : "—"}`}</span>
@@ -428,7 +428,7 @@ function AddAccountModal({ C, st, refs, onClose, onSaved }) {
       <div style={{ ...st.mdCard, width: "min(420px, 100%)" }} onClick={(e) => e.stopPropagation()}>
         <div style={st.mdHead}>
           <div style={st.mdTitle}>Новый счёт ДС</div>
-          <button style={st.iconBtn} onClick={onClose}><X size={17} /></button>
+          <button style={st.iconBtn} onClick={onClose} aria-label="Закрыть"><X size={17} /></button>
         </div>
         <div style={{ display: "grid", gap: 10 }}>
           <div style={st.reqField}>
@@ -456,7 +456,7 @@ function AddAccountModal({ C, st, refs, onClose, onSaved }) {
             </select>
           </div>
         </div>
-        {err && <div style={st.reqError}><AlertCircle size={15} /> {err}</div>}
+        {err && <div role="alert" style={st.reqError}><AlertCircle size={15} /> {err}</div>}
         <div style={st.mdActions}>
           <button style={st.btnGhost} className="btn" onClick={onClose}>Отмена</button>
           <button style={{ ...st.btnGreen, opacity: busy ? 0.7 : 1 }} className="btn" onClick={submit} disabled={busy}>

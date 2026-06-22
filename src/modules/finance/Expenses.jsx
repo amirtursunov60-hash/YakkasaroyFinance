@@ -142,7 +142,7 @@ export function Expenses() {
       </div>
     </section>
 
-    {err && <div style={{ ...st.reqError, marginBottom: 14 }}><AlertCircle size={15} /> {err}</div>}
+    {err && <div role="alert" style={{ ...st.reqError, marginBottom: 14 }}><AlertCircle size={15} /> {err}</div>}
     {done && <div style={{ ...st.reqSuccess, marginBottom: 14 }}><CheckCircle2 size={15} /> {done}</div>}
 
     {/* Дерево статей РД */}
@@ -256,7 +256,7 @@ function ExpenseTypeBindModal({ C, st, type, funds, onClose, onSaved }) {
       <div style={{ ...st.mdCard, width: "min(440px, 100%)" }} onClick={(e) => e.stopPropagation()}>
         <div style={st.mdHead}>
           <div style={st.mdTitle}>Привязка статьи</div>
-          <button style={st.iconBtn} onClick={onClose}><X size={17} /></button>
+          <button style={st.iconBtn} onClick={onClose} aria-label="Закрыть"><X size={17} /></button>
         </div>
 
         <div style={{ ...st.reqField, marginBottom: 12 }}>
@@ -283,7 +283,7 @@ function ExpenseTypeBindModal({ C, st, type, funds, onClose, onSaved }) {
             value={purpose} onChange={(e) => setPurpose(e.target.value)} />
         </div>
 
-        {err && <div style={{ ...st.reqError, marginTop: 12 }}><AlertCircle size={15} /> {err}</div>}
+        {err && <div role="alert" style={{ ...st.reqError, marginTop: 12 }}><AlertCircle size={15} /> {err}</div>}
 
         <div style={st.mdActions}>
           <button style={st.btnGhost} className="btn" onClick={onClose}>Отмена</button>

@@ -262,7 +262,7 @@ export function Requests() {
       </div>
     </section>
 
-    {err && <div style={{ ...st.reqError, marginBottom: 14 }}><AlertCircle size={15} /> {err}</div>}
+    {err && <div role="alert" style={{ ...st.reqError, marginBottom: 14 }}><AlertCircle size={15} /> {err}</div>}
     {done && <div style={{ ...st.reqSuccess, marginBottom: 14 }}><CheckCircle2 size={15} /> {done}</div>}
 
     {/* Счета поставщиков — приоритет одобрения над заявками (ТЗ §4.1.6) */}
@@ -530,7 +530,7 @@ function RequestForm({ st, isMobile, profile, tree, refs, funds, periods, locati
       <div style={st.mdCard} onClick={(e) => e.stopPropagation()}>
         <div style={st.mdHead}>
           <div style={st.mdTitle}>{prefill ? "Копия заявки (ЗРС)" : "Заявка на расход средств (ЗРС)"}</div>
-          <button style={st.iconBtn} onClick={onClose}><X size={17} /></button>
+          <button style={st.iconBtn} onClick={onClose} aria-label="Закрыть"><X size={17} /></button>
         </div>
 
         {!myPositions.length && (
@@ -616,7 +616,7 @@ function RequestForm({ st, isMobile, profile, tree, refs, funds, periods, locati
           </Field>
         </div>
 
-        {err && <div style={st.reqError}><AlertCircle size={15} /> {err}</div>}
+        {err && <div role="alert" style={st.reqError}><AlertCircle size={15} /> {err}</div>}
 
         <div style={st.mdActions}>
           <button style={st.btnGhost} className="btn" onClick={onClose}>Отмена</button>
@@ -654,7 +654,7 @@ export function DecideModal({ C, st, decide, funds, accounts, busy, onClose, onC
       <div style={{ ...st.mdCard, width: "min(440px, 100%)" }} onClick={(e) => e.stopPropagation()}>
         <div style={st.mdHead}>
           <div style={st.mdTitle}>{titles[action]} №{item.number}</div>
-          <button style={st.iconBtn} onClick={onClose}><X size={17} /></button>
+          <button style={st.iconBtn} onClick={onClose} aria-label="Закрыть"><X size={17} /></button>
         </div>
 
         <div style={{ ...st.reqField, marginBottom: 12 }}>

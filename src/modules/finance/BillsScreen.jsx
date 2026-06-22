@@ -170,7 +170,7 @@ export function BillsScreen({ kind, ui }) {
       </div>
     </section>
 
-    {err && <div style={{ ...st.reqError, marginBottom: 14 }}><AlertCircle size={15} /> {err}</div>}
+    {err && <div role="alert" style={{ ...st.reqError, marginBottom: 14 }}><AlertCircle size={15} /> {err}</div>}
     {done && <div style={{ ...st.reqSuccess, marginBottom: 14 }}><CheckCircle2 size={15} /> {done}</div>}
     {sums.overdue > 0 && (
       <div style={st.stockAlert}><AlertTriangle size={16} /> Просрочено {sums.overdueN} счёт(ов) на {fmt(sums.overdue)} TJS — портятся отношения и условия поставщиков</div>
@@ -354,7 +354,7 @@ function BillForm({ C, st, isMobile, profile, kind, ui, groups, refs, funds, cou
       <div style={st.mdCard} onClick={(e) => e.stopPropagation()}>
         <div style={st.mdHead}>
           <div style={st.mdTitle}>{ui.formTitle}</div>
-          <button style={st.iconBtn} onClick={onClose}><X size={17} /></button>
+          <button style={st.iconBtn} onClick={onClose} aria-label="Закрыть"><X size={17} /></button>
         </div>
 
         <div style={{ ...st.mdGrid, ...(isMobile ? { gridTemplateColumns: "1fr" } : {}) }}>
@@ -429,7 +429,7 @@ function BillForm({ C, st, isMobile, profile, kind, ui, groups, refs, funds, cou
           </label>
         </div>
 
-        {err && <div style={st.reqError}><AlertCircle size={15} /> {err}</div>}
+        {err && <div role="alert" style={st.reqError}><AlertCircle size={15} /> {err}</div>}
 
         <div style={st.mdActions}>
           <button style={st.btnGhost} className="btn" onClick={onClose}>Отмена</button>
@@ -458,7 +458,7 @@ function BillDecideModal({ C, st, decide, funds, accounts, busy, onClose, onConf
       <div style={{ ...st.mdCard, width: "min(440px, 100%)" }} onClick={(e) => e.stopPropagation()}>
         <div style={st.mdHead}>
           <div style={st.mdTitle}>{titles[action]} №{bill.number}</div>
-          <button style={st.iconBtn} onClick={onClose}><X size={17} /></button>
+          <button style={st.iconBtn} onClick={onClose} aria-label="Закрыть"><X size={17} /></button>
         </div>
 
         <div style={{ ...st.reqField, marginBottom: 12 }}>

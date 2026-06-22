@@ -109,7 +109,7 @@ export function MjPanel({ kind, src, setSrc }) {
 
   const banners = (<>
     {syncing && <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 12, padding: "9px 12px", borderRadius: 8, fontSize: 12.5, fontWeight: 600, color: C.info, background: `${C.info}1a`, border: `1px solid ${C.info}44` }}><Loader2 size={14} className="spin" /> {syncing}</div>}
-    {err && <div style={{ ...st.reqError, marginBottom: 12 }}><AlertCircle size={15} /> {err}</div>}
+    {err && <div role="alert" style={{ ...st.reqError, marginBottom: 12 }}><AlertCircle size={15} /> {err}</div>}
   </>);
 
   let body = null;

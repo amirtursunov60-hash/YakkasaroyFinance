@@ -204,7 +204,7 @@ export function App({ onLogout }) {
           {isMobile && (
             <div style={st.drawerHead}>
               <span style={st.drawerTitle}>Модули</span>
-              <button style={st.iconBtn} onClick={() => setMenuOpen(false)}><X size={18} /></button>
+              <button style={st.iconBtn} onClick={() => setMenuOpen(false)} aria-label="Закрыть меню"><X size={18} /></button>
             </div>
           )}
           <div style={st.sidebarLabel}>Модули</div>

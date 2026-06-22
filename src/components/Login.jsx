@@ -87,7 +87,7 @@ export function Login({ onEnter }) {
                 <span style={lg.eye} onClick={() => setShow(!show)}>{show ? <EyeOff size={18} /> : <Eye size={18} />}</span>
               </div>
             </div>
-            {err && <div style={lg.error}>{err}</div>}
+            {err && <div role="alert" style={lg.error}>{err}</div>}
             {info && <div style={{ ...lg.error, color: C.green, background: `${C.green}1a`, borderColor: `${C.green}44` }}>{info}</div>}
             <button type="submit" style={{ ...lg.btn, opacity: busy ? 0.7 : 1 }} className="btn" disabled={busy}>
               {busy ? <span className="spin"><Loader2 size={17} /></span> : inviteMode ? "Зарегистрироваться" : "Войти"}

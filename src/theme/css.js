@@ -146,6 +146,10 @@ export const makeCss = (C) => {
     .fpActions .fpBtn{justify-content:center;width:100%;}
     .fpActions .fpLink{margin-left:0;justify-content:center;}
     .heroTitle{font-size:21px;}
+    /* iOS зумит страницу при фокусе инпута с font-size < 16px. Держим 16px на
+       телефоне — это позволяет убрать user-scalable=no и вернуть зум жестами
+       (WCAG 1.4.4), не получая дёрганого авто-зума при вводе. */
+    input,select,textarea{font-size:16px;}
     /* Перф-бюджет стекла: на телефоне блюр дешевле (несколько backdrop-filter
        в видимой области ложатся на GPU тяжело). Блики/тени сохраняются. */
     .modbar,.gseg,.chiptray,.glass-surface{ backdrop-filter:blur(4px) saturate(${g.sat}); -webkit-backdrop-filter:blur(4px) saturate(${g.sat}); }
