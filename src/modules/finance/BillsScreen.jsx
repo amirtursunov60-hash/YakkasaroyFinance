@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { Check, Banknote, AlertTriangle, Loader2, AlertCircle, CheckCircle2, Plus, X, Ban, ChevronRight, Repeat, FileText } from "lucide-react";
-import { Stat } from "../../components/common";
+import { Check, Banknote, AlertTriangle, Loader2, AlertCircle, CheckCircle2, Plus, X, Ban, ChevronRight, Repeat, FileText, Pencil, ListChecks, RotateCcw } from "lucide-react";
+import { Stat, ConfirmModal } from "../../components/common";
 import { useTheme } from "../../theme/theme";
 import { useScrollLock } from "../../hooks/useScrollLock";
 import { useActionFeedback } from "../../hooks/useActionFeedback";
@@ -8,8 +8,9 @@ import { fmt } from "../../utils/format";
 import { usePeriod, periodTitle } from "../../lib/PeriodCtx";
 import { AttachmentsBlock } from "../../components/AttachmentsBlock";
 import {
-  fetchBills, insertBill, decideBill, payBill, createCounterparty,
+  fetchBills, insertBill, updateBill, decideBill, payBill, createCounterparty,
   fetchExpenseTypes, fetchIncomeRefs, fetchFunds, fetchCounterparties,
+  fetchBillPayments, reverseBillPayment,
 } from "../../lib/api";
 import { BILL_FILTERS, billMatchesFilter, billFilterCounts } from "./billFilters";
 
@@ -37,6 +38,9 @@ export function BillsScreen({ kind, ui }) {
   const isFinAdmin = ["owner", "fin_director"].includes(profile?.role);
   const canPay = isFinAdmin || profile?.role === "accountant";
   const canSubmit = ["owner", "fin_director", "accountant", "location_manager", "ops_director"].includes(profile?.role);
+  // Доработки (редактор, лента оплат, отмена, моб. кнопка) — только для «Счета
+  // поставщиков»; «Обязательства» оставлены как есть (решение заказчика).
+  const isSupply = kind === "supply";
 
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
@@ -51,7 +55,11 @@ export function BillsScreen({ kind, ui }) {
   const [expanded, setExpanded] = useState({});
   const [showForm, setShowForm] = useState(false);
   const [prefill, setPrefill] = useState(null);   // для «Повторить»
+  const [editBill, setEditBill] = useState(null); // счёт в режиме редактирования (свой на рассмотрении)
   const [decide, setDecide] = useState(null);     // { bill, action }
+  const [payments, setPayments] = useState([]);   // оплаты счетов из Реестра — лента внизу (только supply)
+  const [cancelBill, setCancelBill] = useState(null); // строка оплаты для отмены (подтверждение)
+  const [cancelErr, setCancelErr] = useState(""); // ошибка отмены — показывается в модалке
   const [busy, setBusy] = useState(null);
 
   const loadStatic = useCallback(async () => {
@@ -71,10 +79,37 @@ export function BillsScreen({ kind, ui }) {
   useEffect(() => { loadStatic(); }, [loadStatic]);
 
   const loadBills = useCallback(async () => {
-    try { setBills(await fetchBills(periodId, kind, ctxLocationId)); }
+    try {
+      const [bls, pays] = await Promise.all([
+        fetchBills(periodId, kind, ctxLocationId),
+        isSupply ? fetchBillPayments(kind, ctxLocationId, { periodId }).catch(() => []) : Promise.resolve([]),
+      ]);
+      setBills(bls); setPayments(pays);
+    }
     catch (e) { setErr("Не удалось загрузить счета: " + (e?.message || e)); }
-  }, [periodId, kind, ctxLocationId]);
+  }, [periodId, kind, ctxLocationId, isSupply]);
   useEffect(() => { if (!periodsLoading) loadBills(); }, [loadBills, periodsLoading]);
+
+  // Кто может править счёт: свой — пока «подан»; финкомитет — любой поданный.
+  // Совпадает с RLS supplier_bills (bills_update). Только для «Счета поставщиков».
+  const canEditBill = (b) => isSupply && b.status === "submitted"
+    && (isFinAdmin || b.created_by === profile.id);
+  const openNewBill = () => { setErr(""); setPrefill(null); setShowForm(true); };
+  const openCancelBill = (row) => { setCancelErr(""); setCancelBill(row); };
+
+  // Отмена оплаты счёта: компенсирующая запись Реестра, счёт → «одобрен».
+  // Ошибку показываем в модалке (лента внизу, верхний баннер оттуда не виден).
+  const doCancelPayment = async (row) => {
+    if (busy) return;
+    setBusy("cancelPay"); setCancelErr(""); setDone("");
+    try {
+      await reverseBillPayment(row.id);
+      await loadBills();
+      setCancelBill(null);
+      setDone(`Оплата счёта №${row.bill?.number ?? ""} отменена — деньги возвращены, счёт снова одобрен`);
+    } catch (e) { setCancelErr(e?.message || String(e)); }
+    finally { setBusy(null); }
+  };
 
   // дерево статей → листья для формы
   const groups = useMemo(() => {
@@ -157,8 +192,10 @@ export function BillsScreen({ kind, ui }) {
             <div style={st.heroLabel}>{ui.heroLabel}</div>
             <div style={st.heroTitle}>{period ? periodTitle(period) : "Период не создан"}</div>
           </div>
-          {canSubmit && (
-            <button style={st.btnGreen} className="btn" onClick={() => { setPrefill(null); setShowForm(true); }}>
+          {/* На телефоне в разделе «Счета поставщиков» кнопка вынесена вниз, под
+              показатели (в шапке не помещалась). В «Обязательствах» — как было. */}
+          {canSubmit && !(isMobile && isSupply) && (
+            <button style={st.btnGreen} className="btn" onClick={openNewBill}>
               <Plus size={15} /> {isMobile ? "Счёт" : ui.addBtn}
             </button>
           )}
@@ -167,8 +204,14 @@ export function BillsScreen({ kind, ui }) {
           <Stat label="К оплате" value={fmt(sums.toPay)} unit="TJS" accent />
           <Stat label="Просрочено" value={fmt(sums.overdue)} unit="TJS" />
           <Stat label="Оплачено за неделю" value={fmt(sums.paid)} unit="TJS" />
-          <Stat label="Счетов" value={String(bills.length)} unit="" />
+          {!isSupply && <Stat label="Счетов" value={String(bills.length)} unit="" />}
         </div>
+        {canSubmit && isMobile && isSupply && (
+          <button style={{ ...st.btnGreen, width: "100%", justifyContent: "center", marginTop: 18 }}
+            className="btn" onClick={openNewBill}>
+            <Plus size={15} /> {ui.addBtn}
+          </button>
+        )}
       </div>
     </section>
 
@@ -254,6 +297,12 @@ export function BillsScreen({ kind, ui }) {
                       <Ban size={14} /> Отклонить
                     </button>
                   </>)}
+                  {canEditBill(b) && (
+                    <button style={st.btnGhost} className="btn" disabled={!!busy} onClick={() => { setErr(""); setEditBill(b); }}
+                      title="Изменить счёт — пока он на рассмотрении">
+                      <Pencil size={14} /> Изменить
+                    </button>
+                  )}
                   {canPay && b.status === "approved" && (
                     <button style={st.btnGreen} className="btn" disabled={!!busy} onClick={() => setDecide({ bill: b, action: "pay" })}>
                       <Banknote size={14} /> Оплатить
@@ -272,19 +321,115 @@ export function BillsScreen({ kind, ui }) {
       );
     })}
 
-    {showForm && refs && (
-      <BillForm C={C} st={st} isMobile={isMobile} profile={profile} kind={kind} ui={ui}
+    {/* Операции со счетами — лента оплат из Реестра выбранной недели (только
+        «Счета поставщиков»). Счёт попадает в Реестр только при оплате. */}
+    {isSupply && (
+      <BillOpsLog C={C} st={st} isMobile={isMobile} payments={payments}
+        canCancel={canPay} busy={busy === "cancelPay"} onCancel={openCancelBill} />
+    )}
+
+    {cancelBill && (
+      <ConfirmModal title="Отменить оплату счёта"
+        message={`Оплата счёта №${cancelBill.bill?.number ?? ""} будет отменена: деньги вернутся в фонд и на счёт ДС, счёт снова станет «одобрен». Запись в Реестре сохранится (добавится компенсирующая).`}
+        error={cancelErr} tone="danger" confirmLabel="Отменить оплату" busy={busy === "cancelPay"}
+        onConfirm={() => doCancelPayment(cancelBill)} onCancel={() => { setCancelBill(null); setCancelErr(""); }} />
+    )}
+
+    {(showForm || editBill) && refs && (
+      <BillForm st={st} isMobile={isMobile} profile={profile} kind={kind} ui={ui}
         groups={groups} refs={refs} funds={funds} counterparties={counterparties}
-        prefill={prefill}
+        prefill={prefill} editItem={editBill}
         onCounterpartiesChanged={async () => setCounterparties(await fetchCounterparties())}
-        onClose={() => setShowForm(false)}
-        onSaved={() => { setShowForm(false); loadBills(); setDone("Счёт добавлен — ожидает одобрения финкомитетом"); }} />
+        onClose={() => { setShowForm(false); setEditBill(null); }}
+        onSaved={() => {
+          const wasEdit = !!editBill;
+          setShowForm(false); setEditBill(null); loadBills();
+          setDone(wasEdit ? "Счёт обновлён" : "Счёт добавлен — ожидает одобрения финкомитетом");
+        }} />
     )}
     {decide && (
       <BillDecideModal C={C} st={st} decide={decide} funds={funds} accounts={refs?.accounts || []}
         busy={busy === "decide"} onClose={() => setDecide(null)} onConfirm={doDecide} />
     )}
   </>);
+}
+
+
+// ---------------------------------------------------------------- Операции со счетами (лента оплат)
+// Внизу вкладки «Счета поставщиков»: лента оплат счетов из Реестра
+// (op_type='bill_payment') выбранной недели + отмена оплаты. Вид — как лента Реестра.
+function BillOpsLog({ C, st, isMobile, payments, canCancel, busy, onCancel }) {
+  const reversedIds = useMemo(
+    () => new Set(payments.filter((p) => p.reverses_id != null).map((p) => String(p.reverses_id))),
+    [payments],
+  );
+  return (
+    <section style={st.reqSection}>
+      <div style={st.reqSectionHead}>
+        <ListChecks size={18} color={C.green} />
+        <h3 style={st.reqSectionTitle}>Операции со счетами</h3>
+        <span style={st.reqSectionSub}>оплаты счетов из Реестра · выбранная неделя</span>
+      </div>
+      {!payments.length ? (
+        <div style={{ ...st.dataCard, ...st.empty }}><ListChecks size={18} /> На этой неделе оплат по счетам нет</div>
+      ) : (
+        <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 6 }} className="stagger">
+          {payments.map((r) => {
+            const isReversal = r.reverses_id != null;
+            const isReversed = reversedIds.has(String(r.id));
+            const periodClosed = r.period?.status === "closed";
+            const tone = isReversal ? C.info : C.warning;
+            const v = Number(r.cash_amount ?? r.fund_amount) || 0;
+            const desc = [
+              r.bill?.number ? `Счёт №${r.bill.number}` : null,
+              r.bill?.counterparty?.name,
+              r.bill?.expense_type ? `${r.bill.expense_type.code || ""} ${r.bill.expense_type.name}`.trim() : null,
+              r.fund ? `${r.fund.code} ${r.fund.name}` : null,
+              r.cash_account?.name,
+            ].filter(Boolean).join(" · ") || "—";
+            const showCancel = canCancel && !isReversal && !isReversed && !periodClosed;
+            const showClosedHint = canCancel && !isReversal && !isReversed && periodClosed;
+            return (
+              <div key={r.id} style={{
+                display: "flex", alignItems: "center", gap: 10, padding: "10px 14px",
+                borderRadius: 12, background: C.solid2, border: `1px solid ${C.line}`,
+                opacity: isReversed ? 0.6 : 1, flexWrap: isMobile ? "wrap" : "nowrap",
+              }} className="frow">
+                <span style={{ fontSize: 11, color: C.faint, width: 88, flexShrink: 0 }}>
+                  {new Date(r.created_at).toLocaleString("ru", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                </span>
+                <span style={{ fontSize: 10.5, fontWeight: 700, padding: "3px 9px", borderRadius: 20, whiteSpace: "nowrap", color: tone, background: `${tone}1a`, flexShrink: 0 }}>
+                  {isReversal ? "Отмена оплаты" : "Оплата счёта"}
+                </span>
+                <div style={{ flex: 1, minWidth: isMobile ? "100%" : 0, fontSize: 12.5, color: C.sub, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", order: isMobile ? 5 : 0, textDecoration: isReversed ? "line-through" : "none" }}>
+                  {desc}{isReversed ? " · отменена" : ""}
+                </div>
+                {!isMobile && r.creator && (
+                  <span style={{ fontSize: 11, color: C.faint, flexShrink: 0 }}>{r.creator.full_name}</span>
+                )}
+                <span style={{ fontWeight: 800, fontVariantNumeric: "tabular-nums", fontSize: 14, color: v >= 0 ? C.money : C.danger, flexShrink: 0, marginLeft: "auto" }}>
+                  {v >= 0 ? "+" : ""}{fmt(v)}
+                </span>
+                {showCancel && (
+                  <button style={{ ...st.btnGhost, color: C.danger, padding: "7px 10px", flexShrink: 0 }}
+                    className="btn" disabled={!!busy} onClick={() => onCancel(r)}
+                    title="Отменить оплату — вернуть деньги и счёт в «одобрен»">
+                    <RotateCcw size={14} /> {isMobile ? "" : "Отменить"}
+                  </button>
+                )}
+                {showClosedHint && (
+                  <span style={{ fontSize: 11, color: C.faint, flexShrink: 0, whiteSpace: "nowrap" }}
+                    title="Неделя оплаты закрыта — откройте её в Директиве, чтобы отменить оплату">
+                    неделя закрыта
+                  </span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
 }
 
 
@@ -296,16 +441,24 @@ const Field = ({ st, label, full, children }) => (
   </div>
 );
 
-function BillForm({ C, st, isMobile, profile, kind, ui, groups, refs, funds, counterparties, prefill, onCounterpartiesChanged, onClose, onSaved }) {
+function BillForm({ st, isMobile, profile, kind, ui, groups, refs, funds, counterparties, prefill, editItem, onCounterpartiesChanged, onClose, onSaved }) {
   useScrollLock();
+  const isEdit = !!editItem;   // правка существующего счёта (иначе — подача нового)
   const baseCur = refs.currencies.find((c) => c.is_base) || refs.currencies[0];
   const today = new Date().toISOString().slice(0, 10);
+  // Правка: поля из самого счёта. Копирование/новый: из prefill/пусто.
   const [f, setF] = useState({
-    number: prefill?.number || "", counterpartyId: prefill?.counterpartyId || "",
-    typeId: prefill?.typeId || "", locationId: prefill?.locationId || "",
-    amount: prefill?.amount || "", currencyId: prefill?.currencyId || baseCur?.id || "",
-    issuedOn: today, dueOn: "", fundId: "",
-    isRecurring: prefill?.isRecurring || false, comment: prefill?.comment || "",
+    number: editItem?.number || prefill?.number || "",
+    counterpartyId: editItem?.counterparty_id || prefill?.counterpartyId || "",
+    typeId: editItem?.expense_type_id || prefill?.typeId || "",
+    locationId: editItem?.location_id || prefill?.locationId || "",
+    amount: editItem ? String(editItem.amount) : (prefill?.amount || ""),
+    currencyId: editItem?.currency?.id || prefill?.currencyId || baseCur?.id || "",
+    issuedOn: editItem?.issued_on || today,
+    dueOn: editItem?.due_on || "",
+    fundId: editItem?.fund?.id || "",
+    isRecurring: editItem ? !!editItem.is_recurring : (prefill?.isRecurring || false),
+    comment: editItem?.comment || prefill?.comment || "",
   });
   const [newSupplier, setNewSupplier] = useState("");
   const [busy, setBusy] = useState(false);
@@ -335,18 +488,24 @@ function BillForm({ C, st, isMobile, profile, kind, ui, groups, refs, funds, cou
     if (!amount || amount <= 0) return setErr("Введите сумму больше нуля");
     setBusy(true);
     try {
-      await insertBill({
+      const payload = {
         number: f.number.trim(), counterparty_id: f.counterpartyId,
         expense_type_id: f.typeId, location_id: f.locationId,
         amount, currency_id: f.currencyId,
         issued_on: f.issuedOn, due_on: f.dueOn || null, fund_id: f.fundId || null,
         is_recurring: f.isRecurring, comment: f.comment.trim() || null,
-        kind, status: "submitted", created_by: profile.id,
-      });
+      };
+      if (isEdit) {
+        await updateBill(editItem.id, payload);
+      } else {
+        await insertBill({ ...payload, kind, status: "submitted", created_by: profile.id });
+      }
       onSaved();
     } catch (e) {
       const msg = e?.message || String(e);
-      setErr(msg.includes("row-level security") ? "Нет прав на добавление счёта по этой точке." : msg);
+      setErr(msg.includes("row-level security")
+        ? (isEdit ? "Нет прав на правку: менять счёт можно, пока он на рассмотрении." : "Нет прав на добавление счёта по этой точке.")
+        : msg);
       setBusy(false);
     }
   };
@@ -355,7 +514,7 @@ function BillForm({ C, st, isMobile, profile, kind, ui, groups, refs, funds, cou
     <div style={st.mdOverlay} data-modal="1" onClick={onClose}>
       <div style={st.mdCard} onClick={(e) => e.stopPropagation()}>
         <div style={st.mdHead}>
-          <div style={st.mdTitle}>{ui.formTitle}</div>
+          <div style={st.mdTitle}>{isEdit ? `Изменить счёт №${editItem.number}` : ui.formTitle}</div>
           <button style={st.iconBtn} onClick={onClose} aria-label="Закрыть"><X size={17} /></button>
         </div>
 
@@ -436,7 +595,7 @@ function BillForm({ C, st, isMobile, profile, kind, ui, groups, refs, funds, cou
         <div style={st.mdActions}>
           <button style={st.btnGhost} className="btn" onClick={onClose}>Отмена</button>
           <button style={{ ...st.btnGreen, opacity: busy ? 0.7 : 1 }} className="btn" onClick={submit} disabled={busy}>
-            {busy ? <Loader2 size={15} className="spin" /> : <FileText size={15} />} Подать счёт
+            {busy ? <Loader2 size={15} className="spin" /> : isEdit ? <Check size={15} /> : <FileText size={15} />} {isEdit ? "Сохранить" : "Подать счёт"}
           </button>
         </div>
       </div>

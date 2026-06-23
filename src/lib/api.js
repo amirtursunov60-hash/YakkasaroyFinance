@@ -469,7 +469,7 @@ export async function fetchBills(_periodId, kind, locationId) {
   let q = supabase
     .from("supplier_bills")
     .select(`id, number, status, kind, amount, issued_on, due_on, is_recurring, comment,
-      rejection_reason, created_at, expense_type_id, counterparty_id, location_id,
+      rejection_reason, created_at, created_by, expense_type_id, counterparty_id, location_id,
       period_approved_id, period_paid_id,
       counterparty:counterparties(id, name),
       expense_type:expense_types(code, name),
@@ -492,6 +492,44 @@ export async function insertBill(row) {
   const { data, error } = await supabase.from("supplier_bills").insert(row).select().single();
   if (error) throw error;
   return data;
+}
+
+// Правка счёта автором, пока он «подан» (или финадмином). RLS разрешает UPDATE
+// только своего submitted-счёта / любого — финадмину. Статус/created_by не трогаем.
+export async function updateBill(id, patch) {
+  const { error } = await supabase.from("supplier_bills").update(patch).eq("id", id);
+  if (error) throw error;
+}
+
+// Оплаты счетов из Реестра (op_type='bill_payment') — лента «Операции со счетами».
+// periodId — только оплаты выбранной недели (период оплаты). kind/точка — фильтр
+// по самому счёту (на клиенте, у fp_register их отдельных колонок нет).
+export async function fetchBillPayments(kind, locationId, { periodId, limit = 100 } = {}) {
+  let q = supabase
+    .from("fp_register")
+    .select(`id, op_type, fund_amount, cash_amount, comment, created_at, period_id, reverses_id,
+      fund:funds(code, name),
+      cash_account:cash_accounts(name),
+      period:fp_periods(status),
+      creator:profiles!fp_register_created_by_fkey(full_name),
+      bill:supplier_bills(number, kind, location_id, counterparty:counterparties(name), expense_type:expense_types(code, name))`)
+    .eq("op_type", "bill_payment")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (periodId) q = q.eq("period_id", periodId);
+  const { data, error } = await q;
+  if (error) throw error;
+  let rows = data || [];
+  if (kind) rows = rows.filter((r) => r.bill?.kind === kind);
+  if (locationId) rows = rows.filter((r) => r.bill?.location_id === locationId);
+  return rows;
+}
+
+// Отмена оплаты счёта — компенсирующая запись Реестра + возврат счёта в
+// 'approved' (RPC fp_reverse_bill_payment). Строку оплаты Реестр не удаляет.
+export async function reverseBillPayment(registerId) {
+  const { error } = await supabase.rpc("fp_reverse_bill_payment", { p_id: registerId });
+  if (error) throw error;
 }
 
 // Одобрение (фонд + период одобрения = выбранная неделя) / отклонение
