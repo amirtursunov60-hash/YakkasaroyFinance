@@ -297,14 +297,17 @@ export async function fetchCounterparties() {
   return data;
 }
 
-// Заявки показываем ВСЕГДА, независимо от выбранной недели (заказчик): заявка
-// может быть подана в одной неделе, а одобрена/оплачена в другой — она не должна
-// пропадать при переключении периода. Период фиксируется на самой заявке.
-export async function fetchRequests(_periodId, locationId) {
+// Заявки-ЗРС.
+// • Вкладка «Заявки» (журнал) — показываем ВСЕГДА, независимо от выбранной недели:
+//   заявка может быть подана в одной неделе, а одобрена/оплачена в другой — она не
+//   должна пропадать при переключении периода (период фиксируется на самой заявке).
+// • Директива (рассмотрение) — только заявки выбранной недели: byPeriod: true
+//   фильтрует по period_id (правило Директивы «поданные на эту неделю»).
+export async function fetchRequests(periodId, locationId, { byPeriod = false } = {}) {
   let q = supabase
     .from("payment_requests")
     .select(`id, number, status, planned_amount, approved_amount, comment, csw_data, csw_situation, csw_solution,
-      purpose, tags, rejection_reason, created_at, decided_at, period_id, expense_type_id,
+      purpose, tags, rejection_reason, created_at, decided_at, period_id, expense_type_id, requester_id, position_id, fund_id,
       position:org_positions(code, name, division:org_divisions(id, code, name)),
       requester:profiles!payment_requests_requester_id_fkey(full_name, avatar_url),
       expense_type:expense_types(code, name),
@@ -315,6 +318,7 @@ export async function fetchRequests(_periodId, locationId) {
       payment_type:payment_types(name),
       attachments:request_attachments(id, file_path, file_name)`)
     .order("created_at", { ascending: false });
+  if (byPeriod && periodId) q = q.eq("period_id", periodId);
   if (locationId) q = q.eq("location_id", locationId);
   const { data, error } = await q;
   if (error) throw error;
@@ -325,6 +329,14 @@ export async function insertRequest(row) {
   const { data, error } = await supabase.from("payment_requests").insert(row).select().single();
   if (error) throw error;
   return data;
+}
+
+// Правка заявки автором, пока она на рассмотрении (или финадмином). RLS разрешает
+// UPDATE только своей submitted-заявки / любой — финадмину. Меняем неделю и поля
+// ЗРС; статус/заявителя не трогаем. Перенос в закрытую неделю блокирует триггер БД.
+export async function updateRequest(id, patch) {
+  const { error } = await supabase.from("payment_requests").update(patch).eq("id", id);
+  if (error) throw error;
 }
 
 // Решение финкомитета: approved (с фондом и периодом одобрения) | rejected | planning
@@ -768,6 +780,37 @@ export async function fetchRegister({ periodId, opType, fundId, cashAccountId, l
   const { data, error } = await q;
   if (error) throw error;
   return data;
+}
+
+// Оплаты заявок из Реестра (op_type='request_payment') — лента «Операции с
+// заявками» внизу вкладки «Заявки». Заявка попадает в Реестр только при оплате.
+// periodId — показываем оплаты только выбранной недели (период оплаты в Реестре).
+// Точка у fp_register отдельной колонкой не хранится — фильтруем по точке заявки
+// на клиенте (как и список заявок во вкладке).
+export async function fetchRequestPayments(locationId, { periodId, limit = 100 } = {}) {
+  let q = supabase
+    .from("fp_register")
+    .select(`id, op_type, fund_amount, cash_amount, comment, created_at, period_id, reverses_id,
+      fund:funds(code, name),
+      cash_account:cash_accounts(name),
+      period:fp_periods(status),
+      creator:profiles!fp_register_created_by_fkey(full_name),
+      request:payment_requests(number, location_id, expense_type:expense_types(code, name), position:org_positions(code, name))`)
+    .eq("op_type", "request_payment")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (periodId) q = q.eq("period_id", periodId);
+  const { data, error } = await q;
+  if (error) throw error;
+  const rows = data || [];
+  return locationId ? rows.filter((r) => r.request?.location_id === locationId) : rows;
+}
+
+// Отмена оплаты заявки — компенсирующая запись Реестра + возврат заявки в
+// 'approved' (RPC fp_reverse_request_payment). Реестр строку оплаты не удаляет.
+export async function reverseRequestPayment(registerId) {
+  const { error } = await supabase.rpc("fp_reverse_request_payment", { p_id: registerId });
+  if (error) throw error;
 }
 
 // ---------------------------------------------------------------- Отчёты

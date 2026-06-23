@@ -104,7 +104,7 @@ export function Directive() {
   const reloadRequests = useCallback(async () => {
     if (!periodId) { setWeekReqs([]); setBills([]); return; }
     try {
-      const [reqs, bls] = await Promise.all([fetchRequests(periodId), fetchBills(periodId, null, null)]);
+      const [reqs, bls] = await Promise.all([fetchRequests(periodId, null, { byPeriod: true }), fetchBills(periodId, null, null)]);
       setWeekReqs(reqs); setBills(bls);
     } catch { /* список заявок/счетов не критичен для распределения */ }
   }, [periodId]);

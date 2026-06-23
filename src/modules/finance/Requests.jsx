@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { ClipboardList, FileText, Check, Ban, Banknote, Loader2, AlertCircle, CheckCircle2, ChevronRight, X, Network, Plus, Copy } from "lucide-react";
-import { Stat } from "../../components/common";
+import { ClipboardList, Check, Ban, Banknote, Loader2, AlertCircle, CheckCircle2, ChevronRight, X, Network, Plus, Copy, Pencil, ListChecks, RotateCcw } from "lucide-react";
+import { Stat, ConfirmModal } from "../../components/common";
 import { InfoHint } from "../../components/InfoHint";
 import { useTheme } from "../../theme/theme";
 import { useScrollLock } from "../../hooks/useScrollLock";
@@ -10,10 +10,9 @@ import { AttachmentsBlock } from "../../components/AttachmentsBlock";
 import { MjPanel, MjSwitch } from "../manajet/MjPanel";
 import { feedbackSuccess, feedbackError } from "../../lib/feedback";
 import {
-  fetchRequests, decideRequest, payRequest,
-  fetchBills, decideBill, payBill,
+  fetchRequests, payRequest, fetchRequestPayments, reverseRequestPayment,
   fetchFunds, fetchIncomeRefs,
-  fetchExpenseTypes, insertRequest, createPositionAndAssign, fetchMyPositions, fetchOrgDivisions,
+  fetchExpenseTypes, insertRequest, updateRequest, createPositionAndAssign, fetchMyPositions, fetchOrgDivisions,
 } from "../../lib/api";
 import { requestPrefill } from "./requestCopy";
 
@@ -87,7 +86,7 @@ export function Requests() {
   const [err, setErr] = useState("");
   const [done, setDone] = useState("");
   const [requests, setRequests] = useState([]);
-  const [bills, setBills] = useState([]);
+  const [payments, setPayments] = useState([]);   // оплаты заявок из Реестра — лента внизу
   const [funds, setFunds] = useState([]);
   const [refs, setRefs] = useState(null);
   const [types, setTypes] = useState([]);
@@ -97,6 +96,9 @@ export function Requests() {
   const [decide, setDecide] = useState(null);   // { item, itemKind: 'request'|'bill', action }
   const [showForm, setShowForm] = useState(false);
   const [prefillReq, setPrefillReq] = useState(null);       // предзаполнение формы для «Копировать»
+  const [editReq, setEditReq] = useState(null);             // заявка в режиме редактирования (своя на рассмотрении)
+  const [cancelPay, setCancelPay] = useState(null);         // строка оплаты для отмены (подтверждение)
+  const [cancelErr, setCancelErr] = useState("");           // ошибка отмены — показывается в самой модалке
   const [busy, setBusy] = useState(null);
   const [reqFilter, setReqFilter] = useState("approved");   // здесь оплачиваем — по умолчанию «Одобрено»
   const [src, setSrc] = useState("ours");                   // источник: наши данные / зеркало ManaJet
@@ -108,6 +110,20 @@ export function Requests() {
     setPrefillReq(requestPrefill(item, myPositions));
     setShowForm(true);
   };
+
+  // Кто может править заявку: своя — пока она «подана» (submitted); финкомитет —
+  // любую на рассмотрении. Совпадает с RLS payment_requests (requests_update).
+  const canEditReq = (item) =>
+    (isFinAdmin && isReviewStatus(item.status)) ||
+    (item.requester_id === profile.id && item.status === "submitted");
+
+  const editRequest = (item) => {
+    setErr("");
+    setEditReq(item);
+  };
+
+  // Открыть пустую форму подачи новой заявки (кнопка в шапке / под показателями на телефоне).
+  const openNewRequest = () => { setErr(""); setPrefillReq(null); setShowForm(true); };
 
   const loadStatic = useCallback(async () => {
     try {
@@ -133,8 +149,11 @@ export function Requests() {
 
   const loadItems = useCallback(async () => {
     try {
-      const [reqs, bls] = await Promise.all([fetchRequests(periodId, ctxLocationId), fetchBills(periodId, null, ctxLocationId)]);
-      setRequests(reqs); setBills(bls);
+      const [reqs, pays] = await Promise.all([
+        fetchRequests(periodId, ctxLocationId),
+        fetchRequestPayments(ctxLocationId, { periodId }).catch(() => []),
+      ]);
+      setRequests(reqs); setPayments(pays);
     } catch (e) { setErr("Не удалось загрузить заявки: " + (e?.message || e)); }
   }, [periodId, ctxLocationId]);
   useEffect(() => { if (!periodsLoading) loadItems(); }, [loadItems, periodsLoading]);
@@ -157,40 +176,26 @@ export function Requests() {
   const sums = useMemo(() => {
     const pend = (arr) => arr.filter((x) => ["submitted", "planning"].includes(x.status));
     const appr = (arr) => arr.filter((x) => x.status === "approved");
-    const reqPend = pend(requests), billPend = pend(bills);
+    const reqPend = pend(requests), reqAppr = appr(requests);
     return {
-      billPendN: billPend.length,
-      billPendSum: billPend.reduce((a, b) => a + Number(b.amount), 0),
       reqPendN: reqPend.length,
       reqPendSum: reqPend.reduce((a, r) => a + Number(r.planned_amount), 0),
-      toPayN: appr(requests).length + appr(bills).length,
-      toPaySum: appr(requests).reduce((a, r) => a + Number(r.planned_amount), 0)
-        + appr(bills).reduce((a, b) => a + Number(b.amount), 0),
+      toPayN: reqAppr.length,
+      toPaySum: reqAppr.reduce((a, r) => a + Number(r.planned_amount), 0),
     };
-  }, [requests, bills]);
+  }, [requests]);
 
-  const doDecide = async ({ item, itemKind, action, fundId, reason, accountId }) => {
+  // На этом экране заявки только ОПЛАЧИВАЮТСЯ (рассмотрение — в Директиве; счета —
+  // на своих экранах Поставщики/Обязательства).
+  const doDecide = async ({ item, action, accountId }) => {
     if (busy) return;
     setBusy("decide"); setErr(""); setDone("");
     try {
-      if (!periodId && action !== "reject") throw new Error("Нет выбранного периода ФП");
-      const isBill = itemKind === "bill";
-      const num = item.number;
-      if (action === "approve") {
-        if (!fundId) throw new Error("Выберите фонд-источник");
-        if (isBill) await decideBill(item.id, { status: "approved", fund_id: fundId, period_approved_id: periodId });
-        else await decideRequest(item.id, { status: "approved", fund_id: fundId, period_id: periodId });
-        setDone(`${isBill ? "Счёт" : "Заявка"} №${num}: одобрено — фонд ${funds.find((f) => f.id === fundId)?.code}`);
-      } else if (action === "reject") {
-        if (!reason?.trim()) throw new Error("Укажите причину отклонения");
-        if (isBill) await decideBill(item.id, { status: "rejected", rejection_reason: reason.trim() });
-        else await decideRequest(item.id, { status: "rejected", rejection_reason: reason.trim() });
-        setDone(`${isBill ? "Счёт" : "Заявка"} №${num}: отклонено`);
-      } else if (action === "pay") {
+      if (!periodId) throw new Error("Нет выбранного периода ФП");
+      if (action === "pay") {
         if (!accountId) throw new Error("Выберите счёт ДС");
-        if (isBill) await payBill(item.id, accountId, periodId);
-        else await payRequest(item.id, accountId, periodId);
-        setDone(`${isBill ? "Счёт" : "Заявка"} №${num}: оплачено — расход проведён в Реестре`);
+        await payRequest(item.id, accountId, periodId);
+        setDone(`Заявка №${item.number}: оплачено — расход проведён в Реестре`);
       }
       await loadItems();
       setDecide(null);
@@ -199,38 +204,42 @@ export function Requests() {
     finally { setBusy(null); }
   };
 
+  // Открыть подтверждение отмены оплаты (сбрасываем прошлую ошибку модалки).
+  const openCancelPay = (row) => { setCancelErr(""); setCancelPay(row); };
+
+  // Отмена оплаты заявки: компенсирующая запись Реестра, заявка → «одобрена».
+  // Ошибку показываем в самой модалке (cancelErr), а не только в баннере вверху —
+  // лента внизу страницы, верхний баннер оттуда не виден.
+  const doCancelPayment = async (row) => {
+    if (busy) return;
+    setBusy("cancelPay"); setCancelErr(""); setDone("");
+    try {
+      await reverseRequestPayment(row.id);
+      await loadItems();
+      setCancelPay(null);
+      setDone(`Оплата заявки №${row.request?.number ?? ""} отменена — деньги возвращены, заявка снова одобрена`);
+      feedbackSuccess();
+    } catch (e) { setCancelErr(e?.message || String(e)); feedbackError(); }
+    finally { setBusy(null); }
+  };
+
   if (src === "manajet") return <MjPanel kind="requests" src={src} setSrc={setSrc} />;
   if (loading || periodsLoading) return <div style={st.empty}><Loader2 size={18} className="spin" /> Загрузка…</div>;
 
-  // Счета поставщиков: одобрение/отклонение/оплата. Заявки-ЗРС рассматриваются
-  // (одобрение/отклонение) в Директиве, а здесь — только оплачиваются одобренные.
-  const Actions = ({ item, itemKind }) => {
-    if (itemKind === "bill") {
-      return (
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          {isFinAdmin && ["submitted", "planning"].includes(item.status) && (<>
-            <button style={st.btnGreen} className="btn" disabled={!!busy} onClick={() => setDecide({ item, itemKind, action: "approve" })}>
-              <Check size={14} /> Одобрить
-            </button>
-            <button style={{ ...st.btnGhost, color: C.danger }} className="btn" disabled={!!busy} onClick={() => setDecide({ item, itemKind, action: "reject" })}>
-              <Ban size={14} /> Отклонить
-            </button>
-          </>)}
-          {canPay && item.status === "approved" && (
-            <button style={st.btnGreen} className="btn" disabled={!!busy} onClick={() => setDecide({ item, itemKind, action: "pay" })}>
-              <Banknote size={14} /> Оплатить
-            </button>
-          )}
-        </div>
-      );
-    }
-    // заявка-ЗРС: оплата одобренной (рассмотрение — в Директиве) + копирование
-    // (повтор регулярной заявки) — доступно на любом статусе.
+  // Заявка-ЗРС: оплата одобренной (рассмотрение — в Директиве), правка своей
+  // заявки на рассмотрении и копирование (повтор регулярной). Счета — на своих
+  // экранах (Поставщики/Обязательства), в этой вкладке их нет.
+  const Actions = ({ item }) => {
     return (
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
         {canPay && item.status === "approved" && (
-          <button style={st.btnGreen} className="btn" disabled={!!busy} onClick={() => setDecide({ item, itemKind, action: "pay" })}>
+          <button style={st.btnGreen} className="btn" disabled={!!busy} onClick={() => setDecide({ item, action: "pay" })}>
             <Banknote size={14} /> Оплатить
+          </button>
+        )}
+        {canEditReq(item) && (
+          <button style={st.btnGhost} className="btn" disabled={!!busy} onClick={() => editRequest(item)} title="Изменить заявку (неделя и поля ЗРС) — пока она на рассмотрении">
+            <Pencil size={14} /> Изменить
           </button>
         )}
         <button style={st.btnGhost} className="btn" disabled={!!busy} onClick={() => copyRequest(item)} title="Создать новую заявку с этими же данными">
@@ -250,39 +259,29 @@ export function Requests() {
             <div style={st.heroLabel}>Заявки · рассмотрение финкомитетом</div>
             <div style={st.heroTitle}>{period ? periodTitle(period) : "Период не создан"}</div>
           </div>
-          <button style={st.btnGreen} className="btn" onClick={() => { setErr(""); setPrefillReq(null); setShowForm(true); }}>
-            <Plus size={15} /> {isMobile ? "Заявка (ЗРС)" : "Подать заявку (ЗРС)"}
-          </button>
+          {/* На десктопе кнопка справа в шапке; на телефоне она вынесена вниз,
+              под показатели (в шапке не помещалась и обрезалась). */}
+          {!isMobile && (
+            <button style={st.btnGreen} className="btn" onClick={openNewRequest}>
+              <Plus size={15} /> Подать заявку (ЗРС)
+            </button>
+          )}
         </div>
         <div style={st.heroStats}>
-          <Stat label="Счета к одобрению" value={`${sums.billPendN} · ${fmt(sums.billPendSum)}`} unit="TJS" accent />
-          <Stat label="Заявки к одобрению" value={`${sums.reqPendN} · ${fmt(sums.reqPendSum)}`} unit="TJS" />
+          <Stat label="Заявки к одобрению" value={`${sums.reqPendN} · ${fmt(sums.reqPendSum)}`} unit="TJS" accent />
           <Stat label="К оплате (одобрено)" value={`${sums.toPayN} · ${fmt(sums.toPaySum)}`} unit="TJS" />
-          <Stat label="Всего позиций" value={String(requests.length + bills.length)} unit="" />
         </div>
+        {isMobile && (
+          <button style={{ ...st.btnGreen, width: "100%", justifyContent: "center", marginTop: 18 }}
+            className="btn" onClick={openNewRequest}>
+            <Plus size={15} /> Подать заявку (ЗРС)
+          </button>
+        )}
       </div>
     </section>
 
     {err && <div role="alert" style={{ ...st.reqError, marginBottom: 14 }}><AlertCircle size={15} /> {err}</div>}
     {done && <div style={{ ...st.reqSuccess, marginBottom: 14 }}><CheckCircle2 size={15} /> {done}</div>}
-
-    {/* Счета поставщиков — приоритет одобрения над заявками (ТЗ §4.1.6) */}
-    <section style={st.reqSection}>
-      <div style={st.reqSectionHead}>
-        <FileText size={18} color={C.green} />
-        <h3 style={st.reqSectionTitle}>Счета поставщиков и обязательства</h3>
-        <span style={st.reqSectionSub}>одобряются приоритетно</span>
-      </div>
-      {!bills.length && <div style={{ ...st.locCard, ...st.empty }}>Счетов на рассмотрении нет</div>}
-      {bills.map((b) => (
-        <ItemCard key={b.id} C={C} st={st} item={b} itemKind="bill"
-          isExpanded={!!expanded[`bill:${b.id}`]}
-          onToggle={() => setExpanded((e) => ({ ...e, [`bill:${b.id}`]: !e[`bill:${b.id}`] }))}
-          statusMeta={ST_META} profileId={profile.id} onAttachmentsChanged={loadItems}>
-          <Actions item={b} itemKind="bill" />
-        </ItemCard>
-      ))}
-    </section>
 
     {/* Заявки по отделениям оргсхемы */}
     <section style={st.reqSection}>
@@ -308,27 +307,43 @@ export function Requests() {
               isExpanded={!!expanded[`request:${r.id}`]}
               onToggle={() => setExpanded((e) => ({ ...e, [`request:${r.id}`]: !e[`request:${r.id}`] }))}
               statusMeta={ST_META} profileId={profile.id} onAttachmentsChanged={loadItems}>
-              <Actions item={r} itemKind="request" />
+              <Actions item={r} />
             </ItemCard>
           ))}
         </div>
       ))}
     </section>
 
+    {/* Операции с заявками — лента оплат из Реестра (заявка попадает в Реестр
+        только при оплате). Стиль — как лента «Реестра». */}
+    <RequestOpsLog C={C} st={st} isMobile={isMobile} payments={payments}
+      canCancel={canPay} busy={busy === "cancelPay"} onCancel={openCancelPay} />
+
+    {cancelPay && (
+      <ConfirmModal title="Отменить оплату заявки"
+        message={`Оплата заявки №${cancelPay.request?.number ?? ""} будет отменена: деньги вернутся в фонд и на счёт ДС, заявка снова станет «одобрена». Запись в Реестре сохранится (добавится компенсирующая).`}
+        error={cancelErr} tone="danger" confirmLabel="Отменить оплату" busy={busy === "cancelPay"}
+        onConfirm={() => doCancelPayment(cancelPay)} onCancel={() => { setCancelPay(null); setCancelErr(""); }} />
+    )}
+
     {decide && (
       <DecideModal C={C} st={st} decide={decide} funds={funds} accounts={refs?.accounts || []}
         busy={busy === "decide"} onClose={() => setDecide(null)} onConfirm={doDecide} />
     )}
 
-    {showForm && refs && (
+    {(showForm || editReq) && refs && (
       <RequestForm
         st={st} isMobile={isMobile} profile={profile}
         tree={tree} refs={refs} funds={funds}
         periods={periods} locationId={ctxLocationId} currentPeriodId={periodId}
-        myPositions={myPositions} divisions={divisions} prefill={prefillReq}
+        myPositions={myPositions} divisions={divisions} prefill={prefillReq} editItem={editReq}
         onPositionsChanged={async () => setMyPositions(await fetchMyPositions(profile.id))}
-        onClose={() => { setShowForm(false); setPrefillReq(null); }}
-        onSaved={() => { setShowForm(false); setPrefillReq(null); loadItems(); setDone(prefillReq ? "Копия заявки подана — рассмотрите её ниже" : "Заявка подана — рассмотрите её ниже"); }}
+        onClose={() => { setShowForm(false); setPrefillReq(null); setEditReq(null); }}
+        onSaved={() => {
+          const wasEdit = !!editReq;
+          setShowForm(false); setPrefillReq(null); setEditReq(null); loadItems();
+          setDone(wasEdit ? "Заявка обновлена" : prefillReq ? "Копия заявки подана — рассмотрите её ниже" : "Заявка подана — рассмотрите её ниже");
+        }}
       />
     )}
   </>);
@@ -424,18 +439,30 @@ const Field = ({ st, label, full, children }) => (
   </div>
 );
 
-function RequestForm({ st, isMobile, profile, tree, refs, funds, periods, locationId, currentPeriodId, myPositions, divisions, prefill, onPositionsChanged, onClose, onSaved }) {
+function RequestForm({ st, isMobile, profile, tree, refs, funds, periods, locationId, currentPeriodId, myPositions, divisions, prefill, editItem, onPositionsChanged, onClose, onSaved }) {
   useScrollLock();
+  const isEdit = !!editItem;   // режим правки существующей заявки (иначе — подача новой)
   // Валюта — базовая (TJS) по умолчанию, в форме не показывается;
   // точка берётся из выбора в шапке приложения (поле в форме убрано).
   const baseCur = refs.currencies.find((c) => c.is_base) || refs.currencies[0];
-  // При «Копировать» поля приходят из prefill; период — всегда текущая неделя.
+  // Подать/перенести заявку можно только на открытую неделю — закрытую в значение по
+  // умолчанию не подставляем (иначе скрытое значение прошло бы мимо выпадашки).
+  const isPeriodOpen = (id) => (periods || []).some((p) => p.id === id && p.status !== "closed");
+  // Правка: поля из самой заявки (период оставляем, только если он открыт — иначе
+  // нужно выбрать неделю заново). Копирование: из prefill. Новая: пусто/текущая неделя.
   const [f, setF] = useState({
-    positionId: prefill?.positionId || myPositions[0]?.id || "",
-    typeId: prefill?.typeId || "", purpose: prefill?.purpose || "",
-    periodId: currentPeriodId || "", amount: prefill?.amount || "", fundId: prefill?.fundId || "",
-    cswData: prefill?.cswData || "", cswSituation: prefill?.cswSituation || "",
-    cswSolution: prefill?.cswSolution || "", tags: prefill?.tags || "",
+    positionId: editItem?.position_id || prefill?.positionId || myPositions[0]?.id || "",
+    typeId: editItem?.expense_type_id || prefill?.typeId || "",
+    purpose: editItem?.purpose || prefill?.purpose || "",
+    periodId: isEdit
+      ? (isPeriodOpen(editItem.period_id) ? editItem.period_id : "")
+      : (isPeriodOpen(currentPeriodId) ? currentPeriodId : ""),
+    amount: (editItem?.planned_amount ?? prefill?.amount) || "",
+    fundId: editItem?.fund_id || prefill?.fundId || "",
+    cswData: editItem?.csw_data || prefill?.cswData || "",
+    cswSituation: editItem?.csw_situation || prefill?.cswSituation || "",
+    cswSolution: editItem?.csw_solution || prefill?.cswSolution || "",
+    tags: isEdit ? (editItem.tags || []).join(", ") : (prefill?.tags || ""),
   });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
@@ -494,8 +521,12 @@ function RequestForm({ st, isMobile, profile, tree, refs, funds, periods, locati
     const amount = parseFloat(String(f.amount).replace(",", "."));
     if (!f.positionId) return setErr("Заявка подаётся от поста — выберите пост");
     if (!f.typeId) return setErr("Выберите вид расхода");
-    if (!locationId) return setErr("Выберите точку в шапке приложения — заявка привязывается к точке");
+    // Точка нужна только при подаче новой — у правки точка уже на заявке, не меняем.
+    if (!isEdit && !locationId) return setErr("Выберите точку в шапке приложения — заявка привязывается к точке");
     if (!f.periodId) return setErr("Выберите неделю ФП для рассмотрения");
+    if (!isPeriodOpen(f.periodId)) return setErr(isEdit
+      ? "Неделя ФП закрыта — перенести заявку в закрытую неделю нельзя. Выберите открытую неделю."
+      : "Неделя ФП закрыта — подать заявку на закрытую неделю нельзя. Выберите открытую неделю.");
     if (!amount || amount <= 0) return setErr("Введите сумму больше нуля");
     if (!f.cswData.trim() || !f.cswSituation.trim() || !f.cswSolution.trim())
       return setErr("Заполните все три поля ЗРС: данные, ситуация, решение");
@@ -503,19 +534,27 @@ function RequestForm({ st, isMobile, profile, tree, refs, funds, periods, locati
     setBusy(true);
     try {
       const tags = f.tags.split(",").map((t) => t.trim()).filter(Boolean);
-      await insertRequest({
-        position_id: f.positionId, requester_id: profile.id, location_id: locationId,
-        expense_type_id: f.typeId, fund_id: f.fundId || null,
-        planned_amount: amount, currency_id: baseCur.id, period_id: f.periodId,
+      const payload = {
+        position_id: f.positionId, expense_type_id: f.typeId, fund_id: f.fundId || null,
+        planned_amount: amount, period_id: f.periodId,
         purpose: f.purpose.trim() || null, tags,
         csw_data: f.cswData.trim(), csw_situation: f.cswSituation.trim(), csw_solution: f.cswSolution.trim(),
-        status: "submitted",
-      });
+      };
+      if (isEdit) {
+        await updateRequest(editItem.id, payload);
+      } else {
+        await insertRequest({
+          ...payload, requester_id: profile.id, location_id: locationId,
+          currency_id: baseCur.id, status: "submitted",
+        });
+      }
       onSaved();
     } catch (e) {
       const msg = e?.message || String(e);
       setErr(msg.includes("row-level security")
-        ? "Нет прав на подачу: проверьте, что вам назначен пост и есть доступ к точке."
+        ? (isEdit
+          ? "Нет прав на правку: менять заявку можно, пока она на рассмотрении."
+          : "Нет прав на подачу: проверьте, что вам назначен пост и есть доступ к точке.")
         : msg);
       setBusy(false);
     }
@@ -531,7 +570,7 @@ function RequestForm({ st, isMobile, profile, tree, refs, funds, periods, locati
       <div style={st.mdCard} onClick={(e) => e.stopPropagation()}>
         <div style={st.mdHead}>
           <div style={{ ...st.mdTitle, display: "inline-flex", alignItems: "center", gap: 6 }}>
-            {prefill ? "Копия заявки (ЗРС)" : "Заявка на расход средств (ЗРС)"}<InfoHint term="ЗРС" />
+            {isEdit ? `Изменить заявку №${editItem.number} (ЗРС)` : prefill ? "Копия заявки (ЗРС)" : "Заявка на расход средств (ЗРС)"}<InfoHint term="ЗРС" />
           </div>
           <button style={st.iconBtn} onClick={onClose} aria-label="Закрыть"><X size={17} /></button>
         </div>
@@ -624,7 +663,7 @@ function RequestForm({ st, isMobile, profile, tree, refs, funds, periods, locati
         <div style={st.mdActions}>
           <button style={st.btnGhost} className="btn" onClick={onClose}>Отмена</button>
           <button style={{ ...st.btnGreen, opacity: busy ? 0.7 : 1 }} className="btn" onClick={submit} disabled={busy || !myPositions.length}>
-            {busy ? <Loader2 size={15} className="spin" /> : <Plus size={15} />} Подать заявку
+            {busy ? <Loader2 size={15} className="spin" /> : isEdit ? <Check size={15} /> : <Plus size={15} />} {isEdit ? "Сохранить" : "Подать заявку"}
           </button>
         </div>
       </div>
@@ -638,6 +677,86 @@ export const CswRow = ({ C, label, text }) => (
     <div style={{ fontSize: 13.5, whiteSpace: "pre-wrap" }}>{text || "—"}</div>
   </div>
 );
+
+
+// ---------------------------------------------------------------- Операции с заявками (лента оплат)
+// Внизу вкладки «Заявки»: лента оплат заявок из Реестра (op_type='request_payment').
+// Заявка попадает в Реестр только при оплате. Вид — как лента «Реестра».
+function RequestOpsLog({ C, st, isMobile, payments, canCancel, busy, onCancel }) {
+  // Какие оплаты уже отменены (есть компенсирующая запись с reverses_id на них).
+  const reversedIds = useMemo(
+    () => new Set(payments.filter((p) => p.reverses_id != null).map((p) => String(p.reverses_id))),
+    [payments],
+  );
+  return (
+    <section style={st.reqSection}>
+      <div style={st.reqSectionHead}>
+        <ListChecks size={18} color={C.green} />
+        <h3 style={st.reqSectionTitle}>Операции с заявками</h3>
+        <span style={st.reqSectionSub}>оплаты заявок из Реестра · выбранная неделя</span>
+      </div>
+      {!payments.length ? (
+        <div style={{ ...st.locCard, ...st.empty }}><ListChecks size={18} /> На этой неделе оплат по заявкам нет</div>
+      ) : (
+        <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 6 }} className="stagger">
+          {payments.map((r) => {
+            const isReversal = r.reverses_id != null;            // запись-отмена
+            const isReversed = reversedIds.has(String(r.id));    // оплата уже отменена
+            const periodClosed = r.period?.status === "closed";  // неделя оплаты закрыта
+            const tone = isReversal ? C.info : C.warning;
+            const v = Number(r.cash_amount ?? r.fund_amount) || 0;
+            const desc = [
+              r.request?.number ? `Заявка №${r.request.number}` : null,
+              r.request?.expense_type ? `${r.request.expense_type.code || ""} ${r.request.expense_type.name}`.trim() : null,
+              r.fund ? `${r.fund.code} ${r.fund.name}` : null,
+              r.cash_account?.name,
+            ].filter(Boolean).join(" · ") || "—";
+            // Отменить можно только активную оплату открытой недели (Реестр в закрытом
+            // периоде не меняем — сначала открыть неделю в Директиве).
+            const showCancel = canCancel && !isReversal && !isReversed && !periodClosed;
+            const showClosedHint = canCancel && !isReversal && !isReversed && periodClosed;
+            return (
+              <div key={r.id} style={{
+                display: "flex", alignItems: "center", gap: 10, padding: "10px 14px",
+                borderRadius: 12, background: C.solid2, border: `1px solid ${C.line}`,
+                opacity: isReversed ? 0.6 : 1, flexWrap: isMobile ? "wrap" : "nowrap",
+              }} className="frow">
+                <span style={{ fontSize: 11, color: C.faint, width: 88, flexShrink: 0 }}>
+                  {new Date(r.created_at).toLocaleString("ru", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                </span>
+                <span style={{ fontSize: 10.5, fontWeight: 700, padding: "3px 9px", borderRadius: 20, whiteSpace: "nowrap", color: tone, background: `${tone}1a`, flexShrink: 0 }}>
+                  {isReversal ? "Отмена оплаты" : "Оплата заявки"}
+                </span>
+                <div style={{ flex: 1, minWidth: isMobile ? "100%" : 0, fontSize: 12.5, color: C.sub, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", order: isMobile ? 5 : 0, textDecoration: isReversed ? "line-through" : "none" }}>
+                  {desc}{isReversed ? " · отменена" : ""}
+                </div>
+                {!isMobile && r.creator && (
+                  <span style={{ fontSize: 11, color: C.faint, flexShrink: 0 }}>{r.creator.full_name}</span>
+                )}
+                <span style={{ fontWeight: 800, fontVariantNumeric: "tabular-nums", fontSize: 14, color: v >= 0 ? C.money : C.danger, flexShrink: 0, marginLeft: "auto" }}>
+                  {v >= 0 ? "+" : ""}{fmt(v)}
+                </span>
+                {showCancel && (
+                  <button style={{ ...st.btnGhost, color: C.danger, padding: "7px 10px", flexShrink: 0 }}
+                    className="btn" disabled={!!busy} onClick={() => onCancel(r)}
+                    title="Отменить оплату — вернуть деньги и заявку в «одобрена»">
+                    <RotateCcw size={14} /> {isMobile ? "" : "Отменить"}
+                  </button>
+                )}
+                {showClosedHint && (
+                  <span style={{ fontSize: 11, color: C.faint, flexShrink: 0, whiteSpace: "nowrap" }}
+                    title="Неделя оплаты закрыта — откройте её в Директиве, чтобы отменить оплату">
+                    неделя закрыта
+                  </span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
+}
 
 
 // ---------------------------------------------------------------- Одобрение / отклонение / оплата
