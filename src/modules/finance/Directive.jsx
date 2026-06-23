@@ -16,6 +16,7 @@ import {
 } from "../../lib/api";
 import { ItemCard, reqStatusMeta, RequestStatusChips, requestCounts, matchRequestFilter, RequesterAvatar } from "./Requests";
 import { payableTotals } from "./directiveSummary";
+import { weekCloseBlockReasons } from "./closeGuards";
 
 
 // ---------------------------------------------------------------- DIRECTIVE
@@ -49,6 +50,7 @@ export function Directive() {
   const [calculated, setCalculated] = useState({}); // { stage: { fund_id: сумма } }
   const [pcts, setPcts] = useState({});             // правки процентов { ruleId: число }
   const [busy, setBusy] = useState(null);           // 'block'|'close'|'transfer'|`calc:х`|`appr:х`
+  const [closeMsg, setCloseMsg] = useState([]);     // причины запрета закрытия — показываются над кнопкой
   const [transferOpen, setTransferOpen] = useState(false);
   const [weekReqs, setWeekReqs] = useState([]);   // заявки недели — рассмотрение в Директиве
   const [bills, setBills] = useState([]);         // счета (одобренные) — для строки «На оплату»
@@ -299,7 +301,7 @@ export function Directive() {
   // Переключатель: закрытая неделя открывается обратно, открытая — закрывается
   const doToggleClose = async () => {
     if (busy || !period) return;
-    setErr(""); setDone("");
+    setErr(""); setDone(""); setCloseMsg([]);
     if (isClosed) {
       if (!(await askConfirm({ title: "Открыть неделю заново", message: "Протокол Директивы будет удалён, операции периода снова разрешены.", tone: "danger", confirmLabel: "Открыть неделю" }))) return;
       setBusy("close");
@@ -311,6 +313,9 @@ export function Directive() {
       finally { setBusy(null); }
       return;
     }
+    // Правила закрытия недели: показываем ВСЕ нарушения сразу над кнопкой (кнопка доступна).
+    const blockers = weekCloseBlockReasons({ prevPeriod, weekReqs, remainder, funds });
+    if (blockers.length) { setCloseMsg(blockers); return; }
     if (!(await askConfirm({ title: "Закрыть период ФП", message: "Все операции периода будут заблокированы, протокол Директивы сохранится.", tone: "warning", confirmLabel: "Закрыть период" }))) return;
     setBusy("close");
     try {
@@ -441,9 +446,21 @@ export function Directive() {
       blocked={requestsBlocked}
       onReload={async () => { await Promise.all([reloadRequests(), reloadPeriodData(), loadRefs()]); }} />
 
-    {/* Закрытие периода Директивой — отдельной кнопкой в самом низу */}
-    <button style={{ ...(isClosed ? st.btnGhost : st.btnGreen), width: "100%", justifyContent: "center", marginTop: 14, opacity: busy === "close" ? 0.7 : 1 }}
-      className="btn" onClick={doToggleClose} disabled={busy || !period}>
+    {/* Причины запрета закрытия — показываются над кнопкой после нажатия (кнопка доступна). */}
+    {!isClosed && closeMsg.length > 0 && (
+      <div role="alert" style={{ ...st.reqError, marginTop: 14, marginBottom: 0, alignItems: "flex-start", flexDirection: "column", gap: 6 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 7, fontWeight: 700 }}>
+          <AlertCircle size={15} style={{ flexShrink: 0 }} /> Нельзя закрыть неделю:
+        </div>
+        {closeMsg.map((m, i) => (
+          <div key={i} style={{ paddingLeft: 22 }}>• {m}</div>
+        ))}
+      </div>
+    )}
+    {/* Закрытие периода Директивой — отдельной кнопкой в самом низу. Кнопка
+        всегда доступна; правила закрытия проверяются по нажатию (см. doToggleClose). */}
+    <button style={{ ...(isClosed ? st.btnGhost : st.btnGreen), width: "100%", justifyContent: "center", marginTop: (!isClosed && closeMsg.length) ? 10 : 14, opacity: busy === "close" ? 0.7 : 1 }}
+      className="btn glass" onClick={doToggleClose} disabled={busy || !period}>
       {busy === "close" ? <Loader2 size={15} className="spin" /> : isClosed ? <Unlock size={15} /> : <Lock size={15} />}
       {isClosed ? " Открыть неделю" : " Закрыть период ФП"}
     </button>

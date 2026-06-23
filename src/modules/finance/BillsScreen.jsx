@@ -3,6 +3,7 @@ import { Check, Banknote, AlertTriangle, Loader2, AlertCircle, CheckCircle2, Plu
 import { Stat } from "../../components/common";
 import { useTheme } from "../../theme/theme";
 import { useScrollLock } from "../../hooks/useScrollLock";
+import { useActionFeedback } from "../../hooks/useActionFeedback";
 import { fmt } from "../../utils/format";
 import { usePeriod, periodTitle } from "../../lib/PeriodCtx";
 import { AttachmentsBlock } from "../../components/AttachmentsBlock";
@@ -40,6 +41,7 @@ export function BillsScreen({ kind, ui }) {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
   const [done, setDone] = useState("");
+  useActionFeedback(done, err);
   const [bills, setBills] = useState([]);
   const [types, setTypes] = useState([]);
   const [refs, setRefs] = useState(null);

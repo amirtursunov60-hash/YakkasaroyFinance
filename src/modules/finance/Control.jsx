@@ -3,6 +3,7 @@ import { Banknote, Save, AlertTriangle, Loader2, AlertCircle, CheckCircle2, Plus
 import { Stat } from "../../components/common";
 import { useTheme } from "../../theme/theme";
 import { useScrollLock } from "../../hooks/useScrollLock";
+import { useActionFeedback } from "../../hooks/useActionFeedback";
 import { fmt } from "../../utils/format";
 import { usePeriod, periodTitle } from "../../lib/PeriodCtx";
 import { ArrowRightLeft } from "lucide-react";
@@ -39,6 +40,7 @@ export function Control() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
   const [done, setDone] = useState("");
+  useActionFeedback(done, err);
   const [accounts, setAccounts] = useState([]);
   const [recons, setRecons] = useState({});
   const [values, setValues] = useState({});      // ввод факта { accountId: строка }

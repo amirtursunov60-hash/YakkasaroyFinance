@@ -7,6 +7,7 @@ import { Stat } from "../../components/common";
 import { InfoHint } from "../../components/InfoHint";
 import { useTheme } from "../../theme/theme";
 import { useScrollLock } from "../../hooks/useScrollLock";
+import { useActionFeedback } from "../../hooks/useActionFeedback";
 import { avatarColor } from "../../utils/format";
 import { orgCounts, nextHatStatus } from "../../utils/org";
 import { MjPanel, MjSwitch } from "../manajet/MjPanel";
@@ -39,6 +40,7 @@ export function OrgModule({ view }) {
   const [src, setSrc] = useState("ours");   // наши данные / зеркало ManaJet
   const [err, setErr] = useState("");
   const [done, setDone] = useState("");
+  useActionFeedback(done, err);
   const [busy, setBusy] = useState(null);
   const [divisions, setDivisions] = useState([]);
   const [people, setPeople] = useState([]);

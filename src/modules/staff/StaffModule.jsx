@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { Users, UserPlus, Loader2, AlertCircle, CheckCircle2, X, Plus, Copy, Trash2, ChevronRight, MapPin, Network, Camera } from "lucide-react";
 import { useTheme } from "../../theme/theme";
 import { avatarColor } from "../../utils/format";
+import { useActionFeedback } from "../../hooks/useActionFeedback";
 import { MjPanel, MjSwitch } from "../manajet/MjPanel";
 import {
   fetchEmployees, updateProfile, fetchAllPositions, assignPosition, unassignPosition,
@@ -34,6 +35,7 @@ export function StaffModule({ view }) {
   const [src, setSrc] = useState("ours");   // наши данные / зеркало ManaJet
   const [err, setErr] = useState("");
   const [done, setDone] = useState("");
+  useActionFeedback(done, err);
   const [people, setPeople] = useState([]);
   const [positions, setPositions] = useState([]);
   const [locations, setLocations] = useState([]);
