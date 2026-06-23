@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { weekCloseBlockReason } from "./closeGuards";
+import { weekCloseBlockReasons } from "./closeGuards";
 
 const ok = {
   prevPeriod: { status: "closed" },
@@ -8,55 +8,65 @@ const ok = {
   funds: [{ code: "FD1", name: "Фонд", balance: 100 }],
 };
 
-describe("weekCloseBlockReason", () => {
-  it("разрешает закрытие, когда все условия выполнены", () => {
-    expect(weekCloseBlockReason(ok)).toBeNull();
+describe("weekCloseBlockReasons", () => {
+  it("пустой список, когда все условия выполнены", () => {
+    expect(weekCloseBlockReasons(ok)).toEqual([]);
   });
 
   it("блокирует, если предыдущая неделя открыта", () => {
-    const r = weekCloseBlockReason({ ...ok, prevPeriod: { status: "open" } });
-    expect(r).toMatch(/предыдущую неделю/i);
+    const r = weekCloseBlockReasons({ ...ok, prevPeriod: { status: "open" } });
+    expect(r).toHaveLength(1);
+    expect(r[0]).toMatch(/предыдущая неделя/i);
   });
 
   it("не блокирует по пред. неделе, если её нет (первая неделя)", () => {
-    expect(weekCloseBlockReason({ ...ok, prevPeriod: null })).toBeNull();
+    expect(weekCloseBlockReasons({ ...ok, prevPeriod: null })).toEqual([]);
   });
 
   it("блокирует, если есть заявки на рассмотрении", () => {
-    const r = weekCloseBlockReason({ ...ok, weekReqs: [{ status: "submitted" }, { status: "approved" }] });
-    expect(r).toMatch(/на рассмотрении \(1\)/i);
+    const r = weekCloseBlockReasons({ ...ok, weekReqs: [{ status: "submitted" }, { status: "approved" }] });
+    expect(r[0]).toMatch(/на рассмотрении \(1\)/i);
   });
 
   it("статус planning тоже считается «на рассмотрении»", () => {
-    const r = weekCloseBlockReason({ ...ok, weekReqs: [{ status: "planning" }] });
-    expect(r).toMatch(/на рассмотрении/i);
+    expect(weekCloseBlockReasons({ ...ok, weekReqs: [{ status: "planning" }] })[0]).toMatch(/на рассмотрении/i);
   });
 
   it("блокирует при нераспределённом остатке (> 0)", () => {
-    expect(weekCloseBlockReason({ ...ok, remainder: 500 })).toMatch(/не полностью/i);
+    expect(weekCloseBlockReasons({ ...ok, remainder: 500 })[0]).toMatch(/не полностью/i);
   });
 
   it("блокирует при перерасходе (остаток < 0)", () => {
-    expect(weekCloseBlockReason({ ...ok, remainder: -500 })).toMatch(/перерасход/i);
+    expect(weekCloseBlockReasons({ ...ok, remainder: -500 })[0]).toMatch(/перерасход/i);
   });
 
   it("игнорирует копеечный хвост округления остатка", () => {
-    expect(weekCloseBlockReason({ ...ok, remainder: 0.004 })).toBeNull();
-    expect(weekCloseBlockReason({ ...ok, remainder: -0.004 })).toBeNull();
+    expect(weekCloseBlockReasons({ ...ok, remainder: 0.004 })).toEqual([]);
+    expect(weekCloseBlockReasons({ ...ok, remainder: -0.004 })).toEqual([]);
   });
 
   it("блокирует, если фонд в минусе", () => {
-    const r = weekCloseBlockReason({ ...ok, funds: [{ code: "FD2", name: "Резерв", balance: -10 }] });
-    expect(r).toMatch(/в минусе/i);
+    expect(weekCloseBlockReasons({ ...ok, funds: [{ code: "FD2", name: "Резерв", balance: -10 }] })[0]).toMatch(/в минусе/i);
   });
 
-  it("приоритет: пред. неделя важнее остальных причин", () => {
-    const r = weekCloseBlockReason({
+  it("возвращает ВСЕ нарушенные правила сразу", () => {
+    const r = weekCloseBlockReasons({
       prevPeriod: { status: "open" },
       weekReqs: [{ status: "submitted" }],
       remainder: 999,
       funds: [{ code: "FD1", name: "Ф", balance: -50 }],
     });
-    expect(r).toMatch(/предыдущую неделю/i);
+    expect(r).toHaveLength(4);
+    expect(r[0]).toMatch(/предыдущая неделя/i);
+    expect(r[1]).toMatch(/на рассмотрении/i);
+    expect(r[2]).toMatch(/не полностью/i);
+    expect(r[3]).toMatch(/в минусе/i);
+  });
+
+  it("порядок сохраняется и при части нарушений", () => {
+    const r = weekCloseBlockReasons({ ...ok, weekReqs: [{ status: "submitted" }], remainder: 100 });
+    expect(r).toHaveLength(2);
+    expect(r[0]).toMatch(/на рассмотрении/i);
+    expect(r[1]).toMatch(/не полностью/i);
   });
 });
