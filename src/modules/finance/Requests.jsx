@@ -244,7 +244,6 @@ export function Requests() {
         <div style={st.heroStats}>
           <Stat label="Заявки к одобрению" value={`${sums.reqPendN} · ${fmt(sums.reqPendSum)}`} unit="TJS" accent />
           <Stat label="К оплате (одобрено)" value={`${sums.toPayN} · ${fmt(sums.toPaySum)}`} unit="TJS" />
-          <Stat label="Всего заявок" value={String(requests.length)} unit="" />
         </div>
         {isMobile && (
           <button style={{ ...st.btnGreen, width: "100%", justifyContent: "center", marginTop: 18 }}
