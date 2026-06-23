@@ -119,6 +119,9 @@ export function Requests() {
     setEditReq(item);
   };
 
+  // Открыть пустую форму подачи новой заявки (кнопка в шапке / под показателями на телефоне).
+  const openNewRequest = () => { setErr(""); setPrefillReq(null); setShowForm(true); };
+
   const loadStatic = useCallback(async () => {
     try {
       const [fs, refData, list, poss, divs] = await Promise.all([
@@ -230,15 +233,25 @@ export function Requests() {
             <div style={st.heroLabel}>Заявки · рассмотрение финкомитетом</div>
             <div style={st.heroTitle}>{period ? periodTitle(period) : "Период не создан"}</div>
           </div>
-          <button style={st.btnGreen} className="btn" onClick={() => { setErr(""); setPrefillReq(null); setShowForm(true); }}>
-            <Plus size={15} /> {isMobile ? "Заявка (ЗРС)" : "Подать заявку (ЗРС)"}
-          </button>
+          {/* На десктопе кнопка справа в шапке; на телефоне она вынесена вниз,
+              под показатели (в шапке не помещалась и обрезалась). */}
+          {!isMobile && (
+            <button style={st.btnGreen} className="btn" onClick={openNewRequest}>
+              <Plus size={15} /> Подать заявку (ЗРС)
+            </button>
+          )}
         </div>
         <div style={st.heroStats}>
           <Stat label="Заявки к одобрению" value={`${sums.reqPendN} · ${fmt(sums.reqPendSum)}`} unit="TJS" accent />
           <Stat label="К оплате (одобрено)" value={`${sums.toPayN} · ${fmt(sums.toPaySum)}`} unit="TJS" />
           <Stat label="Всего заявок" value={String(requests.length)} unit="" />
         </div>
+        {isMobile && (
+          <button style={{ ...st.btnGreen, width: "100%", justifyContent: "center", marginTop: 18 }}
+            className="btn" onClick={openNewRequest}>
+            <Plus size={15} /> Подать заявку (ЗРС)
+          </button>
+        )}
       </div>
     </section>
 
