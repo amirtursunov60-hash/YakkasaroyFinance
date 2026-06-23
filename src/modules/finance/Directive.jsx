@@ -16,6 +16,7 @@ import {
 } from "../../lib/api";
 import { ItemCard, reqStatusMeta, RequestStatusChips, requestCounts, matchRequestFilter, RequesterAvatar } from "./Requests";
 import { payableTotals } from "./directiveSummary";
+import { weekCloseBlockReason } from "./closeGuards";
 
 
 // ---------------------------------------------------------------- DIRECTIVE
@@ -195,6 +196,11 @@ export function Directive() {
   );
   const remainder = income - approvedTotal;
   const fundsTotal = useMemo(() => funds.reduce((a, f) => a + Number(f.balance || 0), 0), [funds]);
+  // Причина запрета закрытия недели (или null) — правила ФП в closeGuards.ts
+  const closeBlock = useMemo(
+    () => weekCloseBlockReason({ prevPeriod, weekReqs, remainder, funds }),
+    [prevPeriod, weekReqs, remainder, funds],
+  );
 
   // Каскад дохода ПО ВИДАМ через этапы («матрёшка»): на входе каждого этапа доход
   // вида = его остаток после удержаний предыдущих этапов. Калькулятор фонда считает
@@ -311,6 +317,7 @@ export function Directive() {
       finally { setBusy(null); }
       return;
     }
+    if (closeBlock) { setErr(closeBlock); return; }
     if (!(await askConfirm({ title: "Закрыть период ФП", message: "Все операции периода будут заблокированы, протокол Директивы сохранится.", tone: "warning", confirmLabel: "Закрыть период" }))) return;
     setBusy("close");
     try {
@@ -441,9 +448,17 @@ export function Directive() {
       blocked={requestsBlocked}
       onReload={async () => { await Promise.all([reloadRequests(), reloadPeriodData(), loadRefs()]); }} />
 
-    {/* Закрытие периода Директивой — отдельной кнопкой в самом низу */}
-    <button style={{ ...(isClosed ? st.btnGhost : st.btnGreen), width: "100%", justifyContent: "center", marginTop: 14, opacity: busy === "close" ? 0.7 : 1 }}
-      className="btn" onClick={doToggleClose} disabled={busy || !period}>
+    {/* Закрытие периода Директивой — отдельной кнопкой в самом низу.
+        Кнопка блокируется, если нарушено хотя бы одно правило закрытия (closeBlock). */}
+    {!isClosed && closeBlock && (
+      <div role="alert" style={{ ...st.reqError, marginTop: 14 }}>
+        <AlertCircle size={15} /> Нельзя закрыть неделю: {closeBlock}
+      </div>
+    )}
+    <button style={{ ...(isClosed ? st.btnGhost : st.btnGreen), width: "100%", justifyContent: "center", marginTop: closeBlock && !isClosed ? 8 : 14,
+        opacity: busy === "close" ? 0.7 : (!isClosed && closeBlock ? 0.5 : 1), cursor: (!isClosed && closeBlock) ? "not-allowed" : "pointer" }}
+      className="btn" onClick={doToggleClose} disabled={busy || !period || (!isClosed && !!closeBlock)}
+      title={!isClosed && closeBlock ? closeBlock : ""}>
       {busy === "close" ? <Loader2 size={15} className="spin" /> : isClosed ? <Unlock size={15} /> : <Lock size={15} />}
       {isClosed ? " Открыть неделю" : " Закрыть период ФП"}
     </button>
