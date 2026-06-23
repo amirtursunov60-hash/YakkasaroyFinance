@@ -784,10 +784,11 @@ export async function fetchRegister({ periodId, opType, fundId, cashAccountId, l
 
 // Оплаты заявок из Реестра (op_type='request_payment') — лента «Операции с
 // заявками» внизу вкладки «Заявки». Заявка попадает в Реестр только при оплате.
+// periodId — показываем оплаты только выбранной недели (период оплаты в Реестре).
 // Точка у fp_register отдельной колонкой не хранится — фильтруем по точке заявки
 // на клиенте (как и список заявок во вкладке).
-export async function fetchRequestPayments(locationId, { limit = 100 } = {}) {
-  const { data, error } = await supabase
+export async function fetchRequestPayments(locationId, { periodId, limit = 100 } = {}) {
+  let q = supabase
     .from("fp_register")
     .select(`id, op_type, fund_amount, cash_amount, comment, created_at, period_id, reverses_id,
       fund:funds(code, name),
@@ -798,6 +799,8 @@ export async function fetchRequestPayments(locationId, { limit = 100 } = {}) {
     .eq("op_type", "request_payment")
     .order("created_at", { ascending: false })
     .limit(limit);
+  if (periodId) q = q.eq("period_id", periodId);
+  const { data, error } = await q;
   if (error) throw error;
   const rows = data || [];
   return locationId ? rows.filter((r) => r.request?.location_id === locationId) : rows;

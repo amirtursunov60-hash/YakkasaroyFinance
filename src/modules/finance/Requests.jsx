@@ -151,7 +151,7 @@ export function Requests() {
     try {
       const [reqs, pays] = await Promise.all([
         fetchRequests(periodId, ctxLocationId),
-        fetchRequestPayments(ctxLocationId).catch(() => []),
+        fetchRequestPayments(ctxLocationId, { periodId }).catch(() => []),
       ]);
       setRequests(reqs); setPayments(pays);
     } catch (e) { setErr("Не удалось загрузить заявки: " + (e?.message || e)); }
@@ -693,10 +693,10 @@ function RequestOpsLog({ C, st, isMobile, payments, canCancel, busy, onCancel })
       <div style={st.reqSectionHead}>
         <ListChecks size={18} color={C.green} />
         <h3 style={st.reqSectionTitle}>Операции с заявками</h3>
-        <span style={st.reqSectionSub}>оплаты заявок из Реестра</span>
+        <span style={st.reqSectionSub}>оплаты заявок из Реестра · выбранная неделя</span>
       </div>
       {!payments.length ? (
-        <div style={{ ...st.locCard, ...st.empty }}><ListChecks size={18} /> Оплат по заявкам пока нет</div>
+        <div style={{ ...st.locCard, ...st.empty }}><ListChecks size={18} /> На этой неделе оплат по заявкам нет</div>
       ) : (
         <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 6 }} className="stagger">
           {payments.map((r) => {
