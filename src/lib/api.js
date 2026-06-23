@@ -782,6 +782,26 @@ export async function fetchRegister({ periodId, opType, fundId, cashAccountId, l
   return data;
 }
 
+// Оплаты заявок из Реестра (op_type='request_payment') — лента «Операции с
+// заявками» внизу вкладки «Заявки». Заявка попадает в Реестр только при оплате.
+// Точка у fp_register отдельной колонкой не хранится — фильтруем по точке заявки
+// на клиенте (как и список заявок во вкладке).
+export async function fetchRequestPayments(locationId, { limit = 100 } = {}) {
+  const { data, error } = await supabase
+    .from("fp_register")
+    .select(`id, op_type, fund_amount, cash_amount, comment, created_at, period_id,
+      fund:funds(code, name),
+      cash_account:cash_accounts(name),
+      creator:profiles!fp_register_created_by_fkey(full_name),
+      request:payment_requests(number, location_id, expense_type:expense_types(code, name), position:org_positions(code, name))`)
+    .eq("op_type", "request_payment")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  const rows = data || [];
+  return locationId ? rows.filter((r) => r.request?.location_id === locationId) : rows;
+}
+
 // ---------------------------------------------------------------- Отчёты
 // Сырьё для ДДС/P&L/сравнения точек: доходы и выплаты по периодам.
 // Точка расхода берётся из заявки или счёта; ЗП и вне ФП — без точки.

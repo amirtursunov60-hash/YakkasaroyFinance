@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { ClipboardList, Check, Ban, Banknote, Loader2, AlertCircle, CheckCircle2, ChevronRight, X, Network, Plus, Copy, Pencil } from "lucide-react";
+import { ClipboardList, Check, Ban, Banknote, Loader2, AlertCircle, CheckCircle2, ChevronRight, X, Network, Plus, Copy, Pencil, ListChecks } from "lucide-react";
 import { Stat } from "../../components/common";
 import { InfoHint } from "../../components/InfoHint";
 import { useTheme } from "../../theme/theme";
@@ -10,7 +10,7 @@ import { AttachmentsBlock } from "../../components/AttachmentsBlock";
 import { MjPanel, MjSwitch } from "../manajet/MjPanel";
 import { feedbackSuccess, feedbackError } from "../../lib/feedback";
 import {
-  fetchRequests, payRequest,
+  fetchRequests, payRequest, fetchRequestPayments,
   fetchFunds, fetchIncomeRefs,
   fetchExpenseTypes, insertRequest, updateRequest, createPositionAndAssign, fetchMyPositions, fetchOrgDivisions,
 } from "../../lib/api";
@@ -86,6 +86,7 @@ export function Requests() {
   const [err, setErr] = useState("");
   const [done, setDone] = useState("");
   const [requests, setRequests] = useState([]);
+  const [payments, setPayments] = useState([]);   // оплаты заявок из Реестра — лента внизу
   const [funds, setFunds] = useState([]);
   const [refs, setRefs] = useState(null);
   const [types, setTypes] = useState([]);
@@ -146,7 +147,11 @@ export function Requests() {
 
   const loadItems = useCallback(async () => {
     try {
-      setRequests(await fetchRequests(periodId, ctxLocationId));
+      const [reqs, pays] = await Promise.all([
+        fetchRequests(periodId, ctxLocationId),
+        fetchRequestPayments(ctxLocationId).catch(() => []),
+      ]);
+      setRequests(reqs); setPayments(pays);
     } catch (e) { setErr("Не удалось загрузить заявки: " + (e?.message || e)); }
   }, [periodId, ctxLocationId]);
   useEffect(() => { if (!periodsLoading) loadItems(); }, [loadItems, periodsLoading]);
@@ -287,6 +292,10 @@ export function Requests() {
         </div>
       ))}
     </section>
+
+    {/* Операции с заявками — лента оплат из Реестра (заявка попадает в Реестр
+        только при оплате). Стиль — как лента «Реестра». */}
+    <RequestOpsLog C={C} st={st} isMobile={isMobile} payments={payments} />
 
     {decide && (
       <DecideModal C={C} st={st} decide={decide} funds={funds} accounts={refs?.accounts || []}
@@ -639,6 +648,61 @@ export const CswRow = ({ C, label, text }) => (
     <div style={{ fontSize: 13.5, whiteSpace: "pre-wrap" }}>{text || "—"}</div>
   </div>
 );
+
+
+// ---------------------------------------------------------------- Операции с заявками (лента оплат)
+// Внизу вкладки «Заявки»: лента оплат заявок из Реестра (op_type='request_payment').
+// Заявка попадает в Реестр только при оплате. Вид — как лента «Реестра».
+function RequestOpsLog({ C, st, isMobile, payments }) {
+  return (
+    <section style={st.reqSection}>
+      <div style={st.reqSectionHead}>
+        <ListChecks size={18} color={C.green} />
+        <h3 style={st.reqSectionTitle}>Операции с заявками</h3>
+        <span style={st.reqSectionSub}>оплаты заявок из Реестра</span>
+      </div>
+      {!payments.length ? (
+        <div style={{ ...st.locCard, ...st.empty }}><ListChecks size={18} /> Оплат по заявкам пока нет</div>
+      ) : (
+        <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 6 }} className="stagger">
+          {payments.map((r) => {
+            const tone = C.warning;
+            const v = Number(r.cash_amount ?? r.fund_amount) || 0;
+            const desc = [
+              r.request?.number ? `Заявка №${r.request.number}` : null,
+              r.request?.expense_type ? `${r.request.expense_type.code || ""} ${r.request.expense_type.name}`.trim() : null,
+              r.fund ? `${r.fund.code} ${r.fund.name}` : null,
+              r.cash_account?.name,
+            ].filter(Boolean).join(" · ") || "—";
+            return (
+              <div key={r.id} style={{
+                display: "flex", alignItems: "center", gap: 10, padding: "10px 14px",
+                borderRadius: 12, background: C.solid2, border: `1px solid ${C.line}`,
+                flexWrap: isMobile ? "wrap" : "nowrap",
+              }} className="frow">
+                <span style={{ fontSize: 11, color: C.faint, width: 88, flexShrink: 0 }}>
+                  {new Date(r.created_at).toLocaleString("ru", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                </span>
+                <span style={{ fontSize: 10.5, fontWeight: 700, padding: "3px 9px", borderRadius: 20, whiteSpace: "nowrap", color: tone, background: `${tone}1a`, flexShrink: 0 }}>
+                  Оплата заявки
+                </span>
+                <div style={{ flex: 1, minWidth: isMobile ? "100%" : 0, fontSize: 12.5, color: C.sub, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", order: isMobile ? 5 : 0 }}>
+                  {desc}
+                </div>
+                {!isMobile && r.creator && (
+                  <span style={{ fontSize: 11, color: C.faint, flexShrink: 0 }}>{r.creator.full_name}</span>
+                )}
+                <span style={{ fontWeight: 800, fontVariantNumeric: "tabular-nums", fontSize: 14, color: v >= 0 ? C.money : C.danger, flexShrink: 0, marginLeft: "auto" }}>
+                  {v >= 0 ? "+" : ""}{fmt(v)}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
+}
 
 
 // ---------------------------------------------------------------- Одобрение / отклонение / оплата
