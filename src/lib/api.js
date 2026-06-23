@@ -792,7 +792,7 @@ export async function globalSearch(qstr) {
   const res = [];
   (cp.data || []).forEach((x) => res.push({ type: "Контрагент", label: x.name, module: "finance", section: "suppliers" }));
   (req.data || []).forEach((x) => res.push({ type: "Заявка", label: `№${x.number} · ${x.csw_solution?.slice(0, 40) || ""}`, module: "finance", section: "requests" }));
-  (bill.data || []).forEach((x) => res.push({ type: x.kind === "obligation" ? "Обязательство" : "Счёт поставщика", label: `№${x.number} · ${x.counterparty?.name || ""}`, module: "finance", section: x.kind === "obligation" ? "obligations" : "suppliers" }));
+  (bill.data || []).forEach((x) => res.push({ type: x.kind === "obligation" ? "Обязательство" : "Счёт поставщика", label: `№${x.number} · ${x.counterparty?.name || ""}`, module: "finance", section: "suppliers" }));
   (inv.data || []).forEach((x) => res.push({ type: "Банкет", label: `№${x.number} · ${x.event_name}`, module: "finance", section: "clients" }));
   (fund.data || []).forEach((x) => res.push({ type: "Фонд", label: `${x.code} · ${x.name}`, module: "finance", section: "funds" }));
   (ppl.data || []).forEach((x) => res.push({ type: "Сотрудник", label: x.full_name, module: "staff", section: "st_people" }));

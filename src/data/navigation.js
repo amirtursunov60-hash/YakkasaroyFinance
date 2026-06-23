@@ -26,7 +26,6 @@ export const NAV_FINANCE = [
   { key: "funds", icon: Layers, label: "Фонды" },
   { key: "directive", icon: SlidersHorizontal, label: "Директива" },
   { key: "requests", icon: ClipboardList, label: "Заявки" },
-  { key: "obligations", icon: FileText, label: "Обязательства" },
   { key: "payroll", icon: Calculator, label: "Расчёт зарплаты" },
   { key: "reports", icon: BarChart3, label: "Управленческие отчёты" },
   { key: "register", icon: List, label: "Реестр операций" },

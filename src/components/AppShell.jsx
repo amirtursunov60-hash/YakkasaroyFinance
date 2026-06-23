@@ -21,7 +21,6 @@ import { Register } from "../modules/finance/Register";
 import { Reports } from "../modules/finance/Reports";
 import { Requests } from "../modules/finance/Requests";
 import { Suppliers } from "../modules/finance/Suppliers";
-import { Obligations } from "../modules/finance/Obligations";
 import { OrgModule } from "../modules/org/OrgModule";
 import { MenuModule } from "../modules/menu/MenuModule";
 import { RestOrders } from "../modules/restaurant/RestOrders";
@@ -226,11 +225,10 @@ export function App({ onLogout }) {
           {activeModule === "finance" && active === "register" && <Register />}
           {activeModule === "finance" && active === "funds" && <Funds />}
           {activeModule === "finance" && active === "suppliers" && <Suppliers />}
-          {activeModule === "finance" && active === "obligations" && <Obligations />}
           {activeModule === "finance" && active === "clients" && <Clients />}
           {activeModule === "finance" && active === "reports" && <Reports />}
           {activeModule === "finance" && active === "payroll" && <Payroll />}
-          {activeModule === "finance" && !["directive", "income", "control", "expense", "requests", "register", "funds", "suppliers", "obligations", "clients", "reports", "payroll"].includes(active) && <Stub label={navList.find((n) => n.key === active)?.label} />}
+          {activeModule === "finance" && !["directive", "income", "control", "expense", "requests", "register", "funds", "suppliers", "clients", "reports", "payroll"].includes(active) && <Stub label={navList.find((n) => n.key === active)?.label} />}
 
           {activeModule === "staff" && <StaffModule view={active} />}
 
