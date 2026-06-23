@@ -792,6 +792,7 @@ export async function fetchRequestPayments(locationId, { limit = 100 } = {}) {
     .select(`id, op_type, fund_amount, cash_amount, comment, created_at, period_id, reverses_id,
       fund:funds(code, name),
       cash_account:cash_accounts(name),
+      period:fp_periods(status),
       creator:profiles!fp_register_created_by_fkey(full_name),
       request:payment_requests(number, location_id, expense_type:expense_types(code, name), position:org_positions(code, name))`)
     .eq("op_type", "request_payment")

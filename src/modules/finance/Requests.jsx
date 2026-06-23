@@ -98,6 +98,7 @@ export function Requests() {
   const [prefillReq, setPrefillReq] = useState(null);       // предзаполнение формы для «Копировать»
   const [editReq, setEditReq] = useState(null);             // заявка в режиме редактирования (своя на рассмотрении)
   const [cancelPay, setCancelPay] = useState(null);         // строка оплаты для отмены (подтверждение)
+  const [cancelErr, setCancelErr] = useState("");           // ошибка отмены — показывается в самой модалке
   const [busy, setBusy] = useState(null);
   const [reqFilter, setReqFilter] = useState("approved");   // здесь оплачиваем — по умолчанию «Одобрено»
   const [src, setSrc] = useState("ours");                   // источник: наши данные / зеркало ManaJet
@@ -203,17 +204,22 @@ export function Requests() {
     finally { setBusy(null); }
   };
 
+  // Открыть подтверждение отмены оплаты (сбрасываем прошлую ошибку модалки).
+  const openCancelPay = (row) => { setCancelErr(""); setCancelPay(row); };
+
   // Отмена оплаты заявки: компенсирующая запись Реестра, заявка → «одобрена».
+  // Ошибку показываем в самой модалке (cancelErr), а не только в баннере вверху —
+  // лента внизу страницы, верхний баннер оттуда не виден.
   const doCancelPayment = async (row) => {
     if (busy) return;
-    setBusy("cancelPay"); setErr(""); setDone("");
+    setBusy("cancelPay"); setCancelErr(""); setDone("");
     try {
       await reverseRequestPayment(row.id);
       await loadItems();
       setCancelPay(null);
       setDone(`Оплата заявки №${row.request?.number ?? ""} отменена — деньги возвращены, заявка снова одобрена`);
       feedbackSuccess();
-    } catch (e) { setErr(e?.message || String(e)); feedbackError(); }
+    } catch (e) { setCancelErr(e?.message || String(e)); feedbackError(); }
     finally { setBusy(null); }
   };
 
@@ -311,13 +317,13 @@ export function Requests() {
     {/* Операции с заявками — лента оплат из Реестра (заявка попадает в Реестр
         только при оплате). Стиль — как лента «Реестра». */}
     <RequestOpsLog C={C} st={st} isMobile={isMobile} payments={payments}
-      canCancel={canPay} busy={busy === "cancelPay"} onCancel={setCancelPay} />
+      canCancel={canPay} busy={busy === "cancelPay"} onCancel={openCancelPay} />
 
     {cancelPay && (
       <ConfirmModal title="Отменить оплату заявки"
         message={`Оплата заявки №${cancelPay.request?.number ?? ""} будет отменена: деньги вернутся в фонд и на счёт ДС, заявка снова станет «одобрена». Запись в Реестре сохранится (добавится компенсирующая).`}
-        tone="danger" confirmLabel="Отменить оплату" busy={busy === "cancelPay"}
-        onConfirm={() => doCancelPayment(cancelPay)} onCancel={() => setCancelPay(null)} />
+        error={cancelErr} tone="danger" confirmLabel="Отменить оплату" busy={busy === "cancelPay"}
+        onConfirm={() => doCancelPayment(cancelPay)} onCancel={() => { setCancelPay(null); setCancelErr(""); }} />
     )}
 
     {decide && (
@@ -696,6 +702,7 @@ function RequestOpsLog({ C, st, isMobile, payments, canCancel, busy, onCancel })
           {payments.map((r) => {
             const isReversal = r.reverses_id != null;            // запись-отмена
             const isReversed = reversedIds.has(String(r.id));    // оплата уже отменена
+            const periodClosed = r.period?.status === "closed";  // неделя оплаты закрыта
             const tone = isReversal ? C.info : C.warning;
             const v = Number(r.cash_amount ?? r.fund_amount) || 0;
             const desc = [
@@ -704,7 +711,10 @@ function RequestOpsLog({ C, st, isMobile, payments, canCancel, busy, onCancel })
               r.fund ? `${r.fund.code} ${r.fund.name}` : null,
               r.cash_account?.name,
             ].filter(Boolean).join(" · ") || "—";
-            const showCancel = canCancel && !isReversal && !isReversed;
+            // Отменить можно только активную оплату открытой недели (Реестр в закрытом
+            // периоде не меняем — сначала открыть неделю в Директиве).
+            const showCancel = canCancel && !isReversal && !isReversed && !periodClosed;
+            const showClosedHint = canCancel && !isReversal && !isReversed && periodClosed;
             return (
               <div key={r.id} style={{
                 display: "flex", alignItems: "center", gap: 10, padding: "10px 14px",
@@ -732,6 +742,12 @@ function RequestOpsLog({ C, st, isMobile, payments, canCancel, busy, onCancel })
                     title="Отменить оплату — вернуть деньги и заявку в «одобрена»">
                     <RotateCcw size={14} /> {isMobile ? "" : "Отменить"}
                   </button>
+                )}
+                {showClosedHint && (
+                  <span style={{ fontSize: 11, color: C.faint, flexShrink: 0, whiteSpace: "nowrap" }}
+                    title="Неделя оплаты закрыта — откройте её в Директиве, чтобы отменить оплату">
+                    неделя закрыта
+                  </span>
                 )}
               </div>
             );
