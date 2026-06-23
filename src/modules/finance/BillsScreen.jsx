@@ -38,9 +38,8 @@ export function BillsScreen({ kind, ui }) {
   const isFinAdmin = ["owner", "fin_director"].includes(profile?.role);
   const canPay = isFinAdmin || profile?.role === "accountant";
   const canSubmit = ["owner", "fin_director", "accountant", "location_manager", "ops_director"].includes(profile?.role);
-  // Доработки (редактор, лента оплат, отмена, моб. кнопка) — только для «Счета
-  // поставщиков»; «Обязательства» оставлены как есть (решение заказчика).
-  const isSupply = kind === "supply";
+  // Доработки (редактор, лента оплат, отмена, моб. кнопка) — в обоих разделах:
+  // «Счета поставщиков» и «Обязательства» (общий экран BillsScreen).
 
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
@@ -82,17 +81,17 @@ export function BillsScreen({ kind, ui }) {
     try {
       const [bls, pays] = await Promise.all([
         fetchBills(periodId, kind, ctxLocationId),
-        isSupply ? fetchBillPayments(kind, ctxLocationId, { periodId }).catch(() => []) : Promise.resolve([]),
+        fetchBillPayments(kind, ctxLocationId, { periodId }).catch(() => []),
       ]);
       setBills(bls); setPayments(pays);
     }
     catch (e) { setErr("Не удалось загрузить счета: " + (e?.message || e)); }
-  }, [periodId, kind, ctxLocationId, isSupply]);
+  }, [periodId, kind, ctxLocationId]);
   useEffect(() => { if (!periodsLoading) loadBills(); }, [loadBills, periodsLoading]);
 
   // Кто может править счёт: свой — пока «подан»; финкомитет — любой поданный.
-  // Совпадает с RLS supplier_bills (bills_update). Только для «Счета поставщиков».
-  const canEditBill = (b) => isSupply && b.status === "submitted"
+  // Совпадает с RLS supplier_bills (bills_update).
+  const canEditBill = (b) => b.status === "submitted"
     && (isFinAdmin || b.created_by === profile.id);
   const openNewBill = () => { setErr(""); setPrefill(null); setShowForm(true); };
   const openCancelBill = (row) => { setCancelErr(""); setCancelBill(row); };
@@ -192,11 +191,11 @@ export function BillsScreen({ kind, ui }) {
             <div style={st.heroLabel}>{ui.heroLabel}</div>
             <div style={st.heroTitle}>{period ? periodTitle(period) : "Период не создан"}</div>
           </div>
-          {/* На телефоне в разделе «Счета поставщиков» кнопка вынесена вниз, под
-              показатели (в шапке не помещалась). В «Обязательствах» — как было. */}
-          {canSubmit && !(isMobile && isSupply) && (
+          {/* На телефоне кнопка вынесена вниз, под показатели (в шапке не
+              помещалась); на десктопе — справа в шапке. */}
+          {canSubmit && !isMobile && (
             <button style={st.btnGreen} className="btn" onClick={openNewBill}>
-              <Plus size={15} /> {isMobile ? "Счёт" : ui.addBtn}
+              <Plus size={15} /> {ui.addBtn}
             </button>
           )}
         </div>
@@ -204,9 +203,8 @@ export function BillsScreen({ kind, ui }) {
           <Stat label="К оплате" value={fmt(sums.toPay)} unit="TJS" accent />
           <Stat label="Просрочено" value={fmt(sums.overdue)} unit="TJS" />
           <Stat label="Оплачено за неделю" value={fmt(sums.paid)} unit="TJS" />
-          {!isSupply && <Stat label="Счетов" value={String(bills.length)} unit="" />}
         </div>
-        {canSubmit && isMobile && isSupply && (
+        {canSubmit && isMobile && (
           <button style={{ ...st.btnGreen, width: "100%", justifyContent: "center", marginTop: 18 }}
             className="btn" onClick={openNewBill}>
             <Plus size={15} /> {ui.addBtn}
@@ -321,12 +319,10 @@ export function BillsScreen({ kind, ui }) {
       );
     })}
 
-    {/* Операции со счетами — лента оплат из Реестра выбранной недели (только
-        «Счета поставщиков»). Счёт попадает в Реестр только при оплате. */}
-    {isSupply && (
-      <BillOpsLog C={C} st={st} isMobile={isMobile} payments={payments}
-        canCancel={canPay} busy={busy === "cancelPay"} onCancel={openCancelBill} />
-    )}
+    {/* Операции со счетами — лента оплат из Реестра выбранной недели. Счёт
+        попадает в Реестр только при оплате. */}
+    <BillOpsLog C={C} st={st} isMobile={isMobile} payments={payments}
+      canCancel={canPay} busy={busy === "cancelPay"} onCancel={openCancelBill} />
 
     {cancelBill && (
       <ConfirmModal title="Отменить оплату счёта"
