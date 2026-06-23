@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { ClipboardList, Check, Ban, Banknote, Loader2, AlertCircle, CheckCircle2, ChevronRight, X, Network, Plus, Copy, Pencil, ListChecks } from "lucide-react";
-import { Stat } from "../../components/common";
+import { ClipboardList, Check, Ban, Banknote, Loader2, AlertCircle, CheckCircle2, ChevronRight, X, Network, Plus, Copy, Pencil, ListChecks, RotateCcw } from "lucide-react";
+import { Stat, ConfirmModal } from "../../components/common";
 import { InfoHint } from "../../components/InfoHint";
 import { useTheme } from "../../theme/theme";
 import { useScrollLock } from "../../hooks/useScrollLock";
@@ -10,7 +10,7 @@ import { AttachmentsBlock } from "../../components/AttachmentsBlock";
 import { MjPanel, MjSwitch } from "../manajet/MjPanel";
 import { feedbackSuccess, feedbackError } from "../../lib/feedback";
 import {
-  fetchRequests, payRequest, fetchRequestPayments,
+  fetchRequests, payRequest, fetchRequestPayments, reverseRequestPayment,
   fetchFunds, fetchIncomeRefs,
   fetchExpenseTypes, insertRequest, updateRequest, createPositionAndAssign, fetchMyPositions, fetchOrgDivisions,
 } from "../../lib/api";
@@ -97,6 +97,7 @@ export function Requests() {
   const [showForm, setShowForm] = useState(false);
   const [prefillReq, setPrefillReq] = useState(null);       // предзаполнение формы для «Копировать»
   const [editReq, setEditReq] = useState(null);             // заявка в режиме редактирования (своя на рассмотрении)
+  const [cancelPay, setCancelPay] = useState(null);         // строка оплаты для отмены (подтверждение)
   const [busy, setBusy] = useState(null);
   const [reqFilter, setReqFilter] = useState("approved");   // здесь оплачиваем — по умолчанию «Одобрено»
   const [src, setSrc] = useState("ours");                   // источник: наши данные / зеркало ManaJet
@@ -202,6 +203,20 @@ export function Requests() {
     finally { setBusy(null); }
   };
 
+  // Отмена оплаты заявки: компенсирующая запись Реестра, заявка → «одобрена».
+  const doCancelPayment = async (row) => {
+    if (busy) return;
+    setBusy("cancelPay"); setErr(""); setDone("");
+    try {
+      await reverseRequestPayment(row.id);
+      await loadItems();
+      setCancelPay(null);
+      setDone(`Оплата заявки №${row.request?.number ?? ""} отменена — деньги возвращены, заявка снова одобрена`);
+      feedbackSuccess();
+    } catch (e) { setErr(e?.message || String(e)); feedbackError(); }
+    finally { setBusy(null); }
+  };
+
   if (src === "manajet") return <MjPanel kind="requests" src={src} setSrc={setSrc} />;
   if (loading || periodsLoading) return <div style={st.empty}><Loader2 size={18} className="spin" /> Загрузка…</div>;
 
@@ -295,7 +310,15 @@ export function Requests() {
 
     {/* Операции с заявками — лента оплат из Реестра (заявка попадает в Реестр
         только при оплате). Стиль — как лента «Реестра». */}
-    <RequestOpsLog C={C} st={st} isMobile={isMobile} payments={payments} />
+    <RequestOpsLog C={C} st={st} isMobile={isMobile} payments={payments}
+      canCancel={canPay} busy={busy === "cancelPay"} onCancel={setCancelPay} />
+
+    {cancelPay && (
+      <ConfirmModal title="Отменить оплату заявки"
+        message={`Оплата заявки №${cancelPay.request?.number ?? ""} будет отменена: деньги вернутся в фонд и на счёт ДС, заявка снова станет «одобрена». Запись в Реестре сохранится (добавится компенсирующая).`}
+        tone="danger" confirmLabel="Отменить оплату" busy={busy === "cancelPay"}
+        onConfirm={() => doCancelPayment(cancelPay)} onCancel={() => setCancelPay(null)} />
+    )}
 
     {decide && (
       <DecideModal C={C} st={st} decide={decide} funds={funds} accounts={refs?.accounts || []}
@@ -653,7 +676,12 @@ export const CswRow = ({ C, label, text }) => (
 // ---------------------------------------------------------------- Операции с заявками (лента оплат)
 // Внизу вкладки «Заявки»: лента оплат заявок из Реестра (op_type='request_payment').
 // Заявка попадает в Реестр только при оплате. Вид — как лента «Реестра».
-function RequestOpsLog({ C, st, isMobile, payments }) {
+function RequestOpsLog({ C, st, isMobile, payments, canCancel, busy, onCancel }) {
+  // Какие оплаты уже отменены (есть компенсирующая запись с reverses_id на них).
+  const reversedIds = useMemo(
+    () => new Set(payments.filter((p) => p.reverses_id != null).map((p) => String(p.reverses_id))),
+    [payments],
+  );
   return (
     <section style={st.reqSection}>
       <div style={st.reqSectionHead}>
@@ -666,7 +694,9 @@ function RequestOpsLog({ C, st, isMobile, payments }) {
       ) : (
         <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 6 }} className="stagger">
           {payments.map((r) => {
-            const tone = C.warning;
+            const isReversal = r.reverses_id != null;            // запись-отмена
+            const isReversed = reversedIds.has(String(r.id));    // оплата уже отменена
+            const tone = isReversal ? C.info : C.warning;
             const v = Number(r.cash_amount ?? r.fund_amount) || 0;
             const desc = [
               r.request?.number ? `Заявка №${r.request.number}` : null,
@@ -674,20 +704,21 @@ function RequestOpsLog({ C, st, isMobile, payments }) {
               r.fund ? `${r.fund.code} ${r.fund.name}` : null,
               r.cash_account?.name,
             ].filter(Boolean).join(" · ") || "—";
+            const showCancel = canCancel && !isReversal && !isReversed;
             return (
               <div key={r.id} style={{
                 display: "flex", alignItems: "center", gap: 10, padding: "10px 14px",
                 borderRadius: 12, background: C.solid2, border: `1px solid ${C.line}`,
-                flexWrap: isMobile ? "wrap" : "nowrap",
+                opacity: isReversed ? 0.6 : 1, flexWrap: isMobile ? "wrap" : "nowrap",
               }} className="frow">
                 <span style={{ fontSize: 11, color: C.faint, width: 88, flexShrink: 0 }}>
                   {new Date(r.created_at).toLocaleString("ru", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
                 </span>
                 <span style={{ fontSize: 10.5, fontWeight: 700, padding: "3px 9px", borderRadius: 20, whiteSpace: "nowrap", color: tone, background: `${tone}1a`, flexShrink: 0 }}>
-                  Оплата заявки
+                  {isReversal ? "Отмена оплаты" : "Оплата заявки"}
                 </span>
-                <div style={{ flex: 1, minWidth: isMobile ? "100%" : 0, fontSize: 12.5, color: C.sub, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", order: isMobile ? 5 : 0 }}>
-                  {desc}
+                <div style={{ flex: 1, minWidth: isMobile ? "100%" : 0, fontSize: 12.5, color: C.sub, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", order: isMobile ? 5 : 0, textDecoration: isReversed ? "line-through" : "none" }}>
+                  {desc}{isReversed ? " · отменена" : ""}
                 </div>
                 {!isMobile && r.creator && (
                   <span style={{ fontSize: 11, color: C.faint, flexShrink: 0 }}>{r.creator.full_name}</span>
@@ -695,6 +726,13 @@ function RequestOpsLog({ C, st, isMobile, payments }) {
                 <span style={{ fontWeight: 800, fontVariantNumeric: "tabular-nums", fontSize: 14, color: v >= 0 ? C.money : C.danger, flexShrink: 0, marginLeft: "auto" }}>
                   {v >= 0 ? "+" : ""}{fmt(v)}
                 </span>
+                {showCancel && (
+                  <button style={{ ...st.btnGhost, color: C.danger, padding: "7px 10px", flexShrink: 0 }}
+                    className="btn" disabled={!!busy} onClick={() => onCancel(r)}
+                    title="Отменить оплату — вернуть деньги и заявку в «одобрена»">
+                    <RotateCcw size={14} /> {isMobile ? "" : "Отменить"}
+                  </button>
+                )}
               </div>
             );
           })}

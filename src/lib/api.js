@@ -789,7 +789,7 @@ export async function fetchRegister({ periodId, opType, fundId, cashAccountId, l
 export async function fetchRequestPayments(locationId, { limit = 100 } = {}) {
   const { data, error } = await supabase
     .from("fp_register")
-    .select(`id, op_type, fund_amount, cash_amount, comment, created_at, period_id,
+    .select(`id, op_type, fund_amount, cash_amount, comment, created_at, period_id, reverses_id,
       fund:funds(code, name),
       cash_account:cash_accounts(name),
       creator:profiles!fp_register_created_by_fkey(full_name),
@@ -800,6 +800,13 @@ export async function fetchRequestPayments(locationId, { limit = 100 } = {}) {
   if (error) throw error;
   const rows = data || [];
   return locationId ? rows.filter((r) => r.request?.location_id === locationId) : rows;
+}
+
+// Отмена оплаты заявки — компенсирующая запись Реестра + возврат заявки в
+// 'approved' (RPC fp_reverse_request_payment). Реестр строку оплаты не удаляет.
+export async function reverseRequestPayment(registerId) {
+  const { error } = await supabase.rpc("fp_reverse_request_payment", { p_id: registerId });
+  if (error) throw error;
 }
 
 // ---------------------------------------------------------------- Отчёты
