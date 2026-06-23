@@ -29,34 +29,30 @@ const UI_OBLIGATION = {
   recurringLabel: "Повторяющееся обязательство (аренда, рассрочка) — после оплаты можно продублировать",
 };
 
-// Ряд переключателей: слева вид счетов (Счета поставщиков / Обязательства),
-// рядом — источник данных (Наши данные / ManaJet).
-function BillsToggleRow({ tab, setTab, src, setSrc }) {
+// Один ряд переключателей вкладки: Счета поставщиков · Обязательства · ManaJet.
+// ManaJet — общий мираж счетов (mj_bills, без деления на вид). На телефоне
+// кнопки переносятся, чтобы не вылезать за край.
+function BillsViewToggle({ view, setView }) {
   const { st } = useTheme();
+  const opt = (key, label, icon) => (
+    <button style={{ ...st.viewBtn, whiteSpace: "nowrap", ...(view === key ? st.viewBtnOn : {}) }}
+      onClick={() => setView(key)}>{icon}{label}</button>
+  );
   return (
-    <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 14 }}>
-      <div style={st.viewToggle}>
-        <button style={{ ...st.viewBtn, ...(tab === "supply" ? st.viewBtnOn : {}) }} onClick={() => setTab("supply")}>Счета поставщиков</button>
-        <button style={{ ...st.viewBtn, ...(tab === "obligation" ? st.viewBtnOn : {}) }} onClick={() => setTab("obligation")}>Обязательства</button>
-      </div>
-      <div style={st.viewToggle}>
-        <button style={{ ...st.viewBtn, ...(src === "ours" ? st.viewBtnOn : {}) }} onClick={() => setSrc("ours")}>Наши данные</button>
-        <button style={{ ...st.viewBtn, ...(src === "manajet" ? st.viewBtnOn : {}) }} onClick={() => setSrc("manajet")}>
-          <Database size={13} /> ManaJet
-        </button>
-      </div>
+    <div style={{ ...st.viewToggle, flexWrap: "wrap", marginBottom: 14 }}>
+      {opt("supply", "Счета поставщиков")}
+      {opt("obligation", "Обязательства")}
+      {opt("manajet", "ManaJet", <Database size={13} />)}
     </div>
   );
 }
 
 export function Suppliers() {
-  const [src, setSrc] = useState("ours");
-  const [tab, setTab] = useState("supply");   // supply | obligation
-  // Источник ManaJet — общий мираж счетов (mj_bills, без деления на вид);
-  // у MjPanel свой тумблер «Наши данные / ManaJet» для возврата.
-  if (src === "manajet") return <MjPanel kind="bills" src={src} setSrc={setSrc} />;
+  const [view, setView] = useState("supply");   // supply | obligation | manajet
   return (<>
-    <BillsToggleRow tab={tab} setTab={setTab} src={src} setSrc={setSrc} />
-    <BillsScreen kind={tab} ui={tab === "supply" ? UI_SUPPLY : UI_OBLIGATION} />
+    <BillsViewToggle view={view} setView={setView} />
+    {view === "manajet"
+      ? <MjPanel kind="bills" hideSwitch />
+      : <BillsScreen kind={view} ui={view === "supply" ? UI_SUPPLY : UI_OBLIGATION} />}
   </>);
 }
