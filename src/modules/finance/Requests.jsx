@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { ClipboardList, FileText, Check, Ban, Banknote, Loader2, AlertCircle, CheckCircle2, ChevronRight, X, Network, Plus, Copy, Pencil } from "lucide-react";
+import { ClipboardList, Check, Ban, Banknote, Loader2, AlertCircle, CheckCircle2, ChevronRight, X, Network, Plus, Copy, Pencil } from "lucide-react";
 import { Stat } from "../../components/common";
 import { InfoHint } from "../../components/InfoHint";
 import { useTheme } from "../../theme/theme";
@@ -10,8 +10,7 @@ import { AttachmentsBlock } from "../../components/AttachmentsBlock";
 import { MjPanel, MjSwitch } from "../manajet/MjPanel";
 import { feedbackSuccess, feedbackError } from "../../lib/feedback";
 import {
-  fetchRequests, decideRequest, payRequest,
-  fetchBills, decideBill, payBill,
+  fetchRequests, payRequest,
   fetchFunds, fetchIncomeRefs,
   fetchExpenseTypes, insertRequest, updateRequest, createPositionAndAssign, fetchMyPositions, fetchOrgDivisions,
 } from "../../lib/api";
@@ -87,7 +86,6 @@ export function Requests() {
   const [err, setErr] = useState("");
   const [done, setDone] = useState("");
   const [requests, setRequests] = useState([]);
-  const [bills, setBills] = useState([]);
   const [funds, setFunds] = useState([]);
   const [refs, setRefs] = useState(null);
   const [types, setTypes] = useState([]);
@@ -145,8 +143,7 @@ export function Requests() {
 
   const loadItems = useCallback(async () => {
     try {
-      const [reqs, bls] = await Promise.all([fetchRequests(periodId, ctxLocationId), fetchBills(periodId, null, ctxLocationId)]);
-      setRequests(reqs); setBills(bls);
+      setRequests(await fetchRequests(periodId, ctxLocationId));
     } catch (e) { setErr("Не удалось загрузить заявки: " + (e?.message || e)); }
   }, [periodId, ctxLocationId]);
   useEffect(() => { if (!periodsLoading) loadItems(); }, [loadItems, periodsLoading]);
@@ -169,40 +166,26 @@ export function Requests() {
   const sums = useMemo(() => {
     const pend = (arr) => arr.filter((x) => ["submitted", "planning"].includes(x.status));
     const appr = (arr) => arr.filter((x) => x.status === "approved");
-    const reqPend = pend(requests), billPend = pend(bills);
+    const reqPend = pend(requests), reqAppr = appr(requests);
     return {
-      billPendN: billPend.length,
-      billPendSum: billPend.reduce((a, b) => a + Number(b.amount), 0),
       reqPendN: reqPend.length,
       reqPendSum: reqPend.reduce((a, r) => a + Number(r.planned_amount), 0),
-      toPayN: appr(requests).length + appr(bills).length,
-      toPaySum: appr(requests).reduce((a, r) => a + Number(r.planned_amount), 0)
-        + appr(bills).reduce((a, b) => a + Number(b.amount), 0),
+      toPayN: reqAppr.length,
+      toPaySum: reqAppr.reduce((a, r) => a + Number(r.planned_amount), 0),
     };
-  }, [requests, bills]);
+  }, [requests]);
 
-  const doDecide = async ({ item, itemKind, action, fundId, reason, accountId }) => {
+  // На этом экране заявки только ОПЛАЧИВАЮТСЯ (рассмотрение — в Директиве; счета —
+  // на своих экранах Поставщики/Обязательства).
+  const doDecide = async ({ item, action, accountId }) => {
     if (busy) return;
     setBusy("decide"); setErr(""); setDone("");
     try {
-      if (!periodId && action !== "reject") throw new Error("Нет выбранного периода ФП");
-      const isBill = itemKind === "bill";
-      const num = item.number;
-      if (action === "approve") {
-        if (!fundId) throw new Error("Выберите фонд-источник");
-        if (isBill) await decideBill(item.id, { status: "approved", fund_id: fundId, period_approved_id: periodId });
-        else await decideRequest(item.id, { status: "approved", fund_id: fundId, period_id: periodId });
-        setDone(`${isBill ? "Счёт" : "Заявка"} №${num}: одобрено — фонд ${funds.find((f) => f.id === fundId)?.code}`);
-      } else if (action === "reject") {
-        if (!reason?.trim()) throw new Error("Укажите причину отклонения");
-        if (isBill) await decideBill(item.id, { status: "rejected", rejection_reason: reason.trim() });
-        else await decideRequest(item.id, { status: "rejected", rejection_reason: reason.trim() });
-        setDone(`${isBill ? "Счёт" : "Заявка"} №${num}: отклонено`);
-      } else if (action === "pay") {
+      if (!periodId) throw new Error("Нет выбранного периода ФП");
+      if (action === "pay") {
         if (!accountId) throw new Error("Выберите счёт ДС");
-        if (isBill) await payBill(item.id, accountId, periodId);
-        else await payRequest(item.id, accountId, periodId);
-        setDone(`${isBill ? "Счёт" : "Заявка"} №${num}: оплачено — расход проведён в Реестре`);
+        await payRequest(item.id, accountId, periodId);
+        setDone(`Заявка №${item.number}: оплачено — расход проведён в Реестре`);
       }
       await loadItems();
       setDecide(null);
@@ -214,34 +197,14 @@ export function Requests() {
   if (src === "manajet") return <MjPanel kind="requests" src={src} setSrc={setSrc} />;
   if (loading || periodsLoading) return <div style={st.empty}><Loader2 size={18} className="spin" /> Загрузка…</div>;
 
-  // Счета поставщиков: одобрение/отклонение/оплата. Заявки-ЗРС рассматриваются
-  // (одобрение/отклонение) в Директиве, а здесь — только оплачиваются одобренные.
-  const Actions = ({ item, itemKind }) => {
-    if (itemKind === "bill") {
-      return (
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          {isFinAdmin && ["submitted", "planning"].includes(item.status) && (<>
-            <button style={st.btnGreen} className="btn" disabled={!!busy} onClick={() => setDecide({ item, itemKind, action: "approve" })}>
-              <Check size={14} /> Одобрить
-            </button>
-            <button style={{ ...st.btnGhost, color: C.danger }} className="btn" disabled={!!busy} onClick={() => setDecide({ item, itemKind, action: "reject" })}>
-              <Ban size={14} /> Отклонить
-            </button>
-          </>)}
-          {canPay && item.status === "approved" && (
-            <button style={st.btnGreen} className="btn" disabled={!!busy} onClick={() => setDecide({ item, itemKind, action: "pay" })}>
-              <Banknote size={14} /> Оплатить
-            </button>
-          )}
-        </div>
-      );
-    }
-    // заявка-ЗРС: оплата одобренной (рассмотрение — в Директиве) + копирование
-    // (повтор регулярной заявки) — доступно на любом статусе.
+  // Заявка-ЗРС: оплата одобренной (рассмотрение — в Директиве), правка своей
+  // заявки на рассмотрении и копирование (повтор регулярной). Счета — на своих
+  // экранах (Поставщики/Обязательства), в этой вкладке их нет.
+  const Actions = ({ item }) => {
     return (
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
         {canPay && item.status === "approved" && (
-          <button style={st.btnGreen} className="btn" disabled={!!busy} onClick={() => setDecide({ item, itemKind, action: "pay" })}>
+          <button style={st.btnGreen} className="btn" disabled={!!busy} onClick={() => setDecide({ item, action: "pay" })}>
             <Banknote size={14} /> Оплатить
           </button>
         )}
@@ -272,34 +235,15 @@ export function Requests() {
           </button>
         </div>
         <div style={st.heroStats}>
-          <Stat label="Счета к одобрению" value={`${sums.billPendN} · ${fmt(sums.billPendSum)}`} unit="TJS" accent />
-          <Stat label="Заявки к одобрению" value={`${sums.reqPendN} · ${fmt(sums.reqPendSum)}`} unit="TJS" />
+          <Stat label="Заявки к одобрению" value={`${sums.reqPendN} · ${fmt(sums.reqPendSum)}`} unit="TJS" accent />
           <Stat label="К оплате (одобрено)" value={`${sums.toPayN} · ${fmt(sums.toPaySum)}`} unit="TJS" />
-          <Stat label="Всего позиций" value={String(requests.length + bills.length)} unit="" />
+          <Stat label="Всего заявок" value={String(requests.length)} unit="" />
         </div>
       </div>
     </section>
 
     {err && <div role="alert" style={{ ...st.reqError, marginBottom: 14 }}><AlertCircle size={15} /> {err}</div>}
     {done && <div style={{ ...st.reqSuccess, marginBottom: 14 }}><CheckCircle2 size={15} /> {done}</div>}
-
-    {/* Счета поставщиков — приоритет одобрения над заявками (ТЗ §4.1.6) */}
-    <section style={st.reqSection}>
-      <div style={st.reqSectionHead}>
-        <FileText size={18} color={C.green} />
-        <h3 style={st.reqSectionTitle}>Счета поставщиков и обязательства</h3>
-        <span style={st.reqSectionSub}>одобряются приоритетно</span>
-      </div>
-      {!bills.length && <div style={{ ...st.locCard, ...st.empty }}>Счетов на рассмотрении нет</div>}
-      {bills.map((b) => (
-        <ItemCard key={b.id} C={C} st={st} item={b} itemKind="bill"
-          isExpanded={!!expanded[`bill:${b.id}`]}
-          onToggle={() => setExpanded((e) => ({ ...e, [`bill:${b.id}`]: !e[`bill:${b.id}`] }))}
-          statusMeta={ST_META} profileId={profile.id} onAttachmentsChanged={loadItems}>
-          <Actions item={b} itemKind="bill" />
-        </ItemCard>
-      ))}
-    </section>
 
     {/* Заявки по отделениям оргсхемы */}
     <section style={st.reqSection}>
@@ -325,7 +269,7 @@ export function Requests() {
               isExpanded={!!expanded[`request:${r.id}`]}
               onToggle={() => setExpanded((e) => ({ ...e, [`request:${r.id}`]: !e[`request:${r.id}`] }))}
               statusMeta={ST_META} profileId={profile.id} onAttachmentsChanged={loadItems}>
-              <Actions item={r} itemKind="request" />
+              <Actions item={r} />
             </ItemCard>
           ))}
         </div>
