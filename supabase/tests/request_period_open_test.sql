@@ -5,7 +5,7 @@
 -- Структурные проверки — ничего не пишут, безопасно везде.
 -- ============================================================================
 begin;
-select plan(3);
+select plan(4);
 
 set search_path = extensions, public;
 
@@ -15,10 +15,21 @@ select has_function(
   'trg_request_period_open_check() есть'
 );
 
--- триггер BEFORE INSERT на payment_requests навешен
+-- триггер на payment_requests навешен (BEFORE INSERT OR UPDATE — подача и перенос)
 select has_trigger(
   'public', 'payment_requests', 'request_period_open_check',
   'триггер request_period_open_check на payment_requests есть'
+);
+
+-- страж покрывает и INSERT, и UPDATE (миграция 20260623130000)
+select is(
+  (select string_agg(lower(t.event), ',' order by lower(t.event))
+     from information_schema.triggers t
+    where t.trigger_schema = 'public'
+      and t.event_object_table = 'payment_requests'
+      and t.trigger_name = 'request_period_open_check'),
+  'insert,update',
+  'страж срабатывает на INSERT и UPDATE'
 );
 
 -- контроль: статус 'closed' остаётся в enum period_status (на него опирается страж)

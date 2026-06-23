@@ -307,7 +307,7 @@ export async function fetchRequests(periodId, locationId, { byPeriod = false } =
   let q = supabase
     .from("payment_requests")
     .select(`id, number, status, planned_amount, approved_amount, comment, csw_data, csw_situation, csw_solution,
-      purpose, tags, rejection_reason, created_at, decided_at, period_id, expense_type_id,
+      purpose, tags, rejection_reason, created_at, decided_at, period_id, expense_type_id, requester_id, position_id, fund_id,
       position:org_positions(code, name, division:org_divisions(id, code, name)),
       requester:profiles!payment_requests_requester_id_fkey(full_name, avatar_url),
       expense_type:expense_types(code, name),
@@ -329,6 +329,14 @@ export async function insertRequest(row) {
   const { data, error } = await supabase.from("payment_requests").insert(row).select().single();
   if (error) throw error;
   return data;
+}
+
+// Правка заявки автором, пока она на рассмотрении (или финадмином). RLS разрешает
+// UPDATE только своей submitted-заявки / любой — финадмину. Меняем неделю и поля
+// ЗРС; статус/заявителя не трогаем. Перенос в закрытую неделю блокирует триггер БД.
+export async function updateRequest(id, patch) {
+  const { error } = await supabase.from("payment_requests").update(patch).eq("id", id);
+  if (error) throw error;
 }
 
 // Решение финкомитета: approved (с фондом и периодом одобрения) | rejected | planning

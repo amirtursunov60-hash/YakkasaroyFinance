@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { ClipboardList, FileText, Check, Ban, Banknote, Loader2, AlertCircle, CheckCircle2, ChevronRight, X, Network, Plus, Copy } from "lucide-react";
+import { ClipboardList, FileText, Check, Ban, Banknote, Loader2, AlertCircle, CheckCircle2, ChevronRight, X, Network, Plus, Copy, Pencil } from "lucide-react";
 import { Stat } from "../../components/common";
 import { InfoHint } from "../../components/InfoHint";
 import { useTheme } from "../../theme/theme";
@@ -13,7 +13,7 @@ import {
   fetchRequests, decideRequest, payRequest,
   fetchBills, decideBill, payBill,
   fetchFunds, fetchIncomeRefs,
-  fetchExpenseTypes, insertRequest, createPositionAndAssign, fetchMyPositions, fetchOrgDivisions,
+  fetchExpenseTypes, insertRequest, updateRequest, createPositionAndAssign, fetchMyPositions, fetchOrgDivisions,
 } from "../../lib/api";
 import { requestPrefill } from "./requestCopy";
 
@@ -97,6 +97,7 @@ export function Requests() {
   const [decide, setDecide] = useState(null);   // { item, itemKind: 'request'|'bill', action }
   const [showForm, setShowForm] = useState(false);
   const [prefillReq, setPrefillReq] = useState(null);       // предзаполнение формы для «Копировать»
+  const [editReq, setEditReq] = useState(null);             // заявка в режиме редактирования (своя на рассмотрении)
   const [busy, setBusy] = useState(null);
   const [reqFilter, setReqFilter] = useState("approved");   // здесь оплачиваем — по умолчанию «Одобрено»
   const [src, setSrc] = useState("ours");                   // источник: наши данные / зеркало ManaJet
@@ -107,6 +108,17 @@ export function Requests() {
     setErr("");
     setPrefillReq(requestPrefill(item, myPositions));
     setShowForm(true);
+  };
+
+  // Кто может править заявку: своя — пока она «подана» (submitted); финкомитет —
+  // любую на рассмотрении. Совпадает с RLS payment_requests (requests_update).
+  const canEditReq = (item) =>
+    (isFinAdmin && isReviewStatus(item.status)) ||
+    (item.requester_id === profile.id && item.status === "submitted");
+
+  const editRequest = (item) => {
+    setErr("");
+    setEditReq(item);
   };
 
   const loadStatic = useCallback(async () => {
@@ -233,6 +245,11 @@ export function Requests() {
             <Banknote size={14} /> Оплатить
           </button>
         )}
+        {canEditReq(item) && (
+          <button style={st.btnGhost} className="btn" disabled={!!busy} onClick={() => editRequest(item)} title="Изменить заявку (неделя и поля ЗРС) — пока она на рассмотрении">
+            <Pencil size={14} /> Изменить
+          </button>
+        )}
         <button style={st.btnGhost} className="btn" disabled={!!busy} onClick={() => copyRequest(item)} title="Создать новую заявку с этими же данными">
           <Copy size={14} /> Копировать
         </button>
@@ -320,15 +337,19 @@ export function Requests() {
         busy={busy === "decide"} onClose={() => setDecide(null)} onConfirm={doDecide} />
     )}
 
-    {showForm && refs && (
+    {(showForm || editReq) && refs && (
       <RequestForm
         st={st} isMobile={isMobile} profile={profile}
         tree={tree} refs={refs} funds={funds}
         periods={periods} locationId={ctxLocationId} currentPeriodId={periodId}
-        myPositions={myPositions} divisions={divisions} prefill={prefillReq}
+        myPositions={myPositions} divisions={divisions} prefill={prefillReq} editItem={editReq}
         onPositionsChanged={async () => setMyPositions(await fetchMyPositions(profile.id))}
-        onClose={() => { setShowForm(false); setPrefillReq(null); }}
-        onSaved={() => { setShowForm(false); setPrefillReq(null); loadItems(); setDone(prefillReq ? "Копия заявки подана — рассмотрите её ниже" : "Заявка подана — рассмотрите её ниже"); }}
+        onClose={() => { setShowForm(false); setPrefillReq(null); setEditReq(null); }}
+        onSaved={() => {
+          const wasEdit = !!editReq;
+          setShowForm(false); setPrefillReq(null); setEditReq(null); loadItems();
+          setDone(wasEdit ? "Заявка обновлена" : prefillReq ? "Копия заявки подана — рассмотрите её ниже" : "Заявка подана — рассмотрите её ниже");
+        }}
       />
     )}
   </>);
@@ -424,21 +445,30 @@ const Field = ({ st, label, full, children }) => (
   </div>
 );
 
-function RequestForm({ st, isMobile, profile, tree, refs, funds, periods, locationId, currentPeriodId, myPositions, divisions, prefill, onPositionsChanged, onClose, onSaved }) {
+function RequestForm({ st, isMobile, profile, tree, refs, funds, periods, locationId, currentPeriodId, myPositions, divisions, prefill, editItem, onPositionsChanged, onClose, onSaved }) {
   useScrollLock();
+  const isEdit = !!editItem;   // режим правки существующей заявки (иначе — подача новой)
   // Валюта — базовая (TJS) по умолчанию, в форме не показывается;
   // точка берётся из выбора в шапке приложения (поле в форме убрано).
   const baseCur = refs.currencies.find((c) => c.is_base) || refs.currencies[0];
-  // Подать заявку можно только на открытую неделю — закрытую в значение по умолчанию
-  // не подставляем (иначе скрытое значение прошло бы мимо выпадашки при отправке).
+  // Подать/перенести заявку можно только на открытую неделю — закрытую в значение по
+  // умолчанию не подставляем (иначе скрытое значение прошло бы мимо выпадашки).
   const isPeriodOpen = (id) => (periods || []).some((p) => p.id === id && p.status !== "closed");
-  // При «Копировать» поля приходят из prefill; период — текущая неделя, если открыта.
+  // Правка: поля из самой заявки (период оставляем, только если он открыт — иначе
+  // нужно выбрать неделю заново). Копирование: из prefill. Новая: пусто/текущая неделя.
   const [f, setF] = useState({
-    positionId: prefill?.positionId || myPositions[0]?.id || "",
-    typeId: prefill?.typeId || "", purpose: prefill?.purpose || "",
-    periodId: isPeriodOpen(currentPeriodId) ? currentPeriodId : "", amount: prefill?.amount || "", fundId: prefill?.fundId || "",
-    cswData: prefill?.cswData || "", cswSituation: prefill?.cswSituation || "",
-    cswSolution: prefill?.cswSolution || "", tags: prefill?.tags || "",
+    positionId: editItem?.position_id || prefill?.positionId || myPositions[0]?.id || "",
+    typeId: editItem?.expense_type_id || prefill?.typeId || "",
+    purpose: editItem?.purpose || prefill?.purpose || "",
+    periodId: isEdit
+      ? (isPeriodOpen(editItem.period_id) ? editItem.period_id : "")
+      : (isPeriodOpen(currentPeriodId) ? currentPeriodId : ""),
+    amount: (editItem?.planned_amount ?? prefill?.amount) || "",
+    fundId: editItem?.fund_id || prefill?.fundId || "",
+    cswData: editItem?.csw_data || prefill?.cswData || "",
+    cswSituation: editItem?.csw_situation || prefill?.cswSituation || "",
+    cswSolution: editItem?.csw_solution || prefill?.cswSolution || "",
+    tags: isEdit ? (editItem.tags || []).join(", ") : (prefill?.tags || ""),
   });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
@@ -497,9 +527,12 @@ function RequestForm({ st, isMobile, profile, tree, refs, funds, periods, locati
     const amount = parseFloat(String(f.amount).replace(",", "."));
     if (!f.positionId) return setErr("Заявка подаётся от поста — выберите пост");
     if (!f.typeId) return setErr("Выберите вид расхода");
-    if (!locationId) return setErr("Выберите точку в шапке приложения — заявка привязывается к точке");
+    // Точка нужна только при подаче новой — у правки точка уже на заявке, не меняем.
+    if (!isEdit && !locationId) return setErr("Выберите точку в шапке приложения — заявка привязывается к точке");
     if (!f.periodId) return setErr("Выберите неделю ФП для рассмотрения");
-    if (!isPeriodOpen(f.periodId)) return setErr("Неделя ФП закрыта — подать заявку на закрытую неделю нельзя. Выберите открытую неделю.");
+    if (!isPeriodOpen(f.periodId)) return setErr(isEdit
+      ? "Неделя ФП закрыта — перенести заявку в закрытую неделю нельзя. Выберите открытую неделю."
+      : "Неделя ФП закрыта — подать заявку на закрытую неделю нельзя. Выберите открытую неделю.");
     if (!amount || amount <= 0) return setErr("Введите сумму больше нуля");
     if (!f.cswData.trim() || !f.cswSituation.trim() || !f.cswSolution.trim())
       return setErr("Заполните все три поля ЗРС: данные, ситуация, решение");
@@ -507,19 +540,27 @@ function RequestForm({ st, isMobile, profile, tree, refs, funds, periods, locati
     setBusy(true);
     try {
       const tags = f.tags.split(",").map((t) => t.trim()).filter(Boolean);
-      await insertRequest({
-        position_id: f.positionId, requester_id: profile.id, location_id: locationId,
-        expense_type_id: f.typeId, fund_id: f.fundId || null,
-        planned_amount: amount, currency_id: baseCur.id, period_id: f.periodId,
+      const payload = {
+        position_id: f.positionId, expense_type_id: f.typeId, fund_id: f.fundId || null,
+        planned_amount: amount, period_id: f.periodId,
         purpose: f.purpose.trim() || null, tags,
         csw_data: f.cswData.trim(), csw_situation: f.cswSituation.trim(), csw_solution: f.cswSolution.trim(),
-        status: "submitted",
-      });
+      };
+      if (isEdit) {
+        await updateRequest(editItem.id, payload);
+      } else {
+        await insertRequest({
+          ...payload, requester_id: profile.id, location_id: locationId,
+          currency_id: baseCur.id, status: "submitted",
+        });
+      }
       onSaved();
     } catch (e) {
       const msg = e?.message || String(e);
       setErr(msg.includes("row-level security")
-        ? "Нет прав на подачу: проверьте, что вам назначен пост и есть доступ к точке."
+        ? (isEdit
+          ? "Нет прав на правку: менять заявку можно, пока она на рассмотрении."
+          : "Нет прав на подачу: проверьте, что вам назначен пост и есть доступ к точке.")
         : msg);
       setBusy(false);
     }
@@ -535,7 +576,7 @@ function RequestForm({ st, isMobile, profile, tree, refs, funds, periods, locati
       <div style={st.mdCard} onClick={(e) => e.stopPropagation()}>
         <div style={st.mdHead}>
           <div style={{ ...st.mdTitle, display: "inline-flex", alignItems: "center", gap: 6 }}>
-            {prefill ? "Копия заявки (ЗРС)" : "Заявка на расход средств (ЗРС)"}<InfoHint term="ЗРС" />
+            {isEdit ? `Изменить заявку №${editItem.number} (ЗРС)` : prefill ? "Копия заявки (ЗРС)" : "Заявка на расход средств (ЗРС)"}<InfoHint term="ЗРС" />
           </div>
           <button style={st.iconBtn} onClick={onClose} aria-label="Закрыть"><X size={17} /></button>
         </div>
@@ -628,7 +669,7 @@ function RequestForm({ st, isMobile, profile, tree, refs, funds, periods, locati
         <div style={st.mdActions}>
           <button style={st.btnGhost} className="btn" onClick={onClose}>Отмена</button>
           <button style={{ ...st.btnGreen, opacity: busy ? 0.7 : 1 }} className="btn" onClick={submit} disabled={busy || !myPositions.length}>
-            {busy ? <Loader2 size={15} className="spin" /> : <Plus size={15} />} Подать заявку
+            {busy ? <Loader2 size={15} className="spin" /> : isEdit ? <Check size={15} /> : <Plus size={15} />} {isEdit ? "Сохранить" : "Подать заявку"}
           </button>
         </div>
       </div>
