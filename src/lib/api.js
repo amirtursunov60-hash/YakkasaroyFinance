@@ -297,10 +297,13 @@ export async function fetchCounterparties() {
   return data;
 }
 
-// Заявки показываем ВСЕГДА, независимо от выбранной недели (заказчик): заявка
-// может быть подана в одной неделе, а одобрена/оплачена в другой — она не должна
-// пропадать при переключении периода. Период фиксируется на самой заявке.
-export async function fetchRequests(_periodId, locationId) {
+// Заявки-ЗРС.
+// • Вкладка «Заявки» (журнал) — показываем ВСЕГДА, независимо от выбранной недели:
+//   заявка может быть подана в одной неделе, а одобрена/оплачена в другой — она не
+//   должна пропадать при переключении периода (период фиксируется на самой заявке).
+// • Директива (рассмотрение) — только заявки выбранной недели: byPeriod: true
+//   фильтрует по period_id (правило Директивы «поданные на эту неделю»).
+export async function fetchRequests(periodId, locationId, { byPeriod = false } = {}) {
   let q = supabase
     .from("payment_requests")
     .select(`id, number, status, planned_amount, approved_amount, comment, csw_data, csw_situation, csw_solution,
@@ -315,6 +318,7 @@ export async function fetchRequests(_periodId, locationId) {
       payment_type:payment_types(name),
       attachments:request_attachments(id, file_path, file_name)`)
     .order("created_at", { ascending: false });
+  if (byPeriod && periodId) q = q.eq("period_id", periodId);
   if (locationId) q = q.eq("location_id", locationId);
   const { data, error } = await q;
   if (error) throw error;

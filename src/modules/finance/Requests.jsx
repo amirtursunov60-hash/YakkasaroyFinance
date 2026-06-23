@@ -429,11 +429,14 @@ function RequestForm({ st, isMobile, profile, tree, refs, funds, periods, locati
   // Валюта — базовая (TJS) по умолчанию, в форме не показывается;
   // точка берётся из выбора в шапке приложения (поле в форме убрано).
   const baseCur = refs.currencies.find((c) => c.is_base) || refs.currencies[0];
-  // При «Копировать» поля приходят из prefill; период — всегда текущая неделя.
+  // Подать заявку можно только на открытую неделю — закрытую в значение по умолчанию
+  // не подставляем (иначе скрытое значение прошло бы мимо выпадашки при отправке).
+  const isPeriodOpen = (id) => (periods || []).some((p) => p.id === id && p.status !== "closed");
+  // При «Копировать» поля приходят из prefill; период — текущая неделя, если открыта.
   const [f, setF] = useState({
     positionId: prefill?.positionId || myPositions[0]?.id || "",
     typeId: prefill?.typeId || "", purpose: prefill?.purpose || "",
-    periodId: currentPeriodId || "", amount: prefill?.amount || "", fundId: prefill?.fundId || "",
+    periodId: isPeriodOpen(currentPeriodId) ? currentPeriodId : "", amount: prefill?.amount || "", fundId: prefill?.fundId || "",
     cswData: prefill?.cswData || "", cswSituation: prefill?.cswSituation || "",
     cswSolution: prefill?.cswSolution || "", tags: prefill?.tags || "",
   });
@@ -496,6 +499,7 @@ function RequestForm({ st, isMobile, profile, tree, refs, funds, periods, locati
     if (!f.typeId) return setErr("Выберите вид расхода");
     if (!locationId) return setErr("Выберите точку в шапке приложения — заявка привязывается к точке");
     if (!f.periodId) return setErr("Выберите неделю ФП для рассмотрения");
+    if (!isPeriodOpen(f.periodId)) return setErr("Неделя ФП закрыта — подать заявку на закрытую неделю нельзя. Выберите открытую неделю.");
     if (!amount || amount <= 0) return setErr("Введите сумму больше нуля");
     if (!f.cswData.trim() || !f.cswSituation.trim() || !f.cswSolution.trim())
       return setErr("Заполните все три поля ЗРС: данные, ситуация, решение");
