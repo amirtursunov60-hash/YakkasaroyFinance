@@ -7,6 +7,7 @@ import {
 import { Stat } from "../../components/common";
 import { useTheme } from "../../theme/theme";
 import { useScrollLock } from "../../hooks/useScrollLock";
+import { useActionFeedback } from "../../hooks/useActionFeedback";
 import { fmt } from "../../utils/format";
 import { usePeriod, periodTitle } from "../../lib/PeriodCtx";
 import {
@@ -50,6 +51,7 @@ export function Funds() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
   const [done, setDone] = useState("");
+  useActionFeedback(done, err);
   const [funds, setFunds] = useState([]);
   const [commitments, setCommitments] = useState({});
   const [debts, setDebts] = useState({});

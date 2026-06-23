@@ -23,26 +23,45 @@ const audio = (): AudioContext | null => {
 };
 
 // Короткая последовательность тихих тонов (sine), длительность каждого ~dur сек.
+// iOS/Safari: AudioContext стартует "suspended" и просыпается только из
+// пользовательского жеста, а resume() асинхронный — поэтому планируем тон ПОСЛЕ
+// resume (иначе на первом воспроизведении звука нет, и кажется, что «не работает»).
 const tone = (freqs: number[], dur = 0.12, gain = 0.04): void => {
   const ac = audio();
   if (!ac) return;
-  if (ac.state === "suspended") ac.resume().catch(() => {});
-  const t0 = ac.currentTime;
-  freqs.forEach((f, i) => {
-    const osc = ac.createOscillator();
-    const g = ac.createGain();
-    osc.type = "sine";
-    osc.frequency.value = f;
-    const start = t0 + i * dur;
-    g.gain.setValueAtTime(0, start);
-    g.gain.linearRampToValueAtTime(gain, start + 0.01);
-    g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
-    osc.connect(g);
-    g.connect(ac.destination);
-    osc.start(start);
-    osc.stop(start + dur);
-  });
+  const play = () => {
+    const t0 = ac.currentTime + 0.02; // небольшой запас после resume
+    freqs.forEach((f, i) => {
+      const osc = ac.createOscillator();
+      const g = ac.createGain();
+      osc.type = "sine";
+      osc.frequency.value = f;
+      const start = t0 + i * dur;
+      g.gain.setValueAtTime(0, start);
+      g.gain.linearRampToValueAtTime(gain, start + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+      osc.connect(g);
+      g.connect(ac.destination);
+      osc.start(start);
+      osc.stop(start + dur);
+    });
+  };
+  if (ac.state === "suspended") ac.resume().then(play).catch(() => {});
+  else play();
 };
+
+// Разблокировка Web Audio на iOS: один раз «прогреваем» контекст на первом
+// касании/клике, чтобы последующие звуки событий воспроизводились без задержки.
+if (typeof window !== "undefined") {
+  const unlock = () => {
+    const ac = audio();
+    ac?.resume?.().catch(() => {});
+    window.removeEventListener("pointerdown", unlock);
+    window.removeEventListener("touchend", unlock);
+  };
+  window.addEventListener("pointerdown", unlock);
+  window.addEventListener("touchend", unlock);
+}
 
 // Мягкий тон «вверх» — операция выполнена.
 export const feedbackSuccess = (): void => {

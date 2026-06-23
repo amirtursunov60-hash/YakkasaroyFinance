@@ -3,6 +3,7 @@ import { Banknote, Loader2, AlertCircle, CheckCircle2, Plus, X, Ban, ChevronRigh
 import { Stat } from "../../components/common";
 import { useTheme } from "../../theme/theme";
 import { useScrollLock } from "../../hooks/useScrollLock";
+import { useActionFeedback } from "../../hooks/useActionFeedback";
 import { fmt } from "../../utils/format";
 import { usePeriod } from "../../lib/PeriodCtx";
 import { MjPanel, MjSwitch } from "../manajet/MjPanel";
@@ -39,6 +40,7 @@ export function Clients() {
   const [src, setSrc] = useState("ours");   // источник: наши данные / зеркало ManaJet
   const [err, setErr] = useState("");
   const [done, setDone] = useState("");
+  useActionFeedback(done, err);
   const [invoices, setInvoices] = useState([]);
   const [payments, setPayments] = useState({});
   const [types, setTypes] = useState([]);

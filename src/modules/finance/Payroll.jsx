@@ -3,6 +3,7 @@ import { Check, Save, Banknote, Loader2, AlertCircle, CheckCircle2, Plus, X, Tra
 import { Stat } from "../../components/common";
 import { useTheme } from "../../theme/theme";
 import { useScrollLock } from "../../hooks/useScrollLock";
+import { useActionFeedback } from "../../hooks/useActionFeedback";
 import { fmt } from "../../utils/format";
 import { STAT_STATES, STATE_COEF } from "../../utils/stats";
 import { usePeriod, periodTitle } from "../../lib/PeriodCtx";
@@ -35,6 +36,7 @@ export function Payroll() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
   const [done, setDone] = useState("");
+  useActionFeedback(done, err);
   const [sheet, setSheet] = useState(null);
   const [rows, setRows] = useState([]);          // редактируемые строки
   const [fot, setFot] = useState("0");
