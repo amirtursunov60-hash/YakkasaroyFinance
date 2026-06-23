@@ -460,7 +460,7 @@ export function Directive() {
     {/* Закрытие периода Директивой — отдельной кнопкой в самом низу. Кнопка
         всегда доступна; правила закрытия проверяются по нажатию (см. doToggleClose). */}
     <button style={{ ...(isClosed ? st.btnGhost : st.btnGreen), width: "100%", justifyContent: "center", marginTop: (!isClosed && closeMsg.length) ? 10 : 14, opacity: busy === "close" ? 0.7 : 1 }}
-      className="btn" onClick={doToggleClose} disabled={busy || !period}>
+      className="btn glass" onClick={doToggleClose} disabled={busy || !period}>
       {busy === "close" ? <Loader2 size={15} className="spin" /> : isClosed ? <Unlock size={15} /> : <Lock size={15} />}
       {isClosed ? " Открыть неделю" : " Закрыть период ФП"}
     </button>
