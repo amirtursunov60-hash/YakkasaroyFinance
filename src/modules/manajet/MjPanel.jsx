@@ -36,7 +36,7 @@ export function MjSwitch({ src, setSrc }) {
   );
 }
 
-export function MjPanel({ kind, src, setSrc }) {
+export function MjPanel({ kind, src, setSrc, hideSwitch }) {
   const { C, st, isMobile } = useTheme();
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
@@ -192,7 +192,7 @@ export function MjPanel({ kind, src, setSrc }) {
 
   return (
     <div>
-      <MjSwitch src={src} setSrc={setSrc} />
+      {!hideSwitch && <MjSwitch src={src} setSrc={setSrc} />}
       {header}{banners}{body}
     </div>
   );
