@@ -11,6 +11,7 @@ import { isSoundOn, setSoundOn } from "./lib/feedback";
 import { enablePeekZoom } from "./lib/peekZoom";
 import { enableEscClose } from "./lib/escClose";
 import { enableModalBackClose } from "./lib/modalBackClose";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import SwitcherDemo from "@/components/ui/switcher-demo";
 
 // Демо фундамента Tailwind/shadcn по адресу <app>/#switcher — изолировано,
@@ -124,9 +125,11 @@ function YakkasaroyApp() {
 
   return (
     <ThemeCtx.Provider value={ctxVal}>
-      {!profile
-        ? <Login onEnter={() => { /* профиль подтянется через onAuthStateChange */ }} />
-        : <App onLogout={handleLogout} />}
+      <ErrorBoundary>
+        {!profile
+          ? <Login onEnter={() => { /* профиль подтянется через onAuthStateChange */ }} />
+          : <App onLogout={handleLogout} />}
+      </ErrorBoundary>
     </ThemeCtx.Provider>
   );
 }
