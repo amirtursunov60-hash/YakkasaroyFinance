@@ -1,0 +1,225 @@
+# Карта пробелов ManaJet → Yakkasaroy (по вкладкам)
+
+> Сверка функционала нашего приложения с эталоном ManaJet по его OpenAPI-спеке
+> (`api.manajet.org/swagger/docs/v1`, 134 эндпоинта, 179 моделей). Дата: 2026-06-24.
+> Метод: модель/эндпоинт ManaJet → наш экран + `lib/api.js` + схема БД.
+> Приоритет: **high** = критично для ХМС/денег/ежедневной работы; med; low.
+> Объём: S/M/L. Статус «колонка есть, но нет в UI» = быстрая победа.
+>
+> Закрыто ранее: привязка дохода к клиенту (`counterparty_id`) — PR #147.
+
+Легенда статуса: ❌ нет совсем · 🟡 колонка/таблица есть, нет в UI · 🟠 частично.
+
+---
+
+## 1. ДОХОД (`Income.jsx`)
+
+| # | Пробел | Свидетельство ManaJet | Статус | Прио | Объём |
+|---|--------|----------------------|--------|------|-------|
+| 1 | Лента отдельных операций дохода (сейчас только свёрнутые суммы по видам) | `GET /api/FpIncome` → `IncomeOperationOutput[]` | ❌ (данные в `incomes` есть) | high | M |
+| 2 | Редактирование операции дохода | `IncomeOperationInput.id` (upsert) | ❌ | high* | M |
+| 3 | Удаление/архив ошибочной операции | `DELETE /api/IncomeCategory`, паттерн архива | ❌ (нет `is_archived` на incomes) | high* | M |
+| 4 | Фильтр операций по диапазону дат | `ApiFilterIncomeOperations.date_from/to` | 🟠 (только неделя ФП) | med | S |
+| 5 | Фильтр по клиенту | `filter.id_company` | 🟡 | med | S |
+| 6 | Фильтр/drill-down по виду дохода | `filter.id_income` | ❌ | med | S |
+| 7 | Документ-основание (ссылка на документ/файл) | `IncomeOperationInput.id_document`, `.outer_id_document` | 🟠 (только текст comment) | med | M |
+| 8 | CRUD справочника видов дохода из UI | `GET/POST/DELETE /api/IncomeCategory` | ❌ (только чтение) | med | M |
+| 9 | CRUD валют из UI | `GET/POST /api/FpCurrency` | 🟠 | low | M |
+| 10 | Привязка дохода к плану ФП (план/факт) | `IncomeOperationOutput.fp_plan` | ❌ | low | L |
+| 11 | `outer_id` операции в UI (интеграция) | `IncomeOperationInput.outer_id*` | 🟡 | low | S |
+| 12 | Пагинация/сортировка ленты | `ApiFilterIncomeOperations.skip/take/sort` | ❌ | low | S |
+
+\* №2/№3 нельзя делать прямым update/delete — нарушит неизменяемость Реестра `fp_register`; правка/отмена только сторнирующей записью.
+
+---
+
+## 2. РАСХОДЫ и ЗАЯВКИ/ЗРС (`Expenses.jsx`, `Requests.jsx`)
+
+| # | Пробел | Свидетельство ManaJet | Статус | Прио | Объём |
+|---|--------|----------------------|--------|------|-------|
+| 1 | **Частичная/многократная оплата заявки** (план/подтверждено/оплачено + платежи[]) | `PurchaseOrderOutput.planned/confirmed/payed_amount`, `payments[]`; `POST /PurchaseOrderPayment` | 🟠 | high | M |
+| 2 | **Ввод согласованной суммы при одобрении** (≠ запрошенной) | `confirmed_value` vs `planned_value` | 🟡 (`approved_amount` есть, не вводится) | high | S |
+| 3 | **Период оплаты ≠ период планирования** у заявки | `id_fp_plan` + `id_fp_plan_payment` | 🟠 (один `period_id`) | high | M |
+| 4 | Маршрут согласования по шагам/постам | `ApiRoutingForm`, `ApiRoutingFormStep` | ❌ | med | L |
+| 5 | Описание и дата у каждой оплаты | `PurchaseOrderPaymentInput.description/payment_date` | ❌ | med | S |
+| 6 | Переписка/комментарии по заявке (ЗРС-тред) | `MsgCsw`, `GET /api/Msg` | 🟡 (`request_comments` есть, не используется) | med | M |
+| 7 | Статус «отменена/отозвана» (≠ отклонена) | `status: Canceled=2` | ❌ | med | S |
+| 8 | Возврат заявки на доработку с причиной | `requested_return_status`, `request_description` | ❌ | med | M |
+| 9 | Загрузка вложений в форме подачи ЗРС | `PurchaseOrderAttachment` | 🟠 (`canUpload=false`, нет в форме) | med | S |
+| 10 | Адресация ЗРС «кому» (пост-получатель) | `ApiMsgCswDraft.id_recipient`, `PositionsToCSW` | ❌ | low | M |
+| 11 | Фильтр заявок по посту | `filter.id_position` | ❌ | low | S |
+| 12 | Способ оплаты на заявке | `PurchaseOrderInput.id_fp_payment_type` | 🟡 | low | S |
+| 13 | Шаблоны маршрутов + кастомные поля шага | `RoutingFormTemplate`, `sequence._fields` | ❌ | low | L |
+| 14 | Метрика срока/скорости согласования | `speed_ratio`, `dt_term` | 🟠 | low | M |
+| 15 | Поля справочника РД: `main_expences`, `type` | `ApiExpenseCategory.main_expences/type` | ❌ | low | S |
+| 16 | Пагинация/сортировка списков | `skip/take/sort` | ❌ | low | M |
+
+---
+
+## 3. СЧЕТА ПОСТАВЩИКОВ и КЛИЕНТОВ (`Suppliers.jsx`, `BillsScreen.jsx`, `Clients.jsx`)
+
+| # | Пробел | Свидетельство ManaJet | Статус | Прио | Объём |
+|---|--------|----------------------|--------|------|-------|
+| 1 | **Частичные оплаты счёта поставщика** | `Bill.payed/remaining_amount`, `payments[]` | ❌ (платится целиком) | high | L |
+| 2 | **Удаление/откат отдельной оплаты клиента** | `DELETE /api/InvoicePayment/{id}` | ❌ | high | M |
+| 3 | **Вложения у счёта клиента** (договор/смета банкета) | `InvoiceAttachment` | ❌ (нет таблицы) | high | M |
+| 4 | История платежей в карточке самого счёта | `GET /api/Bill/{id}` → `payments`, `approvals` | 🟠 (общая лента, не карточка) | med | M |
+| 5 | Фильтр счетов по периоду одобрения/оплаты | `id_fp_plan_approved`/`_payment` | 🟠 (`_periodId` игнорируется в `fetchBills`) | med | M |
+| 6 | Поиск по счетам | `ApiFilterBill.search` | ❌ | med | M |
+| 7 | Пагинация (`skip/take`, Count) | `ApiFilterBill.skip/take` | ❌ (`fetchInvoices` limit 200) | med | M |
+| 8 | Генерация печатной формы счёта (PDF/Word из шаблона) | `*Attachment/ExportFromTemplate`, `DocumentAttachmentGenerator` | ❌ | med | L |
+| 9 | Удаление вложения | `*AttachmentInput.mark_to_delete` | ❌ (есть только upload) | med | S |
+| 10 | Удаление/архив счёта поставщика из UI | `DELETE /api/Bill/{id}` | 🟡 (`is_archived` есть, нет кнопки) | med | S |
+| 11 | НДС (сумма/НДС/итого, флаг, тип расчёта) | `total_without_amount/vat_amount`, `is_vat_enabled` | ❌ | med | L |
+| 12 | Просрочка дебиторки клиентов | `status` + `search_date_type` | ❌ (только у поставщиков) | med | M |
+| 13 | Позиции счёта (табличная часть) | `Bill/Invoice.detail[]` | ❌ | low | L |
+| 14 | Серия счёта + строковый номер клиента | `seria`+`number` (string) | ❌ (`client_invoices.number` integer) | low | M |
+| 15 | Реквизиты контрагента (ИНН/тел) в форме | `id_company` + реквизиты | 🟡 (поля есть, не вводятся) | low | S |
+| 16 | Способ оплаты на счёте поставщика | `Bill.id_paymend_metod` | ❌ | low | S |
+| 17 | «Ожидаемая дата оплаты» (прогноз) | `estimated_payment_date` | ❌ | low | S |
+| 18 | Описание/дата/`outer_id` у оплаты | `*PaymentInput.description/date/outer_id` | 🟠 | low | S |
+| 19 | Возврат оплаты поставщику (`bill_return`) | `BillPaymentInput.bill_return` | ❌ | low | M |
+| 20 | Кастомные поля, история одобрений | `customMasterFields`, `approvals[]` | ❌ | low | M |
+| 21 | Фильтры: контрагент, диапазон дат, архив, сортировка | `id_company`, `period_*`, `in_arhive`, `sort` | ❌ | low | M |
+
+> Системный перекос: модель поставщик↔клиент у ManaJet зеркальна; у нас асимметрия (у поставщика нет частичных оплат, у клиента нет вложений/удаления платежа/просрочки).
+
+---
+
+## 4. ФОНДЫ, КОНТРОЛЬ СРЕДСТВ, ДИРЕКТИВА/ПЕРИОД (`Funds.jsx`, `Control.jsx`, `Directive.jsx`)
+
+| # | Пробел | Свидетельство ManaJet | Статус | Прио | Объём |
+|---|--------|----------------------|--------|------|-------|
+| 1 | **Два флага подтверждения периода** (исполнительный + BAF/финкомитет) вместо одного статуса | `FpPlanOutput.is_executive_confirmed` + `is_baf_confirmed` | 🟠 (один `status`) | high | M |
+| 2 | **Остаток счёта/фонда в разрезе периода** (на конец недели N) | `FpAsset.total` × `filter.id_fp_plan` | ❌ (только live-баланс) | high | L |
+| 3 | CRUD валют + `short_name`/`outer_id` | `FpCurrency` GET/POST | 🟠 (только чтение) | med | M |
+| 4 | CRUD курсов обмена из UI | курсы валют | 🟡 (`exchange_rates` только чтение) | med | M |
+| 5 | Обмен валют между счетами/фондами | конвертация активов | 🟡 (`fx_exchange` в метках, нет действия) | med | M |
+| 6 | Мультивалютная агрегация (не складывать валюты в TJS «в лоб») | активы с валютой | 🟠 | med | M |
+| 7 | Банковский счёт с реквизитами (BankAccount: номер, банк, is_default) | `BankAccount` GET/POST | ❌ (нет таблицы) | med | L |
+| 8 | CRUD способов оплаты + `short_name` | `PaymentType` GET/POST | 🟠 (только чтение) | med | M |
+| 9 | Per-period остаток фонда (снапшот на границе) | нет `total` в `FpFund` → живёт в активах | ❌ | med | M |
+| 10 | Справочник банков (Bank: name, SWIFT) | `Bank` GET/POST | ❌ | low | M |
+| 11 | Номер актива/счёта (`FpAsset.number`) | `ApiFpAsset.number` | ❌ | low | S |
+| 12 | Архивирование счёта ДС из UI | `FpAsset.in_archive` | 🟡 (поле есть, нет кнопки) | low | S |
+| 13 | Автосоздание периода флагом | `FpPlanInput.autocreate` | 🟠 | low | S |
+| 14 | Кастомные мастер-поля | `customMasterFields` | ❌ | low | L |
+
+---
+
+## 5. РЕЕСТР, ОТЧЁТЫ, ПЛАН СЧЕТОВ, АУДИТ (`Register.jsx`, `Reports.jsx`)
+
+| # | Пробел | Свидетельство ManaJet | Статус | Прио | Объём |
+|---|--------|----------------------|--------|------|-------|
+| 1 | **Фильтр Реестра по контрагенту** | `ApiFilterRegister.id_company` | 🟡 (`counterparty_id` есть) | high | S |
+| 2 | **Журнал истории/аудита изменений** | `History`/`HistoryEvent` | 🟡 (`audit_log` есть, не выведен) | high | M |
+| 3 | Двойная запись дебет/кредит (пара счетов проводки) | `register_element[]` (debet/kredit) | 🟠 (одна сумма со знаком) | med | L |
+| 4 | Фильтр по способу оплаты | `id_fp_payment_type` | 🟡 | med | S |
+| 5 | Фильтр/переход по документу/заявке | `id_fp_purchase_order`, `id_stock_document` | 🟠 | med | M |
+| 6 | Поиск по Реестру (номер/серия) | `ApiFilterRegister.search` | ❌ | med | S |
+| 7 | Фильтр по диапазону дат | `period_begin/end`, `search_date_type` | 🟠 (только неделя/все) | med | S |
+| 8 | Пагинация Реестра (`skip/take`, Count) | `ApiFilterRegister.skip/take` | ❌ (жёсткий limit 200) | med | S |
+| 9 | ОСВ: вход/оборот/исход остаток за период | `ApiSheetOfAccountTotalOutput` | ❌ | med | M |
+| 10 | Карточка операции по id (drill-down) | `GET /api/Register/{id}` | ❌ (строки некликабельны) | med | M |
+| 11 | Справочник типов операций (Consolidation/Debt/DirectArrival/Manual) | `operation_type` enum | 🟠 | med | M |
+| 12 | План счетов как справочник | `SheetOfAccounts` | ❌ | low | L |
+| 13 | Бухпроводки (AccountingReg) | `AccountingReg` GET/POST | ❌ | low | L |
+| 14 | Складские проводки + НДС (AccountingStock) | `AccountingStock` | ❌ (отдаётся iiko) | low | L |
+| 15 | `outer_id` записи Реестра + простановка | `RegisterOuterId` POST | ❌ | low | M |
+| 16 | Экспорт в виде проводок/ОСВ (не только плоский CSV) | структура двойной записи | 🟠 | low | M |
+| 17 | Системная vs ручная запись (флаг) | `History.system`, `operation_type=Manual` | ❌ | low | S |
+| 18 | Сортировка/архив в листингах | `sort`, `in_arhive` | ❌ | low | S |
+
+> Быстрые победы: №1/№4/№5 — данные уже в `fp_register`, нужны только фильтры в `fetchRegister` + селекты. №2 — таблица `audit_log` есть, нужен API + экран.
+> Крупнейший разрыв: ManaJet ведёт настоящий бухгалтерский леджер двойной записи (план счетов, ОСВ, проводки с НДС); у нас `fp_register` — однострочный финансовый леджер ФП. Часть (склад/НДС) по ТЗ уходит в iiko.
+
+---
+
+## 6. СТАТИСТИКИ (ИЦО), ОРГСХЕМА, СОТРУДНИКИ, КОНТРАГЕНТЫ (`StatsModule.jsx`, `OrgModule.jsx`, `StaffModule.jsx`)
+
+| # | Пробел | Свидетельство ManaJet | Статус | Прио | Объём |
+|---|--------|----------------------|--------|------|-------|
+| 1 | Тип статистики (`stat_type` enum 30+) | `ApiStat.stat_type` | 🟡 (колонка есть, не используется) | med | M |
+| 2 | Пост-источник ввода + заполнять `entered_by` | `id_position_enters` | 🟡 | med | M |
+| 3 | Норма/коридор статистики на графике | `min_val`/`max_val` | 🟡 | low | S |
+| 4 | `sign` vs наш `invert` (рассинхрон при синке) | `ApiStat.sign` | 🟡 | low | S |
+| 5 | Периодичность статистики (день/неделя/мес) + горизонт | `period`/`view_period` | 🟠 (жёстко неделя) | med | L |
+| 6 | Дневные/произвольно-датированные значения | `StatValue.period_begin/end` | ❌ | med | L |
+| 7 | `date_from_showing` (с какой даты показывать) | `ApiStat.date_from_showing` | ❌ | low | S |
+| 8 | Комментарий к значению/статистике | `StatValue.description`, `Stat.comment` | ❌ | med | S |
+| 9 | Статистика по контрагенту/воронке | `id_company`, `id_aida` | ❌ | low | M |
+| 10 | Иерархия постов (`parent_id`) — дерево | оргсхема-дерево | 🟡 (плоско) | med | M |
+| 11 | Связь поста ↔ числовая статистика ИЦО | `id_position_ref/enters` | 🟠 (статистика поста — текст) | med | M |
+| 12 | Пост ↔ точка в UI (`location_id`) | контекст оргструктуры | 🟡 | med | M |
+| 13 | Email/логин сотрудника | `ApiPerson.email/login` | ❌ (email в auth, не показан) | med | S |
+| 14 | Поиск/архив/пагинация сотрудников | `ApiFilterPerson` | ❌ | med | S |
+| 15 | Пол, last_login, структурированное ФИО | `gender`, `last_login`, `first/last_name` | ❌ | low | S |
+| 16 | **Категории контрагентов** | `CompanyCategory` | ❌ (только флаги client/supplier) | high | M |
+| 17 | **Контакты контрагента** (email/неск. телефонов) | `CompanyContact` | ❌ (один `phone`) | high | M |
+| 18 | **Экран-справочник контрагентов** (поиск/фильтры) | `ApiCompanyFilter` | ❌ (создаются «на лету») | high | M |
+| 19 | Адреса контрагента | `CompanyAddress` | ❌ | med | M |
+| 20 | Ответственные лица контрагента | `company_person[]` | ❌ | med | M |
+| 21 | Физлицо/юрлицо + реквизиты (VAT/КПП/ОГРН) | `is_private_person`, `vat_id` | 🟠 (только ИНН) | med | S |
+| 22 | Вложения к контрагенту (договоры) | `CompanyAttachment` | ❌ | med | M |
+| 23 | Архив контрагента в UI | `is_disabled` | 🟡 (`is_archived` есть) | med | S |
+| 24 | Реквизиты компании: url/logo/email/иерархия | `ApiCompany.url/logo/id_parent` | ❌ | low | M |
+| 25 | Кастом-поля контрагента | `customMasterFields` | ❌ | low | L |
+
+---
+
+## 7. ЗАДАЧИ, БОЕВОЕ ПЛАНИРОВАНИЕ, ДАШБОРД, CRM/ВОРОНКА, WORKFLOW, РАССЫЛКИ (`DashModule.jsx`, `OwnerDashboard.jsx`, `CrmModule.jsx`)
+
+| # | Пробел | Свидетельство ManaJet | Статус | Прио | Объём |
+|---|--------|----------------------|--------|------|-------|
+| 1 | **Задача на ПОСТ оргсхемы** (не только человек) | `Task.id_orgboard_position` | ❌ (только `to_id`) | high | M |
+| 2 | **БП ↔ статистика/пост связью в данных** | `is_stats_visible`, посты | ❌ (`target` — текст) | high | M |
+| 3 | Описание задачи | `ApiTask.description` | ❌ (только title) | med | S |
+| 4 | Богатые статусы задачи + приёмка постановщиком | `Task.status` enum | 🟠 (new/progress/done) | med | M |
+| 5 | Задача ↔ клиент/банкет (CRM-связка) | `Task.id_company` | ❌ | med | M |
+| 6 | Комментарии к задаче | Msg/History | ❌ | med | M |
+| 7 | БП адресован посту; period_id используется | `id_orgboard_position`, `id_fp_plan` | 🟡 (`period_id` не исп.) | med | S |
+| 8 | **Workflow/Kanban** (доски→колонки→карточки→чек-листы) | `WorkflowBoard/List/Card/Step` | ❌ (воронка — хардкод enum) | med | L |
+| 9 | Настраиваемые колонки воронки (цвет/порядок) | `WorkflowList` | ❌ (константа `CRM_STAGES`) | med | M |
+| 10 | Напоминания/дедлайн-ремайндеры | `*Reminder`, `due_date_remind` | ❌ | med | M |
+| 11 | Карточка лида: due_date, ответственные, чек-лист | `WorkflowCard.*` | ❌ | med | L |
+| 12 | Рассылки клиентам (Massmail) + сегменты | `Massmail`, `MassmailSendingList` | ❌ | med | L |
+| 13 | In-app уведомления (лента, прочитано) | `Msg`, `Msg/Count` | 🟠 (только счётчик NotifyBell) | med | M |
+| 14 | Дашборд собственника: задачи/БП/воронка | доски + Task/Count | ❌ (только финансы) | med | M |
+| 15 | drag-and-drop воронки | смена `id_workflow_list` | ❌ (только «следующий этап») | low | M |
+| 16 | История по лиду/задаче (таймлайн) | `History` | 🟡 (`audit_log` есть) | low | M |
+| 17 | ЗРС-канал пост→пост (MsgCsw), мн. ответственные, шаблоны | `MsgCsw`, `responsible[]` | ❌ | low | M |
+
+---
+
+## СВОДКА: что закрывать первым (по всему приложению)
+
+### Уровень 1 — быстрые победы (колонка/таблица уже есть, нужен только код, без миграций или минимально)
+- **Реестр:** фильтры по контрагенту / способу оплаты / документу — данные в `fp_register` уже есть (Реестр §1,4,5).
+- **Журнал аудита:** таблица `audit_log` есть — нужен API + экран (Реестр §2).
+- **Заявки:** ввод согласованной суммы при одобрении (`approved_amount` есть, §2); комментарии к заявке (`request_comments` есть, §6); включить загрузку вложений в форме (§9).
+- **Счета:** применить игнорируемый `_periodId` в `fetchBills` (§5); удаление/архив счёта (`is_archived` есть, §10).
+- **Статистики:** задействовать `stat_type`/`min_val`/`max_val`, проставлять `entered_by` (§1–3); комментарий к значению (§8).
+- **Оргсхема:** задействовать `parent_id`/`location_id` (§10,12).
+- **Контрагенты:** архив в UI (`is_archived` есть, §23).
+- **БП:** задействовать `period_id` (§7).
+
+### Уровень 2 — ценные доработки (нужны миграции/новые поля)
+- Частичные оплаты заявок и счетов поставщиков (Заявки §1, Счета §1) — деньги, high.
+- Два флага подтверждения периода (исполнительный + BAF) (Фонды §1) — ХМС-точность, high.
+- Период оплаты ≠ период планирования у заявки (Заявки §3).
+- Вложения у счёта клиента (Счета §3); удаление платежа клиента (§2).
+- Лента/редактирование/отмена операций дохода через сторно (Доход §1–3).
+- Контрагенты: категории + контакты + экран-справочник (Стат/Контр §16–18) — high.
+- Задача на пост + БП↔статистика (Задачи §1,2) — high для ХМС.
+
+### Уровень 3 — крупные блоки (L, отдельные инициативы)
+- Workflow/Kanban как основа CRM-воронки и проектов (Задачи §8,11).
+- Бухгалтерский леджер двойной записи: план счетов, ОСВ, проводки (Реестр §3,9,12,13).
+- Per-period остатки счетов/фондов (Фонды §2,9).
+- Рассылки клиентам / уведомления (Задачи §12,13).
+- НДС и позиции счетов (Счета §11,13) — частично уходит в интеграцию iiko.
+
+### Осознанно вне периметра (по ТЗ — заменит iiko)
+- Складской учёт (`AccountingStock`, `StockCard`), НДС-проводки склада.
+
+> Метод закрытия (как делали «Доход»): спека ManaJet → наш экран → пробел → реализация → зелёные ворота → проверка на staging → отдельный PR.
