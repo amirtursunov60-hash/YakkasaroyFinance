@@ -140,7 +140,7 @@ export function BillsScreen({ kind, ui }) {
     };
   }, [bills]);
 
-  const doDecide = async ({ bill, action, fundId, reason, accountId }) => {
+  const doDecide = async ({ bill, action, fundId, reason, accountId, payAmount }) => {
     if (busy) return;
     setBusy("decide"); setErr(""); setDone("");
     try {
@@ -156,8 +156,11 @@ export function BillsScreen({ kind, ui }) {
       } else if (action === "pay") {
         if (!accountId) throw new Error("Выберите счёт ДС");
         if (!periodId) throw new Error("Нет выбранного периода ФП");
-        await payBill(bill.id, accountId, periodId);
-        setDone(`Счёт №${bill.number} оплачен — период оплаты: ${period ? periodTitle(period) : ""}`);
+        const amt = payAmount != null && String(payAmount).trim() !== ""
+          ? parseFloat(String(payAmount).replace(",", ".")) : null;
+        if (amt != null && (!Number.isFinite(amt) || amt <= 0)) throw new Error("Введите сумму оплаты больше нуля");
+        await payBill(bill.id, accountId, periodId, amt);
+        setDone(`Счёт №${bill.number}: оплата проведена в Реестре`);
       }
       await loadBills();
       setDecide(null);
@@ -294,6 +297,9 @@ export function BillsScreen({ kind, ui }) {
                   {b.fund && <span>Фонд: <b style={{ color: C.text }}>{b.fund.code} {b.fund.name}</b></span>}
                   {b.approved_period && <span>Период одобрения: <b style={{ color: C.text }}>{shortPeriod(b.approved_period)}</b></span>}
                   {b.paid_period && <span>Период оплаты: <b style={{ color: C.text }}>{shortPeriod(b.paid_period)}</b></span>}
+                  {Number(b.paid_amount) > 0 && b.status !== "paid" && (
+                    <span>Оплачено: <b style={{ color: C.money }}>{fmt(Number(b.paid_amount))}</b> из {fmt(Number(b.amount))} {b.currency?.code}</span>
+                  )}
                 </div>
                 {b.comment && <div style={{ fontSize: 13 }}>{b.comment}</div>}
                 <AttachmentsBlock kind="bill" parentId={b.id} attachments={b.attachments}
@@ -636,6 +642,10 @@ function BillDecideModal({ C, st, decide, funds, accounts, busy, onClose, onConf
   const [accountId, setAccountId] = useState("");
   const titles = { approve: "Одобрить счёт", reject: "Отклонить счёт", pay: "Оплатить счёт" };
   const accs = accounts.filter((a) => a.currency_id === bill.currency?.id);
+  const total = Number(bill.amount);
+  const paid = Number(bill.paid_amount || 0);
+  const remaining = Math.max(0, Math.round((total - paid) * 100) / 100);
+  const [payAmount, setPayAmount] = useState(String(remaining));
 
   return (
     <div style={st.mdOverlay} data-modal="1" onClick={onClose}>
@@ -668,7 +678,17 @@ function BillDecideModal({ C, st, decide, funds, accounts, busy, onClose, onConf
               value={reason} onChange={(e) => setReason(e.target.value)} />
           </div>
         )}
-        {action === "pay" && (
+        {action === "pay" && (<>
+          {paid > 0 && (
+            <div style={{ fontSize: 12.5, color: C.sub, marginBottom: 8 }}>
+              Оплачено <b style={{ color: C.text }}>{fmt(paid)}</b> из {fmt(total)} · остаток <b style={{ color: C.money }}>{fmt(remaining)}</b> {bill.currency?.code}
+            </div>
+          )}
+          <div style={st.reqField}>
+            <span style={st.reqFieldLbl}>Сумма оплаты (можно частично)</span>
+            <input style={st.mdInput} className="fin" inputMode="decimal" value={payAmount}
+              onChange={(e) => setPayAmount(e.target.value)} placeholder={String(remaining)} />
+          </div>
           <div style={st.reqField}>
             <span style={st.reqFieldLbl}>Счёт ДС — откуда платим</span>
             <select style={st.mdSelect} className="fin" value={accountId} onChange={(e) => setAccountId(e.target.value)}>
@@ -676,12 +696,12 @@ function BillDecideModal({ C, st, decide, funds, accounts, busy, onClose, onConf
               {accs.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
             </select>
           </div>
-        )}
+        </>)}
 
         <div style={st.mdActions}>
           <button style={st.btnGhost} className="btn" onClick={onClose}>Отмена</button>
           <button style={{ ...(action === "reject" ? { ...st.btnGhost, color: C.danger } : st.btnGreen), opacity: busy ? 0.7 : 1 }} className="btn"
-            disabled={busy} onClick={() => onConfirm({ bill, action, fundId, reason, accountId })}>
+            disabled={busy} onClick={() => onConfirm({ bill, action, fundId, reason, accountId, payAmount })}>
             {busy ? <Loader2 size={15} className="spin" /> : action === "pay" ? <Banknote size={15} /> : action === "reject" ? <Ban size={15} /> : <Check size={15} />}
             {" "}{titles[action].split(" ")[0]}
           </button>
