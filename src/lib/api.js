@@ -474,7 +474,7 @@ export async function redeemInvite(token, fullName) {
 export async function fetchBills(_periodId, kind, locationId) {
   let q = supabase
     .from("supplier_bills")
-    .select(`id, number, status, kind, amount, issued_on, due_on, is_recurring, comment,
+    .select(`id, number, status, kind, amount, paid_amount, issued_on, due_on, is_recurring, comment,
       rejection_reason, created_at, created_by, expense_type_id, counterparty_id, location_id,
       period_approved_id, period_paid_id,
       counterparty:counterparties(id, name),
@@ -550,9 +550,10 @@ export async function decideBill(id, patch) {
 }
 
 // Оплата одобренного счёта (серверная функция fp_pay_bill)
-export async function payBill(billId, cashAccountId, periodId) {
+// amount — сумма частичной оплаты (в валюте счёта); null/undefined = весь остаток.
+export async function payBill(billId, cashAccountId, periodId, amount = null) {
   const { error } = await supabase.rpc("fp_pay_bill", {
-    p_bill_id: billId, p_cash_account_id: cashAccountId, p_period_id: periodId,
+    p_bill_id: billId, p_cash_account_id: cashAccountId, p_period_id: periodId, p_amount: amount,
   });
   if (error) throw error;
 }

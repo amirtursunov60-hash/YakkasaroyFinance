@@ -2677,6 +2677,7 @@ export type Database = {
           location_id: string
           number: string
           outer_id: string | null
+          paid_amount: number
           period_approved_id: string | null
           period_paid_id: string | null
           rejection_reason: string | null
@@ -2702,6 +2703,7 @@ export type Database = {
           location_id: string
           number: string
           outer_id?: string | null
+          paid_amount?: number
           period_approved_id?: string | null
           period_paid_id?: string | null
           rejection_reason?: string | null
@@ -2727,6 +2729,7 @@ export type Database = {
           location_id?: string
           number?: string
           outer_id?: string | null
+          paid_amount?: number
           period_approved_id?: string | null
           period_paid_id?: string | null
           rejection_reason?: string | null
@@ -2967,6 +2970,7 @@ export type Database = {
       }
       fp_pay_bill: {
         Args: {
+          p_amount?: number
           p_bill_id: string
           p_cash_account_id: string
           p_period_id: string
