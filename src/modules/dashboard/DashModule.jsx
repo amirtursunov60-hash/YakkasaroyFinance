@@ -9,7 +9,7 @@ import { fmt } from "../../utils/format";
 import { calcState, STAT_STATES } from "../../utils/stats";
 import {
   fetchTasks, createTask, setTaskStatus, fetchBattlePlan, createBattleItem,
-  setBattleDone, fetchPeopleBrief, fetchStatistics, fetchStatisticValues,
+  setBattleDone, fetchPeopleBrief, fetchPositionsBrief, fetchStatistics, fetchStatisticValues,
   fetchPeriods, fetchMyRequests,
 } from "../../lib/api";
 
@@ -34,23 +34,24 @@ export function DashModule({ view }) {
   const [battle, setBattle] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [people, setPeople] = useState([]);
+  const [positions, setPositions] = useState([]);
   const [stats, setStats] = useState([]);
   const [statValues, setStatValues] = useState({});
   const [periods, setPeriods] = useState([]);
   const [myReqs, setMyReqs] = useState([]);
 
-  const [newBp, setNewBp] = useState("");
+  const [bForm, setBForm] = useState({ text: "", statisticId: "", positionId: "", isStatsVisible: false });
   const [taskFilter, setTaskFilter] = useState("active");
-  const [tForm, setTForm] = useState({ title: "", toId: "", due: "", priority: "mid" });
+  const [tForm, setTForm] = useState({ title: "", toId: "", positionId: "", due: "", priority: "mid" });
 
   const load = useCallback(async () => {
     setErr("");
     try {
-      const [bp, ts, ppl, ss, ps, reqs] = await Promise.all([
-        fetchBattlePlan(), fetchTasks(), fetchPeopleBrief(), fetchStatistics(),
+      const [bp, ts, ppl, pos, ss, ps, reqs] = await Promise.all([
+        fetchBattlePlan(), fetchTasks(), fetchPeopleBrief(), fetchPositionsBrief(), fetchStatistics(),
         fetchPeriods(12), fetchMyRequests(myId),
       ]);
-      setBattle(bp); setTasks(ts); setPeople(ppl); setStats(ss); setPeriods(ps); setMyReqs(reqs);
+      setBattle(bp); setTasks(ts); setPeople(ppl); setPositions(pos); setStats(ss); setPeriods(ps); setMyReqs(reqs);
       const vals = await fetchStatisticValues(ps.map((p) => p.id));
       setStatValues(vals);
     } catch (e) {
@@ -69,10 +70,16 @@ export function DashModule({ view }) {
     finally { setBusy(null); }
   };
   const addBp = async () => {
-    const t = newBp.trim(); if (!t || busy) return;
+    const t = bForm.text.trim(); if (!t || busy) return;
     setBusy("addbp"); setErr("");
-    try { await createBattleItem({ text: t }); setNewBp(""); await load(); }
-    catch (e) { setErr(e?.message || String(e)); }
+    try {
+      await createBattleItem({
+        text: t, statisticId: bForm.statisticId || null, positionId: bForm.positionId || null,
+        isStatsVisible: !!bForm.statisticId,   // привязка к статистике → показывать в её контексте
+      });
+      setBForm({ text: "", statisticId: "", positionId: "", isStatsVisible: false });
+      await load();
+    } catch (e) { setErr(e?.message || String(e)); }
     finally { setBusy(null); }
   };
 
@@ -94,7 +101,7 @@ export function DashModule({ view }) {
     const title = tForm.title.trim(); if (!title || busy) return;
     setBusy("addtask"); setErr("");
     try {
-      await createTask({ title, toId: tForm.toId, dueDate: tForm.due || null, priority: tForm.priority });
+      await createTask({ title, toId: tForm.toId, positionId: tForm.positionId, dueDate: tForm.due || null, priority: tForm.priority });
       setTForm((f) => ({ ...f, title: "", due: "" }));
       await load(); setDone("Задача поручена");
     } catch (e) { setErr(e?.message || String(e)); }
@@ -139,7 +146,9 @@ export function DashModule({ view }) {
           <div style={{ fontSize: 14, fontWeight: 700, lineHeight: 1.35, textDecoration: t.status === "done" ? "line-through" : "none" }}>{t.title}</div>
           <span style={{ fontSize: 10.5, fontWeight: 700, padding: "3px 9px", borderRadius: 20, whiteSpace: "nowrap", color: m.color, background: `${m.color}1a`, flexShrink: 0 }}>{m.label}</span>
         </div>
-        <div style={{ fontSize: 12, color: C.sub, marginTop: 6 }}>{t.from?.full_name || "—"} → <b style={{ color: C.text }}>{t.assignee?.full_name || "не назначен"}</b></div>
+        <div style={{ fontSize: 12, color: C.sub, marginTop: 6 }}>
+          {t.from?.full_name || "—"} → <b style={{ color: C.text }}>{t.assignee?.full_name || (t.position ? `пост ${t.position.code} ${t.position.name}` : "не назначен")}</b>
+        </div>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 10, gap: 10, flexWrap: "wrap" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11.5, color: C.faint }}><CalendarDays size={13} /> {t.due_date ? new Date(t.due_date + "T00:00:00").toLocaleDateString("ru-RU", { day: "2-digit", month: "short" }) : "без срока"}</span>
@@ -158,7 +167,12 @@ export function DashModule({ view }) {
       </button>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 13.5, fontWeight: 600, textDecoration: b.done ? "line-through" : "none", color: b.done ? C.faint : C.text }}>{b.text}</div>
-        <div style={{ fontSize: 11, color: C.faint, marginTop: 2 }}>→ {b.target || "Личный план"}</div>
+        <div style={{ fontSize: 11, color: C.faint, marginTop: 2, display: "flex", gap: 8, flexWrap: "wrap" }}>
+          {b.statistic
+            ? <span style={{ color: C.money }}>↗ {b.statistic.name}{b.statistic.unit ? `, ${b.statistic.unit}` : ""}</span>
+            : <span>→ {b.target || "Личный план"}</span>}
+          {b.position && <span>· пост {b.position.code} {b.position.name}</span>}
+        </div>
       </div>
     </div>
   );
@@ -185,9 +199,23 @@ export function DashModule({ view }) {
         </div>
         {battle.length === 0 && <div style={{ ...st.empty, padding: "16px 0" }}>Пунктов пока нет — добавьте первое действие</div>}
         {battle.map((b) => <BpRow key={b.id} b={b} />)}
-        <div style={{ display: "flex", gap: 10, marginTop: 16, flexWrap: "wrap" }}>
-          <input value={newBp} onChange={(e) => setNewBp(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addBp()}
+        <div style={{ display: "flex", gap: 10, marginTop: 16, flexWrap: "wrap", alignItems: "flex-end" }}>
+          <input value={bForm.text} onChange={(e) => setBForm((f) => ({ ...f, text: e.target.value }))} onKeyDown={(e) => e.key === "Enter" && addBp()}
             placeholder="Новое действие на день…" style={{ ...st.numInput, flex: 1, minWidth: 200, textAlign: "left" }} className="amtIn" />
+          <label style={st.reqField}>
+            <span style={st.reqFieldLbl}>Статистика (ИЦО)</span>
+            <select style={st.reqSelect} value={bForm.statisticId} onChange={(e) => setBForm((f) => ({ ...f, statisticId: e.target.value }))}>
+              <option value="">— без привязки —</option>
+              {stats.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+            </select>
+          </label>
+          <label style={st.reqField}>
+            <span style={st.reqFieldLbl}>Пост</span>
+            <select style={st.reqSelect} value={bForm.positionId} onChange={(e) => setBForm((f) => ({ ...f, positionId: e.target.value }))}>
+              <option value="">— без поста —</option>
+              {positions.map((p) => <option key={p.id} value={p.id}>{p.code} {p.name}</option>)}
+            </select>
+          </label>
           <button style={{ ...st.btnGreen, opacity: busy === "addbp" ? 0.7 : 1 }} className="btn glass" onClick={addBp} disabled={busy === "addbp"}>
             {busy === "addbp" ? <Loader2 size={15} className="spin" /> : <Plus size={15} />} Добавить
           </button>
@@ -234,6 +262,13 @@ export function DashModule({ view }) {
             <select style={st.reqSelect} value={tForm.toId} onChange={(e) => setTForm((f) => ({ ...f, toId: e.target.value }))}>
               <option value="">— выберите —</option>
               {people.map((p) => <option key={p.id} value={p.id}>{p.full_name}</option>)}
+            </select>
+          </label>
+          <label style={st.reqField}>
+            <span style={st.reqFieldLbl}>…или пост оргсхемы</span>
+            <select style={st.reqSelect} value={tForm.positionId} onChange={(e) => setTForm((f) => ({ ...f, positionId: e.target.value }))}>
+              <option value="">— без поста —</option>
+              {positions.map((p) => <option key={p.id} value={p.id}>{p.code} {p.name}</option>)}
             </select>
           </label>
           <label style={st.reqField}>

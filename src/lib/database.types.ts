@@ -62,10 +62,13 @@ export type Database = {
           done: boolean
           id: string
           is_archived: boolean
+          is_stats_visible: boolean
           outer_id: string | null
           owner_id: string
           period_id: string | null
+          position_id: string | null
           sort: number
+          statistic_id: string | null
           target: string | null
           text: string
         }
@@ -75,10 +78,13 @@ export type Database = {
           done?: boolean
           id?: string
           is_archived?: boolean
+          is_stats_visible?: boolean
           outer_id?: string | null
           owner_id?: string
           period_id?: string | null
+          position_id?: string | null
           sort?: number
+          statistic_id?: string | null
           target?: string | null
           text: string
         }
@@ -88,10 +94,13 @@ export type Database = {
           done?: boolean
           id?: string
           is_archived?: boolean
+          is_stats_visible?: boolean
           outer_id?: string | null
           owner_id?: string
           period_id?: string | null
+          position_id?: string | null
           sort?: number
+          statistic_id?: string | null
           target?: string | null
           text?: string
         }
@@ -108,6 +117,20 @@ export type Database = {
             columns: ["period_id"]
             isOneToOne: false
             referencedRelation: "fp_periods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "battle_plan_items_position_id_fkey"
+            columns: ["position_id"]
+            isOneToOne: false
+            referencedRelation: "org_positions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "battle_plan_items_statistic_id_fkey"
+            columns: ["statistic_id"]
+            isOneToOne: false
+            referencedRelation: "statistics"
             referencedColumns: ["id"]
           },
         ]
@@ -2905,6 +2928,7 @@ export type Database = {
           is_archived: boolean
           location_id: string | null
           outer_id: string | null
+          position_id: string | null
           priority: Database["public"]["Enums"]["task_priority"]
           status: Database["public"]["Enums"]["task_status"]
           title: string
@@ -2919,6 +2943,7 @@ export type Database = {
           is_archived?: boolean
           location_id?: string | null
           outer_id?: string | null
+          position_id?: string | null
           priority?: Database["public"]["Enums"]["task_priority"]
           status?: Database["public"]["Enums"]["task_status"]
           title: string
@@ -2933,6 +2958,7 @@ export type Database = {
           is_archived?: boolean
           location_id?: string | null
           outer_id?: string | null
+          position_id?: string | null
           priority?: Database["public"]["Enums"]["task_priority"]
           status?: Database["public"]["Enums"]["task_status"]
           title?: string
@@ -2951,6 +2977,13 @@ export type Database = {
             columns: ["location_id"]
             isOneToOne: false
             referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_position_id_fkey"
+            columns: ["position_id"]
+            isOneToOne: false
+            referencedRelation: "org_positions"
             referencedColumns: ["id"]
           },
           {

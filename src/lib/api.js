@@ -248,6 +248,17 @@ export async function fetchPeopleBrief() {
   return data;
 }
 
+// Краткий список постов оргсхемы (для адресации задач/БП посту)
+export async function fetchPositionsBrief() {
+  const { data, error } = await supabase
+    .from("org_positions")
+    .select("id, code, name, division:org_divisions(code, name)")
+    .eq("is_archived", false)
+    .order("code");
+  if (error) throw error;
+  return data;
+}
+
 export async function createDivision({ code, name, color, ckp }) {
   const { data, error } = await supabase
     .from("org_divisions")
@@ -1632,19 +1643,20 @@ export async function createCrmClient(row) {
 export async function fetchTasks() {
   const { data, error } = await supabase
     .from("tasks")
-    .select(`id, title, due_date, status, priority, from_id, to_id,
+    .select(`id, title, due_date, status, priority, from_id, to_id, position_id,
       from:profiles!tasks_from_id_fkey(full_name),
-      assignee:profiles!tasks_to_id_fkey(full_name)`)
+      assignee:profiles!tasks_to_id_fkey(full_name),
+      position:org_positions(code, name)`)
     .eq("is_archived", false)
     .order("created_at", { ascending: false });
   if (error) throw error;
   return data;
 }
 
-export async function createTask({ title, toId, dueDate, priority }) {
+export async function createTask({ title, toId, positionId, dueDate, priority }) {
   const { data, error } = await supabase
     .from("tasks")
-    .insert({ title, to_id: toId || null, due_date: dueDate || null, priority: priority || "mid" })
+    .insert({ title, to_id: toId || null, position_id: positionId || null, due_date: dueDate || null, priority: priority || "mid" })
     .select().single();
   if (error) throw error;
   return data;
@@ -1658,17 +1670,23 @@ export async function setTaskStatus(id, status) {
 export async function fetchBattlePlan() {
   const { data, error } = await supabase
     .from("battle_plan_items")
-    .select("id, text, target, done, sort, created_at")
+    .select(`id, text, target, done, sort, created_at, statistic_id, position_id, is_stats_visible,
+      statistic:statistics(id, name, unit),
+      position:org_positions(code, name)`)
     .eq("is_archived", false)
     .order("sort").order("created_at");
   if (error) throw error;
   return data;
 }
 
-export async function createBattleItem({ text, target }) {
+export async function createBattleItem({ text, target, statisticId, positionId, isStatsVisible }) {
   const { data, error } = await supabase
     .from("battle_plan_items")
-    .insert({ text, target: target || "Личный план" })
+    .insert({
+      text, target: target || "Личный план",
+      statistic_id: statisticId || null, position_id: positionId || null,
+      is_stats_visible: !!isStatsVisible,
+    })
     .select().single();
   if (error) throw error;
   return data;
