@@ -1452,6 +1452,15 @@ export async function setPeriodStatus(periodId, status) {
   if (error) throw error;
 }
 
+// Подтверждение недели ФП: kind 'executive' (исполнительный контур) | 'baf'
+// (финкомитет). Закрытие Директивой требует обоих (миграция 20260624190000).
+export async function setPeriodConfirmation(periodId, kind, value) {
+  const { error } = await supabase.rpc("fp_set_period_confirmation", {
+    p_period_id: periodId, p_kind: kind, p_value: value,
+  });
+  if (error) throw error;
+}
+
 // Протокол Директивы + закрытие периода (серверная функция, миграция 006)
 export async function closePeriod(periodId, protocol) {
   const { error } = await supabase.rpc("fp_close_period", {

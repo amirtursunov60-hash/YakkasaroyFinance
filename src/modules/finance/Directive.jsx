@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { ClipboardList, Calculator, CalendarDays, Check, RotateCcw, RotateCw, Lock, Unlock, Ban, ArrowRightLeft, Loader2, AlertCircle, CheckCircle2, X, Landmark, ChevronRight, Scale, Banknote, Wallet, Coins, List, LayoutList } from "lucide-react";
+import { ClipboardList, Calculator, CalendarDays, Check, RotateCcw, RotateCw, Lock, Unlock, Ban, ArrowRightLeft, Loader2, AlertCircle, CheckCircle2, X, Landmark, ChevronRight, Scale, Banknote, Wallet, Coins, List, LayoutList, ShieldCheck, Gavel } from "lucide-react";
 import { Stat, ConfirmModal } from "../../components/common";
 import { useTheme } from "../../theme/theme";
 import { useScrollLock } from "../../hooks/useScrollLock";
@@ -10,7 +10,7 @@ import { usePeriod, periodTitle } from "../../lib/PeriodCtx";
 import { GlassSegment } from "../../components/ui/glass-segment";
 import {
   fetchFunds, fetchDefaultRules,
-  fetchPeriodIncome, fetchPeriodDistribution, distributeStage, setPeriodStatus, closePeriod, reopenPeriod, resetDistribution,
+  fetchPeriodIncome, fetchPeriodDistribution, distributeStage, setPeriodStatus, setPeriodConfirmation, closePeriod, reopenPeriod, resetDistribution,
   fetchRequests, decideRequest, fetchPeriodOverrides, savePeriodOverrides,
   fetchIncomeTypeRules, fetchIncomeByType, fetchFundFolders, fetchBills,
 } from "../../lib/api";
@@ -298,6 +298,23 @@ export function Directive() {
     finally { setBusy(null); }
   };
 
+  // Подтверждения недели (ХМС-процедура: исполнительный контур + финкомитет/BAF).
+  // Закрытие Директивой требует обоих (страж + триггер БД).
+  const canConfirmExec = ["owner", "fin_director", "ops_director"].includes(profile?.role);
+  const canConfirmBaf = ["owner", "fin_director"].includes(profile?.role);
+  const doConfirm = async (kind, value) => {
+    if (busy || !period || isClosed) return;
+    setBusy(`confirm:${kind}`); setErr(""); setDone("");
+    try {
+      await setPeriodConfirmation(periodId, kind, value);
+      await reloadPeriods(true);
+      setDone(value
+        ? (kind === "executive" ? "Исполнительное подтверждение проставлено" : "Подтверждение финкомитета (BAF) проставлено")
+        : "Подтверждение снято");
+    } catch (e) { setErr(e?.message || String(e)); }
+    finally { setBusy(null); }
+  };
+
   // Переключатель: закрытая неделя открывается обратно, открытая — закрывается
   const doToggleClose = async () => {
     if (busy || !period) return;
@@ -314,7 +331,7 @@ export function Directive() {
       return;
     }
     // Правила закрытия недели: показываем ВСЕ нарушения сразу над кнопкой (кнопка доступна).
-    const blockers = weekCloseBlockReasons({ prevPeriod, weekReqs, remainder, funds });
+    const blockers = weekCloseBlockReasons({ prevPeriod, weekReqs, remainder, funds, period });
     if (blockers.length) { setCloseMsg(blockers); return; }
     if (!(await askConfirm({ title: "Закрыть период ФП", message: "Все операции периода будут заблокированы, протокол Директивы сохранится.", tone: "warning", confirmLabel: "Закрыть период" }))) return;
     setBusy("close");
@@ -457,6 +474,26 @@ export function Directive() {
         ))}
       </div>
     )}
+    {/* Подтверждение недели — два контура ХМС (исполнительный + финкомитет/BAF).
+        Оба нужны для закрытия Директивой. */}
+    {period && (
+      <section style={{ ...st.fpCard, marginTop: 14 }}>
+        <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: 0.5, color: C.faint, fontWeight: 700, marginBottom: 10 }}>
+          Подтверждение недели
+        </div>
+        <div style={{ display: "grid", gap: 8, gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr" }}>
+          <ConfirmRow C={C} st={st} icon={ShieldCheck} label="Исполнительное"
+            confirmed={!!period.is_executive_confirmed} canToggle={canConfirmExec && !isClosed}
+            busy={busy === "confirm:executive"} disabled={!!busy}
+            onToggle={() => doConfirm("executive", !period.is_executive_confirmed)} />
+          <ConfirmRow C={C} st={st} icon={Gavel} label="Финкомитет (BAF)"
+            confirmed={!!period.is_baf_confirmed} canToggle={canConfirmBaf && !isClosed}
+            busy={busy === "confirm:baf"} disabled={!!busy}
+            onToggle={() => doConfirm("baf", !period.is_baf_confirmed)} />
+        </div>
+      </section>
+    )}
+
     {/* Закрытие периода Директивой — отдельной кнопкой в самом низу. Кнопка
         всегда доступна; правила закрытия проверяются по нажатию (см. doToggleClose). */}
     <button style={{ ...(isClosed ? st.btnGhost : st.btnGreen), width: "100%", justifyContent: "center", marginTop: (!isClosed && closeMsg.length) ? 10 : 14, opacity: busy === "close" ? 0.7 : 1 }}
@@ -484,6 +521,37 @@ export function Directive() {
         onConfirm={() => resolveConfirm(true)} onCancel={() => resolveConfirm(false)} />
     )}
   </>);
+}
+
+
+// ---------------------------------------------------------------- Строка подтверждения недели
+// Один контур подтверждения (исполнительный / финкомитет). Подтверждённый —
+// зелёная плашка с возможностью снять; неподтверждённый — кнопка «Подтвердить».
+function ConfirmRow({ C, st, icon: Icon, label, confirmed, canToggle, busy, disabled, onToggle }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 12,
+      border: `1px solid ${confirmed ? C.money : C.line}`, background: confirmed ? `${C.money}14` : C.panel2 }}>
+      <div style={{ width: 32, height: 32, borderRadius: 9, display: "grid", placeItems: "center", flexShrink: 0,
+        background: confirmed ? `${C.money}22` : `${C.faint}1a`, color: confirmed ? C.money : C.faint }}>
+        <Icon size={17} />
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontWeight: 700, fontSize: 13.5 }}>{label}</div>
+        <div style={{ fontSize: 11.5, color: confirmed ? C.money : C.faint, fontWeight: 600 }}>
+          {confirmed ? "подтверждено" : "не подтверждено"}
+        </div>
+      </div>
+      {canToggle ? (
+        <button style={{ ...(confirmed ? st.btnGhost : st.btnGreen), padding: "7px 12px", fontSize: 12.5, opacity: busy ? 0.7 : 1 }}
+          className="btn" disabled={disabled} onClick={onToggle}>
+          {busy ? <Loader2 size={14} className="spin" /> : confirmed ? <RotateCcw size={14} /> : <Check size={14} />}
+          {confirmed ? " Снять" : " Подтвердить"}
+        </button>
+      ) : confirmed ? (
+        <CheckCircle2 size={18} color={C.money} />
+      ) : null}
+    </div>
+  );
 }
 
 

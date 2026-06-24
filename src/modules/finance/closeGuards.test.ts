@@ -69,4 +69,19 @@ describe("weekCloseBlockReasons", () => {
     expect(r[0]).toMatch(/на рассмотрении/i);
     expect(r[1]).toMatch(/не полностью/i);
   });
+
+  it("без объекта period подтверждения не проверяются (обратная совместимость)", () => {
+    expect(weekCloseBlockReasons(ok)).toEqual([]);
+  });
+
+  it("блокирует без исполнительного подтверждения и без BAF", () => {
+    const r = weekCloseBlockReasons({ ...ok, period: { is_executive_confirmed: false, is_baf_confirmed: false } });
+    expect(r).toHaveLength(2);
+    expect(r[0]).toMatch(/исполнительного подтверждения/i);
+    expect(r[1]).toMatch(/финкомитета \(BAF\)/i);
+  });
+
+  it("оба подтверждения проставлены — препятствий нет", () => {
+    expect(weekCloseBlockReasons({ ...ok, period: { is_executive_confirmed: true, is_baf_confirmed: true } })).toEqual([]);
+  });
 });
