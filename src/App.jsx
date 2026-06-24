@@ -4,7 +4,7 @@ import { Login } from "./components/Login";
 import { useIsMobile } from "./hooks/useIsMobile";
 import { makeStyles } from "./theme/styles";
 import { THEMES, ThemeCtx, applyThemeVars } from "./theme/theme";
-import { supabase } from "./lib/supabase";
+import { supabase, isSupabaseConfigured } from "./lib/supabase";
 import { getProfile, signOut } from "./lib/auth";
 import { redeemInvite } from "./lib/api";
 import { isSoundOn, setSoundOn } from "./lib/feedback";
@@ -58,6 +58,9 @@ function YakkasaroyApp() {
     let active = true;
 
     const load = async () => {
+      // Без ключей Supabase не дёргаем auth (клиент-заглушка) — сразу показываем
+      // экран настройки.
+      if (!isSupabaseConfigured) { if (active) setLoading(false); return; }
       // Приглашение: после первого входа применяем роль/точку/пост из инвайта
       const token = localStorage.getItem("yk_invite");
       if (token) {
@@ -94,6 +97,33 @@ function YakkasaroyApp() {
       <div style={{ minHeight: "100vh", background: C.bg, color: C.sub,
         display: "grid", placeItems: "center", fontFamily: "'Inter',system-ui,sans-serif", fontSize: 14 }}>
         Загрузка…
+      </div>
+    );
+  }
+
+  // Ключи Supabase не заданы — вместо белого экрана показываем, что настроить.
+  if (!isSupabaseConfigured) {
+    return (
+      <div style={{ minHeight: "100vh", background: C.bg, color: C.text,
+        display: "grid", placeItems: "center", fontFamily: "'Inter',system-ui,sans-serif", padding: 20 }}>
+        <div style={{ maxWidth: 460, width: "100%", textAlign: "center", background: C.panel,
+          border: `1px solid ${C.line}`, borderRadius: 20, padding: "28px 24px" }}>
+          <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 10 }}>Приложение не настроено</div>
+          <div style={{ fontSize: 13.5, color: C.sub, lineHeight: 1.6, marginBottom: 16 }}>
+            Не заданы переменные окружения для подключения к базе. Добавьте их и
+            перезапустите сборку:
+          </div>
+          <pre style={{ textAlign: "left", background: C.bg, color: C.text,
+            border: `1px solid ${C.line}`, borderRadius: 12, padding: "12px 14px",
+            fontSize: 12.5, overflowX: "auto", margin: 0 }}>
+{`VITE_SUPABASE_URL=…
+VITE_SUPABASE_KEY=…`}
+          </pre>
+          <div style={{ fontSize: 12.5, color: C.sub, lineHeight: 1.6, marginTop: 14 }}>
+            Локально — в файл <code>.env</code>; на Vercel — в настройках проекта
+            (Environment Variables).
+          </div>
+        </div>
       </div>
     );
   }
