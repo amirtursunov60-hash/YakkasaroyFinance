@@ -1467,6 +1467,8 @@ export async function archiveStatistic(id) {
 // тройка (statistic_id, period_id, is_quota) — апсертим вручную select→update/insert.
 export async function upsertStatisticValue(statisticId, periodId, value, isQuota = false) {
   if (!periodId) throw new Error("Не выбрана неделя ФП");
+  // Кто внёс значение — для аудита (колонка entered_by ранее не заполнялась).
+  const enteredBy = (await supabase.auth.getUser()).data.user?.id ?? null;
   const found = await supabase
     .from("statistic_values").select("id")
     .eq("statistic_id", statisticId).eq("period_id", periodId).eq("is_quota", isQuota)
@@ -1474,13 +1476,13 @@ export async function upsertStatisticValue(statisticId, periodId, value, isQuota
   if (found.error) throw found.error;
   if (found.data) {
     const { error } = await supabase
-      .from("statistic_values").update({ value }).eq("id", found.data.id);
+      .from("statistic_values").update({ value, entered_by: enteredBy }).eq("id", found.data.id);
     if (error) throw error;
     return;
   }
   const { error } = await supabase
     .from("statistic_values")
-    .insert({ statistic_id: statisticId, period_id: periodId, value, is_quota: isQuota });
+    .insert({ statistic_id: statisticId, period_id: periodId, value, is_quota: isQuota, entered_by: enteredBy });
   if (error) throw error;
 }
 
