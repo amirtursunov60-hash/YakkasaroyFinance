@@ -825,6 +825,20 @@ export async function fetchRegister({ periodId, opType, fundId, cashAccountId, c
   return data;
 }
 
+// Журнал аудита — кто/что/когда менял (таблица audit_log, заполняется
+// триггерами БД). Чтение — только финадмины (RLS audit_read). Связь автора —
+// audit_log_user_id_fkey → profiles.
+export async function fetchAuditLog({ limit = 200 } = {}) {
+  const { data, error } = await supabase
+    .from("audit_log")
+    .select(`id, action, table_name, record_id, created_at,
+      author:profiles!audit_log_user_id_fkey(full_name)`)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return data;
+}
+
 // Оплаты заявок из Реестра (op_type='request_payment') — лента «Операции с
 // заявками» внизу вкладки «Заявки». Заявка попадает в Реестр только при оплате.
 // periodId — показываем оплаты только выбранной недели (период оплаты в Реестре).
