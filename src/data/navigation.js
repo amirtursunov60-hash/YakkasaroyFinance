@@ -1,4 +1,4 @@
-import { Wallet, ArrowUpRight, ArrowDownLeft, Layers, FileText, ClipboardList, SlidersHorizontal, Calculator, BarChart3, CalendarDays, List, LayoutGrid, LayoutDashboard, Users, UserPlus, Contact, Network, PiggyBank, FolderKanban, UtensilsCrossed, ConciergeBell, Armchair, Package, Clock, Flame, TrendingUp, ShieldCheck } from "lucide-react";
+import { Wallet, ArrowUpRight, ArrowDownLeft, Layers, FileText, ClipboardList, SlidersHorizontal, Calculator, BarChart3, CalendarDays, List, LayoutGrid, LayoutDashboard, Users, UserPlus, Contact, Network, PiggyBank, FolderKanban, UtensilsCrossed, ConciergeBell, Armchair, Package, Clock, Flame, TrendingUp, ShieldCheck, Building2 } from "lucide-react";
 
 
 
@@ -23,6 +23,7 @@ export const NAV_FINANCE = [
   { key: "expense", icon: ArrowDownLeft, label: "Расходы" },
   { key: "suppliers", icon: FileText, label: "Поставщики" },
   { key: "clients", icon: ClipboardList, label: "Клиенты" },
+  { key: "counterparties", icon: Building2, label: "Контрагенты" },
   { key: "funds", icon: Layers, label: "Фонды" },
   { key: "directive", icon: SlidersHorizontal, label: "Директива" },
   { key: "requests", icon: ClipboardList, label: "Заявки" },

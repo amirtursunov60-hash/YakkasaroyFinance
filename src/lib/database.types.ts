@@ -398,6 +398,7 @@ export type Database = {
       }
       counterparties: {
         Row: {
+          category_id: string | null
           comment: string | null
           created_at: string
           id: string
@@ -410,6 +411,7 @@ export type Database = {
           phone: string | null
         }
         Insert: {
+          category_id?: string | null
           comment?: string | null
           created_at?: string
           id?: string
@@ -422,6 +424,7 @@ export type Database = {
           phone?: string | null
         }
         Update: {
+          category_id?: string | null
           comment?: string | null
           created_at?: string
           id?: string
@@ -433,7 +436,80 @@ export type Database = {
           outer_id?: string | null
           phone?: string | null
         }
+        Relationships: [
+          {
+            foreignKeyName: "counterparties_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "counterparty_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      counterparty_categories: {
+        Row: {
+          color: string | null
+          created_at: string
+          id: string
+          is_archived: boolean
+          name: string
+          outer_id: string | null
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          is_archived?: boolean
+          name: string
+          outer_id?: string | null
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          is_archived?: boolean
+          name?: string
+          outer_id?: string | null
+        }
         Relationships: []
+      }
+      counterparty_contacts: {
+        Row: {
+          counterparty_id: string
+          created_at: string
+          id: string
+          is_primary: boolean
+          kind: string
+          label: string | null
+          value: string
+        }
+        Insert: {
+          counterparty_id: string
+          created_at?: string
+          id?: string
+          is_primary?: boolean
+          kind?: string
+          label?: string | null
+          value: string
+        }
+        Update: {
+          counterparty_id?: string
+          created_at?: string
+          id?: string
+          is_primary?: boolean
+          kind?: string
+          label?: string | null
+          value?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "counterparty_contacts_counterparty_id_fkey"
+            columns: ["counterparty_id"]
+            isOneToOne: false
+            referencedRelation: "counterparties"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       crm_clients: {
         Row: {
