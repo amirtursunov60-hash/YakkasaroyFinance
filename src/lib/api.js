@@ -1448,7 +1448,7 @@ export async function resetDistribution(periodId, stage) {
 export async function fetchStatistics() {
   const { data, error } = await supabase
     .from("statistics")
-    .select(`id, name, unit, invert, is_auto, source, location_id, owner_id, position_id,
+    .select(`id, name, unit, invert, is_auto, source, location_id, owner_id, position_id, min_val, max_val,
       owner:profiles(full_name),
       position:org_positions(code, name, division:org_divisions(code, name))`)
     .eq("is_archived", false)
@@ -1477,13 +1477,14 @@ export async function fetchStatisticValues(periodIds) {
   return m;
 }
 
-export async function createStatistic({ name, unit, invert = false, positionId, ownerId, locationId, source }) {
+export async function createStatistic({ name, unit, invert = false, positionId, ownerId, locationId, source, minVal = null, maxVal = null }) {
   const { data, error } = await supabase
     .from("statistics")
     .insert({
       name, unit: unit || null, invert,
       position_id: positionId || null, owner_id: ownerId || null,
       location_id: locationId || null, source: source || null,
+      min_val: minVal, max_val: maxVal,
     })
     .select().single();
   if (error) throw error;

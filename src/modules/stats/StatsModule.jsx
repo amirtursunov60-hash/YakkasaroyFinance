@@ -269,6 +269,11 @@ export function StatsModule({ view }) {
                   <div style={{ color: C.text }}><StatChart values={r.series} quota={r.hasQuota ? r.quotaSeries : undefined} color={m.color} height={150} /></div>
                   {r.hasQuota && <ChartLegend color={m.color} />}
                 </>) : <div style={{ fontSize: 12.5, color: C.faint, padding: "20px 0", textAlign: "center" }}>Значений ещё нет — внесите за неделю ниже</div>}
+                {(s.min_val != null || s.max_val != null) && (
+                  <div style={{ fontSize: 12, color: C.sub, marginTop: 10 }}>
+                    Норма: <b style={{ color: C.text }}>{s.min_val != null ? ru(s.min_val) : "—"} … {s.max_val != null ? ru(s.max_val) : "—"} {s.unit}</b>
+                  </div>
+                )}
                 {r.curQuota != null && (
                   <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", fontSize: 12, marginTop: 12 }}>
                     <span style={{ color: C.sub }}>План недели <b style={{ color: C.text }}>{ru(r.curQuota)} {s.unit}</b></span>
@@ -361,7 +366,10 @@ function StatFormModal({ C, st, isMobile, positions, stat, busy, onArchive, onCl
   const [f, setF] = useState({
     name: stat?.name || "", unit: stat?.unit || "", invert: stat?.invert || false,
     positionId: stat?.position_id || "", source: stat?.source || "",
+    minVal: stat?.min_val != null ? String(stat.min_val) : "",
+    maxVal: stat?.max_val != null ? String(stat.max_val) : "",
   });
+  const numOrNull = (v) => { const n = parseFloat(String(v).replace(",", ".")); return Number.isFinite(n) ? n : null; };
   const [confirmArch, setConfirmArch] = useState(false);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState("");
@@ -372,12 +380,14 @@ function StatFormModal({ C, st, isMobile, positions, stat, busy, onArchive, onCl
     if (!f.name.trim()) return setErr("Укажите название статистики");
     setSaving(true);
     try {
+      const minVal = numOrNull(f.minVal), maxVal = numOrNull(f.maxVal);
       const payload = {
         name: f.name.trim(), unit: f.unit.trim() || null, invert: f.invert,
         position_id: f.positionId || null, source: f.source.trim() || null,
+        min_val: minVal, max_val: maxVal,
       };
       if (isEdit) { await updateStatistic(stat.id, payload); onSaved("Статистика обновлена"); }
-      else { await createStatistic({ ...payload, positionId: f.positionId }); onSaved("Статистика создана"); }
+      else { await createStatistic({ ...payload, positionId: f.positionId, minVal, maxVal }); onSaved("Статистика создана"); }
     } catch (e) { setErr(e?.message || String(e)); setSaving(false); }
   };
 
@@ -413,6 +423,18 @@ function StatFormModal({ C, st, isMobile, positions, stat, busy, onArchive, onCl
             <span style={st.reqFieldLbl}>Источник (необязательно)</span>
             <input style={st.mdInput} className="fin" placeholder="откуда берётся значение…"
               value={f.source} onChange={(e) => setF((p) => ({ ...p, source: e.target.value }))} />
+          </div>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <div style={{ ...st.reqField, flex: 1, minWidth: 120 }}>
+              <span style={st.reqFieldLbl}>Норма — от (необязательно)</span>
+              <input style={st.mdInput} className="fin" inputMode="decimal" placeholder="мин"
+                value={f.minVal} onChange={(e) => setF((p) => ({ ...p, minVal: e.target.value }))} />
+            </div>
+            <div style={{ ...st.reqField, flex: 1, minWidth: 120 }}>
+              <span style={st.reqFieldLbl}>Норма — до (необязательно)</span>
+              <input style={st.mdInput} className="fin" inputMode="decimal" placeholder="макс"
+                value={f.maxVal} onChange={(e) => setF((p) => ({ ...p, maxVal: e.target.value }))} />
+            </div>
           </div>
           <label style={st.mdCheck}>
             <input type="checkbox" checked={f.invert} onChange={(e) => setF((p) => ({ ...p, invert: e.target.checked }))} />
