@@ -209,7 +209,8 @@ export async function fetchOrgChart() {
     supabase.from("org_divisions").select("id, code, name, color, ckp, sort").order("sort"),
     supabase
       .from("org_positions")
-      .select(`id, code, name, division_id, section, ckp, statistic, duties, is_executive, sort,
+      .select(`id, code, name, division_id, location_id, section, ckp, statistic, duties, is_executive, sort,
+        location:locations(name),
         assignments:position_assignments!position_assignments_position_id_fkey(
           is_main, hat_status, person:profiles!position_assignments_person_id_fkey(id, full_name))`)
       .eq("is_archived", false)
@@ -226,6 +227,7 @@ export async function fetchOrgChart() {
       .sort((a, b) => Number(b.isMain) - Number(a.isMain));
     const pos = {
       id: p.id, code: p.code, name: p.name, divisionId: p.division_id,
+      locationId: p.location_id, locationName: p.location?.name || null,
       section: p.section || "Без секции", ckp: p.ckp, statistic: p.statistic,
       duties: Array.isArray(p.duties) ? p.duties : [],
       isExecutive: p.is_executive, sort: p.sort, holders,
