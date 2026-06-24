@@ -835,33 +835,65 @@ export type Database = {
       }
       fp_periods: {
         Row: {
+          baf_confirmed_at: string | null
+          baf_confirmed_by: string | null
           closed_at: string | null
           closed_by: string | null
           ends_on: string
+          executive_confirmed_at: string | null
+          executive_confirmed_by: string | null
           id: string
+          is_baf_confirmed: boolean
+          is_executive_confirmed: boolean
           starts_on: string
           status: Database["public"]["Enums"]["period_status"]
         }
         Insert: {
+          baf_confirmed_at?: string | null
+          baf_confirmed_by?: string | null
           closed_at?: string | null
           closed_by?: string | null
           ends_on: string
+          executive_confirmed_at?: string | null
+          executive_confirmed_by?: string | null
           id?: string
+          is_baf_confirmed?: boolean
+          is_executive_confirmed?: boolean
           starts_on: string
           status?: Database["public"]["Enums"]["period_status"]
         }
         Update: {
+          baf_confirmed_at?: string | null
+          baf_confirmed_by?: string | null
           closed_at?: string | null
           closed_by?: string | null
           ends_on?: string
+          executive_confirmed_at?: string | null
+          executive_confirmed_by?: string | null
           id?: string
+          is_baf_confirmed?: boolean
+          is_executive_confirmed?: boolean
           starts_on?: string
           status?: Database["public"]["Enums"]["period_status"]
         }
         Relationships: [
           {
+            foreignKeyName: "fp_periods_baf_confirmed_by_fkey"
+            columns: ["baf_confirmed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "fp_periods_closed_by_fkey"
             columns: ["closed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fp_periods_executive_confirmed_by_fkey"
+            columns: ["executive_confirmed_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -3077,6 +3109,10 @@ export type Database = {
       fp_reverse_fund_op: { Args: { p_id: number }; Returns: undefined }
       fp_reverse_invoice_payment: { Args: { p_income_id: string }; Returns: undefined }
       fp_reverse_request_payment: { Args: { p_id: number }; Returns: undefined }
+      fp_set_period_confirmation: {
+        Args: { p_period_id: string; p_kind: string; p_value: boolean }
+        Returns: undefined
+      }
       fp_set_fund_stage: {
         Args: {
           p_fund: string

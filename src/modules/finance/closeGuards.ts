@@ -8,7 +8,9 @@ import { fmt } from "../../utils/format";
 //  1) предыдущая неделя ещё открыта;
 //  2) есть заявки недели на рассмотрении (не одобрены и не отклонены);
 //  3) доход распределён не полностью (остаток ≠ 0) или распределено больше дохода;
-//  4) баланс какого-либо фонда ушёл в минус.
+//  4) баланс какого-либо фонда ушёл в минус;
+//  5) нет исполнительного подтверждения недели;
+//  6) нет подтверждения финкомитета (BAF).
 
 const REVIEW_STATUSES = ["submitted", "planning"];
 
@@ -22,6 +24,7 @@ export interface CloseGuardInput {
   weekReqs: { status?: string | null }[];
   remainder: number;
   funds: CloseGuardFund[];
+  period?: { is_executive_confirmed?: boolean | null; is_baf_confirmed?: boolean | null } | null;
 }
 
 // Допуск округления до половины дирама (0.005 TJS) — чтобы копеечные хвосты
@@ -30,7 +33,7 @@ const EPS = 0.005;
 
 // Все нарушенные правила сразу (для показа списком при нажатии «Закрыть»).
 export function weekCloseBlockReasons(input: CloseGuardInput): string[] {
-  const { prevPeriod, weekReqs, remainder, funds } = input;
+  const { prevPeriod, weekReqs, remainder, funds, period } = input;
   const reasons: string[] = [];
 
   // 1) предыдущая неделя открыта
@@ -55,6 +58,14 @@ export function weekCloseBlockReasons(input: CloseGuardInput): string[] {
   const neg = funds.find((f) => Number(f.balance || 0) < -EPS);
   if (neg) {
     reasons.push(`Фонд ${neg.code || ""} «${neg.name || ""}» в минусе (${fmt(Number(neg.balance || 0))} TJS). Исправьте распределение.`);
+  }
+
+  // 5–6) подтверждения недели (исполнительное + финкомитет/BAF)
+  if (period && !period.is_executive_confirmed) {
+    reasons.push("Нет исполнительного подтверждения недели.");
+  }
+  if (period && !period.is_baf_confirmed) {
+    reasons.push("Нет подтверждения финкомитета (BAF).");
   }
 
   return reasons;
