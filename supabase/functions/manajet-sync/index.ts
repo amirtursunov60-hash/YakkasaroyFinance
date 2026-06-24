@@ -25,6 +25,12 @@ const cors = {
 
 const num = (v: unknown) => (v == null || v === "" ? null : Number(v));
 
+// ManaJet отдаёт слабо типизированный JSON без узкой схемы; описываем запись
+// как объект с произвольными полями (значения могут быть вложенными записями).
+// Снимает no-explicit-any, не вводя any.
+type MjValue = string | number | boolean | null | undefined | MjRecord | MjValue[];
+interface MjRecord { [key: string]: MjValue }
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
 
@@ -61,7 +67,7 @@ Deno.serve(async (req) => {
   const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
   // одна страница с ретраями на 5xx (IIS отдаёт 504 на больших страницах)
-  async function mjPage(path: string, take: number, skip: number, extra: Record<string, string>): Promise<any[]> {
+  async function mjPage(path: string, take: number, skip: number, extra: Record<string, string>): Promise<MjRecord[]> {
     const url = new URL(`${MJ_BASE}/${path}`);
     url.searchParams.set("filter.take", String(take));
     url.searchParams.set("filter.skip", String(skip));
@@ -77,7 +83,7 @@ Deno.serve(async (req) => {
     throw new Error(`${path} → HTTP ${lastStatus}`);
   }
 
-  async function upsert(table: string, rows: any[], onConflict: string) {
+  async function upsert(table: string, rows: MjRecord[], onConflict: string) {
     if (!rows.length) return;
     const { error } = await admin.from(table).upsert(rows, { onConflict });
     if (error) throw new Error(`${table}: ${error.message}`);
@@ -87,7 +93,7 @@ Deno.serve(async (req) => {
   // исчерпан до конца — done=false и nextSkip для докачки по курсору.
   async function stream(
     path: string, take: number, table: string, onConflict: string,
-    map: (x: any) => any, startSkip: number, extra: Record<string, string> = {},
+    map: (x: MjRecord) => MjRecord, startSkip: number, extra: Record<string, string> = {},
   ): Promise<{ count: number; done: boolean; nextSkip: number }> {
     let skip = startSkip; let count = 0;
     while (Date.now() < deadline) {
@@ -127,7 +133,7 @@ Deno.serve(async (req) => {
   };
 
   // -------------------------------------------------------- запуск
-  let body: any = {};
+  let body: { entities?: unknown; cursor?: { entity: string; skip: number } } = {};
   try { body = await req.json(); } catch { /* пустое тело — все сущности */ }
   const requested: string[] = Array.isArray(body?.entities) && body.entities.length
     ? body.entities.filter((e: string) => e in ENTITIES)

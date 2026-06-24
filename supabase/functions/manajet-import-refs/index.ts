@@ -51,7 +51,7 @@ Deno.serve(async (req) => {
   const { data: baseCur } = await admin.from("currencies").select("id").eq("is_base", true).limit(1).maybeSingle();
   const baseCurrencyId = baseCur?.id ?? null;
 
-  async function mjGet(path: string): Promise<any[]> {
+  async function mjGet(path: string): Promise<Record<string, unknown>[]> {
     const url = new URL(`${MJ_BASE}/${path}`);
     url.searchParams.set("filter.take", "500");
     url.searchParams.set("filter.skip", "0");
@@ -62,7 +62,7 @@ Deno.serve(async (req) => {
   }
 
   // batch-upsert; при ошибке (напр. коллизия UNIQUE code) — построчно, пропуская сбойные
-  async function upsertRefs(table: string, rows: any[]): Promise<{ ok: number; skipped: number }> {
+  async function upsertRefs(table: string, rows: Record<string, unknown>[]): Promise<{ ok: number; skipped: number }> {
     if (!rows.length) return { ok: 0, skipped: 0 };
     const batch = await admin.from(table).upsert(rows, { onConflict: "outer_id" });
     if (!batch.error) return { ok: rows.length, skipped: 0 };
