@@ -2088,6 +2088,7 @@ export type Database = {
           paid_amount: number
           payment_type_id: string | null
           period_id: string | null
+          period_paid_id: string | null
           planned_amount: number
           position_id: string
           purpose: string | null
@@ -2116,6 +2117,7 @@ export type Database = {
           paid_amount?: number
           payment_type_id?: string | null
           period_id?: string | null
+          period_paid_id?: string | null
           planned_amount: number
           position_id: string
           purpose?: string | null
@@ -2144,6 +2146,7 @@ export type Database = {
           paid_amount?: number
           payment_type_id?: string | null
           period_id?: string | null
+          period_paid_id?: string | null
           planned_amount?: number
           position_id?: string
           purpose?: string | null
@@ -2205,6 +2208,13 @@ export type Database = {
           {
             foreignKeyName: "payment_requests_period_id_fkey"
             columns: ["period_id"]
+            isOneToOne: false
+            referencedRelation: "fp_periods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_requests_period_paid_id_fkey"
+            columns: ["period_paid_id"]
             isOneToOne: false
             referencedRelation: "fp_periods"
             referencedColumns: ["id"]

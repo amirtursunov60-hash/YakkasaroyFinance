@@ -188,17 +188,18 @@ export function Requests() {
 
   // На этом экране заявки только ОПЛАЧИВАЮТСЯ (рассмотрение — в Директиве; счета —
   // на своих экранах Поставщики/Обязательства).
-  const doDecide = async ({ item, action, accountId, payAmount }) => {
+  const doDecide = async ({ item, action, accountId, payAmount, payPeriodId }) => {
     if (busy) return;
     setBusy("decide"); setErr(""); setDone("");
     try {
-      if (!periodId) throw new Error("Нет выбранного периода ФП");
       if (action === "pay") {
+        const payWeek = payPeriodId || periodId;
+        if (!payWeek) throw new Error("Выберите неделю оплаты");
         if (!accountId) throw new Error("Выберите счёт ДС");
         const amt = payAmount != null && String(payAmount).trim() !== ""
           ? parseFloat(String(payAmount).replace(",", ".")) : null;
         if (amt != null && (!Number.isFinite(amt) || amt <= 0)) throw new Error("Введите сумму оплаты больше нуля");
-        await payRequest(item.id, accountId, periodId, amt);
+        await payRequest(item.id, accountId, payWeek, amt);
         setDone(`Заявка №${item.number}: оплата проведена в Реестре`);
       }
       await loadItems();
@@ -332,6 +333,7 @@ export function Requests() {
 
     {decide && (
       <DecideModal C={C} st={st} decide={decide} funds={funds} accounts={refs?.accounts || []}
+        periods={periods} currentPeriodId={periodId}
         busy={busy === "decide"} onClose={() => setDecide(null)} onConfirm={doDecide} />
     )}
 
@@ -423,6 +425,10 @@ export function ItemCard({ C, st, item, itemKind, isExpanded, onToggle, statusMe
                 <span>Оплачено: <b style={{ color: C.money }}>{fmt(Number(item.paid_amount))}</b> из {fmt(Number(item.approved_amount ?? item.planned_amount))} {item.currency?.code}</span>
               )}
               {itemKind === "bill" && item.due_on && <span>Срок: <b style={{ color: C.text }}>{new Date(item.due_on + "T00:00:00").toLocaleDateString("ru")}</b></span>}
+              {itemKind === "request" && item.period && <span>Неделя заявки: <b style={{ color: C.text }}>{periodTitle(item.period)}</b></span>}
+              {itemKind === "request" && item.period_paid && item.period_paid.id !== item.period?.id && (
+                <span>Неделя оплаты: <b style={{ color: C.money }}>{periodTitle(item.period_paid)}</b></span>
+              )}
               {item.comment && <span>{item.comment}</span>}
               <span>Подано: <b style={{ color: C.text }}>{new Date(item.created_at).toLocaleDateString("ru")}</b></span>
             </div>
@@ -836,7 +842,7 @@ function RequestOpsLog({ C, st, isMobile, payments, canCancel, busy, onCancel })
 
 
 // ---------------------------------------------------------------- Одобрение / отклонение / оплата
-export function DecideModal({ C, st, decide, funds, accounts, busy, onClose, onConfirm }) {
+export function DecideModal({ C, st, decide, funds, accounts, periods = [], currentPeriodId, busy, onClose, onConfirm }) {
   useScrollLock();
   const { item, itemKind, action } = decide;
   const [fundId, setFundId] = useState(item.fund?.id || "");
@@ -850,6 +856,11 @@ export function DecideModal({ C, st, decide, funds, accounts, busy, onClose, onC
   const amount = action === "pay" ? remaining : total;
   const [payAmount, setPayAmount] = useState(String(remaining));
   const accs = accounts.filter((a) => a.currency_id === item.currency?.id);
+  // Неделя оплаты — может отличаться от недели планирования заявки. По умолчанию
+  // текущая выбранная неделя в шапке; список — все открытые недели.
+  const openPeriods = (periods || []).filter((p) => p.status !== "closed");
+  const defaultPayPeriod = openPeriods.some((p) => p.id === currentPeriodId) ? currentPeriodId : (openPeriods[0]?.id || "");
+  const [payPeriodId, setPayPeriodId] = useState(defaultPayPeriod);
 
   return (
     <div style={st.mdOverlay} data-modal="1" onClick={onClose}>
@@ -900,12 +911,26 @@ export function DecideModal({ C, st, decide, funds, accounts, busy, onClose, onC
               {accs.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
             </select>
           </div>
+          {itemKind !== "bill" && (
+            <div style={st.reqField}>
+              <span style={st.reqFieldLbl}>Неделя оплаты (может отличаться от недели заявки)</span>
+              <select style={st.mdSelect} className="fin" value={payPeriodId} onChange={(e) => setPayPeriodId(e.target.value)}>
+                {!openPeriods.length && <option value="">Нет открытых недель</option>}
+                {openPeriods.map((p) => <option key={p.id} value={p.id}>{periodTitle(p)}</option>)}
+              </select>
+              {item.period && payPeriodId && payPeriodId !== item.period.id && (
+                <span style={{ fontSize: 11.5, color: C.warning, marginTop: 4 }}>
+                  Заявка спланирована на неделю {periodTitle(item.period)} — оплата пройдёт в другой неделе.
+                </span>
+              )}
+            </div>
+          )}
         </>)}
 
         <div style={st.mdActions}>
           <button style={st.btnGhost} className="btn" onClick={onClose}>Отмена</button>
           <button style={{ ...(action === "reject" ? { ...st.btnGhost, color: C.danger } : st.btnGreen), opacity: busy ? 0.7 : 1 }} className="btn"
-            disabled={busy} onClick={() => onConfirm({ item, itemKind, action, fundId, reason, accountId, payAmount })}>
+            disabled={busy} onClick={() => onConfirm({ item, itemKind, action, fundId, reason, accountId, payAmount, payPeriodId })}>
             {busy ? <Loader2 size={15} className="spin" /> : action === "pay" ? <Banknote size={15} /> : action === "reject" ? <Ban size={15} /> : <Check size={15} />}
             {" "}{titles[action].split(" ")[0]}
           </button>
