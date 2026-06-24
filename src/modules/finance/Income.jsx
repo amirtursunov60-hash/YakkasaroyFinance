@@ -371,7 +371,8 @@ function IncomeForm({ refs, tree, byParent, locationOf, period, ctxLocationId, p
     ? period.starts_on : today;
   const [f, setF] = useState({
     typeId: "", amount: "", currencyId: baseCur?.id || "", date: defDate,
-    accountId: "", payTypeId: "", locationId: ctxLocationId || "", isReturn: false, comment: "",
+    accountId: "", payTypeId: "", locationId: ctxLocationId || "", counterpartyId: "",
+    isReturn: false, comment: "",
   });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
@@ -416,6 +417,7 @@ function IncomeForm({ refs, tree, byParent, locationOf, period, ctxLocationId, p
         income_type_id: f.typeId, location_id: locationId, period_id: period.id,
         amount, currency_id: f.currencyId, amount_base: amountBase, received_on: f.date,
         cash_account_id: f.accountId, payment_type_id: f.payTypeId,
+        counterparty_id: f.counterpartyId || null,
         is_return: f.isReturn, comment: f.comment.trim() || null, created_by: profile.id,
       });
       onSaved();
@@ -478,6 +480,13 @@ function IncomeForm({ refs, tree, byParent, locationOf, period, ctxLocationId, p
             <select style={st.mdSelect} className="fin" value={f.payTypeId} onChange={set("payTypeId")}>
               <option value="">— выберите —</option>
               {refs.payTypes.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+            </select>
+          </Field>
+
+          <Field st={st} label="Клиент (необязательно)" full>
+            <select style={st.mdSelect} className="fin" value={f.counterpartyId} onChange={set("counterpartyId")}>
+              <option value="">— не выбран —</option>
+              {(refs.counterparties || []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           </Field>
 

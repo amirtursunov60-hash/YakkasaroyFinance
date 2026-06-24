@@ -93,18 +93,20 @@ export async function fetchLocations() {
 
 // Справочники для формы ввода дохода
 export async function fetchIncomeRefs() {
-  const [accounts, payTypes, currencies, locations] = await Promise.all([
+  const [accounts, payTypes, currencies, locations, counterparties] = await Promise.all([
     supabase.from("cash_accounts").select("id, name, currency_id, location_id").eq("is_archived", false).order("name"),
     supabase.from("payment_types").select("id, name").eq("is_archived", false).order("name"),
     supabase.from("currencies").select("id, code, name, is_base").order("code"),
     supabase.from("locations").select("id, name, city").eq("is_archived", false).order("name"),
+    supabase.from("counterparties").select("id, name").eq("is_archived", false).order("name"),
   ]);
-  for (const r of [accounts, payTypes, currencies, locations]) if (r.error) throw r.error;
+  for (const r of [accounts, payTypes, currencies, locations, counterparties]) if (r.error) throw r.error;
   return {
     accounts: accounts.data,
     payTypes: payTypes.data,
     currencies: currencies.data,
     locations: locations.data,
+    counterparties: counterparties.data,
   };
 }
 
