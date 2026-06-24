@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { ClipboardList, Check, Ban, Banknote, Loader2, AlertCircle, CheckCircle2, ChevronRight, X, Network, Plus, Copy, Pencil, ListChecks, RotateCcw } from "lucide-react";
+import { ClipboardList, Check, Ban, Banknote, Loader2, AlertCircle, CheckCircle2, ChevronRight, X, Network, Plus, Copy, Pencil, ListChecks, RotateCcw, MessageSquare, Send } from "lucide-react";
 import { Stat, ConfirmModal } from "../../components/common";
 import { InfoHint } from "../../components/InfoHint";
 import { useTheme } from "../../theme/theme";
@@ -13,6 +13,7 @@ import {
   fetchRequests, payRequest, fetchRequestPayments, reverseRequestPayment,
   fetchFunds, fetchIncomeRefs,
   fetchExpenseTypes, insertRequest, updateRequest, createPositionAndAssign, fetchMyPositions, fetchOrgDivisions,
+  fetchRequestComments, addRequestComment,
 } from "../../lib/api";
 import { requestPrefill } from "./requestCopy";
 
@@ -422,10 +423,79 @@ export function ItemCard({ C, st, item, itemKind, isExpanded, onToggle, statusMe
             {item.status === "rejected" && item.rejection_reason && (
               <div style={{ color: C.danger, fontSize: 13 }}>Причина отклонения: {item.rejection_reason}</div>
             )}
+            {itemKind === "request" && <RequestComments C={C} st={st} requestId={item.id} />}
             {children}
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+
+// ---------------------------------------------------------------- Комментарии к заявке
+// Тред переписки по заявке (request_comments). Лениво грузится при раскрытии
+// карточки. Любой, кто видит заявку, может оставить комментарий (RLS на сервере).
+function RequestComments({ C, st, requestId }) {
+  const [comments, setComments] = useState(null);   // null = ещё не загружено
+  const [text, setText] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    fetchRequestComments(requestId)
+      .then((d) => { if (active) setComments(d); })
+      .catch((e) => { if (active) setErr(e?.message || String(e)); });
+    return () => { active = false; };
+  }, [requestId]);
+
+  const send = async () => {
+    const body = text.trim();
+    if (!body || busy) return;
+    setBusy(true); setErr("");
+    try {
+      const added = await addRequestComment(requestId, body);
+      setComments((c) => [...(c || []), added]);
+      setText("");
+    } catch (e) { setErr(e?.message || String(e)); }
+    finally { setBusy(false); }
+  };
+
+  return (
+    <div style={{ borderTop: `1px solid ${C.line}`, paddingTop: 10, display: "grid", gap: 8 }}>
+      <span style={{ ...st.reqFieldLbl, display: "flex", alignItems: "center", gap: 6 }}>
+        <MessageSquare size={13} /> Комментарии {comments?.length ? `· ${comments.length}` : ""}
+      </span>
+      {comments === null ? (
+        <span style={{ fontSize: 12, color: C.faint }}><Loader2 size={12} className="spin" /> загрузка…</span>
+      ) : comments.length === 0 ? (
+        <span style={{ fontSize: 12, color: C.faint }}>Пока нет комментариев</span>
+      ) : (
+        <div style={{ display: "grid", gap: 6 }}>
+          {comments.map((c) => (
+            <div key={c.id} style={{ fontSize: 12.5, color: C.sub, background: C.solid2, border: `1px solid ${C.line}`, borderRadius: 10, padding: "7px 10px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", gap: 8, marginBottom: 2 }}>
+                <b style={{ color: C.text, fontSize: 11.5 }}>{c.author?.full_name || "—"}</b>
+                <span style={{ color: C.faint, fontSize: 10.5 }}>
+                  {new Date(c.created_at).toLocaleString("ru", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                </span>
+              </div>
+              <div style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{c.body}</div>
+            </div>
+          ))}
+        </div>
+      )}
+      <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
+        <input style={{ ...st.mdInput, flex: 1 }} className="fin" placeholder="Написать комментарий…"
+          value={text} onChange={(e) => setText(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }} />
+        <button style={{ ...st.btnGreen, opacity: busy || !text.trim() ? 0.6 : 1, padding: "9px 12px" }} className="btn"
+          disabled={busy || !text.trim()} onClick={send} aria-label="Отправить">
+          {busy ? <Loader2 size={15} className="spin" /> : <Send size={15} />}
+        </button>
+      </div>
+      {err && <span style={{ fontSize: 11.5, color: C.danger }}>{err}</span>}
     </div>
   );
 }
