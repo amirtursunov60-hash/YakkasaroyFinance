@@ -3226,6 +3226,7 @@ export type Database = {
       }
       fp_reverse_bill_payment: { Args: { p_id: number }; Returns: undefined }
       fp_reverse_fund_op: { Args: { p_id: number }; Returns: undefined }
+      fp_reverse_income: { Args: { p_income_id: string }; Returns: undefined }
       fp_reverse_invoice_payment: { Args: { p_income_id: string }; Returns: undefined }
       fp_reverse_request_payment: { Args: { p_id: number }; Returns: undefined }
       fp_set_period_confirmation: {
