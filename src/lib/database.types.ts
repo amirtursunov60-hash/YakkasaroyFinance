@@ -154,6 +154,48 @@ export type Database = {
           },
         ]
       }
+      invoice_attachments: {
+        Row: {
+          created_at: string
+          file_name: string
+          file_path: string
+          id: string
+          invoice_id: string
+          uploaded_by: string
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          file_path: string
+          id?: string
+          invoice_id: string
+          uploaded_by: string
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          file_path?: string
+          id?: string
+          invoice_id?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_attachments_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "client_invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_attachments_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cash_account_folders: {
         Row: {
           id: string
@@ -1202,6 +1244,7 @@ export type Database = {
           payment_type_id: string
           period_id: string
           received_on: string
+          reverses_income_id: string | null
           source: string
         }
         Insert: {
@@ -1223,6 +1266,7 @@ export type Database = {
           payment_type_id: string
           period_id: string
           received_on: string
+          reverses_income_id?: string | null
           source?: string
         }
         Update: {
@@ -1244,6 +1288,7 @@ export type Database = {
           payment_type_id?: string
           period_id?: string
           received_on?: string
+          reverses_income_id?: string | null
           source?: string
         }
         Relationships: [
@@ -1308,6 +1353,13 @@ export type Database = {
             columns: ["period_id"]
             isOneToOne: false
             referencedRelation: "fp_periods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incomes_reverses_income_id_fkey"
+            columns: ["reverses_income_id"]
+            isOneToOne: false
+            referencedRelation: "incomes"
             referencedColumns: ["id"]
           },
         ]
@@ -3023,6 +3075,7 @@ export type Database = {
       }
       fp_reverse_bill_payment: { Args: { p_id: number }; Returns: undefined }
       fp_reverse_fund_op: { Args: { p_id: number }; Returns: undefined }
+      fp_reverse_invoice_payment: { Args: { p_income_id: string }; Returns: undefined }
       fp_reverse_request_payment: { Args: { p_id: number }; Returns: undefined }
       fp_set_fund_stage: {
         Args: {
