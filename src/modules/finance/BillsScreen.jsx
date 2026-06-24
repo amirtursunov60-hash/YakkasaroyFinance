@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { Check, Banknote, AlertTriangle, Loader2, AlertCircle, CheckCircle2, Plus, X, Ban, ChevronRight, Repeat, FileText, Pencil, ListChecks, RotateCcw } from "lucide-react";
+import { Check, Banknote, AlertTriangle, Loader2, AlertCircle, CheckCircle2, Plus, X, Ban, ChevronRight, Repeat, FileText, Pencil, ListChecks, RotateCcw, Archive } from "lucide-react";
 import { Stat, ConfirmModal } from "../../components/common";
 import { useTheme } from "../../theme/theme";
 import { useScrollLock } from "../../hooks/useScrollLock";
@@ -56,6 +56,7 @@ export function BillsScreen({ kind, ui }) {
   const [prefill, setPrefill] = useState(null);   // для «Повторить»
   const [editBill, setEditBill] = useState(null); // счёт в режиме редактирования (свой на рассмотрении)
   const [decide, setDecide] = useState(null);     // { bill, action }
+  const [archiveBill, setArchiveBill] = useState(null); // счёт к архивации (подтверждение)
   const [payments, setPayments] = useState([]);   // оплаты счетов из Реестра — лента внизу (только supply)
   const [cancelBill, setCancelBill] = useState(null); // строка оплаты для отмены (подтверждение)
   const [cancelErr, setCancelErr] = useState(""); // ошибка отмены — показывается в модалке
@@ -160,6 +161,20 @@ export function BillsScreen({ kind, ui }) {
       }
       await loadBills();
       setDecide(null);
+    } catch (e) { setErr(e?.message || String(e)); }
+    finally { setBusy(null); }
+  };
+
+  // Архивация счёта (скрыть из списка) — только не оплаченный, чтобы не прятать
+  // запись, по которой прошли деньги в Реестре.
+  const doArchiveBill = async (bill) => {
+    if (busy) return;
+    setBusy("archive"); setErr(""); setDone("");
+    try {
+      await updateBill(bill.id, { is_archived: true });
+      await loadBills();
+      setArchiveBill(null);
+      setDone(`Счёт №${bill.number} перенесён в архив`);
     } catch (e) { setErr(e?.message || String(e)); }
     finally { setBusy(null); }
   };
@@ -311,6 +326,12 @@ export function BillsScreen({ kind, ui }) {
                       <Repeat size={14} /> Повторить счёт
                     </button>
                   )}
+                  {isFinAdmin && b.status !== "paid" && (
+                    <button style={{ ...st.btnGhost, color: C.sub }} className="btn" disabled={!!busy} onClick={() => setArchiveBill(b)}
+                      title="Перенести счёт в архив (скрыть из списка)">
+                      <Archive size={14} /> {!isMobile && "В архив"}
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -346,6 +367,12 @@ export function BillsScreen({ kind, ui }) {
     {decide && (
       <BillDecideModal C={C} st={st} decide={decide} funds={funds} accounts={refs?.accounts || []}
         busy={busy === "decide"} onClose={() => setDecide(null)} onConfirm={doDecide} />
+    )}
+    {archiveBill && (
+      <ConfirmModal title="Архивировать счёт"
+        message={`Счёт №${archiveBill.number ?? ""} будет перенесён в архив и скрыт из списка. Записи в Реестре это не затрагивает.`}
+        tone="danger" confirmLabel="В архив" busy={busy === "archive"}
+        onConfirm={() => doArchiveBill(archiveBill)} onCancel={() => setArchiveBill(null)} />
     )}
   </>);
 }
