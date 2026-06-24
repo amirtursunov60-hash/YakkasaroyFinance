@@ -311,7 +311,7 @@ export async function fetchRequests(periodId, locationId, { byPeriod = false } =
   let q = supabase
     .from("payment_requests")
     .select(`id, number, status, planned_amount, approved_amount, paid_amount, comment, csw_data, csw_situation, csw_solution,
-      purpose, tags, rejection_reason, created_at, decided_at, period_id, expense_type_id, requester_id, position_id, fund_id,
+      purpose, tags, rejection_reason, created_at, decided_at, period_id, period_paid_id, expense_type_id, requester_id, position_id, fund_id,
       position:org_positions(code, name, division:org_divisions(id, code, name)),
       requester:profiles!payment_requests_requester_id_fkey(full_name, avatar_url),
       expense_type:expense_types(code, name),
@@ -320,6 +320,8 @@ export async function fetchRequests(periodId, locationId, { byPeriod = false } =
       currency:currencies(id, code, is_base),
       counterparty:counterparties(name),
       payment_type:payment_types(name),
+      period:fp_periods!payment_requests_period_id_fkey(id, starts_on, ends_on),
+      period_paid:fp_periods!payment_requests_period_paid_id_fkey(id, starts_on, ends_on),
       attachments:request_attachments(id, file_path, file_name)`)
     .order("created_at", { ascending: false });
   if (byPeriod && periodId) q = q.eq("period_id", periodId);
