@@ -12,7 +12,7 @@ import { avatarColor } from "../../utils/format";
 import { orgCounts, nextHatStatus } from "../../utils/org";
 import { MjPanel, MjSwitch } from "../manajet/MjPanel";
 import {
-  fetchOrgChart, fetchPeopleBrief,
+  fetchOrgChart, fetchPeopleBrief, fetchLocations,
   createDivision, updateDivision, deleteDivision,
   createPosition, updatePosition, archivePosition,
   assignPosition, unassignPosition, setHatStatus,
@@ -44,6 +44,7 @@ export function OrgModule({ view }) {
   const [busy, setBusy] = useState(null);
   const [divisions, setDivisions] = useState([]);
   const [people, setPeople] = useState([]);
+  const [locations, setLocations] = useState([]);
   const [open, setOpen] = useState({});
   const [hatOpen, setHatOpen] = useState({});
   const [modal, setModal] = useState(null); // { type, division?, position? }
@@ -51,12 +52,14 @@ export function OrgModule({ view }) {
   const load = useCallback(async () => {
     setErr("");
     try {
-      const [chart, ppl] = await Promise.all([
+      const [chart, ppl, locs] = await Promise.all([
         fetchOrgChart(),
         canPos ? fetchPeopleBrief() : Promise.resolve([]),
+        fetchLocations(),
       ]);
       setDivisions(chart);
       setPeople(ppl);
+      setLocations(locs);
       setOpen((o) => (Object.keys(o).length ? o : (chart[0] ? { [chart[0].id]: true } : {})));
     } catch (e) {
       setErr("Не удалось загрузить оргсхему: " + (e?.message || e));
@@ -226,7 +229,7 @@ export function OrgModule({ view }) {
                 <div style={{ ...st.locDot, background: p.color }} />
                 <div style={st.locTitle}>
                   <div style={st.locName}>{p.isExecutive && <Star size={12} color={p.color} style={{ marginRight: 4, verticalAlign: "middle" }} />}{p.name}</div>
-                  <div style={st.locCode}>Отд. {p.deptCode} · {p.section} · {holder?.name || "вакансия"}</div>
+                  <div style={st.locCode}>Отд. {p.deptCode} · {p.section}{p.locationName ? ` · ${p.locationName}` : ""} · {holder?.name || "вакансия"}</div>
                 </div>
                 <div style={st.locRight}>{holder ? <HatBadge code={code} /> : <VacBadge />}</div>
                 <span style={{ ...st.locChevron, transform: isOpen ? "rotate(90deg)" : "none" }}><ChevronRight size={18} /></span>
@@ -289,7 +292,7 @@ export function OrgModule({ view }) {
         onClose={() => setModal(null)} onSaved={afterModal} />
     )}
     {modal?.type === "position" && (
-      <PositionModal C={C} st={st} isMobile={isMobile} divisions={divisions}
+      <PositionModal C={C} st={st} isMobile={isMobile} divisions={divisions} locations={locations}
         position={modal.position} division={modal.division}
         onClose={() => setModal(null)} onSaved={afterModal} onArchive={act} />
     )}
@@ -419,12 +422,13 @@ function DivisionModal({ C, st, division, onClose, onSaved }) {
 
 
 // ---------------------------------------------------------------- Модал поста
-function PositionModal({ C, st, isMobile, divisions, position, division, onClose, onSaved, onArchive }) {
+function PositionModal({ C, st, isMobile, divisions, locations = [], position, division, onClose, onSaved, onArchive }) {
   useScrollLock();
   const edit = !!position;
   const [f, setF] = useState({
     code: position?.code || "", name: position?.name || "",
     divisionId: position?.divisionId || division?.id || (divisions[0]?.id ?? ""),
+    locationId: position?.locationId || "",
     section: position?.section && position.section !== "Без секции" ? position.section : "",
     ckp: position?.ckp || "", statistic: position?.statistic || "",
     duties: (position?.duties || []).join("\n"),
@@ -440,6 +444,7 @@ function PositionModal({ C, st, isMobile, divisions, position, division, onClose
     try {
       const patch = {
         code: f.code.trim(), name: f.name.trim(), division_id: f.divisionId,
+        location_id: f.locationId || null,
         section: f.section.trim() || null, ckp: f.ckp.trim() || null,
         statistic: f.statistic.trim() || null,
         duties: f.duties.split("\n").map((s) => s.trim()).filter(Boolean),
@@ -481,6 +486,13 @@ function PositionModal({ C, st, isMobile, divisions, position, division, onClose
               <span style={st.reqFieldLbl}>Секция</span>
               <input style={st.mdInput} value={f.section} onChange={(e) => setF((p) => ({ ...p, section: e.target.value }))} placeholder="Отдел продаж банкетов" />
             </div>
+          </div>
+          <div style={st.reqField}>
+            <span style={st.reqFieldLbl}>Точка (необязательно)</span>
+            <select style={st.mdSelect} className="fin" value={f.locationId} onChange={(e) => setF((p) => ({ ...p, locationId: e.target.value }))}>
+              <option value="">— вся сеть —</option>
+              {locations.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
+            </select>
           </div>
           <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: C.text, cursor: "pointer" }}>
             <input type="checkbox" checked={f.isExecutive} onChange={(e) => setF((p) => ({ ...p, isExecutive: e.target.checked }))} />
