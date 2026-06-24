@@ -602,12 +602,48 @@ export type Database = {
           },
         ]
       }
+      crm_lead_checklist: {
+        Row: {
+          created_at: string
+          done: boolean
+          id: string
+          lead_id: string
+          sort: number
+          text: string
+        }
+        Insert: {
+          created_at?: string
+          done?: boolean
+          id?: string
+          lead_id: string
+          sort?: number
+          text: string
+        }
+        Update: {
+          created_at?: string
+          done?: boolean
+          id?: string
+          lead_id?: string
+          sort?: number
+          text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_lead_checklist_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "crm_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       crm_leads: {
         Row: {
           budget: number
           client_id: string | null
           created_at: string
           created_by: string | null
+          due_date: string | null
           event_date: string | null
           event_type: string | null
           guests: number
@@ -619,14 +655,18 @@ export type Database = {
           note: string | null
           outer_id: string | null
           phone: string | null
+          responsible_id: string | null
+          sort: number
           source: string | null
           stage: Database["public"]["Enums"]["crm_lead_stage"]
+          stage_id: string | null
         }
         Insert: {
           budget?: number
           client_id?: string | null
           created_at?: string
           created_by?: string | null
+          due_date?: string | null
           event_date?: string | null
           event_type?: string | null
           guests?: number
@@ -638,14 +678,18 @@ export type Database = {
           note?: string | null
           outer_id?: string | null
           phone?: string | null
+          responsible_id?: string | null
+          sort?: number
           source?: string | null
           stage?: Database["public"]["Enums"]["crm_lead_stage"]
+          stage_id?: string | null
         }
         Update: {
           budget?: number
           client_id?: string | null
           created_at?: string
           created_by?: string | null
+          due_date?: string | null
           event_date?: string | null
           event_type?: string | null
           guests?: number
@@ -657,8 +701,11 @@ export type Database = {
           note?: string | null
           outer_id?: string | null
           phone?: string | null
+          responsible_id?: string | null
+          sort?: number
           source?: string | null
           stage?: Database["public"]["Enums"]["crm_lead_stage"]
+          stage_id?: string | null
         }
         Relationships: [
           {
@@ -677,6 +724,67 @@ export type Database = {
           },
           {
             foreignKeyName: "crm_leads_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_leads_responsible_id_fkey"
+            columns: ["responsible_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_leads_stage_id_fkey"
+            columns: ["stage_id"]
+            isOneToOne: false
+            referencedRelation: "crm_stages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_stages: {
+        Row: {
+          code: string | null
+          color: string | null
+          created_at: string
+          id: string
+          is_archived: boolean
+          is_lost: boolean
+          is_won: boolean
+          location_id: string | null
+          name: string
+          sort: number
+        }
+        Insert: {
+          code?: string | null
+          color?: string | null
+          created_at?: string
+          id?: string
+          is_archived?: boolean
+          is_lost?: boolean
+          is_won?: boolean
+          location_id?: string | null
+          name: string
+          sort?: number
+        }
+        Update: {
+          code?: string | null
+          color?: string | null
+          created_at?: string
+          id?: string
+          is_archived?: boolean
+          is_lost?: boolean
+          is_won?: boolean
+          location_id?: string | null
+          name?: string
+          sort?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_stages_location_id_fkey"
             columns: ["location_id"]
             isOneToOne: false
             referencedRelation: "locations"

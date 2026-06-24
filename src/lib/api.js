@@ -1700,10 +1700,12 @@ export async function fetchCrmHalls() {
 export async function fetchCrmLeads() {
   const { data, error } = await supabase
     .from("crm_leads")
-    .select(`id, name, phone, event_type, event_date, guests, budget, stage, source, note,
-      hall_id, location_id, client_id, hall:crm_halls(name)`)
+    .select(`id, name, phone, event_type, event_date, guests, budget, stage, stage_id, source, note,
+      due_date, responsible_id, sort,
+      hall_id, location_id, client_id, hall:crm_halls(name),
+      responsible:profiles(full_name, avatar_url)`)
     .eq("is_archived", false)
-    .order("created_at", { ascending: false });
+    .order("sort").order("created_at", { ascending: false });
   if (error) throw error;
   return data;
 }
@@ -1721,6 +1723,69 @@ export async function updateCrmLead(id, patch) {
 
 export async function setCrmLeadStage(id, stage) {
   const { error } = await supabase.from("crm_leads").update({ stage }).eq("id", id);
+  if (error) throw error;
+}
+
+// Перемещение карточки в колонку Kanban (stage_id) + позиция в колонке
+export async function moveCrmLead(id, stageId, sort = 0) {
+  const { error } = await supabase.from("crm_leads").update({ stage_id: stageId, sort }).eq("id", id);
+  if (error) throw error;
+}
+
+// ---------------------------------------------------------------- Колонки воронки (Kanban)
+export async function fetchCrmStages() {
+  const { data, error } = await supabase
+    .from("crm_stages")
+    .select("id, code, name, color, sort, is_won, is_lost")
+    .eq("is_archived", false).order("sort");
+  if (error) throw error;
+  return data;
+}
+
+export async function createCrmStage({ name, color, sort = 0 }) {
+  const { data, error } = await supabase
+    .from("crm_stages").insert({ name, color: color || null, sort }).select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function updateCrmStage(id, patch) {
+  const { error } = await supabase.from("crm_stages").update(patch).eq("id", id);
+  if (error) throw error;
+}
+
+export async function archiveCrmStage(id) {
+  const { error } = await supabase.from("crm_stages").update({ is_archived: true }).eq("id", id);
+  if (error) throw error;
+}
+
+// ---------------------------------------------------------------- Чек-лист карточки лида
+export async function fetchCrmChecklist(leadIds) {
+  if (!leadIds.length) return {};
+  const { data, error } = await supabase
+    .from("crm_lead_checklist")
+    .select("id, lead_id, text, done, sort")
+    .in("lead_id", leadIds).order("sort").order("created_at");
+  if (error) throw error;
+  const m = {};
+  for (const r of data) (m[r.lead_id] ??= []).push(r);
+  return m;
+}
+
+export async function addCrmChecklistItem(leadId, text) {
+  const { data, error } = await supabase
+    .from("crm_lead_checklist").insert({ lead_id: leadId, text }).select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function setCrmChecklistDone(id, done) {
+  const { error } = await supabase.from("crm_lead_checklist").update({ done }).eq("id", id);
+  if (error) throw error;
+}
+
+export async function deleteCrmChecklistItem(id) {
+  const { error } = await supabase.from("crm_lead_checklist").delete().eq("id", id);
   if (error) throw error;
 }
 
