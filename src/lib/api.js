@@ -310,7 +310,7 @@ export async function fetchCounterparties() {
 export async function fetchRequests(periodId, locationId, { byPeriod = false } = {}) {
   let q = supabase
     .from("payment_requests")
-    .select(`id, number, status, planned_amount, approved_amount, comment, csw_data, csw_situation, csw_solution,
+    .select(`id, number, status, planned_amount, approved_amount, paid_amount, comment, csw_data, csw_situation, csw_solution,
       purpose, tags, rejection_reason, created_at, decided_at, period_id, expense_type_id, requester_id, position_id, fund_id,
       position:org_positions(code, name, division:org_divisions(id, code, name)),
       requester:profiles!payment_requests_requester_id_fkey(full_name, avatar_url),
@@ -355,9 +355,11 @@ export async function decideRequest(id, patch) {
 }
 
 // Оплата одобренной заявки (серверная функция, миграция fp_pay_request)
-export async function payRequest(requestId, cashAccountId, periodId) {
+// amount — сумма частичной оплаты (в валюте заявки); null/undefined = весь остаток.
+export async function payRequest(requestId, cashAccountId, periodId, amount = null) {
   const { error } = await supabase.rpc("fp_pay_request", {
     p_request_id: requestId, p_cash_account_id: cashAccountId, p_period_id: periodId,
+    p_amount: amount,
   });
   if (error) throw error;
 }

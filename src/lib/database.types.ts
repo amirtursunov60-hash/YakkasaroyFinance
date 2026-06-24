@@ -2001,6 +2001,7 @@ export type Database = {
           location_id: string
           number: number
           outer_id: string | null
+          paid_amount: number
           payment_type_id: string | null
           period_id: string | null
           planned_amount: number
@@ -2028,6 +2029,7 @@ export type Database = {
           location_id: string
           number?: never
           outer_id?: string | null
+          paid_amount?: number
           payment_type_id?: string | null
           period_id?: string | null
           planned_amount: number
@@ -2055,6 +2057,7 @@ export type Database = {
           location_id?: string
           number?: never
           outer_id?: string | null
+          paid_amount?: number
           payment_type_id?: string | null
           period_id?: string | null
           planned_amount?: number
@@ -2991,6 +2994,7 @@ export type Database = {
       }
       fp_pay_request: {
         Args: {
+          p_amount?: number
           p_cash_account_id: string
           p_period_id: string
           p_request_id: string
@@ -3013,7 +3017,9 @@ export type Database = {
         Args: { p_period_id: string; p_stage: string }
         Returns: undefined
       }
+      fp_reverse_bill_payment: { Args: { p_id: number }; Returns: undefined }
       fp_reverse_fund_op: { Args: { p_id: number }; Returns: undefined }
+      fp_reverse_request_payment: { Args: { p_id: number }; Returns: undefined }
       fp_set_fund_stage: {
         Args: {
           p_fund: string

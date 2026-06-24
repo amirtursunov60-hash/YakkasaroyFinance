@@ -188,15 +188,18 @@ export function Requests() {
 
   // На этом экране заявки только ОПЛАЧИВАЮТСЯ (рассмотрение — в Директиве; счета —
   // на своих экранах Поставщики/Обязательства).
-  const doDecide = async ({ item, action, accountId }) => {
+  const doDecide = async ({ item, action, accountId, payAmount }) => {
     if (busy) return;
     setBusy("decide"); setErr(""); setDone("");
     try {
       if (!periodId) throw new Error("Нет выбранного периода ФП");
       if (action === "pay") {
         if (!accountId) throw new Error("Выберите счёт ДС");
-        await payRequest(item.id, accountId, periodId);
-        setDone(`Заявка №${item.number}: оплачено — расход проведён в Реестре`);
+        const amt = payAmount != null && String(payAmount).trim() !== ""
+          ? parseFloat(String(payAmount).replace(",", ".")) : null;
+        if (amt != null && (!Number.isFinite(amt) || amt <= 0)) throw new Error("Введите сумму оплаты больше нуля");
+        await payRequest(item.id, accountId, periodId, amt);
+        setDone(`Заявка №${item.number}: оплата проведена в Реестре`);
       }
       await loadItems();
       setDecide(null);
@@ -416,6 +419,9 @@ export function ItemCard({ C, st, item, itemKind, isExpanded, onToggle, statusMe
             )}
             <div style={{ display: "flex", gap: 16, flexWrap: "wrap", fontSize: 12.5, color: C.sub }}>
               {!hideFund && item.fund && <span>Фонд: <b style={{ color: C.text }}>{item.fund.code} {item.fund.name}</b></span>}
+              {itemKind === "request" && Number(item.paid_amount) > 0 && item.status !== "paid" && (
+                <span>Оплачено: <b style={{ color: C.money }}>{fmt(Number(item.paid_amount))}</b> из {fmt(Number(item.approved_amount ?? item.planned_amount))} {item.currency?.code}</span>
+              )}
               {itemKind === "bill" && item.due_on && <span>Срок: <b style={{ color: C.text }}>{new Date(item.due_on + "T00:00:00").toLocaleDateString("ru")}</b></span>}
               {item.comment && <span>{item.comment}</span>}
               <span>Подано: <b style={{ color: C.text }}>{new Date(item.created_at).toLocaleDateString("ru")}</b></span>
@@ -838,7 +844,11 @@ export function DecideModal({ C, st, decide, funds, accounts, busy, onClose, onC
   const [accountId, setAccountId] = useState("");
   const noun = itemKind === "bill" ? "счёт" : "заявку";
   const titles = { approve: `Одобрить ${noun}`, reject: `Отклонить ${noun}`, pay: `Оплатить ${noun}` };
-  const amount = Number(itemKind === "bill" ? item.amount : item.planned_amount);
+  const total = Number(itemKind === "bill" ? item.amount : (item.approved_amount ?? item.planned_amount));
+  const paid = Number(item.paid_amount || 0);
+  const remaining = Math.max(0, Math.round((total - paid) * 100) / 100);
+  const amount = action === "pay" ? remaining : total;
+  const [payAmount, setPayAmount] = useState(String(remaining));
   const accs = accounts.filter((a) => a.currency_id === item.currency?.id);
 
   return (
@@ -872,7 +882,17 @@ export function DecideModal({ C, st, decide, funds, accounts, busy, onClose, onC
               value={reason} onChange={(e) => setReason(e.target.value)} />
           </div>
         )}
-        {action === "pay" && (
+        {action === "pay" && (<>
+          {paid > 0 && (
+            <div style={{ fontSize: 12.5, color: C.sub, marginBottom: 8 }}>
+              Оплачено <b style={{ color: C.text }}>{fmt(paid)}</b> из {fmt(total)} · остаток <b style={{ color: C.money }}>{fmt(remaining)}</b> {item.currency?.code}
+            </div>
+          )}
+          <div style={st.reqField}>
+            <span style={st.reqFieldLbl}>Сумма оплаты (можно частично)</span>
+            <input style={st.mdInput} className="fin" inputMode="decimal" value={payAmount}
+              onChange={(e) => setPayAmount(e.target.value)} placeholder={String(remaining)} />
+          </div>
           <div style={st.reqField}>
             <span style={st.reqFieldLbl}>Счёт ДС — откуда платим</span>
             <select style={st.mdSelect} className="fin" value={accountId} onChange={(e) => setAccountId(e.target.value)}>
@@ -880,12 +900,12 @@ export function DecideModal({ C, st, decide, funds, accounts, busy, onClose, onC
               {accs.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
             </select>
           </div>
-        )}
+        </>)}
 
         <div style={st.mdActions}>
           <button style={st.btnGhost} className="btn" onClick={onClose}>Отмена</button>
           <button style={{ ...(action === "reject" ? { ...st.btnGhost, color: C.danger } : st.btnGreen), opacity: busy ? 0.7 : 1 }} className="btn"
-            disabled={busy} onClick={() => onConfirm({ item, itemKind, action, fundId, reason, accountId })}>
+            disabled={busy} onClick={() => onConfirm({ item, itemKind, action, fundId, reason, accountId, payAmount })}>
             {busy ? <Loader2 size={15} className="spin" /> : action === "pay" ? <Banknote size={15} /> : action === "reject" ? <Ban size={15} /> : <Check size={15} />}
             {" "}{titles[action].split(" ")[0]}
           </button>
