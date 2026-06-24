@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { Banknote, Loader2, AlertCircle, CheckCircle2, Plus, X, Ban, ChevronRight, CalendarDays, PartyPopper , Receipt} from "lucide-react";
+import { Banknote, Loader2, AlertCircle, CheckCircle2, Plus, X, Ban, ChevronRight, CalendarDays, PartyPopper, Receipt, Undo2 } from "lucide-react";
 import { Stat } from "../../components/common";
+import { AttachmentsBlock } from "../../components/AttachmentsBlock";
 import { useTheme } from "../../theme/theme";
 import { useScrollLock } from "../../hooks/useScrollLock";
 import { useActionFeedback } from "../../hooks/useActionFeedback";
@@ -10,6 +11,7 @@ import { MjPanel, MjSwitch } from "../manajet/MjPanel";
 import {
   fetchInvoices, fetchInvoicePayments, insertInvoice, cancelInvoice, payInvoice,
   fetchIncomeTypes, fetchIncomeRefs, fetchCounterparties, createCounterparty, isoDate,
+  reverseInvoicePayment, fetchInvoiceAttachments,
 } from "../../lib/api";
 
 
@@ -43,6 +45,7 @@ export function Clients() {
   useActionFeedback(done, err);
   const [invoices, setInvoices] = useState([]);
   const [payments, setPayments] = useState({});
+  const [atts, setAtts] = useState({});
   const [types, setTypes] = useState([]);
   const [refs, setRefs] = useState(null);
   const [counterparties, setCounterparties] = useState([]);
@@ -59,7 +62,9 @@ export function Clients() {
         fetchInvoices(ctxLocationId), fetchIncomeTypes(), fetchIncomeRefs(), fetchCounterparties(),
       ]);
       setInvoices(invs); setTypes(tps); setRefs(refData); setCounterparties(cps);
-      setPayments(await fetchInvoicePayments(invs.map((i) => i.id)));
+      const ids = invs.map((i) => i.id);
+      const [pays, attMap] = await Promise.all([fetchInvoicePayments(ids), fetchInvoiceAttachments(ids)]);
+      setPayments(pays); setAtts(attMap);
     } catch (e) {
       setErr("Не удалось загрузить счета: " + (e?.message || e));
     } finally {
@@ -127,6 +132,25 @@ export function Clients() {
     } catch (e) { setErr(e?.message || String(e)); }
     finally { setBusy(null); }
   };
+
+  const doReversePayment = async (inv, p) => {
+    if (busy) return;
+    if (!window.confirm(`Отменить оплату ${fmt(Number(p.amount))} ${inv.currency?.code} по счёту №${inv.number}? Будет проведён возврат — деньги уйдут со счёта ДС.`)) return;
+    setBusy(`rev:${p.id}`); setErr(""); setDone("");
+    try {
+      await reverseInvoicePayment(p.id);
+      await load();
+      setDone(`Оплата ${fmt(Number(p.amount))} ${inv.currency?.code} отменена — проведён возврат`);
+    } catch (e) { setErr(e?.message || String(e)); }
+    finally { setBusy(null); }
+  };
+
+  // id оплат, у которых уже есть запись-отмена (нельзя отменять повторно)
+  const reversedIds = useMemo(() => {
+    const s = new Set();
+    Object.values(payments).forEach((arr) => arr.forEach((p) => { if (p.reverses_income_id) s.add(p.reverses_income_id); }));
+    return s;
+  }, [payments]);
 
   const filtered = invoices.filter((i) => filter === "all" ? true : i.status === filter);
 
@@ -234,22 +258,39 @@ export function Clients() {
 
                 {pays.length > 0 && (
                   <div style={{ display: "grid", gap: 5 }}>
-                    {pays.map((p) => (
-                      <div key={p.id} style={{ display: "flex", justifyContent: "space-between", gap: 10, fontSize: 12.5, padding: "7px 10px", borderRadius: 8, background: C.panel2, border: `1px solid ${C.line}` }}>
-                        <span style={{ color: C.sub }}>
-                          <CalendarDays size={11} style={{ verticalAlign: -1, marginRight: 4 }} />
-                          {new Date(p.received_on + "T00:00:00").toLocaleDateString("ru")}
-                          {p.cash_account ? ` · ${p.cash_account.name}` : ""}
-                          {p.payment_type ? ` · ${p.payment_type.name}` : ""}
-                          {p.is_return ? " · возврат" : ""}
-                        </span>
-                        <b style={{ color: p.is_return ? C.danger : C.green, fontVariantNumeric: "tabular-nums" }}>
-                          {p.is_return ? "−" : "+"}{fmt(Number(p.amount))}
-                        </b>
-                      </div>
-                    ))}
+                    {pays.map((p) => {
+                      const isReversed = reversedIds.has(p.id);
+                      const canReverse = canPay && !p.is_return && !isReversed && inv.status !== "cancelled";
+                      return (
+                        <div key={p.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, fontSize: 12.5, padding: "7px 10px", borderRadius: 8, background: C.panel2, border: `1px solid ${C.line}`, opacity: isReversed ? 0.6 : 1 }}>
+                          <span style={{ color: C.sub }}>
+                            <CalendarDays size={11} style={{ verticalAlign: -1, marginRight: 4 }} />
+                            {new Date(p.received_on + "T00:00:00").toLocaleDateString("ru")}
+                            {p.cash_account ? ` · ${p.cash_account.name}` : ""}
+                            {p.payment_type ? ` · ${p.payment_type.name}` : ""}
+                            {p.is_return ? " · возврат" : ""}
+                            {isReversed ? " · отменена" : ""}
+                          </span>
+                          <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                            <b style={{ color: p.is_return ? C.danger : C.green, fontVariantNumeric: "tabular-nums" }}>
+                              {p.is_return ? "−" : "+"}{fmt(Number(p.amount))}
+                            </b>
+                            {canReverse && (
+                              <button style={{ ...st.iconBtn, width: 26, height: 26, color: C.danger }} className="btn"
+                                title="Отменить оплату" aria-label="Отменить оплату"
+                                disabled={!!busy} onClick={() => doReversePayment(inv, p)}>
+                                {busy === `rev:${p.id}` ? <Loader2 size={13} className="spin" /> : <Undo2 size={13} />}
+                              </button>
+                            )}
+                          </span>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
+
+                <AttachmentsBlock kind="invoice" parentId={inv.id} attachments={atts[inv.id] || []}
+                  canUpload={canSubmit} profileId={profile.id} onChanged={load} />
 
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                   {canPay && !["paid", "cancelled"].includes(inv.status) && (

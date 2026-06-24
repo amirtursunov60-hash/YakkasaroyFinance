@@ -1,15 +1,23 @@
 import { useState } from "react";
-import { Paperclip, Loader2, AlertCircle } from "lucide-react";
+import { Paperclip, Loader2, AlertCircle, X } from "lucide-react";
 import { useTheme } from "../theme/theme";
-import { uploadAttachment, attachmentUrl } from "../lib/api";
+import { uploadAttachment, attachmentUrl, deleteAttachment } from "../lib/api";
 
 
 // ---------------------------------------------------------------- Вложения
-// Фото счёта и документы к заявкам (kind='request') и счетам/обязательствам
-// (kind='bill'). Файлы — в Storage (bucket attachments), ссылки — в таблицах.
-export function AttachmentsBlock({ kind, parentId, attachments = [], canUpload, profileId, onChanged }) {
+// Фото счёта и документы к заявкам (kind='request'), счетам/обязательствам
+// (kind='bill') и счетам клиентов (kind='invoice' — договор/смета банкета).
+// Файлы — в Storage (bucket attachments), ссылки — в таблицах.
+const UPLOAD_LABEL = {
+  request: "Прикрепить документ",
+  bill: "Прикрепить фото счёта",
+  invoice: "Прикрепить договор/смету",
+};
+
+export function AttachmentsBlock({ kind, parentId, attachments = [], canUpload, canDelete = canUpload, profileId, onChanged }) {
   const { C, st } = useTheme();
   const [busy, setBusy] = useState(false);
+  const [delId, setDelId] = useState(null);
   const [err, setErr] = useState("");
 
   const open = async (att) => {
@@ -32,6 +40,17 @@ export function AttachmentsBlock({ kind, parentId, attachments = [], canUpload, 
     finally { setBusy(false); }
   };
 
+  const remove = async (att) => {
+    if (delId) return;
+    if (!window.confirm(`Удалить вложение «${att.file_name}»?`)) return;
+    setDelId(att.id); setErr("");
+    try {
+      await deleteAttachment(kind, att.id, att.file_path);
+      await onChanged();
+    } catch (e) { setErr(e?.message || String(e)); }
+    finally { setDelId(null); }
+  };
+
   return (
     <div>
       <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: 0.5, color: C.faint, fontWeight: 700, marginBottom: 6, display: "flex", alignItems: "center", gap: 5 }}>
@@ -39,17 +58,26 @@ export function AttachmentsBlock({ kind, parentId, attachments = [], canUpload, 
       </div>
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
         {attachments.map((a) => (
-          <button key={a.id} className="btn"
-            style={{ ...st.weekTag, marginLeft: 0, border: "none", cursor: "pointer", fontFamily: "inherit", padding: "5px 11px" }}
-            onClick={() => open(a)}>
-            📎 {a.file_name.length > 28 ? a.file_name.slice(0, 25) + "…" : a.file_name}
-          </button>
+          <span key={a.id} style={{ ...st.weekTag, marginLeft: 0, padding: "5px 6px 5px 11px", display: "inline-flex", alignItems: "center", gap: 6 }}>
+            <button className="btn"
+              style={{ border: "none", background: "transparent", cursor: "pointer", fontFamily: "inherit", color: "inherit", padding: 0, fontSize: "inherit" }}
+              onClick={() => open(a)}>
+              📎 {a.file_name.length > 28 ? a.file_name.slice(0, 25) + "…" : a.file_name}
+            </button>
+            {canDelete && (
+              <button className="btn" aria-label="Удалить вложение" disabled={delId === a.id}
+                style={{ border: "none", background: "transparent", cursor: "pointer", color: C.faint, padding: 0, display: "inline-flex" }}
+                onClick={() => remove(a)}>
+                {delId === a.id ? <Loader2 size={12} className="spin" /> : <X size={12} />}
+              </button>
+            )}
+          </span>
         ))}
         {!attachments.length && <span style={{ fontSize: 12, color: C.faint }}>нет</span>}
         {canUpload && (
           <label style={{ ...st.btnGhost, padding: "5px 11px", fontSize: 12, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 5 }} className="btn">
             {busy ? <Loader2 size={13} className="spin" /> : <Paperclip size={13} />}
-            Прикрепить фото счёта
+            {UPLOAD_LABEL[kind] || "Прикрепить файл"}
             <input type="file" accept="image/*,.pdf" style={{ display: "none" }} onChange={upload} disabled={busy} />
           </label>
         )}

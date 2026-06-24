@@ -591,7 +591,7 @@ export async function fetchInvoicePayments(invoiceIds) {
   if (!invoiceIds.length) return {};
   const { data, error } = await supabase
     .from("incomes")
-    .select("id, invoice_id, amount, is_return, received_on, payment_type:payment_types(name), cash_account:cash_accounts(name)")
+    .select("id, invoice_id, amount, is_return, reverses_income_id, received_on, payment_type:payment_types(name), cash_account:cash_accounts(name)")
     .in("invoice_id", invoiceIds)
     .order("received_on", { ascending: false });
   if (error) throw error;
@@ -621,6 +621,13 @@ export async function payInvoice({ invoiceId, amount, cashAccountId, paymentType
   if (error) throw error;
 }
 
+// Откат отдельной оплаты счёта клиента: сторно через операцию дохода-возврата
+// (income_return проводит триггер; счёт ДС уменьшается, статус счёта пересчитан)
+export async function reverseInvoicePayment(incomeId) {
+  const { error } = await supabase.rpc("fp_reverse_invoice_payment", { p_income_id: incomeId });
+  if (error) throw error;
+}
+
 // Перемещение между счетами ДС — инкассация (fp_cash_transfer)
 export async function cashTransfer(fromId, toId, amount, periodId, comment) {
   const { error } = await supabase.rpc("fp_cash_transfer", {
@@ -630,17 +637,40 @@ export async function cashTransfer(fromId, toId, amount, periodId, comment) {
 }
 
 // ---------------------------------------------------------------- Вложения
-// kind: 'request' | 'bill'; файл кладём в Storage, ссылку — в таблицу
+// kind: 'request' | 'bill' | 'invoice'; файл кладём в Storage, ссылку — в таблицу
+const ATT_TABLE = { request: "request_attachments", bill: "bill_attachments", invoice: "invoice_attachments" };
+const ATT_FK = { request: "request_id", bill: "bill_id", invoice: "invoice_id" };
+
 export async function uploadAttachment(kind, parentId, file, uploadedBy) {
   const safe = file.name.replace(/[^\wа-яА-ЯёЁ.-]+/gu, "_").slice(-80);
   const path = `${kind}s/${parentId}/${Date.now()}_${safe}`;
   const up = await supabase.storage.from("attachments").upload(path, file);
   if (up.error) throw up.error;
-  const table = kind === "request" ? "request_attachments" : "bill_attachments";
-  const fk = kind === "request" ? "request_id" : "bill_id";
-  const { error } = await supabase.from(table)
-    .insert({ [fk]: parentId, file_path: path, file_name: file.name, uploaded_by: uploadedBy });
+  const { error } = await supabase.from(ATT_TABLE[kind])
+    .insert({ [ATT_FK[kind]]: parentId, file_path: path, file_name: file.name, uploaded_by: uploadedBy });
   if (error) throw error;
+}
+
+// Удаление вложения: сначала строку из таблицы (RLS: автор или финадмин),
+// затем файл из Storage (owner/финадмин по политике attachments)
+export async function deleteAttachment(kind, id, filePath) {
+  const { error } = await supabase.from(ATT_TABLE[kind]).delete().eq("id", id);
+  if (error) throw error;
+  await supabase.storage.from("attachments").remove([filePath]);
+}
+
+// Вложения по списку счетов клиентов: { [invoice_id]: [{...}] }
+export async function fetchInvoiceAttachments(invoiceIds) {
+  if (!invoiceIds.length) return {};
+  const { data, error } = await supabase
+    .from("invoice_attachments")
+    .select("id, invoice_id, file_path, file_name, uploaded_by, created_at")
+    .in("invoice_id", invoiceIds)
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+  const m = {};
+  for (const r of data) (m[r.invoice_id] ??= []).push(r);
+  return m;
 }
 
 export async function attachmentUrl(path) {
