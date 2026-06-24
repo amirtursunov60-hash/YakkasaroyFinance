@@ -839,6 +839,29 @@ export async function fetchAuditLog({ limit = 200 } = {}) {
   return data;
 }
 
+// Комментарии/переписка по заявке (ЗРС-тред, таблица request_comments).
+// Автор — request_comments_author_id_fkey → profiles. RLS: чтение и вставка.
+export async function fetchRequestComments(requestId) {
+  const { data, error } = await supabase
+    .from("request_comments")
+    .select(`id, body, created_at, author:profiles!request_comments_author_id_fkey(full_name)`)
+    .eq("request_id", requestId)
+    .order("created_at");
+  if (error) throw error;
+  return data;
+}
+
+export async function addRequestComment(requestId, body) {
+  const authorId = (await supabase.auth.getUser()).data.user?.id ?? null;
+  const { data, error } = await supabase
+    .from("request_comments")
+    .insert({ request_id: requestId, author_id: authorId, body })
+    .select(`id, body, created_at, author:profiles!request_comments_author_id_fkey(full_name)`)
+    .single();
+  if (error) throw error;
+  return data;
+}
+
 // Оплаты заявок из Реестра (op_type='request_payment') — лента «Операции с
 // заявками» внизу вкладки «Заявки». Заявка попадает в Реестр только при оплате.
 // periodId — показываем оплаты только выбранной недели (период оплаты в Реестре).
