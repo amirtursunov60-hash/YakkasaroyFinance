@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { ArrowUpRight, ArrowDownRight, ChevronRight, Plus, X, Loader2, AlertCircle, Calculator, Trash2, Store } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, ChevronRight, Plus, X, Loader2, AlertCircle, Calculator, Trash2, Store, List, Undo2, Pencil, CalendarDays } from "lucide-react";
 import { useTheme } from "../../theme/theme";
 import { useScrollLock } from "../../hooks/useScrollLock";
 import { fmt } from "../../utils/format";
@@ -8,6 +8,7 @@ import {
   isoDate, getPeriodFor,
   fetchIncomeTypes, fetchIncomeSums, fetchIncomeRefs, findRate, insertIncome,
   fetchRulesByIncomeType, fetchFunds, addDistributionRule, deleteDistributionRule,
+  fetchIncomeOperations, reverseIncome,
 } from "../../lib/api";
 
 
@@ -25,7 +26,12 @@ export function Income() {
   const [refs, setRefs] = useState(null);
   const [open, setOpen] = useState(null);         // раскрытые папки; null = ещё не инициализировано
   const [showForm, setShowForm] = useState(false);
+  const [formInit, setFormInit] = useState(null);   // предзаполнение формы (правка = сторно + повтор)
+  const [ops, setOps] = useState([]);               // лента операций недели
+  const [opsOpen, setOpsOpen] = useState(false);
+  const [opBusy, setOpBusy] = useState(null);
   const isFinAdmin = ["owner", "fin_director"].includes(profile?.role);
+  const canReverse = isFinAdmin || ["accountant", "location_manager"].includes(profile?.role);
   const isClosed = period?.status === "closed";
   const [rulesByType, setRulesByType] = useState({}); // схемы распределения по видам дохода
   const [funds, setFunds] = useState([]);
@@ -64,6 +70,50 @@ export function Income() {
     }
   }, [period?.id, prevPeriod?.id, ctxLocationId]);
   useEffect(() => { if (!periodsLoading) loadSums(); }, [loadSums, periodsLoading]);
+
+  const loadOps = useCallback(async () => {
+    if (!period?.id) { setOps([]); return; }
+    try { setOps(await fetchIncomeOperations({ periodId: period.id, locationId: ctxLocationId })); }
+    catch (e) { setLoadError("Не удалось загрузить операции: " + (e?.message || e)); }
+  }, [period?.id, ctxLocationId]);
+  useEffect(() => { if (!periodsLoading) loadOps(); }, [loadOps, periodsLoading]);
+
+  // id операций, у которых есть сторно (нельзя отменять повторно)
+  const reversedIds = useMemo(() => {
+    const s = new Set();
+    ops.forEach((o) => { if (o.reverses_income_id) s.add(o.reverses_income_id); });
+    return s;
+  }, [ops]);
+
+  const refresh = useCallback(async () => { await Promise.all([loadSums(), loadOps()]); }, [loadSums, loadOps]);
+
+  const doReverse = async (op) => {
+    if (opBusy) return;
+    if (!window.confirm(`Отменить операцию дохода ${fmt(Number(op.amount))} ${op.currency?.code || ""}? Будет проведено сторно — сумма снимется со счёта ДС.`)) return;
+    setOpBusy(`rev:${op.id}`); setLoadError("");
+    try { await reverseIncome(op.id); await refresh(); }
+    catch (e) { setLoadError(e?.message || String(e)); }
+    finally { setOpBusy(null); }
+  };
+
+  // Правка = сторно исходной операции + форма, предзаполненная её значениями
+  const doEdit = async (op) => {
+    if (opBusy) return;
+    if (!window.confirm(`Изменить операцию? Текущая будет отменена (сторно), затем введите исправленную.`)) return;
+    setOpBusy(`edit:${op.id}`); setLoadError("");
+    try {
+      await reverseIncome(op.id);
+      await refresh();
+      setFormInit({
+        typeId: op.income_type_id || "", amount: String(op.amount ?? ""), currencyId: op.currency_id || "",
+        date: op.received_on, accountId: op.cash_account_id || "", payTypeId: op.payment_type_id || "",
+        locationId: op.location_id || "", counterpartyId: op.counterparty_id || "",
+        isReturn: false, comment: op.comment || "",
+      });
+      setShowForm(true);
+    } catch (e) { setLoadError(e?.message || String(e)); }
+    finally { setOpBusy(null); }
+  };
 
   // Дерево из плоского списка; сортировка по коду
   const byParent = useMemo(() => {
@@ -254,12 +304,74 @@ export function Income() {
       })}
     </div>
 
+    {/* Лента отдельных операций дохода недели (ManaJet FpIncome) */}
+    <div style={{ ...st.dataCard, marginTop: 14 }}>
+      <div style={st.locHead} className="locHead" onClick={() => setOpsOpen((v) => !v)}>
+        <div style={{ width: 34, height: 34, borderRadius: 10, display: "grid", placeItems: "center", flexShrink: 0, background: `${C.info}22`, color: C.info }}>
+          <List size={18} />
+        </div>
+        <div style={st.locTitle}>
+          <div style={st.locName}>Операции дохода</div>
+          <div style={st.locCode}>{ops.length ? `${ops.length} операций за неделю` : "за неделю операций нет"}</div>
+        </div>
+        <span style={{ ...st.locChevron, transform: opsOpen ? "rotate(90deg)" : "none" }}><ChevronRight size={18} /></span>
+      </div>
+
+      {opsOpen && (
+        <div style={st.locBody}>
+          {!ops.length && <div style={{ ...st.empty, padding: "14px 0" }}>Операций за эту неделю пока нет</div>}
+          {ops.map((op) => {
+            const isReversed = reversedIds.has(op.id);
+            const isStorno = !!op.reverses_income_id;       // сама запись-сторно
+            const allowReverse = canReverse && !isClosed && !op.is_return && !isReversed;
+            const sign = op.is_return ? "−" : "+";
+            const col = op.is_return ? C.danger : C.money;
+            return (
+              <div key={op.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px",
+                borderTop: `1px solid ${C.line}`, opacity: isReversed ? 0.55 : 1, flexWrap: "wrap" }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontWeight: 600, fontSize: 13.5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {op.income_type ? `${op.income_type.code || ""} ${op.income_type.name}` : "—"}
+                    {op.counterparty ? ` · ${op.counterparty.name}` : ""}
+                  </div>
+                  <div style={{ fontSize: 11.5, color: C.faint, display: "flex", gap: 8, flexWrap: "wrap", marginTop: 2 }}>
+                    <span><CalendarDays size={11} style={{ verticalAlign: -1, marginRight: 3 }} />{new Date(op.received_on + "T00:00:00").toLocaleDateString("ru")}</span>
+                    {op.cash_account && <span>· {op.cash_account.name}</span>}
+                    {op.payment_type && <span>· {op.payment_type.name}</span>}
+                    {isStorno && <span style={{ color: C.danger }}>· сторно</span>}
+                    {isReversed && <span>· отменена</span>}
+                    {op.comment && <span>· {op.comment}</span>}
+                  </div>
+                </div>
+                <b style={{ color: col, fontVariantNumeric: "tabular-nums", flexShrink: 0 }}>
+                  {sign}{fmt(Number(op.amount))} <span style={{ fontSize: 11, color: C.faint }}>{op.currency?.code}</span>
+                </b>
+                {allowReverse && (
+                  <span style={{ display: "inline-flex", gap: 4, flexShrink: 0 }}>
+                    <button style={{ ...st.iconBtn, width: 28, height: 28 }} className="btn" title="Изменить (сторно + повтор)"
+                      disabled={!!opBusy} onClick={() => doEdit(op)}>
+                      {opBusy === `edit:${op.id}` ? <Loader2 size={13} className="spin" /> : <Pencil size={13} />}
+                    </button>
+                    <button style={{ ...st.iconBtn, width: 28, height: 28, color: C.danger }} className="btn" title="Отменить (сторно)"
+                      disabled={!!opBusy} onClick={() => doReverse(op)}>
+                      {opBusy === `rev:${op.id}` ? <Loader2 size={13} className="spin" /> : <Undo2 size={13} />}
+                    </button>
+                  </span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+
     {showForm && refs && (
       <IncomeForm
         refs={refs} tree={tree} byParent={byParent} locationOf={locationOf}
         period={period} ctxLocationId={ctxLocationId} profile={profile} isMobile={isMobile} C={C} st={st}
-        onClose={() => setShowForm(false)}
-        onSaved={() => { setShowForm(false); loadSums(); }}
+        initVals={formInit}
+        onClose={() => { setShowForm(false); setFormInit(null); }}
+        onSaved={() => { setShowForm(false); setFormInit(null); refresh(); }}
       />
     )}
     {schemeType && (
@@ -362,7 +474,7 @@ const Field = ({ st, label, full, children }) => (
   </div>
 );
 
-function IncomeForm({ refs, tree, byParent, locationOf, period, ctxLocationId, profile, isMobile, C, st, onClose, onSaved }) {
+function IncomeForm({ refs, tree, byParent, locationOf, period, ctxLocationId, profile, isMobile, C, st, initVals, onClose, onSaved }) {
   useScrollLock();
   const baseCur = refs.currencies.find((c) => c.is_base) || refs.currencies[0];
   // Дата по умолчанию: сегодня, если попадает в выбранную неделю, иначе её начало
@@ -373,6 +485,7 @@ function IncomeForm({ refs, tree, byParent, locationOf, period, ctxLocationId, p
     typeId: "", amount: "", currencyId: baseCur?.id || "", date: defDate,
     accountId: "", payTypeId: "", locationId: ctxLocationId || "", counterpartyId: "",
     isReturn: false, comment: "",
+    ...(initVals || {}),
   });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
@@ -432,7 +545,7 @@ function IncomeForm({ refs, tree, byParent, locationOf, period, ctxLocationId, p
     <div style={st.mdOverlay} data-modal="1" onClick={onClose}>
       <div style={st.mdCard} onClick={(e) => e.stopPropagation()}>
         <div style={st.mdHead}>
-          <div style={st.mdTitle}>Операция дохода</div>
+          <div style={st.mdTitle}>{initVals ? "Исправление операции дохода" : "Операция дохода"}</div>
           <button style={st.iconBtn} onClick={onClose} aria-label="Закрыть"><X size={17} /></button>
         </div>
 

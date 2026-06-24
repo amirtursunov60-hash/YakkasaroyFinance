@@ -130,6 +130,34 @@ export async function insertIncome(row) {
   return data;
 }
 
+// Лента отдельных операций дохода недели (ManaJet FpIncome): не свод по видам,
+// а каждая операция. Включает сторно (is_return + reverses_income_id).
+export async function fetchIncomeOperations({ periodId, locationId } = {}) {
+  if (!periodId) return [];
+  let q = supabase
+    .from("incomes")
+    .select(`id, amount, amount_base, received_on, is_return, reverses_income_id, source, comment, created_at,
+      income_type_id, currency_id, cash_account_id, payment_type_id, counterparty_id, location_id,
+      income_type:income_types(code, name),
+      currency:currencies(code, is_base),
+      cash_account:cash_accounts(name),
+      payment_type:payment_types(name),
+      counterparty:counterparties(name),
+      location:locations(name)`)
+    .eq("period_id", periodId)
+    .order("received_on", { ascending: false }).order("created_at", { ascending: false });
+  if (locationId) q = q.eq("location_id", locationId);
+  const { data, error } = await q;
+  if (error) throw error;
+  return data;
+}
+
+// Отмена операции дохода через сторно (доход-возврат; миграция 20260624230000).
+export async function reverseIncome(incomeId) {
+  const { error } = await supabase.rpc("fp_reverse_income", { p_income_id: incomeId });
+  if (error) throw error;
+}
+
 // ---------------------------------------------------------------- Расходы / Заявки (ЗРС)
 export async function fetchExpenseTypes() {
   const { data, error } = await supabase
