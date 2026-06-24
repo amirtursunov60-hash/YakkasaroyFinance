@@ -23,7 +23,6 @@ export const NAV_FINANCE = [
   { key: "expense", icon: ArrowDownLeft, label: "Расходы" },
   { key: "suppliers", icon: FileText, label: "Поставщики" },
   { key: "clients", icon: ClipboardList, label: "Клиенты" },
-  { key: "counterparties", icon: Building2, label: "Контрагенты" },
   { key: "funds", icon: Layers, label: "Фонды" },
   { key: "directive", icon: SlidersHorizontal, label: "Директива" },
   { key: "requests", icon: ClipboardList, label: "Заявки" },
@@ -62,6 +61,7 @@ export const NAV_DASH = [
 export const NAV_CRM = [
   { key: "c_funnel", icon: SlidersHorizontal, label: "Воронка банкетов" },
   { key: "c_clients", icon: Contact, label: "База клиентов" },
+  { key: "c_counterparties", icon: Building2, label: "Контрагенты" },
   { key: "c_bookings", icon: CalendarDays, label: "Брони залов" },
 ];
 

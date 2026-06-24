@@ -11,7 +11,7 @@ import { CrmModule } from "../modules/crm/CrmModule";
 import { DashModule } from "../modules/dashboard/DashModule";
 import { OwnerDashboard } from "../modules/dashboard/OwnerDashboard";
 import { Clients } from "../modules/finance/Clients";
-import { Counterparties } from "../modules/finance/Counterparties";
+import { Counterparties } from "../modules/crm/Counterparties";
 import { Control } from "../modules/finance/Control";
 import { Directive } from "../modules/finance/Directive";
 import { Expenses } from "../modules/finance/Expenses";
@@ -229,7 +229,6 @@ export function App({ onLogout }) {
           {activeModule === "finance" && active === "funds" && <Funds />}
           {activeModule === "finance" && active === "suppliers" && <Suppliers />}
           {activeModule === "finance" && active === "clients" && <Clients />}
-          {activeModule === "finance" && active === "counterparties" && <Counterparties />}
           {activeModule === "finance" && active === "reports" && <Reports />}
           {activeModule === "finance" && active === "payroll" && <Payroll />}
           {activeModule === "finance" && !["directive", "income", "control", "expense", "requests", "register", "audit", "funds", "suppliers", "clients", "reports", "payroll"].includes(active) && <Stub label={navList.find((n) => n.key === active)?.label} />}
@@ -243,7 +242,8 @@ export function App({ onLogout }) {
           {activeModule === "dashboard" && active === "d_owner" && <OwnerDashboard />}
           {activeModule === "dashboard" && active !== "d_owner" && <DashModule view={active} />}
 
-          {activeModule === "crm" && <CrmModule view={active} />}
+          {activeModule === "crm" && active === "c_counterparties" && <Counterparties />}
+          {activeModule === "crm" && active !== "c_counterparties" && <CrmModule view={active} />}
 
           {activeModule === "restaurant" && active === "r_orders" && <RestOrders />}
           {activeModule === "restaurant" && active === "r_tables" && <RestTables />}
