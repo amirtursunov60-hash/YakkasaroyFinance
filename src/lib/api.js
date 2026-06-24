@@ -803,13 +803,14 @@ export async function globalSearch(qstr) {
 
 // ---------------------------------------------------------------- Реестр операций
 // Единая лента всех операций ФП (ТЗ §4.1.9) с фильтрами
-export async function fetchRegister({ periodId, opType, fundId, cashAccountId, limit = 200 } = {}) {
+export async function fetchRegister({ periodId, opType, fundId, cashAccountId, counterpartyId, paymentTypeId, limit = 200 } = {}) {
   let q = supabase
     .from("fp_register")
     .select(`id, op_type, fund_amount, cash_amount, comment, created_at, period_id,
       fund:funds(code, name),
       cash_account:cash_accounts(name),
       counterparty:counterparties(name),
+      payment_type:payment_types(name),
       creator:profiles!fp_register_created_by_fkey(full_name)`)
     .order("created_at", { ascending: false })
     .limit(limit);
@@ -817,6 +818,8 @@ export async function fetchRegister({ periodId, opType, fundId, cashAccountId, l
   if (opType) q = q.eq("op_type", opType);
   if (fundId) q = q.eq("fund_id", fundId);
   if (cashAccountId) q = q.eq("cash_account_id", cashAccountId);
+  if (counterpartyId) q = q.eq("counterparty_id", counterpartyId);
+  if (paymentTypeId) q = q.eq("payment_type_id", paymentTypeId);
   const { data, error } = await q;
   if (error) throw error;
   return data;

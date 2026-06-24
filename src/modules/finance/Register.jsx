@@ -38,7 +38,9 @@ export function Register() {
   const [rows, setRows] = useState([]);
   const [funds, setFunds] = useState([]);
   const [accounts, setAccounts] = useState([]);
-  const [f, setF] = useState({ scope: "week", opType: "", fundId: "", accountId: "" });
+  const [counterparties, setCounterparties] = useState([]);
+  const [payTypes, setPayTypes] = useState([]);
+  const [f, setF] = useState({ scope: "week", opType: "", fundId: "", accountId: "", counterpartyId: "", paymentTypeId: "" });
 
   useEffect(() => {
     (async () => {
@@ -46,6 +48,8 @@ export function Register() {
         const [fs, refs] = await Promise.all([fetchFunds(), fetchIncomeRefs()]);
         setFunds(fs.sort((a, b) => a.code.localeCompare(b.code, "ru", { numeric: true })));
         setAccounts(refs.accounts);
+        setCounterparties(refs.counterparties || []);
+        setPayTypes(refs.payTypes || []);
       } catch (e) { setErr(e?.message || String(e)); }
     })();
   }, []);
@@ -57,6 +61,7 @@ export function Register() {
       setRows(await fetchRegister({
         periodId: f.scope === "week" ? periodId : null,
         opType: f.opType || null, fundId: f.fundId || null, cashAccountId: f.accountId || null,
+        counterpartyId: f.counterpartyId || null, paymentTypeId: f.paymentTypeId || null,
       }));
     } catch (e) { setErr("Не удалось загрузить Реестр: " + (e?.message || e)); }
     finally { setLoading(false); }
@@ -75,13 +80,14 @@ export function Register() {
   const set = (k) => (e) => setF((p) => ({ ...p, [k]: e.target.value }));
 
   const exportCsv = () => {
-    const head = ["Дата", "Тип", "Фонд", "Счёт ДС", "Контрагент", "Сумма (фонд)", "Сумма (счёт)", "Комментарий", "Провёл"];
+    const head = ["Дата", "Тип", "Фонд", "Счёт ДС", "Контрагент", "Способ оплаты", "Сумма (фонд)", "Сумма (счёт)", "Комментарий", "Провёл"];
     const lines = rows.map((r) => [
       new Date(r.created_at).toLocaleString("ru"),
       OP_META[r.op_type]?.label || r.op_type,
       r.fund ? `${r.fund.code} ${r.fund.name}` : "",
       r.cash_account?.name || "",
       r.counterparty?.name || "",
+      r.payment_type?.name || "",
       r.fund_amount ?? "", r.cash_amount ?? "",
       r.comment || "", r.creator?.full_name || "",
     ]);
@@ -140,6 +146,18 @@ export function Register() {
           <option value="">Все счета ДС</option>
           {accounts.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
         </select>
+        {counterparties.length > 0 && (
+          <select style={selStyle} className="fin" value={f.counterpartyId} onChange={set("counterpartyId")}>
+            <option value="">Все контрагенты</option>
+            {counterparties.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
+        )}
+        {payTypes.length > 0 && (
+          <select style={selStyle} className="fin" value={f.paymentTypeId} onChange={set("paymentTypeId")}>
+            <option value="">Все способы оплаты</option>
+            {payTypes.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+          </select>
+        )}
       </div>
     </section>
 
@@ -170,6 +188,7 @@ export function Register() {
               {[r.fund ? `${r.fund.code} ${r.fund.name}` : null,
                 r.cash_account?.name,
                 r.counterparty?.name,
+                r.payment_type?.name,
                 r.comment].filter(Boolean).join(" · ") || "—"}
             </div>
             {!isMobile && r.creator && (
