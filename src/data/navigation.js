@@ -18,17 +18,17 @@ export const MODULES = [
 
 // Разделы (сайдбар) для каждого модуля
 export const NAV_FINANCE = [
-  { key: "control", icon: Wallet, label: "Баланс" },
+  { key: "control", icon: Wallet, label: "Контроль средств" },
   { key: "income", icon: ArrowUpRight, label: "Доходы" },
   { key: "expense", icon: ArrowDownLeft, label: "Расходы" },
-  { key: "suppliers", icon: FileText, label: "Поставщики" },
-  { key: "clients", icon: ClipboardList, label: "Клиенты" },
+  { key: "suppliers", icon: FileText, label: "Счета поставщиков" },
+  { key: "clients", icon: ClipboardList, label: "Счета клиентов" },
   { key: "funds", icon: Layers, label: "Фонды" },
   { key: "directive", icon: SlidersHorizontal, label: "Директива" },
   { key: "requests", icon: ClipboardList, label: "Заявки" },
-  { key: "payroll", icon: Calculator, label: "Зарплаты" },
-  { key: "reports", icon: BarChart3, label: "Отчёты" },
-  { key: "register", icon: List, label: "Реестр" },
+  { key: "payroll", icon: Calculator, label: "Расчёт зарплаты" },
+  { key: "reports", icon: BarChart3, label: "Управленческие отчёты" },
+  { key: "register", icon: List, label: "Реестр операций" },
   { key: "audit", icon: ShieldCheck, label: "Журнал аудита" },
 ];
 
