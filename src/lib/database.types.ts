@@ -3348,6 +3348,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      fp_withdraw_request: { Args: { p_request_id: string }; Returns: undefined }
       has_fund_access: { Args: { f: string }; Returns: boolean }
       has_location_access: { Args: { loc: string }; Returns: boolean }
       holds_position: { Args: { pos: string }; Returns: boolean }
@@ -3407,6 +3408,7 @@ export type Database = {
         | "approved"
         | "rejected"
         | "paid"
+        | "withdrawn"
       task_priority: "low" | "mid" | "high"
       task_status: "new" | "progress" | "done"
     }

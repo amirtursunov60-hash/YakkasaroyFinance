@@ -13,7 +13,7 @@ import {
   fetchRequests, payRequest, fetchRequestPayments, reverseRequestPayment,
   fetchFunds, fetchIncomeRefs,
   fetchExpenseTypes, insertRequest, updateRequest, createPositionAndAssign, fetchMyPositions, fetchOrgDivisions,
-  fetchRequestComments, addRequestComment,
+  fetchRequestComments, addRequestComment, withdrawRequest,
 } from "../../lib/api";
 import { requestPrefill } from "./requestCopy";
 
@@ -32,6 +32,7 @@ export const reqStatusMeta = (C) => ({
   approved:  { label: "одобрена",        color: C.successSoft },
   rejected:  { label: "отклонена",       color: C.danger },
   paid:      { label: "оплачена",        color: C.success },
+  withdrawn: { label: "отозвана",        color: C.sub },
 });
 
 // «К рассмотрению на ФП» = ждут решения финкомитета (поданные + на планировании).
@@ -101,6 +102,7 @@ export function Requests() {
   const [cancelPay, setCancelPay] = useState(null);         // строка оплаты для отмены (подтверждение)
   const [cancelErr, setCancelErr] = useState("");           // ошибка отмены — показывается в самой модалке
   const [busy, setBusy] = useState(null);
+  const [withdrawTarget, setWithdrawTarget] = useState(null); // заявка к отзыву (подтверждение)
   const [reqFilter, setReqFilter] = useState("approved");   // здесь оплачиваем — по умолчанию «Одобрено»
   const [src, setSrc] = useState("ours");                   // источник: наши данные / зеркало ManaJet
 
@@ -121,6 +123,25 @@ export function Requests() {
   const editRequest = (item) => {
     setErr("");
     setEditReq(item);
+  };
+
+  // Отозвать можно только свою заявку, пока она «подана» (до решения финкомитета).
+  // Совпадает с инвариантом RPC fp_withdraw_request.
+  const canWithdraw = (item) =>
+    item.requester_id === profile.id && item.status === "submitted";
+
+  const doWithdraw = async () => {
+    const item = withdrawTarget;
+    if (!item || busy) return;
+    setBusy("withdraw"); setErr(""); setDone("");
+    try {
+      await withdrawRequest(item.id);
+      setWithdrawTarget(null);
+      await loadItems();
+      setDone(`Заявка №${item.number} отозвана`);
+      feedbackSuccess();
+    } catch (e) { setErr(e?.message || String(e)); feedbackError(); }
+    finally { setBusy(null); }
   };
 
   // Открыть пустую форму подачи новой заявки (кнопка в шапке / под показателями на телефоне).
@@ -247,6 +268,11 @@ export function Requests() {
             <Pencil size={14} /> Изменить
           </button>
         )}
+        {canWithdraw(item) && (
+          <button style={st.btnGhost} className="btn" disabled={!!busy} onClick={() => setWithdrawTarget(item)} title="Отозвать свою заявку (пока она на рассмотрении)">
+            <Ban size={14} /> Отозвать
+          </button>
+        )}
         <button style={st.btnGhost} className="btn" disabled={!!busy} onClick={() => copyRequest(item)} title="Создать новую заявку с этими же данными">
           <Copy size={14} /> Копировать
         </button>
@@ -335,6 +361,13 @@ export function Requests() {
       <DecideModal C={C} st={st} decide={decide} funds={funds} accounts={refs?.accounts || []}
         periods={periods} currentPeriodId={periodId}
         busy={busy === "decide"} onClose={() => setDecide(null)} onConfirm={doDecide} />
+    )}
+
+    {withdrawTarget && (
+      <ConfirmModal title="Отозвать заявку"
+        message={`Заявка №${withdrawTarget.number} будет отозвана и снята с рассмотрения финкомитетом. Это не отказ — статус станет «отозвана». При необходимости подайте новую заявку («Копировать»).`}
+        tone="warning" confirmLabel="Отозвать" busy={busy === "withdraw"}
+        onConfirm={doWithdraw} onCancel={() => setWithdrawTarget(null)} />
     )}
 
     {(showForm || editReq) && refs && (
