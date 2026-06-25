@@ -10,6 +10,7 @@ import { useScrollLock } from "../../hooks/useScrollLock";
 import { useActionFeedback } from "../../hooks/useActionFeedback";
 import { fmt } from "../../utils/format";
 import { usePeriod, periodTitle } from "../../lib/PeriodCtx";
+import { PaymentTypesManager } from "./PaymentTypesManager";
 import {
   fetchFunds, fetchIncomeRefs, createFund, updateFund, archiveFund, triggerMjImportRefs,
   fetchFundDebts, fetchFundCommitments, fetchFundJournal, fetchFundLoans,
@@ -429,6 +430,9 @@ export function Funds() {
         );
       })}
     </section>
+
+    {/* Справочник способов оплаты (Фонды §8) — CRUD для фин-админов */}
+    {isFinAdmin && <PaymentTypesManager />}
 
     {statement && (
       <FundStatementModal C={C} st={st} statement={statement} period={period}
