@@ -31,6 +31,7 @@ export const reqStatusMeta = (C) => ({
   planning:  { label: "на планировании", color: C.info },
   approved:  { label: "одобрена",        color: C.successSoft },
   rejected:  { label: "отклонена",       color: C.danger },
+  revision:  { label: "на доработке",    color: C.gold },
   paid:      { label: "оплачена",        color: C.success },
   withdrawn: { label: "отозвана",        color: C.sub },
 });
@@ -40,7 +41,7 @@ export const isReviewStatus = (status) => ["submitted", "planning"].includes(sta
 
 // Счётчики заявок по статусам — для чипов-фильтров.
 export const requestCounts = (requests) => {
-  const c = { all: requests.length, review: 0, approved: 0, rejected: 0, paid: 0, withdrawn: 0 };
+  const c = { all: requests.length, review: 0, approved: 0, rejected: 0, revision: 0, paid: 0, withdrawn: 0 };
   requests.forEach((r) => {
     if (isReviewStatus(r.status)) c.review += 1;
     if (c[r.status] !== undefined) c[r.status] += 1;
@@ -57,6 +58,7 @@ export function RequestStatusChips({ C, counts, filter, setFilter }) {
     { key: "review",   label: "К рассмотрению на ФП", color: C.warning },
     { key: "approved", label: "Одобрено",            color: C.successSoft },
     { key: "rejected", label: "Отклонено",           color: C.danger },
+    { key: "revision", label: "На доработке",        color: C.gold },
     { key: "paid",     label: "Оплачено",            color: C.success },
     { key: "withdrawn", label: "Отозвано",           color: C.sub },
     { key: "all",      label: "Все",                 color: C.green },
@@ -120,7 +122,7 @@ export function Requests() {
   // любую на рассмотрении. Совпадает с RLS payment_requests (requests_update).
   const canEditReq = (item) =>
     (isFinAdmin && isReviewStatus(item.status)) ||
-    (item.requester_id === profile.id && item.status === "submitted");
+    (item.requester_id === profile.id && (item.status === "submitted" || item.status === "revision"));
 
   const editRequest = (item) => {
     setErr("");
@@ -470,6 +472,9 @@ export function ItemCard({ C, st, item, itemKind, isExpanded, onToggle, statusMe
             {item.status === "rejected" && item.rejection_reason && (
               <div style={{ color: C.danger, fontSize: 13 }}>Причина отклонения: {item.rejection_reason}</div>
             )}
+            {item.status === "revision" && item.rejection_reason && (
+              <div style={{ color: C.gold, fontSize: 13 }}>На доработку: {item.rejection_reason}</div>
+            )}
             {itemKind === "request" && <RequestComments C={C} st={st} requestId={item.id} />}
             {children}
           </div>
@@ -658,6 +663,9 @@ function RequestForm({ st, isMobile, profile, tree, refs, funds, periods, locati
         csw_data: f.cswData.trim(), csw_situation: f.cswSituation.trim(), csw_solution: f.cswSolution.trim(),
       };
       if (isEdit) {
+        // Заявку, возвращённую на доработку, правка автором подаёт заново:
+        // status → submitted, заметка финкомитета (rejection_reason) очищается.
+        if (editItem.status === "revision") { payload.status = "submitted"; payload.rejection_reason = null; }
         await updateRequest(editItem.id, payload);
       } else {
         await insertRequest({
