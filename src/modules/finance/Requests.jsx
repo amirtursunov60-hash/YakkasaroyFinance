@@ -534,7 +534,8 @@ function RequestComments({ C, st, requestId }) {
     const tempId = `tmp-${Date.now()}`;
     // Оптимистично показываем своё сообщение: сначала одна галочка («отправлено»).
     setComments((c) => [...(c || []), { id: tempId, body, created_at: new Date().toISOString(),
-      is_ai: false, author_id: profile?.id, author: { full_name: profile?.full_name }, _status: "sent" }]);
+      is_ai: false, author_id: profile?.id,
+      author: { full_name: profile?.full_name, avatar_url: profile?.avatar_url }, _status: "sent" }]);
     setText("");
     try {
       const added = await addRequestComment(requestId, body);
@@ -581,25 +582,34 @@ function RequestComments({ C, st, requestId }) {
         <div style={{ display: "grid", gap: 6 }}>
           {comments.map((c) => {
             const own = !c.is_ai && c.author_id && c.author_id === profile?.id;
+            const avatar = c.is_ai
+              ? <div style={{ width: 28, height: 28, borderRadius: "50%", display: "grid", placeItems: "center", flexShrink: 0, background: `${C.green}22`, color: C.green, border: `1px solid ${C.green}55` }}><Briefcase size={14} /></div>
+              : <RequesterAvatar requester={c.author} size={28} round />;
             return (
-              <div key={c.id} style={{ fontSize: 12.5, color: C.sub, background: C.solid2,
-                border: `1px solid ${C.line}`, borderRadius: 10, padding: "7px 10px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", gap: 8, marginBottom: 2 }}>
-                  <b style={{ color: c.is_ai ? C.green : C.text, fontSize: 11.5, display: "inline-flex", alignItems: "center", gap: 4 }}>
-                    {c.is_ai ? <><Briefcase size={12} /> Финансовый директор</> : (c.author?.full_name || "—")}
-                  </b>
-                  <span style={{ display: "inline-flex", alignItems: "center", gap: 4, color: C.faint, fontSize: 10.5 }}>
-                    {new Date(c.created_at).toLocaleString("ru", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
-                    {own && ownTick(c)}
-                  </span>
+              <div key={c.id} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+                {avatar}
+                <div style={{ flex: 1, minWidth: 0, fontSize: 12.5, color: C.sub, background: C.solid2,
+                  border: `1px solid ${C.line}`, borderRadius: 10, padding: "7px 10px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", gap: 8, marginBottom: 2 }}>
+                    <b style={{ color: c.is_ai ? C.green : C.text, fontSize: 11.5 }}>
+                      {c.is_ai ? "Финансовый директор" : (c.author?.full_name || "—")}
+                    </b>
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, color: C.faint, fontSize: 10.5, flexShrink: 0 }}>
+                      {new Date(c.created_at).toLocaleString("ru", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                      {own && ownTick(c)}
+                    </span>
+                  </div>
+                  <div style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{c.body}</div>
                 </div>
-                <div style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{c.body}</div>
               </div>
             );
           })}
           {typing && (
-            <div style={{ fontSize: 12, color: C.green, display: "inline-flex", alignItems: "center", gap: 6, padding: "2px" }}>
-              <Pencil size={12} /> Финансовый директор печатает<TypingDots />
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <div style={{ width: 28, height: 28, borderRadius: "50%", display: "grid", placeItems: "center", flexShrink: 0, background: `${C.green}22`, color: C.green, border: `1px solid ${C.green}55` }}><Briefcase size={14} /></div>
+              <span style={{ fontSize: 12, color: C.green, display: "inline-flex", alignItems: "center", gap: 6 }}>
+                <Pencil size={12} /> печатает<TypingDots />
+              </span>
             </div>
           )}
         </div>

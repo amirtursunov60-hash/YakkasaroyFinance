@@ -1062,7 +1062,7 @@ export async function fetchAuditLog({ limit = 200 } = {}) {
 export async function fetchRequestComments(requestId) {
   const { data, error } = await supabase
     .from("request_comments")
-    .select(`id, body, created_at, is_ai, author_id, author:profiles!request_comments_author_id_fkey(full_name)`)
+    .select(`id, body, created_at, is_ai, author_id, author:profiles!request_comments_author_id_fkey(full_name, avatar_url)`)
     .eq("request_id", requestId)
     .order("created_at");
   if (error) throw error;
