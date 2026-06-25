@@ -10,6 +10,7 @@ import {
   fetchRulesByIncomeType, fetchFunds, addDistributionRule, deleteDistributionRule,
   fetchIncomeOperations, reverseIncome,
 } from "../../lib/api";
+import { IncomeTypesManager } from "./IncomeTypesManager";
 
 
 // ---------------------------------------------------------------- INCOME
@@ -430,6 +431,9 @@ export function Income() {
         rules={rulesByType[schemeType.id] || []} funds={funds}
         onChanged={reloadRules} onClose={() => setSchemeType(null)} />
     )}
+
+    {/* Справочник видов дохода (D-коды, §8) — CRUD для фин-админов */}
+    {isFinAdmin && <IncomeTypesManager />}
   </>);
 }
 

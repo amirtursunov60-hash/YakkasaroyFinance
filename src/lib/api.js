@@ -64,6 +64,38 @@ export async function fetchIncomeTypes() {
   return data;
 }
 
+// ---- Виды дохода (справочник income_types, Доход §8) -----------------------
+// CRUD под RLS-политикой itypes_write = is_fin_admin() (см. baseline-схему).
+// Дерево: папки (parent_id IS NULL, с привязкой к точке) → листья (parent_id).
+export async function fetchIncomeTypesManage({ includeArchived = false } = {}) {
+  let query = supabase
+    .from("income_types")
+    .select("id, code, name, parent_id, location_id, is_archived, location:locations(name)");
+  if (!includeArchived) query = query.eq("is_archived", false);
+  const { data, error } = await query.order("code");
+  if (error) throw error;
+  return data;
+}
+
+export async function createIncomeType({ code, name, parentId = null }) {
+  const { data, error } = await supabase
+    .from("income_types")
+    .insert({ code: code || null, name, parent_id: parentId || null })
+    .select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function updateIncomeType(id, patch) {
+  const { error } = await supabase.from("income_types").update(patch).eq("id", id);
+  if (error) throw error;
+}
+
+export async function setIncomeTypeArchived(id, archived) {
+  const { error } = await supabase.from("income_types").update({ is_archived: archived }).eq("id", id);
+  if (error) throw error;
+}
+
 // Суммы доходов по видам за указанные периоды:
 // { [income_type_id]: { [period_id]: сумма в базовой валюте } }
 export async function fetchIncomeSums(periodIds, locationId) {
