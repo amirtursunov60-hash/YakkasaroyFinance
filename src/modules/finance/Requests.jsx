@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
-import { ClipboardList, Check, Ban, Banknote, Loader2, AlertCircle, CheckCircle2, ChevronRight, X, Network, Plus, Copy, Pencil, ListChecks, RotateCcw, MessageSquare, Send, Bot } from "lucide-react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { ClipboardList, Check, Ban, Banknote, Loader2, AlertCircle, CheckCircle2, ChevronRight, X, Network, Plus, Copy, Pencil, ListChecks, RotateCcw, MessageSquare, Send, Briefcase } from "lucide-react";
 import { Stat, ConfirmModal } from "../../components/common";
 import { InfoHint } from "../../components/InfoHint";
 import { useTheme } from "../../theme/theme";
@@ -494,18 +494,23 @@ function RequestComments({ C, st, requestId }) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
 
+  // Отложенные перезагрузки (send/таймеры) могут сработать после закрытия треда —
+  // mountedRef защищает от setState на размонтированном компоненте.
+  const mounted = useRef(true);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
+
+  const reload = useCallback(() => fetchRequestComments(requestId)
+    .then((d) => { if (mounted.current) setComments(d); })
+    .catch((e) => { if (mounted.current) setErr(e?.message || String(e)); }), [requestId]);
+
   useEffect(() => {
-    let active = true;
-    const load = () => fetchRequestComments(requestId)
-      .then((d) => { if (active) setComments(d); })
-      .catch((e) => { if (active) setErr(e?.message || String(e)); });
-    load();
-    // ИИ-рецензия прилетает через несколько секунд после подачи — подхватываем
-    // её парой отложенных перезагрузок (без постоянного опроса).
-    const t1 = setTimeout(load, 6000);
-    const t2 = setTimeout(load, 14000);
-    return () => { active = false; clearTimeout(t1); clearTimeout(t2); };
-  }, [requestId]);
+    reload();
+    // Ответ финдиректора прилетает через несколько секунд — подхватываем
+    // парой отложенных перезагрузок (без постоянного опроса).
+    const t1 = setTimeout(reload, 6000);
+    const t2 = setTimeout(reload, 14000);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, [reload]);
 
   const send = async () => {
     const body = text.trim();
@@ -515,6 +520,10 @@ function RequestComments({ C, st, requestId }) {
       const added = await addRequestComment(requestId, body);
       setComments((c) => [...(c || []), added]);
       setText("");
+      // Финдиректор реагирует на сообщение автора — запускаем и подхватываем ответ.
+      requestAiReview(requestId);
+      setTimeout(reload, 6000);
+      setTimeout(reload, 14000);
     } catch (e) { setErr(e?.message || String(e)); }
     finally { setBusy(false); }
   };
@@ -532,11 +541,11 @@ function RequestComments({ C, st, requestId }) {
         <div style={{ display: "grid", gap: 6 }}>
           {comments.map((c) => (
             <div key={c.id} style={{ fontSize: 12.5, color: C.sub,
-              background: c.is_ai ? `${C.gold}14` : C.solid2,
-              border: `1px solid ${c.is_ai ? `${C.gold}55` : C.line}`, borderRadius: 10, padding: "7px 10px" }}>
+              background: c.is_ai ? `${C.green}14` : C.solid2,
+              border: `1px solid ${c.is_ai ? `${C.green}55` : C.line}`, borderRadius: 10, padding: "7px 10px" }}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: 8, marginBottom: 2 }}>
-                <b style={{ color: c.is_ai ? C.gold : C.text, fontSize: 11.5, display: "inline-flex", alignItems: "center", gap: 4 }}>
-                  {c.is_ai ? <><Bot size={12} /> ИИ-рецензент</> : (c.author?.full_name || "—")}
+                <b style={{ color: c.is_ai ? C.green : C.text, fontSize: 11.5, display: "inline-flex", alignItems: "center", gap: 4 }}>
+                  {c.is_ai ? <><Briefcase size={12} /> Финансовый директор</> : (c.author?.full_name || "—")}
                 </b>
                 <span style={{ color: C.faint, fontSize: 10.5 }}>
                   {new Date(c.created_at).toLocaleString("ru", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
