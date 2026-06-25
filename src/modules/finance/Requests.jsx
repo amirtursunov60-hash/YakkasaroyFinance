@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { ClipboardList, Check, Ban, Banknote, Loader2, AlertCircle, CheckCircle2, ChevronRight, X, Network, Plus, Copy, Pencil, ListChecks, RotateCcw, MessageSquare, Send } from "lucide-react";
+import { ClipboardList, Check, Ban, Banknote, Loader2, AlertCircle, CheckCircle2, ChevronRight, X, Network, Plus, Copy, Pencil, ListChecks, RotateCcw, MessageSquare, Send, Bot } from "lucide-react";
 import { Stat, ConfirmModal } from "../../components/common";
 import { InfoHint } from "../../components/InfoHint";
 import { useTheme } from "../../theme/theme";
@@ -13,7 +13,7 @@ import {
   fetchRequests, payRequest, fetchRequestPayments, reverseRequestPayment,
   fetchFunds, fetchIncomeRefs,
   fetchExpenseTypes, insertRequest, updateRequest, createPositionAndAssign, fetchMyPositions, fetchOrgDivisions,
-  fetchRequestComments, addRequestComment, withdrawRequest,
+  fetchRequestComments, addRequestComment, withdrawRequest, requestAiReview,
 } from "../../lib/api";
 import { requestPrefill } from "./requestCopy";
 
@@ -496,10 +496,15 @@ function RequestComments({ C, st, requestId }) {
 
   useEffect(() => {
     let active = true;
-    fetchRequestComments(requestId)
+    const load = () => fetchRequestComments(requestId)
       .then((d) => { if (active) setComments(d); })
       .catch((e) => { if (active) setErr(e?.message || String(e)); });
-    return () => { active = false; };
+    load();
+    // ИИ-рецензия прилетает через несколько секунд после подачи — подхватываем
+    // её парой отложенных перезагрузок (без постоянного опроса).
+    const t1 = setTimeout(load, 6000);
+    const t2 = setTimeout(load, 14000);
+    return () => { active = false; clearTimeout(t1); clearTimeout(t2); };
   }, [requestId]);
 
   const send = async () => {
@@ -526,9 +531,13 @@ function RequestComments({ C, st, requestId }) {
       ) : (
         <div style={{ display: "grid", gap: 6 }}>
           {comments.map((c) => (
-            <div key={c.id} style={{ fontSize: 12.5, color: C.sub, background: C.solid2, border: `1px solid ${C.line}`, borderRadius: 10, padding: "7px 10px" }}>
+            <div key={c.id} style={{ fontSize: 12.5, color: C.sub,
+              background: c.is_ai ? `${C.gold}14` : C.solid2,
+              border: `1px solid ${c.is_ai ? `${C.gold}55` : C.line}`, borderRadius: 10, padding: "7px 10px" }}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: 8, marginBottom: 2 }}>
-                <b style={{ color: C.text, fontSize: 11.5 }}>{c.author?.full_name || "—"}</b>
+                <b style={{ color: c.is_ai ? C.gold : C.text, fontSize: 11.5, display: "inline-flex", alignItems: "center", gap: 4 }}>
+                  {c.is_ai ? <><Bot size={12} /> ИИ-рецензент</> : (c.author?.full_name || "—")}
+                </b>
                 <span style={{ color: C.faint, fontSize: 10.5 }}>
                   {new Date(c.created_at).toLocaleString("ru", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
                 </span>
@@ -662,18 +671,24 @@ function RequestForm({ st, isMobile, profile, tree, refs, funds, periods, locati
         purpose: f.purpose.trim() || null, tags,
         csw_data: f.cswData.trim(), csw_situation: f.cswSituation.trim(), csw_solution: f.cswSolution.trim(),
       };
+      let reviewId = null;   // id заявки для авто-проверки ИИ (после подачи/переподачи)
       if (isEdit) {
         // Заявку, возвращённую на доработку, правка автором подаёт заново:
         // status → submitted, заметка финкомитета (rejection_reason) очищается.
-        if (editItem.status === "revision") { payload.status = "submitted"; payload.rejection_reason = null; }
+        const wasRevision = editItem.status === "revision";
+        if (wasRevision) { payload.status = "submitted"; payload.rejection_reason = null; }
         await updateRequest(editItem.id, payload);
+        if (wasRevision) reviewId = editItem.id;   // переподача — снова на проверку ИИ
       } else {
-        await insertRequest({
+        const created = await insertRequest({
           ...payload, requester_id: profile.id, location_id: locationId,
           currency_id: baseCur.id, status: "submitted",
         });
+        reviewId = created?.id || null;
       }
       onSaved();
+      // Авто-проверка ИИ — fire-and-forget (не блокирует и не роняет UX).
+      if (reviewId) requestAiReview(reviewId);
     } catch (e) {
       const msg = e?.message || String(e);
       setErr(msg.includes("row-level security")

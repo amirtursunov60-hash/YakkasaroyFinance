@@ -1062,7 +1062,7 @@ export async function fetchAuditLog({ limit = 200 } = {}) {
 export async function fetchRequestComments(requestId) {
   const { data, error } = await supabase
     .from("request_comments")
-    .select(`id, body, created_at, author:profiles!request_comments_author_id_fkey(full_name)`)
+    .select(`id, body, created_at, is_ai, author:profiles!request_comments_author_id_fkey(full_name)`)
     .eq("request_id", requestId)
     .order("created_at");
   if (error) throw error;
@@ -1074,10 +1074,21 @@ export async function addRequestComment(requestId, body) {
   const { data, error } = await supabase
     .from("request_comments")
     .insert({ request_id: requestId, author_id: authorId, body })
-    .select(`id, body, created_at, author:profiles!request_comments_author_id_fkey(full_name)`)
+    .select(`id, body, created_at, is_ai, author:profiles!request_comments_author_id_fkey(full_name)`)
     .single();
   if (error) throw error;
   return data;
+}
+
+// ИИ-рецензент ЗРС: дёргаем Edge Function request-ai-review (она читает заявку,
+// зовёт Claude и при неполноте пишет комментарий в тред). Fire-and-forget —
+// не блокируем подачу и не роняем UX, если ИИ недоступен или ключ не настроен.
+export async function requestAiReview(requestId) {
+  try {
+    await supabase.functions.invoke("request-ai-review", { body: { request_id: requestId } });
+  } catch {
+    /* ИИ-проверка необязательна — молча игнорируем сбой */
+  }
 }
 
 // Оплаты заявок из Реестра (op_type='request_payment') — лента «Операции с

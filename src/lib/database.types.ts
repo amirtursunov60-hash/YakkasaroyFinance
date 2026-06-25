@@ -2795,24 +2795,27 @@ export type Database = {
       }
       request_comments: {
         Row: {
-          author_id: string
+          author_id: string | null
           body: string
           created_at: string
           id: string
+          is_ai: boolean
           request_id: string
         }
         Insert: {
-          author_id: string
+          author_id?: string | null
           body: string
           created_at?: string
           id?: string
+          is_ai?: boolean
           request_id: string
         }
         Update: {
-          author_id?: string
+          author_id?: string | null
           body?: string
           created_at?: string
           id?: string
+          is_ai?: boolean
           request_id?: string
         }
         Relationships: [
