@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { Loader2, AlertCircle, Download, ListChecks, Search, X } from "lucide-react";
+import { Loader2, AlertCircle, Download, ListChecks, Search, X, BookOpen, ChevronRight } from "lucide-react";
 import { Stat } from "../../components/common";
 import { useTheme } from "../../theme/theme";
 import { fmt } from "../../utils/format";
@@ -15,19 +15,19 @@ import { fetchRegister, fetchFunds, fetchIncomeRefs } from "../../lib/api";
 // Цвет типа операции — токен палитры C (адаптивен к теме dark/light),
 // а не захардкоженный hex: соблюдает «цвета только из C» и контраст в обеих темах.
 const OP_META = {
-  income:           { label: "Доход",              tone: "success" },
-  income_return:    { label: "Возврат дохода",     tone: "danger" },
-  distribution:     { label: "Распределение",      tone: "successSoft" },
-  request_payment:  { label: "Оплата заявки",      tone: "warning" },
-  bill_payment:     { label: "Оплата счёта",       tone: "warning" },
-  payroll_payment:  { label: "Выплата ЗП",         tone: "gold" },
-  fund_transfer:    { label: "Перемещение фондов", tone: "info" },
-  fund_loan:        { label: "Заём фонда",         tone: "violet" },
-  fund_loan_return: { label: "Возврат займа",      tone: "violet" },
-  fx_exchange:      { label: "Обмен валют",        tone: "teal" },
-  cash_transfer:    { label: "Перемещение ДС",     tone: "info" },
-  off_plan:         { label: "Трата вне ФП",       tone: "danger" },
-  adjustment:       { label: "Корректировка",      tone: "sub" },
+  income:           { label: "Доход",              tone: "success",     desc: "Поступление денег от клиента/выручки — зачисляется на счёт ДС и запускает распределение по фондам." },
+  income_return:    { label: "Возврат дохода",     tone: "danger",      desc: "Сторно ранее принятого дохода: возврат денег клиенту, обратное распределение по фондам." },
+  distribution:     { label: "Распределение",      tone: "successSoft", desc: "Разнесение поступивших денег по фондам по схемам ФРС (3 этапа: от выручки → маржи → скорр. дохода)." },
+  request_payment:  { label: "Оплата заявки",      tone: "warning",     desc: "Расход из фонда по одобренной заявке (ЗРС) финкомитета." },
+  bill_payment:     { label: "Оплата счёта",       tone: "warning",     desc: "Оплата счёта поставщика или обязательства из фонда." },
+  payroll_payment:  { label: "Выплата ЗП",         tone: "gold",        desc: "Выплата заработной платы сотрудникам из фонда оплаты труда." },
+  fund_transfer:    { label: "Перемещение фондов", tone: "info",        desc: "Перевод средств между фондами (без возврата)." },
+  fund_loan:        { label: "Заём фонда",         tone: "violet",      desc: "Заём из одного фонда в другой — с обязательством вернуть." },
+  fund_loan_return: { label: "Возврат займа",      tone: "violet",      desc: "Возврат ранее выданного межфондового займа." },
+  fx_exchange:      { label: "Обмен валют",        tone: "teal",        desc: "Конвертация валюты между счетами ДС по курсу." },
+  cash_transfer:    { label: "Перемещение ДС",     tone: "info",        desc: "Перемещение денег между счетами ДС (например касса ⇄ банк)." },
+  off_plan:         { label: "Трата вне ФП",       tone: "danger",      desc: "Внеплановый расход мимо финансового планирования — выделен как отклонение." },
+  adjustment:       { label: "Корректировка",      tone: "sub",         desc: "Ручное выравнивание остатка фонда/счёта (инвентаризация, исправление)." },
 };
 
 export function Register() {
@@ -45,6 +45,7 @@ export function Register() {
   // поэтому отдельным состоянием, а не в f (иначе load() дёргался бы на каждый символ).
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState(null); // строка для карточки-деталей (drill-down)
+  const [legendOpen, setLegendOpen] = useState(false); // справочник типов операций (§11)
 
   useEffect(() => {
     (async () => {
@@ -244,6 +245,36 @@ export function Register() {
       })}
     </div>
 
+    {/* Справочник типов операций (§11): легенда — что означает каждый тип
+        и его цвет. Источник — тот же OP_META, что красит ленту. */}
+    <div style={{ ...st.locCard, marginTop: 14, padding: 0, overflow: "hidden" }}>
+      <button className="btn" onClick={() => setLegendOpen((v) => !v)}
+        aria-expanded={legendOpen}
+        style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "12px 14px",
+          background: "transparent", border: "none", cursor: "pointer", fontFamily: "inherit", color: C.text }}>
+        <BookOpen size={16} color={C.sub} />
+        <span style={{ fontWeight: 700, fontSize: 13.5 }}>Справочник типов операций</span>
+        <span style={{ fontSize: 12, color: C.faint }}>{Object.keys(OP_META).length}</span>
+        <ChevronRight size={17} style={{ marginLeft: "auto", transform: legendOpen ? "rotate(90deg)" : "none", transition: "transform .15s", color: C.faint }} />
+      </button>
+      {legendOpen && (
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill, minmax(280px, 1fr))", gap: 10, padding: "0 14px 14px" }}>
+          {Object.entries(OP_META).map(([k, m]) => {
+            const tone = C[m.tone] || C.sub;
+            return (
+              <div key={k} style={{ display: "flex", gap: 9, alignItems: "flex-start" }}>
+                <span style={{ flexShrink: 0, marginTop: 4, width: 9, height: 9, borderRadius: 3, background: tone }} />
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 12.5, fontWeight: 700, color: tone }}>{m.label}</div>
+                  <div style={{ fontSize: 12, color: C.sub, lineHeight: 1.45, marginTop: 1 }}>{m.desc}</div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+
     {/* Карточка-детали операции (drill-down §10) — все поля уже в строке,
         доп. запрос не нужен. Реестр неизменяем: правка/отмена — только сторно
         из профильных вкладок (Доход/Заявки/Счета), здесь карточка — read-only. */}
@@ -267,7 +298,8 @@ export function Register() {
               <div style={st.mdTitle}>Операция Реестра</div>
               <button style={st.iconBtn} onClick={() => setSelected(null)} aria-label="Закрыть"><X size={17} /></button>
             </div>
-            <span style={{ display: "inline-block", fontSize: 11, fontWeight: 700, padding: "4px 11px", borderRadius: 20, color: tone, background: `${tone}1a`, marginBottom: 14 }}>{m.label}</span>
+            <span style={{ display: "inline-block", fontSize: 11, fontWeight: 700, padding: "4px 11px", borderRadius: 20, color: tone, background: `${tone}1a`, marginBottom: 8 }}>{m.label}</span>
+            {m.desc && <div style={{ fontSize: 12, color: C.faint, lineHeight: 1.45, marginBottom: 14 }}>{m.desc}</div>}
             <div style={{ display: "grid", gap: 0 }}>
               {kv.map(([k, val]) => (
                 <div key={k} style={{ display: "flex", justifyContent: "space-between", gap: 12, padding: "9px 0", borderBottom: `1px solid ${C.line}`, fontSize: 13 }}>
