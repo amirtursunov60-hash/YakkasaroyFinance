@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { Check, Banknote, AlertTriangle, Loader2, AlertCircle, CheckCircle2, Plus, X, Ban, ChevronRight, Repeat, FileText, Pencil, ListChecks, RotateCcw, Archive } from "lucide-react";
+import { Check, Banknote, AlertTriangle, Loader2, AlertCircle, CheckCircle2, Plus, X, Ban, ChevronRight, Repeat, FileText, Pencil, ListChecks, RotateCcw, Archive, Search } from "lucide-react";
 import { Stat, ConfirmModal } from "../../components/common";
 import { useTheme } from "../../theme/theme";
 import { useScrollLock } from "../../hooks/useScrollLock";
@@ -51,6 +51,7 @@ export function BillsScreen({ kind, ui }) {
   const [funds, setFunds] = useState([]);
   const [counterparties, setCounterparties] = useState([]);
   const [filter, setFilter] = useState("all");
+  const [search, setSearch] = useState(""); // поиск по счетам (§6) — клиентский, по загруженному списку
   const [expanded, setExpanded] = useState({});
   const [showForm, setShowForm] = useState(false);
   const [prefill, setPrefill] = useState(null);   // для «Повторить»
@@ -195,6 +196,12 @@ export function BillsScreen({ kind, ui }) {
   const today = new Date().toISOString().slice(0, 10);
   const filterCounts = useMemo(() => billFilterCounts(bills, today), [bills, today]);
   const filtered = bills.filter((b) => billMatchesFilter(b, filter, today));
+  // Поиск поверх статус-фильтра: номер, контрагент, статья, точка, комментарий, сумма.
+  const q = search.trim().toLowerCase();
+  const shown = q ? filtered.filter((b) => [
+    `№${b.number}`, b.counterparty?.name, b.expense_type?.code, b.expense_type?.name,
+    b.location?.name, b.comment, String(b.amount ?? ""),
+  ].filter(Boolean).join(" ").toLowerCase().includes(q)) : filtered;
   // Цвет чипа-фильтра: статусы — из ST_META, «Просрочено» — danger, «Все» — бренд.
   const filterColor = (key) => key === "overdue" ? C.danger : key === "all" ? C.green : (ST_META[key]?.color || C.sub);
 
@@ -237,6 +244,23 @@ export function BillsScreen({ kind, ui }) {
       <div style={st.stockAlert}><AlertTriangle size={16} /> Просрочено {sums.overdueN} счёт(ов) на {fmt(sums.overdue)} TJS — портятся отношения и условия поставщиков</div>
     )}
 
+    <div style={{ position: "relative", marginBottom: 12 }}>
+      <Search size={15} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: C.faint, pointerEvents: "none" }} />
+      <input
+        style={{ ...st.mdInput, width: "100%", padding: "9px 34px 9px 36px" }}
+        className="fin" type="text" inputMode="search" value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        placeholder="Поиск: номер, контрагент, статья, комментарий…"
+        aria-label="Поиск по счетам"
+      />
+      {search && (
+        <button onClick={() => setSearch("")} aria-label="Очистить поиск"
+          style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: C.faint, cursor: "pointer", display: "grid", placeItems: "center", padding: 4 }}>
+          <X size={15} />
+        </button>
+      )}
+    </div>
+
     <div className="chiptray" style={{ marginBottom: 12 }}>
       {BILL_FILTERS.map(({ key, label }) => {
         const active = filter === key;
@@ -255,13 +279,13 @@ export function BillsScreen({ kind, ui }) {
       })}
     </div>
 
-    {!filtered.length && (
+    {!shown.length && (
       <div style={{ ...st.dataCard, ...st.empty }}>
-        {bills.length ? "Нет счетов с этим статусом" : ui.emptyText}
+        {q ? "Ничего не найдено" : (bills.length ? "Нет счетов с этим статусом" : ui.emptyText)}
       </div>
     )}
 
-    {filtered.map((b) => {
+    {shown.map((b) => {
       const m = ST_META[b.status] || {};
       const isExp = !!expanded[b.id];
       const isOverdue = b.due_on && b.due_on < today && !["paid", "rejected"].includes(b.status);
