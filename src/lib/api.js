@@ -168,7 +168,7 @@ export async function fetchIncomeOperations({ periodId, locationId } = {}) {
   if (!periodId) return [];
   let q = supabase
     .from("incomes")
-    .select(`id, amount, amount_base, received_on, is_return, reverses_income_id, source, comment, created_at,
+    .select(`id, amount, amount_base, received_on, is_return, reverses_income_id, source, comment, basis_document, created_at,
       income_type_id, currency_id, cash_account_id, payment_type_id, counterparty_id, location_id,
       income_type:income_types(code, name),
       currency:currencies(code, is_base),

@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { ArrowUpRight, ArrowDownRight, ChevronRight, Plus, X, Loader2, AlertCircle, Calculator, Trash2, Store, List, Undo2, Pencil, CalendarDays } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, ChevronRight, Plus, X, Loader2, AlertCircle, Calculator, Trash2, Store, List, Undo2, Pencil, CalendarDays, FileText } from "lucide-react";
 import { useTheme } from "../../theme/theme";
 import { useScrollLock } from "../../hooks/useScrollLock";
 import { fmt } from "../../utils/format";
@@ -133,7 +133,7 @@ export function Income() {
         typeId: op.income_type_id || "", amount: String(op.amount ?? ""), currencyId: op.currency_id || "",
         date: op.received_on, accountId: op.cash_account_id || "", payTypeId: op.payment_type_id || "",
         locationId: op.location_id || "", counterpartyId: op.counterparty_id || "",
-        isReturn: false, comment: op.comment || "",
+        isReturn: false, basisDocument: op.basis_document || "", comment: op.comment || "",
       });
       setShowForm(true);
     } catch (e) { setLoadError(e?.message || String(e)); }
@@ -390,6 +390,7 @@ export function Income() {
                     <span><CalendarDays size={11} style={{ verticalAlign: -1, marginRight: 3 }} />{new Date(op.received_on + "T00:00:00").toLocaleDateString("ru")}</span>
                     {op.cash_account && <span>· {op.cash_account.name}</span>}
                     {op.payment_type && <span>· {op.payment_type.name}</span>}
+                    {op.basis_document && <span title="Документ-основание"><FileText size={11} style={{ verticalAlign: -1, marginRight: 3 }} />{op.basis_document}</span>}
                     {isStorno && <span style={{ color: C.danger }}>· сторно</span>}
                     {isReversed && <span>· отменена</span>}
                     {op.comment && <span>· {op.comment}</span>}
@@ -539,7 +540,7 @@ function IncomeForm({ refs, tree, byParent, locationOf, period, ctxLocationId, p
   const [f, setF] = useState({
     typeId: "", amount: "", currencyId: baseCur?.id || "", date: defDate,
     accountId: "", payTypeId: "", locationId: ctxLocationId || "", counterpartyId: "",
-    isReturn: false, comment: "",
+    isReturn: false, basisDocument: "", comment: "",
     ...(initVals || {}),
   });
   const [busy, setBusy] = useState(false);
@@ -586,7 +587,8 @@ function IncomeForm({ refs, tree, byParent, locationOf, period, ctxLocationId, p
         amount, currency_id: f.currencyId, amount_base: amountBase, received_on: f.date,
         cash_account_id: f.accountId, payment_type_id: f.payTypeId,
         counterparty_id: f.counterpartyId || null,
-        is_return: f.isReturn, comment: f.comment.trim() || null, created_by: profile.id,
+        is_return: f.isReturn, basis_document: f.basisDocument.trim() || null,
+        comment: f.comment.trim() || null, created_by: profile.id,
       });
       onSaved();
     } catch (e) {
@@ -658,8 +660,13 @@ function IncomeForm({ refs, tree, byParent, locationOf, period, ctxLocationId, p
             </select>
           </Field>
 
+          <Field st={st} label="Документ-основание (необязательно)" full>
+            <input style={st.mdInput} className="fin" placeholder="№ счёта / договора / чека / акта…"
+              value={f.basisDocument} onChange={set("basisDocument")} />
+          </Field>
+
           <Field st={st} label="Комментарий" full>
-            <input style={st.mdInput} className="fin" placeholder="Документ-основание, примечание…"
+            <input style={st.mdInput} className="fin" placeholder="Примечание…"
               value={f.comment} onChange={set("comment")} />
           </Field>
 
