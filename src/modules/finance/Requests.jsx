@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { ClipboardList, Check, Ban, Banknote, Loader2, AlertCircle, CheckCircle2, ChevronRight, X, Network, Plus, Copy, Pencil, ListChecks, RotateCcw, MessageSquare, Send, Briefcase } from "lucide-react";
+import { ClipboardList, Check, CheckCheck, Ban, Banknote, Loader2, AlertCircle, CheckCircle2, ChevronRight, X, Network, Plus, Copy, Pencil, ListChecks, RotateCcw, MessageSquare, Send, Briefcase } from "lucide-react";
 import { Stat, ConfirmModal } from "../../components/common";
 import { InfoHint } from "../../components/InfoHint";
 import { useTheme } from "../../theme/theme";
@@ -488,25 +488,40 @@ export function ItemCard({ C, st, item, itemKind, isExpanded, onToggle, statusMe
 // ---------------------------------------------------------------- Комментарии к заявке
 // Тред переписки по заявке (request_comments). Лениво грузится при раскрытии
 // карточки. Любой, кто видит заявку, может оставить комментарий (RLS на сервере).
+function TypingDots() {
+  const [n, setN] = useState(1);
+  useEffect(() => { const t = setInterval(() => setN((x) => (x % 3) + 1), 450); return () => clearInterval(t); }, []);
+  return <span style={{ display: "inline-block", width: 14, textAlign: "left" }}>{".".repeat(n)}</span>;
+}
+
 function RequestComments({ C, st, requestId }) {
+  const { profile } = useTheme();
   const [comments, setComments] = useState(null);   // null = ещё не загружено
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
+  const [typing, setTyping] = useState(false);      // «Финансовый директор печатает…»
 
-  // Отложенные перезагрузки (send/таймеры) могут сработать после закрытия треда —
+  // Отложенные перезагрузки могут сработать после закрытия треда —
   // mountedRef защищает от setState на размонтированном компоненте.
   const mounted = useRef(true);
+  const sentAtRef = useRef(null);   // время последней отправки — чтобы поймать свежий ответ ИИ
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
 
+  // Применяем данные; гасим «печатает», если после нашей отправки появился ответ.
+  const applyData = useCallback((d) => {
+    setComments(d);
+    if (sentAtRef.current && d.some((c) => c.is_ai && c.created_at > sentAtRef.current)) {
+      setTyping(false); sentAtRef.current = null;
+    }
+  }, []);
   const reload = useCallback(() => fetchRequestComments(requestId)
-    .then((d) => { if (mounted.current) setComments(d); })
-    .catch((e) => { if (mounted.current) setErr(e?.message || String(e)); }), [requestId]);
+    .then((d) => { if (mounted.current) applyData(d); })
+    .catch((e) => { if (mounted.current) setErr(e?.message || String(e)); }), [requestId, applyData]);
 
   useEffect(() => {
     reload();
-    // Ответ финдиректора прилетает через несколько секунд — подхватываем
-    // парой отложенных перезагрузок (без постоянного опроса).
+    // Первая вычитка финдиректора прилетает через несколько секунд — подхватываем.
     const t1 = setTimeout(reload, 6000);
     const t2 = setTimeout(reload, 14000);
     return () => { clearTimeout(t1); clearTimeout(t2); };
@@ -516,16 +531,41 @@ function RequestComments({ C, st, requestId }) {
     const body = text.trim();
     if (!body || busy) return;
     setBusy(true); setErr("");
+    const tempId = `tmp-${Date.now()}`;
+    // Оптимистично показываем своё сообщение: сначала одна галочка («отправлено»).
+    setComments((c) => [...(c || []), { id: tempId, body, created_at: new Date().toISOString(),
+      is_ai: false, author_id: profile?.id, author: { full_name: profile?.full_name }, _status: "sent" }]);
+    setText("");
     try {
       const added = await addRequestComment(requestId, body);
-      setComments((c) => [...(c || []), added]);
-      setText("");
-      // Финдиректор реагирует на сообщение автора — запускаем и подхватываем ответ.
+      if (!mounted.current) return;
+      // Доставлено — две серые галочки.
+      setComments((c) => (c || []).map((x) => (x.id === tempId ? { ...added, _status: "delivered" } : x)));
+      // Финдиректор «читает» и печатает; ответ показываем с человеческой задержкой
+      // (обычно 9–15с, иногда 4–7с), а не мгновенно.
+      sentAtRef.current = added.created_at;
+      setTyping(true);
       requestAiReview(requestId);
-      setTimeout(reload, 6000);
-      setTimeout(reload, 14000);
-    } catch (e) { setErr(e?.message || String(e)); }
-    finally { setBusy(false); }
+      const fast = Math.random() < 0.3;
+      const delay = fast ? 4000 + Math.random() * 3000 : 9000 + Math.random() * 6000;
+      setTimeout(() => { if (mounted.current) reload(); }, delay);
+      setTimeout(() => { if (mounted.current) reload(); }, delay + 6000);
+      setTimeout(() => { if (mounted.current) setTyping(false); }, delay + 14000); // страховка
+    } catch (e) {
+      if (mounted.current) {
+        setErr(e?.message || String(e));
+        setComments((c) => (c || []).filter((x) => x.id !== tempId));
+      }
+    } finally { if (mounted.current) setBusy(false); }
+  };
+
+  // «Прочитано» (синие галочки): своё сообщение прочитано, если финдиректор
+  // ответил после него (есть его сообщение с более поздним временем).
+  const lastAiAt = (comments || []).reduce((m, c) => (c.is_ai && c.created_at > m ? c.created_at : m), "");
+  const ownTick = (c) => {
+    if (c._status === "sent") return <Check size={13} style={{ color: C.faint }} />;
+    const read = lastAiAt && lastAiAt > c.created_at;
+    return <CheckCheck size={13} style={{ color: read ? C.info : C.faint }} />;
   };
 
   return (
@@ -539,21 +579,29 @@ function RequestComments({ C, st, requestId }) {
         <span style={{ fontSize: 12, color: C.faint }}>Пока нет комментариев</span>
       ) : (
         <div style={{ display: "grid", gap: 6 }}>
-          {comments.map((c) => (
-            <div key={c.id} style={{ fontSize: 12.5, color: C.sub,
-              background: c.is_ai ? `${C.green}14` : C.solid2,
-              border: `1px solid ${c.is_ai ? `${C.green}55` : C.line}`, borderRadius: 10, padding: "7px 10px" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", gap: 8, marginBottom: 2 }}>
-                <b style={{ color: c.is_ai ? C.green : C.text, fontSize: 11.5, display: "inline-flex", alignItems: "center", gap: 4 }}>
-                  {c.is_ai ? <><Briefcase size={12} /> Финансовый директор</> : (c.author?.full_name || "—")}
-                </b>
-                <span style={{ color: C.faint, fontSize: 10.5 }}>
-                  {new Date(c.created_at).toLocaleString("ru", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
-                </span>
+          {comments.map((c) => {
+            const own = !c.is_ai && c.author_id && c.author_id === profile?.id;
+            return (
+              <div key={c.id} style={{ fontSize: 12.5, color: C.sub, background: C.solid2,
+                border: `1px solid ${C.line}`, borderRadius: 10, padding: "7px 10px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", gap: 8, marginBottom: 2 }}>
+                  <b style={{ color: c.is_ai ? C.green : C.text, fontSize: 11.5, display: "inline-flex", alignItems: "center", gap: 4 }}>
+                    {c.is_ai ? <><Briefcase size={12} /> Финансовый директор</> : (c.author?.full_name || "—")}
+                  </b>
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 4, color: C.faint, fontSize: 10.5 }}>
+                    {new Date(c.created_at).toLocaleString("ru", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                    {own && ownTick(c)}
+                  </span>
+                </div>
+                <div style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{c.body}</div>
               </div>
-              <div style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{c.body}</div>
+            );
+          })}
+          {typing && (
+            <div style={{ fontSize: 12, color: C.green, display: "inline-flex", alignItems: "center", gap: 6, padding: "2px" }}>
+              <Pencil size={12} /> Финансовый директор печатает<TypingDots />
             </div>
-          ))}
+          )}
         </div>
       )}
       <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
