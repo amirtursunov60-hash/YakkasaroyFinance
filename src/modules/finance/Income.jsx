@@ -30,6 +30,9 @@ export function Income() {
   const [ops, setOps] = useState([]);               // лента операций недели
   const [opsOpen, setOpsOpen] = useState(false);
   const [opBusy, setOpBusy] = useState(null);
+  // Фильтры ленты — клиентские, по уже загруженным операциям недели
+  // (вид дохода §6, контрагент §5, диапазон дат внутри недели §4).
+  const [opF, setOpF] = useState({ typeId: "", counterpartyId: "", from: "", to: "" });
   const isFinAdmin = ["owner", "fin_director"].includes(profile?.role);
   const canReverse = isFinAdmin || ["accountant", "location_manager"].includes(profile?.role);
   const isClosed = period?.status === "closed";
@@ -84,6 +87,27 @@ export function Income() {
     ops.forEach((o) => { if (o.reverses_income_id) s.add(o.reverses_income_id); });
     return s;
   }, [ops]);
+
+  // Опции селектов — только встречающиеся в ленте значения (а не весь справочник),
+  // чтобы не плодить пустые варианты. [id, {code?, name}].
+  const opTypeOpts = useMemo(() => {
+    const m = new Map();
+    ops.forEach((o) => { if (o.income_type_id && o.income_type) m.set(o.income_type_id, o.income_type); });
+    return [...m.entries()].sort((a, b) => (a[1].code || a[1].name).localeCompare(b[1].code || b[1].name, "ru", { numeric: true }));
+  }, [ops]);
+  const opCpOpts = useMemo(() => {
+    const m = new Map();
+    ops.forEach((o) => { if (o.counterparty_id && o.counterparty) m.set(o.counterparty_id, o.counterparty); });
+    return [...m.entries()].sort((a, b) => a[1].name.localeCompare(b[1].name, "ru"));
+  }, [ops]);
+  const opsFiltered = useMemo(() => ops.filter((o) => {
+    if (opF.typeId && o.income_type_id !== opF.typeId) return false;
+    if (opF.counterpartyId && o.counterparty_id !== opF.counterpartyId) return false;
+    if (opF.from && o.received_on < opF.from) return false;   // received_on = 'YYYY-MM-DD' → строковое сравнение корректно
+    if (opF.to && o.received_on > opF.to) return false;
+    return true;
+  }), [ops, opF]);
+  const opFActive = !!(opF.typeId || opF.counterpartyId || opF.from || opF.to);
 
   const refresh = useCallback(async () => { await Promise.all([loadSums(), loadOps()]); }, [loadSums, loadOps]);
 
@@ -312,7 +336,7 @@ export function Income() {
         </div>
         <div style={st.locTitle}>
           <div style={st.locName}>Операции дохода</div>
-          <div style={st.locCode}>{ops.length ? `${ops.length} операций за неделю` : "за неделю операций нет"}</div>
+          <div style={st.locCode}>{ops.length ? `${opFActive ? `${opsFiltered.length} из ${ops.length}` : ops.length} операций за неделю` : "за неделю операций нет"}</div>
         </div>
         <span style={{ ...st.locChevron, transform: opsOpen ? "rotate(90deg)" : "none" }}><ChevronRight size={18} /></span>
       </div>
@@ -320,7 +344,34 @@ export function Income() {
       {opsOpen && (
         <div style={st.locBody}>
           {!ops.length && <div style={{ ...st.empty, padding: "14px 0" }}>Операций за эту неделю пока нет</div>}
-          {ops.map((op) => {
+          {ops.length > 0 && (
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", padding: "10px 14px", borderTop: `1px solid ${C.line}` }}>
+              <select style={{ ...st.mdSelect, flex: isMobile ? "1 1 100%" : "1 1 160px", minWidth: 0 }} className="fin"
+                value={opF.typeId} onChange={(e) => setOpF((p) => ({ ...p, typeId: e.target.value }))} aria-label="Вид дохода">
+                <option value="">Все виды дохода</option>
+                {opTypeOpts.map(([id, t]) => <option key={id} value={id}>{t.code ? `${t.code} ` : ""}{t.name}</option>)}
+              </select>
+              {opCpOpts.length > 0 && (
+                <select style={{ ...st.mdSelect, flex: isMobile ? "1 1 100%" : "1 1 160px", minWidth: 0 }} className="fin"
+                  value={opF.counterpartyId} onChange={(e) => setOpF((p) => ({ ...p, counterpartyId: e.target.value }))} aria-label="Контрагент">
+                  <option value="">Все контрагенты</option>
+                  {opCpOpts.map(([id, c]) => <option key={id} value={id}>{c.name}</option>)}
+                </select>
+              )}
+              <input style={{ ...st.mdInput, flex: isMobile ? "1 1 46%" : "0 1 140px", minWidth: 0 }} className="fin" type="date"
+                value={opF.from} max={opF.to || undefined} onChange={(e) => setOpF((p) => ({ ...p, from: e.target.value }))} aria-label="С даты" title="С даты" />
+              <input style={{ ...st.mdInput, flex: isMobile ? "1 1 46%" : "0 1 140px", minWidth: 0 }} className="fin" type="date"
+                value={opF.to} min={opF.from || undefined} onChange={(e) => setOpF((p) => ({ ...p, to: e.target.value }))} aria-label="По дату" title="По дату" />
+              {opFActive && (
+                <button style={{ ...st.btnGhost, padding: "6px 12px" }} className="btn"
+                  onClick={() => setOpF({ typeId: "", counterpartyId: "", from: "", to: "" })}>
+                  <X size={14} /> Сбросить
+                </button>
+              )}
+            </div>
+          )}
+          {ops.length > 0 && !opsFiltered.length && <div style={{ ...st.empty, padding: "14px 0" }}>По выбранному фильтру операций нет</div>}
+          {opsFiltered.map((op) => {
             const isReversed = reversedIds.has(op.id);
             const isStorno = !!op.reverses_income_id;       // сама запись-сторно
             const allowReverse = canReverse && !isClosed && !op.is_return && !isReversed;
