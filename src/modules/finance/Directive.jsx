@@ -589,6 +589,7 @@ function RequestsReview({ C, st, isMobile, profile, requests, funds, periodId, b
     await decideRequest(item.id, {
       status: "approved", fund_id: fundId, approved_amount: amt,
       comment: comment?.trim() || null, period_id: periodId,
+      rejection_reason: null,   // снять заметку «на доработку/отклонено», если была
     });
     await onReload();
     return `Заявка №${item.number}: одобрена на ${fmt(amt)} — фонд ${fund?.code || ""}`;
@@ -606,7 +607,12 @@ function RequestsReview({ C, st, isMobile, profile, requests, funds, periodId, b
   // Комментарий обязателен — что именно доработать. Автор правит и подаёт заново.
   const doReturn = async (item, { comment }) => {
     if (!comment?.trim()) throw new Error("Укажите, что нужно доработать, в комментарии");
-    await decideRequest(item.id, { status: "revision", rejection_reason: comment.trim() });
+    // Возврат сбрасывает поля решения (если заявку до этого успели одобрить) —
+    // чтобы карточка показывала запрошенную сумму, а не старую одобренную.
+    await decideRequest(item.id, {
+      status: "revision", rejection_reason: comment.trim(),
+      approved_amount: null, fund_id: null, decided_by: null, decided_at: null,
+    });
     await onReload();
     return `Заявка №${item.number}: возвращена автору на доработку`;
   };
