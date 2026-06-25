@@ -31,9 +31,11 @@ select has_function(
   'fp_withdraw_request(uuid) есть'
 );
 
--- функция SECURITY DEFINER (выполняет перевод в обход RLS, со своими проверками)
+-- функция SECURITY DEFINER (выполняет перевод в обход RLS, со своими проверками).
+-- Сигнатуру пиним через regprocedure — иначе одноимённая перегрузка/функция в
+-- другой схеме вернула бы >1 строки и тест бы упал.
 select is(
-  (select prosecdef from pg_proc where proname = 'fp_withdraw_request'),
+  (select p.prosecdef from pg_proc p where p.oid = 'public.fp_withdraw_request(uuid)'::regprocedure),
   true,
   'fp_withdraw_request — SECURITY DEFINER'
 );

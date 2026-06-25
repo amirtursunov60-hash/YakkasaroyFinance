@@ -40,7 +40,7 @@ export const isReviewStatus = (status) => ["submitted", "planning"].includes(sta
 
 // Счётчики заявок по статусам — для чипов-фильтров.
 export const requestCounts = (requests) => {
-  const c = { all: requests.length, review: 0, approved: 0, rejected: 0, paid: 0 };
+  const c = { all: requests.length, review: 0, approved: 0, rejected: 0, paid: 0, withdrawn: 0 };
   requests.forEach((r) => {
     if (isReviewStatus(r.status)) c.review += 1;
     if (c[r.status] !== undefined) c[r.status] += 1;
@@ -58,6 +58,7 @@ export function RequestStatusChips({ C, counts, filter, setFilter }) {
     { key: "approved", label: "Одобрено",            color: C.successSoft },
     { key: "rejected", label: "Отклонено",           color: C.danger },
     { key: "paid",     label: "Оплачено",            color: C.success },
+    { key: "withdrawn", label: "Отозвано",           color: C.sub },
     { key: "all",      label: "Все",                 color: C.green },
   ];
   return (
@@ -103,6 +104,7 @@ export function Requests() {
   const [cancelErr, setCancelErr] = useState("");           // ошибка отмены — показывается в самой модалке
   const [busy, setBusy] = useState(null);
   const [withdrawTarget, setWithdrawTarget] = useState(null); // заявка к отзыву (подтверждение)
+  const [withdrawErr, setWithdrawErr] = useState("");          // ошибка отзыва — показывается в самой модалке
   const [reqFilter, setReqFilter] = useState("approved");   // здесь оплачиваем — по умолчанию «Одобрено»
   const [src, setSrc] = useState("ours");                   // источник: наши данные / зеркало ManaJet
 
@@ -133,14 +135,14 @@ export function Requests() {
   const doWithdraw = async () => {
     const item = withdrawTarget;
     if (!item || busy) return;
-    setBusy("withdraw"); setErr(""); setDone("");
+    setBusy("withdraw"); setWithdrawErr(""); setDone("");
     try {
       await withdrawRequest(item.id);
       setWithdrawTarget(null);
       await loadItems();
       setDone(`Заявка №${item.number} отозвана`);
       feedbackSuccess();
-    } catch (e) { setErr(e?.message || String(e)); feedbackError(); }
+    } catch (e) { setWithdrawErr(e?.message || String(e)); feedbackError(); }
     finally { setBusy(null); }
   };
 
@@ -269,7 +271,7 @@ export function Requests() {
           </button>
         )}
         {canWithdraw(item) && (
-          <button style={st.btnGhost} className="btn" disabled={!!busy} onClick={() => setWithdrawTarget(item)} title="Отозвать свою заявку (пока она на рассмотрении)">
+          <button style={st.btnGhost} className="btn" disabled={!!busy} onClick={() => { setWithdrawErr(""); setWithdrawTarget(item); }} title="Отозвать свою заявку (пока она на рассмотрении)">
             <Ban size={14} /> Отозвать
           </button>
         )}
@@ -366,8 +368,8 @@ export function Requests() {
     {withdrawTarget && (
       <ConfirmModal title="Отозвать заявку"
         message={`Заявка №${withdrawTarget.number} будет отозвана и снята с рассмотрения финкомитетом. Это не отказ — статус станет «отозвана». При необходимости подайте новую заявку («Копировать»).`}
-        tone="warning" confirmLabel="Отозвать" busy={busy === "withdraw"}
-        onConfirm={doWithdraw} onCancel={() => setWithdrawTarget(null)} />
+        error={withdrawErr} tone="warning" confirmLabel="Отозвать" busy={busy === "withdraw"}
+        onConfirm={doWithdraw} onCancel={() => { setWithdrawTarget(null); setWithdrawErr(""); }} />
     )}
 
     {(showForm || editReq) && refs && (
