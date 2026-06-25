@@ -32,6 +32,17 @@ describe("weekCloseBlockReasons", () => {
     expect(weekCloseBlockReasons({ ...ok, weekReqs: [{ status: "planning" }] })[0]).toMatch(/на рассмотрении/i);
   });
 
+  it("статус revision (возврат на доработку) блокирует закрытие", () => {
+    expect(weekCloseBlockReasons({ ...ok, weekReqs: [{ status: "revision" }] })[0]).toMatch(/на рассмотрении/i);
+  });
+
+  it("withdrawn/rejected/approved/paid закрытию не мешают", () => {
+    const r = weekCloseBlockReasons({ ...ok, weekReqs: [
+      { status: "withdrawn" }, { status: "rejected" }, { status: "approved" }, { status: "paid" },
+    ] });
+    expect(r.some((x) => /на рассмотрении/i.test(x))).toBe(false);
+  });
+
   it("блокирует при нераспределённом остатке (> 0)", () => {
     expect(weekCloseBlockReasons({ ...ok, remainder: 500 })[0]).toMatch(/не полностью/i);
   });

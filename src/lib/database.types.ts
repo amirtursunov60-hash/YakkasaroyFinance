@@ -3412,6 +3412,7 @@ export type Database = {
         | "rejected"
         | "paid"
         | "withdrawn"
+        | "revision"
       task_priority: "low" | "mid" | "high"
       task_status: "new" | "progress" | "done"
     }

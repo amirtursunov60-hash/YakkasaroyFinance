@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { ClipboardList, Calculator, CalendarDays, Check, RotateCcw, RotateCw, Lock, Unlock, Ban, ArrowRightLeft, Loader2, AlertCircle, CheckCircle2, X, Landmark, ChevronRight, Scale, Banknote, Wallet, Coins, List, LayoutList, ShieldCheck, Gavel } from "lucide-react";
+import { ClipboardList, Calculator, CalendarDays, Check, RotateCcw, RotateCw, Lock, Unlock, Ban, ArrowRightLeft, Loader2, AlertCircle, CheckCircle2, X, Landmark, ChevronRight, Scale, Banknote, Wallet, Coins, List, LayoutList, ShieldCheck, Gavel, Undo2 } from "lucide-react";
 import { Stat, ConfirmModal } from "../../components/common";
 import { useTheme } from "../../theme/theme";
 import { useScrollLock } from "../../hooks/useScrollLock";
@@ -589,6 +589,7 @@ function RequestsReview({ C, st, isMobile, profile, requests, funds, periodId, b
     await decideRequest(item.id, {
       status: "approved", fund_id: fundId, approved_amount: amt,
       comment: comment?.trim() || null, period_id: periodId,
+      rejection_reason: null,   // снять заметку «на доработку/отклонено», если была
     });
     await onReload();
     return `Заявка №${item.number}: одобрена на ${fmt(amt)} — фонд ${fund?.code || ""}`;
@@ -600,6 +601,20 @@ function RequestsReview({ C, st, isMobile, profile, requests, funds, periodId, b
     await decideRequest(item.id, { status: "rejected", rejection_reason: comment.trim(), comment: comment.trim() });
     await onReload();
     return `Заявка №${item.number}: отклонена`;
+  };
+
+  // Возврат на доработку: заявка уходит автору на правку с причиной (≠ отклонение).
+  // Комментарий обязателен — что именно доработать. Автор правит и подаёт заново.
+  const doReturn = async (item, { comment }) => {
+    if (!comment?.trim()) throw new Error("Укажите, что нужно доработать, в комментарии");
+    // Возврат сбрасывает поля решения (если заявку до этого успели одобрить) —
+    // чтобы карточка показывала запрошенную сумму, а не старую одобренную.
+    await decideRequest(item.id, {
+      status: "revision", rejection_reason: comment.trim(),
+      approved_amount: null, fund_id: null, decided_by: null, decided_at: null,
+    });
+    await onReload();
+    return `Заявка №${item.number}: возвращена автору на доработку`;
   };
 
   // Сброс: вернуть заявку к рассмотрению (отменить решение). Для оплаченных недоступно.
@@ -636,7 +651,7 @@ function RequestsReview({ C, st, isMobile, profile, requests, funds, periodId, b
         const controls = (
           <RequestReviewControls C={C} st={st} isMobile={isMobile} item={r}
             funds={funds} isFinAdmin={isFinAdmin}
-            onApprove={doApprove} onReject={doReject} onReset={doReset} />
+            onApprove={doApprove} onReject={doReject} onReturn={doReturn} onReset={doReset} />
         );
         const toggle = () => setExpanded((e) => ({ ...e, [r.id]: !e[r.id] }));
         return view === "list" ? (
@@ -713,7 +728,7 @@ function CompactRequestRow({ C, st, item, statusMeta, expanded, onToggle, childr
 // ---------------------------------------------------------------- Инлайн-форма рассмотрения заявки
 // Внутри развёрнутой карточки: выбор фонда, правка одобряемой суммы и комментарий
 // (при рассмотрении) либо итог решения + Оплатить/Сброс (после решения).
-function RequestReviewControls({ C, st, isMobile, item, funds, isFinAdmin, onApprove, onReject, onReset }) {
+function RequestReviewControls({ C, st, isMobile, item, funds, isFinAdmin, onApprove, onReject, onReturn, onReset }) {
   const isPaid = item.status === "paid";
   const isApproved = item.status === "approved";
 
@@ -784,7 +799,7 @@ function RequestReviewControls({ C, st, isMobile, item, funds, isFinAdmin, onApp
         </div>
       </div>
       <div style={st.reqField}>
-        <span style={st.reqFieldLbl}>Комментарий (при отклонении — обязателен)</span>
+        <span style={st.reqFieldLbl}>Комментарий (при отклонении и возврате — обязателен)</span>
         <textarea style={{ ...st.mdInput, minHeight: 56, resize: "vertical", fontFamily: "inherit" }} className="fin"
           placeholder="Комментарий финкомитета…" value={comment} onChange={(e) => setComment(e.target.value)} />
       </div>
@@ -796,16 +811,22 @@ function RequestReviewControls({ C, st, isMobile, item, funds, isFinAdmin, onApp
           <CheckCircle2 size={14} /> {done}
         </div>
       )}
-      <div style={{ display: "flex", gap: 8 }} className={shake ? "shake" : ""}>
-        <button style={{ ...st.btnGreen, flex: 1, justifyContent: "center", minWidth: 0 }}
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4, 1fr)", gap: 8 }} className={shake ? "shake" : ""}>
+        <button style={{ ...st.btnGreen, justifyContent: "center", minWidth: 0 }}
           className="btn" disabled={busy} onClick={() => act(() => onApprove(item, { fundId, amount, comment }))}>
           <Check size={14} /> Одобрить
         </button>
-        <button style={{ ...st.btnGhost, color: C.danger, flex: 1, justifyContent: "center", minWidth: 0 }} className="btn" disabled={busy}
+        {onReturn && (
+          <button style={{ ...st.btnGhost, color: C.gold, justifyContent: "center", minWidth: 0 }} className="btn" disabled={busy}
+            onClick={() => act(() => onReturn(item, { comment }))} title="Вернуть автору на доработку с причиной">
+            <Undo2 size={14} /> На доработку
+          </button>
+        )}
+        <button style={{ ...st.btnGhost, color: C.danger, justifyContent: "center", minWidth: 0 }} className="btn" disabled={busy}
           onClick={() => act(() => onReject(item, { comment }))}>
           <Ban size={14} /> Отклонить
         </button>
-        <button style={{ ...st.btnGhost, flex: 1, justifyContent: "center", minWidth: 0 }} className="btn" disabled={busy} onClick={() => act(() => onReset(item))}>
+        <button style={{ ...st.btnGhost, justifyContent: "center", minWidth: 0 }} className="btn" disabled={busy} onClick={() => act(() => onReset(item))}>
           <RotateCcw size={14} /> Сброс
         </button>
       </div>
