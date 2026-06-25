@@ -1467,6 +1467,7 @@ export type Database = {
         Row: {
           amount: number
           amount_base: number
+          basis_document: string | null
           cash_account_id: string
           comment: string | null
           counterparty_id: string | null
@@ -1489,6 +1490,7 @@ export type Database = {
         Insert: {
           amount: number
           amount_base: number
+          basis_document?: string | null
           cash_account_id: string
           comment?: string | null
           counterparty_id?: string | null
@@ -1511,6 +1513,7 @@ export type Database = {
         Update: {
           amount?: number
           amount_base?: number
+          basis_document?: string | null
           cash_account_id?: string
           comment?: string | null
           counterparty_id?: string | null
