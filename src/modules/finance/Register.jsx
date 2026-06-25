@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { Loader2, AlertCircle, Download, ListChecks } from "lucide-react";
+import { Loader2, AlertCircle, Download, ListChecks, Search, X } from "lucide-react";
 import { Stat } from "../../components/common";
 import { useTheme } from "../../theme/theme";
 import { fmt } from "../../utils/format";
@@ -41,6 +41,10 @@ export function Register() {
   const [counterparties, setCounterparties] = useState([]);
   const [payTypes, setPayTypes] = useState([]);
   const [f, setF] = useState({ scope: "week", opType: "", fundId: "", accountId: "", counterpartyId: "", paymentTypeId: "" });
+  // Поиск — клиентский, по уже загруженной ленте (не перезапрашивает сервер),
+  // поэтому отдельным состоянием, а не в f (иначе load() дёргался бы на каждый символ).
+  const [search, setSearch] = useState("");
+  const [selected, setSelected] = useState(null); // строка для карточки-деталей (drill-down)
 
   useEffect(() => {
     (async () => {
@@ -68,20 +72,34 @@ export function Register() {
   }, [f, periodId, periodsLoading]);
   useEffect(() => { load(); }, [load]);
 
+  // Клиентский поиск по ленте: тип, фонд, счёт, контрагент, способ оплаты,
+  // комментарий, провёл. Без учёта регистра. Сумму тоже ищем (подстрокой).
+  const filtered = useMemo(() => {
+    const s = search.trim().toLowerCase();
+    if (!s) return rows;
+    return rows.filter((r) => [
+      OP_META[r.op_type]?.label || r.op_type,
+      r.fund ? `${r.fund.code} ${r.fund.name}` : "",
+      r.cash_account?.name, r.counterparty?.name, r.payment_type?.name,
+      r.comment, r.creator?.full_name,
+      String(r.fund_amount ?? ""), String(r.cash_amount ?? ""),
+    ].filter(Boolean).join(" ").toLowerCase().includes(s));
+  }, [rows, search]);
+
   const sums = useMemo(() => {
     let inflow = 0, outflow = 0;
-    for (const r of rows) {
+    for (const r of filtered) {
       const v = Number(r.cash_amount ?? r.fund_amount) || 0;
       if (v >= 0) inflow += v; else outflow += -v;
     }
     return { inflow, outflow, net: inflow - outflow };
-  }, [rows]);
+  }, [filtered]);
 
   const set = (k) => (e) => setF((p) => ({ ...p, [k]: e.target.value }));
 
   const exportCsv = () => {
     const head = ["Дата", "Тип", "Фонд", "Счёт ДС", "Контрагент", "Способ оплаты", "Сумма (фонд)", "Сумма (счёт)", "Комментарий", "Провёл"];
-    const lines = rows.map((r) => [
+    const lines = filtered.map((r) => [
       new Date(r.created_at).toLocaleString("ru"),
       OP_META[r.op_type]?.label || r.op_type,
       r.fund ? `${r.fund.code} ${r.fund.name}` : "",
@@ -112,12 +130,13 @@ export function Register() {
             <div style={st.heroLabel}>Реестр операций · источник истины ФП</div>
             <div style={st.heroTitle}>{f.scope === "week" ? (period ? periodTitle(period) : "Период не создан") : "Все периоды"}</div>
           </div>
-          <button style={st.btnGhost} className="btn" onClick={exportCsv} disabled={!rows.length}>
+          <button style={st.btnGhost} className="btn" onClick={exportCsv} disabled={!filtered.length}>
             <Download size={15} /> {!isMobile && "Экспорт CSV"}
           </button>
         </div>
         <div style={st.heroStats}>
-          <Stat label="Операций" value={String(rows.length)} unit={rows.length === 200 ? "последние 200" : ""} />
+          <Stat label="Операций" value={String(filtered.length)}
+            unit={search.trim() ? `из ${rows.length}` : (rows.length === 200 ? "последние 200" : "")} />
           <Stat label="Поступления (+)" value={fmt(sums.inflow)} unit="TJS" />
           <Stat label="Списания (−)" value={fmt(sums.outflow)} unit="TJS" />
           <Stat label="Нетто" value={fmt(sums.net)} unit="TJS" tone={sums.net < -0.01 ? "danger" : "success"} />
@@ -130,6 +149,22 @@ export function Register() {
     {/* Фильтры */}
     <section style={{ ...st.fpCard, marginTop: 0, marginBottom: 16 }}>
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+        <div style={{ position: "relative", flex: isMobile ? "1 1 100%" : "1 1 220px", minWidth: isMobile ? "100%" : 200 }}>
+          <Search size={15} style={{ position: "absolute", left: 11, top: "50%", transform: "translateY(-50%)", color: C.faint, pointerEvents: "none" }} />
+          <input
+            style={{ ...selStyle, width: "100%", minWidth: 0, padding: "8px 32px 8px 34px" }}
+            className="fin" type="text" inputMode="search" value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Поиск по ленте (контрагент, фонд, комментарий…)"
+            aria-label="Поиск по Реестру"
+          />
+          {search && (
+            <button onClick={() => setSearch("")} aria-label="Очистить поиск"
+              style={{ position: "absolute", right: 6, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: C.faint, cursor: "pointer", display: "grid", placeItems: "center", padding: 4 }}>
+              <X size={14} />
+            </button>
+          )}
+        </div>
         <select style={selStyle} className="fin" value={f.scope} onChange={set("scope")}>
           <option value="week">Выбранная неделя</option>
           <option value="all">Все периоды</option>
@@ -162,21 +197,28 @@ export function Register() {
     </section>
 
     {/* Лента */}
-    {!rows.length && <div style={{ ...st.locCard, ...st.empty }}><ListChecks size={18} /> Операций по выбранным фильтрам нет</div>}
+    {!filtered.length && (
+      <div style={{ ...st.locCard, ...st.empty }}>
+        <ListChecks size={18} /> {search.trim() ? "По запросу ничего не найдено" : "Операций по выбранным фильтрам нет"}
+      </div>
+    )}
     {/* minmax(0,1fr): иначе строка с nowrap-описанием раздувает грид-трек
         шире экрана и появляется горизонтальный скролл на телефоне. */}
     <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 6 }} className="stagger">
-      {rows.map((r) => {
+      {filtered.map((r) => {
         const m = OP_META[r.op_type] || { label: r.op_type, tone: "sub" };
         const tone = C[m.tone] || C.sub;
         const v = Number(r.cash_amount ?? r.fund_amount) || 0;
         const offPlan = r.op_type === "off_plan";
         return (
-          <div key={r.id} style={{
+          <div key={r.id} role="button" tabIndex={0}
+            onClick={() => setSelected(r)}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setSelected(r); } }}
+            style={{
             display: "flex", alignItems: "center", gap: 10, padding: "10px 14px",
             borderRadius: 12, background: offPlan ? `${C.danger}10` : C.solid2,
             border: `1px solid ${offPlan ? `${C.danger}44` : C.line}`,
-            flexWrap: isMobile ? "wrap" : "nowrap",
+            flexWrap: isMobile ? "wrap" : "nowrap", cursor: "pointer",
           }} className="frow">
             <span style={{ fontSize: 11, color: C.faint, width: 88, flexShrink: 0 }}>
               {new Date(r.created_at).toLocaleString("ru", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
@@ -201,5 +243,54 @@ export function Register() {
         );
       })}
     </div>
+
+    {/* Карточка-детали операции (drill-down §10) — все поля уже в строке,
+        доп. запрос не нужен. Реестр неизменяем: правка/отмена — только сторно
+        из профильных вкладок (Доход/Заявки/Счета), здесь карточка — read-only. */}
+    {selected && (() => {
+      const m = OP_META[selected.op_type] || { label: selected.op_type, tone: "sub" };
+      const tone = C[m.tone] || C.sub;
+      const kv = [
+        ["Дата и время", new Date(selected.created_at).toLocaleString("ru")],
+        ["Фонд", selected.fund ? `${selected.fund.code} — ${selected.fund.name}` : "—"],
+        ["Счёт ДС", selected.cash_account?.name || "—"],
+        ["Контрагент", selected.counterparty?.name || "—"],
+        ["Способ оплаты", selected.payment_type?.name || "—"],
+        ["Сумма (фонд)", selected.fund_amount != null ? `${fmt(Number(selected.fund_amount))} TJS` : "—"],
+        ["Сумма (счёт ДС)", selected.cash_amount != null ? `${fmt(Number(selected.cash_amount))} TJS` : "—"],
+        ["Провёл", selected.creator?.full_name || "—"],
+      ];
+      return (
+        <div style={st.mdOverlay} data-modal="1" onClick={() => setSelected(null)} role="dialog" aria-modal="true">
+          <div style={st.mdCard} onClick={(e) => e.stopPropagation()}>
+            <div style={st.mdHead}>
+              <div style={st.mdTitle}>Операция Реестра</div>
+              <button style={st.iconBtn} onClick={() => setSelected(null)} aria-label="Закрыть"><X size={17} /></button>
+            </div>
+            <span style={{ display: "inline-block", fontSize: 11, fontWeight: 700, padding: "4px 11px", borderRadius: 20, color: tone, background: `${tone}1a`, marginBottom: 14 }}>{m.label}</span>
+            <div style={{ display: "grid", gap: 0 }}>
+              {kv.map(([k, val]) => (
+                <div key={k} style={{ display: "flex", justifyContent: "space-between", gap: 12, padding: "9px 0", borderBottom: `1px solid ${C.line}`, fontSize: 13 }}>
+                  <span style={{ color: C.faint, flexShrink: 0 }}>{k}</span>
+                  <span style={{ color: C.sub, textAlign: "right", fontWeight: 600, wordBreak: "break-word" }}>{val}</span>
+                </div>
+              ))}
+            </div>
+            {selected.comment && (
+              <div style={{ marginTop: 14 }}>
+                <div style={{ fontSize: 11, color: C.faint, marginBottom: 5 }}>Комментарий</div>
+                <div style={{ fontSize: 13, color: C.sub, lineHeight: 1.5, whiteSpace: "pre-wrap" }}>{selected.comment}</div>
+              </div>
+            )}
+            {selected.reverses_id && (
+              <div style={{ marginTop: 14, fontSize: 12, color: C.warning, display: "flex", alignItems: "center", gap: 7 }}>
+                <AlertCircle size={14} /> Сторнирующая запись (отменяет другую операцию)
+              </div>
+            )}
+            <div style={{ marginTop: 16, fontSize: 10.5, color: C.faint, fontFamily: "monospace" }}>ID: {selected.id}</div>
+          </div>
+        </div>
+      );
+    })()}
   </>);
 }
