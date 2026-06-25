@@ -629,6 +629,33 @@ export async function createCounterpartyCategory(name, { color } = {}) {
   return data;
 }
 
+// ---- Способы оплаты (справочник payment_types, Фонды §8) -------------------
+// CRUD под RLS-политикой ptypes_write = is_fin_admin() (см. baseline-схему).
+export async function fetchPaymentTypes({ includeArchived = false } = {}) {
+  let query = supabase.from("payment_types").select("id, name, is_archived");
+  if (!includeArchived) query = query.eq("is_archived", false);
+  const { data, error } = await query.order("name");
+  if (error) throw error;
+  return data;
+}
+
+export async function createPaymentType(name) {
+  const { data, error } = await supabase
+    .from("payment_types").insert({ name }).select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function updatePaymentType(id, patch) {
+  const { error } = await supabase.from("payment_types").update(patch).eq("id", id);
+  if (error) throw error;
+}
+
+export async function setPaymentTypeArchived(id, archived) {
+  const { error } = await supabase.from("payment_types").update({ is_archived: archived }).eq("id", id);
+  if (error) throw error;
+}
+
 // Полный список для справочника (с категорией и контактами). Фильтры —
 // role: 'supplier'|'client'|null; categoryId; includeArchived; q (поиск по имени/ИНН).
 export async function fetchCounterpartiesFull({ q = "", role = null, categoryId = null, includeArchived = false } = {}) {
