@@ -496,10 +496,15 @@ function RequestComments({ C, st, requestId }) {
 
   useEffect(() => {
     let active = true;
-    fetchRequestComments(requestId)
+    const load = () => fetchRequestComments(requestId)
       .then((d) => { if (active) setComments(d); })
       .catch((e) => { if (active) setErr(e?.message || String(e)); });
-    return () => { active = false; };
+    load();
+    // ИИ-рецензия прилетает через несколько секунд после подачи — подхватываем
+    // её парой отложенных перезагрузок (без постоянного опроса).
+    const t1 = setTimeout(load, 6000);
+    const t2 = setTimeout(load, 14000);
+    return () => { active = false; clearTimeout(t1); clearTimeout(t2); };
   }, [requestId]);
 
   const send = async () => {
