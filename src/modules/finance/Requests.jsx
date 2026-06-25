@@ -509,8 +509,17 @@ function RequestComments({ C, st, requestId }) {
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
 
   // Применяем данные; гасим «печатает», если после нашей отправки появился ответ.
+  // МЕРЖ, а не замена: из-за задержки реплики БД свежая перезагрузка может ещё
+  // не содержать только что отправленное сообщение — не теряем его (иначе галочка
+  // на миг пропадает и появляется заново), сохраняем локальные строки, которых
+  // нет в ответе (кроме оптимистичных tmp-).
   const applyData = useCallback((d) => {
-    setComments(d);
+    setComments((prev) => {
+      if (!prev) return d;
+      const ids = new Set(d.map((x) => x.id));
+      const extras = prev.filter((x) => !ids.has(x.id) && !String(x.id).startsWith("tmp-"));
+      return [...d, ...extras].sort((a, b) => (a.created_at < b.created_at ? -1 : a.created_at > b.created_at ? 1 : 0));
+    });
     if (sentAtRef.current && d.some((c) => c.is_ai && c.created_at > sentAtRef.current)) {
       setTyping(false); sentAtRef.current = null;
     }
