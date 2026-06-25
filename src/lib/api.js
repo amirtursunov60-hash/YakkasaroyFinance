@@ -957,7 +957,7 @@ export async function globalSearch(qstr) {
 export async function fetchRegister({ periodId, opType, fundId, cashAccountId, counterpartyId, paymentTypeId, limit = 200 } = {}) {
   let q = supabase
     .from("fp_register")
-    .select(`id, op_type, fund_amount, cash_amount, comment, created_at, period_id,
+    .select(`id, op_type, fund_amount, cash_amount, comment, created_at, period_id, reverses_id,
       fund:funds(code, name),
       cash_account:cash_accounts(name),
       counterparty:counterparties(name),
