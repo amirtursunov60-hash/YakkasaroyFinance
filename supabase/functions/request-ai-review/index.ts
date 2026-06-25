@@ -147,8 +147,13 @@ Deno.serve(async (req) => {
     const ai = await resp.json();
     const text = (ai?.content?.[0]?.text || "").trim();
 
-    // Полная заявка → модель отвечает OK → не шумим.
-    if (!text || text.toUpperCase() === "OK") return json({ posted: false, verdict: "ok" });
+    // «Нечего добавить» → модель отвечает OK → не шумим. Нормализуем: срезаем
+    // обрамляющие кавычки/знаки, кириллические «ОК» → латиница (модель на
+    // русском нередко пишет «ОК»/«OK.»). Внутренний текст НЕ трогаем, чтобы
+    // настоящий ответ («ОК, но уточните…») не приняли за молчание.
+    const norm = text.replace(/^["'«»\s]+|["'«».!\s]+$/g, "").toUpperCase()
+      .replace(/О/g, "O").replace(/К/g, "K");
+    if (!text || norm === "OK") return json({ posted: false, verdict: "ok" });
 
     const body = text;
     const { error: insErr } = await admin

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { ClipboardList, Check, Ban, Banknote, Loader2, AlertCircle, CheckCircle2, ChevronRight, X, Network, Plus, Copy, Pencil, ListChecks, RotateCcw, MessageSquare, Send, Briefcase } from "lucide-react";
 import { Stat, ConfirmModal } from "../../components/common";
 import { InfoHint } from "../../components/InfoHint";
@@ -494,9 +494,14 @@ function RequestComments({ C, st, requestId }) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
 
+  // Отложенные перезагрузки (send/таймеры) могут сработать после закрытия треда —
+  // mountedRef защищает от setState на размонтированном компоненте.
+  const mounted = useRef(true);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
+
   const reload = useCallback(() => fetchRequestComments(requestId)
-    .then((d) => setComments(d))
-    .catch((e) => setErr(e?.message || String(e))), [requestId]);
+    .then((d) => { if (mounted.current) setComments(d); })
+    .catch((e) => { if (mounted.current) setErr(e?.message || String(e)); }), [requestId]);
 
   useEffect(() => {
     reload();
