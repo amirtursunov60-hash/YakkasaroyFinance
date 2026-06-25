@@ -427,6 +427,14 @@ export async function decideRequest(id, patch) {
   if (error) throw error;
 }
 
+// Отзыв собственной заявки заявителем (Заявки §7). Серверная функция
+// fp_withdraw_request проверяет, что отзывает владелец и только пока заявка
+// «подана» (submitted); переводит статус в 'withdrawn' (≠ rejected).
+export async function withdrawRequest(requestId) {
+  const { error } = await supabase.rpc("fp_withdraw_request", { p_request_id: requestId });
+  if (error) throw error;
+}
+
 // Оплата одобренной заявки (серверная функция, миграция fp_pay_request)
 // amount — сумма частичной оплаты (в валюте заявки); null/undefined = весь остаток.
 export async function payRequest(requestId, cashAccountId, periodId, amount = null) {
