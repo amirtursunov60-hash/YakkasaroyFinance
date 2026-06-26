@@ -702,6 +702,7 @@ export async function fetchCounterpartiesFull({ q = "", role = null, categoryId 
   let query = supabase
     .from("counterparties")
     .select(`id, name, is_supplier, is_client, phone, inn, comment, is_archived, category_id,
+      entity_type, address, bank_name, bank_account, bank_mfo, contact_person,
       category:counterparty_categories(id, name, color),
       contacts:counterparty_contacts(id, kind, value, label, is_primary)`)
     .order("name");
@@ -715,12 +716,18 @@ export async function fetchCounterpartiesFull({ q = "", role = null, categoryId 
   return data;
 }
 
-export async function createCounterpartyFull({ name, isSupplier, isClient, phone, inn, categoryId, comment }) {
+export async function createCounterpartyFull({
+  name, isSupplier, isClient, phone, inn, categoryId, comment,
+  entityType, address, bankName, bankAccount, bankMfo, contactPerson,
+}) {
   const { data, error } = await supabase
     .from("counterparties")
     .insert({
       name, is_supplier: !!isSupplier, is_client: !!isClient,
       phone: phone || null, inn: inn || null, category_id: categoryId || null, comment: comment || null,
+      entity_type: entityType || null, address: address || null,
+      bank_name: bankName || null, bank_account: bankAccount || null,
+      bank_mfo: bankMfo || null, contact_person: contactPerson || null,
     })
     .select().single();
   if (error) throw error;
