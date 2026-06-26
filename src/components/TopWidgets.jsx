@@ -81,7 +81,7 @@ export function NotifyBell({ onGo }) {
       setItems((x) => x.map((i) => (i.id === n.id ? { ...i, is_read: true } : i)));
       try { await markNotificationsRead([n.id]); } catch { /* не критично */ }
     }
-    if (n.module) onGo(n.module, n.view_key || undefined);
+    if (n.module) onGo(n.module, n.view_key || "requests");
   };
   const markAll = async () => {
     setItems((x) => x.map((i) => ({ ...i, is_read: true })));
@@ -103,7 +103,7 @@ export function NotifyBell({ onGo }) {
       </button>
       {open && (<>
         <div style={st.weekOverlay} onClick={() => setOpen(false)} />
-        <div style={{ ...st.weekMenu, top: 42, right: 0, width: 320, maxHeight: 420, overflowY: "auto" }}>
+        <div style={{ ...st.weekMenu, top: 42, right: 0, width: "min(320px, calc(100vw - 24px))", maxHeight: 420, overflowY: "auto" }}>
           <div style={{ ...st.weekMenuHead, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
             <span>Уведомления</span>
             {unread > 0 && (
