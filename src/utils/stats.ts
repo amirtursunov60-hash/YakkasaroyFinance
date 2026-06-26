@@ -57,6 +57,21 @@ export function quotaAchievement(
 }
 
 
+// Типы статистик ManaJet (`Stat.stat_type` — integer). Полный справочник из 33
+// значений у ManaJet ещё не задокументирован; ниже — подтверждённые типы из
+// комментария к колонке. Неизвестные значения показываем как «Тип N».
+export const STAT_TYPES: Record<number, string> = {
+  1: "Счётная",
+  8: "Доход / выручка",
+  11: "Дивиденд",
+  12: "Активы / резервы",
+};
+export function statTypeLabel(t: number | null | undefined): string | null {
+  if (t == null) return null;
+  return STAT_TYPES[t] || `Тип ${t}`;
+}
+
+
 export function weekLabels(n: number): string[] {
   const out: string[] = [];
   const end = new Date(2026, 5, 10);

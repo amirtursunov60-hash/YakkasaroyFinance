@@ -8,7 +8,7 @@ import { Stat } from "../../components/common";
 import { useTheme } from "../../theme/theme";
 import { useScrollLock } from "../../hooks/useScrollLock";
 import { usePeriod, periodTitle } from "../../lib/PeriodCtx";
-import { calcState, STAT_STATES, quotaAchievement } from "../../utils/stats";
+import { calcState, STAT_STATES, quotaAchievement, STAT_TYPES, statTypeLabel } from "../../utils/stats";
 import {
   fetchStatistics, fetchStatisticValues, fetchPeriods, fetchOrgDivisions,
   fetchAllPositions, upsertStatisticValue, createStatistic, updateStatistic,
@@ -221,7 +221,10 @@ export function StatsModule({ view }) {
                     <div style={{ fontSize: 13.5, fontWeight: 700, lineHeight: 1.3 }}>{r.s.name}</div>
                     <Badge code={r.state} />
                   </div>
-                  <div style={{ fontSize: 11, color: C.faint, marginBottom: 10 }}>{r.owner}</div>
+                  <div style={{ fontSize: 11, color: C.faint, marginBottom: 10, display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+                    <span>{r.owner}</span>
+                    {statTypeLabel(r.s.stat_type) && <span style={{ color: C.sub, background: `${C.faint}1a`, padding: "1px 7px", borderRadius: 20, fontWeight: 600 }}>{statTypeLabel(r.s.stat_type)}</span>}
+                  </div>
                   {r.series.length ? (<>
                     <div style={{ color: C.text }}><StatChart values={r.series} quota={r.hasQuota ? r.quotaSeries : undefined} color={m.color} height={95} /></div>
                     {r.hasQuota && <ChartLegend color={m.color} />}
@@ -255,7 +258,7 @@ export function StatsModule({ view }) {
               <div style={{ ...st.locDot, background: m.color, borderRadius: "50%" }} />
               <div style={st.locTitle}>
                 <div style={st.locName}>{s.name}</div>
-                <div style={st.locCode}>{r.divCode !== "—" ? `Отд. ${r.divCode} · ${r.divName} · ` : ""}{r.owner}</div>
+                <div style={st.locCode}>{r.divCode !== "—" ? `Отд. ${r.divCode} · ${r.divName} · ` : ""}{r.owner}{statTypeLabel(s.stat_type) ? ` · ${statTypeLabel(s.stat_type)}` : ""}</div>
               </div>
               <div style={st.locRight}>
                 <div style={st.locSum}>{ru(r.last)} <span style={st.locUnit}>{s.unit}</span></div>
@@ -368,6 +371,7 @@ function StatFormModal({ C, st, isMobile, positions, stat, busy, onArchive, onCl
     positionId: stat?.position_id || "", source: stat?.source || "",
     minVal: stat?.min_val != null ? String(stat.min_val) : "",
     maxVal: stat?.max_val != null ? String(stat.max_val) : "",
+    statType: stat?.stat_type != null ? String(stat.stat_type) : "",
   });
   const numOrNull = (v) => { const n = parseFloat(String(v).replace(",", ".")); return Number.isFinite(n) ? n : null; };
   const [confirmArch, setConfirmArch] = useState(false);
@@ -381,13 +385,14 @@ function StatFormModal({ C, st, isMobile, positions, stat, busy, onArchive, onCl
     setSaving(true);
     try {
       const minVal = numOrNull(f.minVal), maxVal = numOrNull(f.maxVal);
+      const statType = f.statType ? Number(f.statType) : null;
       const payload = {
         name: f.name.trim(), unit: f.unit.trim() || null, invert: f.invert,
         position_id: f.positionId || null, source: f.source.trim() || null,
-        min_val: minVal, max_val: maxVal,
+        min_val: minVal, max_val: maxVal, stat_type: statType,
       };
       if (isEdit) { await updateStatistic(stat.id, payload); onSaved("Статистика обновлена"); }
-      else { await createStatistic({ ...payload, positionId: f.positionId, minVal, maxVal }); onSaved("Статистика создана"); }
+      else { await createStatistic({ ...payload, positionId: f.positionId, minVal, maxVal, statType }); onSaved("Статистика создана"); }
     } catch (e) { setErr(e?.message || String(e)); setSaving(false); }
   };
 
@@ -419,10 +424,21 @@ function StatFormModal({ C, st, isMobile, positions, stat, busy, onArchive, onCl
               </select>
             </div>
           </div>
-          <div style={st.reqField}>
-            <span style={st.reqFieldLbl}>Источник (необязательно)</span>
-            <input style={st.mdInput} className="fin" placeholder="откуда берётся значение…"
-              value={f.source} onChange={(e) => setF((p) => ({ ...p, source: e.target.value }))} />
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <div style={{ ...st.reqField, flex: 1, minWidth: 150 }}>
+              <span style={st.reqFieldLbl}>Источник (необязательно)</span>
+              <input style={st.mdInput} className="fin" placeholder="откуда берётся значение…"
+                value={f.source} onChange={(e) => setF((p) => ({ ...p, source: e.target.value }))} />
+            </div>
+            <div style={{ ...st.reqField, flex: isMobile ? "1 1 100%" : "0 0 170px" }}>
+              <span style={st.reqFieldLbl}>Тип статистики</span>
+              <select style={st.mdSelect} className="fin" value={f.statType}
+                onChange={(e) => setF((p) => ({ ...p, statType: e.target.value }))}>
+                <option value="">— не задан —</option>
+                {Object.entries(STAT_TYPES).map(([code, label]) => <option key={code} value={code}>{label}</option>)}
+                {f.statType && !STAT_TYPES[Number(f.statType)] && <option value={f.statType}>Тип {f.statType}</option>}
+              </select>
+            </div>
           </div>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
             <div style={{ ...st.reqField, flex: 1, minWidth: 120 }}>
