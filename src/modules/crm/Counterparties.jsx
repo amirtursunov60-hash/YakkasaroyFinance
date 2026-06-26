@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Building2, Loader2, AlertCircle, CheckCircle2, Plus, X, Search, Phone, Mail,
-  Archive, ArchiveRestore, Pencil, Trash2, Tag,
+  Archive, ArchiveRestore, Pencil, Trash2, Tag, User, MapPin, Landmark,
 } from "lucide-react";
 import { Stat } from "../../components/common";
 import { useTheme } from "../../theme/theme";
@@ -157,6 +157,7 @@ export function Counterparties() {
               <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginTop: 5 }}>
                 {cp.is_supplier && <span style={{ ...st.weekTag, marginLeft: 0, color: C.info, background: `${C.info}1a` }}>поставщик</span>}
                 {cp.is_client && <span style={{ ...st.weekTag, marginLeft: 0, color: C.violet, background: `${C.violet}1a` }}>клиент</span>}
+                {cp.entity_type && <span style={{ ...st.weekTag, marginLeft: 0, color: C.sub, background: `${C.faint}1a` }}>{cp.entity_type === "legal" ? "юрлицо" : "физлицо"}</span>}
                 {cp.category && <span style={{ ...st.weekTag, marginLeft: 0, color: cp.category.color || C.green, background: `${cp.category.color || C.green}1a` }}><Tag size={10} style={{ verticalAlign: -1, marginRight: 3 }} />{cp.category.name}</span>}
                 {cp.is_archived && <span style={{ ...st.weekTag, marginLeft: 0, color: C.faint, background: `${C.faint}1a` }}>в архиве</span>}
               </div>
@@ -165,7 +166,19 @@ export function Counterparties() {
 
           <div style={{ marginTop: 10, display: "grid", gap: 4, fontSize: 12.5, color: C.sub }}>
             {cp.inn && <div>ИНН: <b style={{ color: C.text }}>{cp.inn}</b></div>}
+            {cp.contact_person && <div style={{ display: "flex", alignItems: "center", gap: 6 }}><User size={12} /> {cp.contact_person}</div>}
             {cp.phone && <div style={{ display: "flex", alignItems: "center", gap: 6 }}><Phone size={12} /> {cp.phone}</div>}
+            {cp.address && <div style={{ display: "flex", alignItems: "flex-start", gap: 6 }}><MapPin size={12} style={{ marginTop: 2, flexShrink: 0 }} /> <span>{cp.address}</span></div>}
+            {(cp.bank_name || cp.bank_account || cp.bank_mfo) && (
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 6 }}>
+                <Landmark size={12} style={{ marginTop: 2, flexShrink: 0 }} />
+                <span>
+                  {cp.bank_name}
+                  {cp.bank_account && <><br />р/с {cp.bank_account}</>}
+                  {cp.bank_mfo && <> · МФО {cp.bank_mfo}</>}
+                </span>
+              </div>
+            )}
             {(cp.contacts || []).map((c) => (
               <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 {c.kind === "email" ? <Mail size={12} /> : <Phone size={12} />}
@@ -224,6 +237,8 @@ function CounterpartyForm({ st, isMobile, cats, cp, initSupplier, onClose, onCat
   const [f, setF] = useState({
     name: cp?.name || "", isSupplier: cp ? cp.is_supplier : !!initSupplier, isClient: cp ? cp.is_client : false,
     phone: cp?.phone || "", inn: cp?.inn || "", categoryId: cp?.category_id || "", comment: cp?.comment || "",
+    entityType: cp?.entity_type || "", address: cp?.address || "", contactPerson: cp?.contact_person || "",
+    bankName: cp?.bank_name || "", bankAccount: cp?.bank_account || "", bankMfo: cp?.bank_mfo || "",
   });
   const [newCat, setNewCat] = useState("");
   const [busy, setBusy] = useState(false);
@@ -254,12 +269,18 @@ function CounterpartyForm({ st, isMobile, cats, cp, initSupplier, onClose, onCat
           name: f.name.trim(), is_supplier: f.isSupplier, is_client: f.isClient,
           phone: f.phone.trim() || null, inn: f.inn.trim() || null,
           category_id: f.categoryId || null, comment: f.comment.trim() || null,
+          entity_type: f.entityType || null, address: f.address.trim() || null,
+          contact_person: f.contactPerson.trim() || null,
+          bank_name: f.bankName.trim() || null, bank_account: f.bankAccount.trim() || null,
+          bank_mfo: f.bankMfo.trim() || null,
         });
         onSaved(`${f.name.trim()} — сохранён`);
       } else {
         await createCounterpartyFull({
           name: f.name.trim(), isSupplier: f.isSupplier, isClient: f.isClient,
           phone: f.phone.trim(), inn: f.inn.trim(), categoryId: f.categoryId, comment: f.comment.trim(),
+          entityType: f.entityType, address: f.address.trim(), contactPerson: f.contactPerson.trim(),
+          bankName: f.bankName.trim(), bankAccount: f.bankAccount.trim(), bankMfo: f.bankMfo.trim(),
         });
         onSaved(`${f.name.trim()} — добавлен`);
       }
@@ -289,12 +310,38 @@ function CounterpartyForm({ st, isMobile, cats, cp, initSupplier, onClose, onCat
           </div>
           <div style={{ ...st.mdGrid, ...(isMobile ? { gridTemplateColumns: "1fr" } : {}) }}>
             <div style={st.reqField}>
+              <span style={st.reqFieldLbl}>Тип</span>
+              <select style={st.mdSelect} className="fin" value={f.entityType} onChange={set("entityType")}>
+                <option value="">— не указан —</option>
+                <option value="individual">Физлицо</option>
+                <option value="legal">Юрлицо</option>
+              </select>
+            </div>
+            <div style={st.reqField}>
+              <span style={st.reqFieldLbl}>Ответственное лицо</span>
+              <input style={st.mdInput} className="fin" value={f.contactPerson} onChange={set("contactPerson")} placeholder="ФИО" />
+            </div>
+          </div>
+          <div style={{ ...st.mdGrid, ...(isMobile ? { gridTemplateColumns: "1fr" } : {}) }}>
+            <div style={st.reqField}>
               <span style={st.reqFieldLbl}>Телефон</span>
               <input style={st.mdInput} className="fin" value={f.phone} onChange={set("phone")} />
             </div>
             <div style={st.reqField}>
               <span style={st.reqFieldLbl}>ИНН</span>
               <input style={st.mdInput} className="fin" value={f.inn} onChange={set("inn")} />
+            </div>
+          </div>
+          <div style={st.reqField}>
+            <span style={st.reqFieldLbl}>Адрес</span>
+            <input style={st.mdInput} className="fin" value={f.address} onChange={set("address")} placeholder="город, улица, дом" />
+          </div>
+          <div style={{ ...st.reqField, gap: 6 }}>
+            <span style={st.reqFieldLbl}>Банковские реквизиты</span>
+            <input style={st.mdInput} className="fin" value={f.bankName} onChange={set("bankName")} placeholder="Наименование банка" />
+            <div style={{ ...st.mdGrid, ...(isMobile ? { gridTemplateColumns: "1fr" } : {}), marginTop: 0 }}>
+              <input style={st.mdInput} className="fin" value={f.bankAccount} onChange={set("bankAccount")} placeholder="Расчётный счёт" />
+              <input style={st.mdInput} className="fin" value={f.bankMfo} onChange={set("bankMfo")} placeholder="МФО / код банка" />
             </div>
           </div>
           <div style={st.reqField}>

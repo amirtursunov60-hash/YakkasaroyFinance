@@ -398,9 +398,15 @@ export type Database = {
       }
       counterparties: {
         Row: {
+          address: string | null
+          bank_account: string | null
+          bank_mfo: string | null
+          bank_name: string | null
           category_id: string | null
           comment: string | null
+          contact_person: string | null
           created_at: string
+          entity_type: string | null
           id: string
           inn: string | null
           is_archived: boolean
@@ -411,9 +417,15 @@ export type Database = {
           phone: string | null
         }
         Insert: {
+          address?: string | null
+          bank_account?: string | null
+          bank_mfo?: string | null
+          bank_name?: string | null
           category_id?: string | null
           comment?: string | null
+          contact_person?: string | null
           created_at?: string
+          entity_type?: string | null
           id?: string
           inn?: string | null
           is_archived?: boolean
@@ -424,9 +436,15 @@ export type Database = {
           phone?: string | null
         }
         Update: {
+          address?: string | null
+          bank_account?: string | null
+          bank_mfo?: string | null
+          bank_name?: string | null
           category_id?: string | null
           comment?: string | null
+          contact_person?: string | null
           created_at?: string
+          entity_type?: string | null
           id?: string
           inn?: string | null
           is_archived?: boolean
