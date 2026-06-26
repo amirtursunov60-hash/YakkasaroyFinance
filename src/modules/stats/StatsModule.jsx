@@ -12,10 +12,11 @@ import { calcState, STAT_STATES, quotaAchievement, STAT_TYPES, statTypeLabel } f
 import {
   fetchStatistics, fetchStatisticValues, fetchPeriods, fetchOrgDivisions,
   fetchAllPositions, upsertStatisticValue, createStatistic, updateStatistic,
-  archiveStatistic,
+  archiveStatistic, fetchStatisticDatedValues, upsertStatisticDatedValue, isoDate,
 } from "../../lib/api";
 
 const ru = (v) => (v == null || Number.isNaN(v) ? "—" : Number(v).toLocaleString("ru-RU"));
+const FREQ_LABEL = { day: "дневная", week: "недельная", month: "месячная" };
 
 export function StatsModule({ view }) {
   const { C, st, isMobile, profile } = useTheme();
@@ -28,6 +29,7 @@ export function StatsModule({ view }) {
   const [stats, setStats] = useState([]);
   const [periods, setPeriods] = useState([]); // по убыванию даты
   const [values, setValues] = useState({});
+  const [datedValues, setDatedValues] = useState({}); // { statId: { value_date: {value,quota,description} } } для day/month
   const [divisions, setDivisions] = useState([]);
   const [positions, setPositions] = useState([]);
   const [open, setOpen] = useState({});
@@ -41,6 +43,15 @@ export function StatsModule({ view }) {
     setValues(vals);
   }, [periods]);
 
+  // Датированные значения для статистик с периодичностью день/месяц (отдельная таблица).
+  // Стабильная (без зависимости от stats) — список передаётся аргументом.
+  const reloadDated = useCallback(async (ss) => {
+    const dated = (ss || []).filter((s) => s.frequency && s.frequency !== "week");
+    if (!dated.length) { setDatedValues({}); return; }
+    const entries = await Promise.all(dated.map((s) => fetchStatisticDatedValues(s.id).then((m) => [s.id, m])));
+    setDatedValues(Object.fromEntries(entries));
+  }, []);
+
   const load = useCallback(async () => {
     setErr("");
     try {
@@ -48,23 +59,42 @@ export function StatsModule({ view }) {
         fetchStatistics(), fetchPeriods(12), fetchOrgDivisions(), fetchAllPositions(),
       ]);
       setStats(ss); setPeriods(ps); setDivisions(divs); setPositions(poss);
-      await reloadValues(ps);
+      await Promise.all([reloadValues(ps), reloadDated(ss)]);
     } catch (e) {
       setErr("Не удалось загрузить статистики: " + (e?.message || e));
     } finally { setLoading(false); }
-  }, [reloadValues]);
+  }, [reloadValues, reloadDated]);
   useEffect(() => { load(); }, [load]);
 
   // Модель строки: хронологический ряд факта, состояние, дельта, текущая квота
   const rows = useMemo(() => stats.map((s) => {
+    const isDated = s.frequency === "day" || s.frequency === "month";
     const series = [];
-    const quotaSeries = [];   // план, выровненный по неделям факта (null где плана нет)
-    for (const p of periodsAsc) {
-      const cell = values[s.id]?.[p.id];
-      if (cell && cell.value != null) {
-        series.push(Number(cell.value));
-        quotaSeries.push(cell.quota != null ? Number(cell.quota) : null);
+    const quotaSeries = [];   // план, выровненный по точкам факта (null где плана нет)
+    let curCell = null;
+    if (isDated) {
+      const cap = s.frequency === "day" ? 14 : 12;
+      const dv = datedValues[s.id] || {};
+      const dates = Object.keys(dv).sort().slice(-cap);   // ISO-даты по возрастанию
+      for (const d of dates) {
+        const cell = dv[d];
+        if (cell && cell.value != null) {
+          series.push(Number(cell.value));
+          quotaSeries.push(cell.quota != null ? Number(cell.quota) : null);
+        }
       }
+      // «Текущая» точка датированной статистики — последняя заполненная
+      const lastDate = dates[dates.length - 1];
+      curCell = lastDate ? dv[lastDate] : null;
+    } else {
+      for (const p of periodsAsc) {
+        const cell = values[s.id]?.[p.id];
+        if (cell && cell.value != null) {
+          series.push(Number(cell.value));
+          quotaSeries.push(cell.quota != null ? Number(cell.quota) : null);
+        }
+      }
+      curCell = periodId ? values[s.id]?.[periodId] : null;
     }
     const hasQuota = quotaSeries.some((q) => q != null);
     const state = calcState(series, s.invert);
@@ -80,12 +110,11 @@ export function StatsModule({ view }) {
     const divCode = s.position?.division?.code || "—";
     const divName = s.position?.division?.name || "Без отделения";
     const owner = s.owner?.full_name || s.position?.name || "—";
-    const curCell = periodId ? values[s.id]?.[periodId] : null;
     const achievement = quotaAchievement(curCell?.value, curCell?.quota, s.invert);
-    return { s, series, quotaSeries, hasQuota, state, last, delta, divCode, divName, owner,
+    return { s, isDated, series, quotaSeries, hasQuota, state, last, delta, divCode, divName, owner,
       curValue: curCell?.value ?? null, curQuota: curCell?.quota ?? null,
       curDescription: curCell?.description ?? null, achievement };
-  }), [stats, values, periodsAsc, periodId]);
+  }), [stats, values, datedValues, periodsAsc, periodId]);
 
   const summary = useMemo(() => {
     let up = 0, down = 0, danger = 0;
@@ -259,7 +288,7 @@ export function StatsModule({ view }) {
               <div style={{ ...st.locDot, background: m.color, borderRadius: "50%" }} />
               <div style={st.locTitle}>
                 <div style={st.locName}>{s.name}</div>
-                <div style={st.locCode}>{r.divCode !== "—" ? `Отд. ${r.divCode} · ${r.divName} · ` : ""}{r.owner}{statTypeLabel(s.stat_type) ? ` · ${statTypeLabel(s.stat_type)}` : ""}</div>
+                <div style={st.locCode}>{r.divCode !== "—" ? `Отд. ${r.divCode} · ${r.divName} · ` : ""}{r.owner}{statTypeLabel(s.stat_type) ? ` · ${statTypeLabel(s.stat_type)}` : ""}{r.isDated ? ` · ${FREQ_LABEL[s.frequency]}` : ""}</div>
               </div>
               <div style={st.locRight}>
                 <div style={st.locSum}>{ru(r.last)} <span style={st.locUnit}>{s.unit}</span></div>
@@ -272,7 +301,7 @@ export function StatsModule({ view }) {
                 {r.series.length ? (<>
                   <div style={{ color: C.text }}><StatChart values={r.series} quota={r.hasQuota ? r.quotaSeries : undefined} color={m.color} height={150} /></div>
                   {r.hasQuota && <ChartLegend color={m.color} />}
-                </>) : <div style={{ fontSize: 12.5, color: C.faint, padding: "20px 0", textAlign: "center" }}>Значений ещё нет — внесите за неделю ниже</div>}
+                </>) : <div style={{ fontSize: 12.5, color: C.faint, padding: "20px 0", textAlign: "center" }}>Значений ещё нет — внесите {r.isDated ? "ниже" : "за неделю ниже"}</div>}
                 {(s.min_val != null || s.max_val != null) && (
                   <div style={{ fontSize: 12, color: C.sub, marginTop: 10 }}>
                     Норма: <b style={{ color: C.text }}>{s.min_val != null ? ru(s.min_val) : "—"} … {s.max_val != null ? ru(s.max_val) : "—"} {s.unit}</b>
@@ -280,7 +309,7 @@ export function StatsModule({ view }) {
                 )}
                 {r.curQuota != null && (
                   <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", fontSize: 12, marginTop: 12 }}>
-                    <span style={{ color: C.sub }}>План недели <b style={{ color: C.text }}>{ru(r.curQuota)} {s.unit}</b></span>
+                    <span style={{ color: C.sub }}>{r.isDated ? "План" : "План недели"} <b style={{ color: C.text }}>{ru(r.curQuota)} {s.unit}</b></span>
                     <span style={{ color: C.sub }}>· Факт <b style={{ color: C.text }}>{ru(r.curValue)} {s.unit}</b></span>
                     {r.achievement && (
                       <span style={{ fontWeight: 700, color: r.achievement.met ? C.green : C.warning }}>
@@ -294,10 +323,16 @@ export function StatsModule({ view }) {
                     <b style={{ color: C.text }}>Заметка к факту:</b> {r.curDescription}
                   </div>
                 )}
-                <ValueEntry C={C} st={st} isMobile={isMobile} stat={s} periodId={periodId}
-                  curValue={r.curValue} curQuota={r.curQuota} curDescription={r.curDescription}
-                  onSaved={async (msg) => { await reloadValues(); setDone(msg); }}
-                  onError={setErr} />
+                {r.isDated ? (
+                  <DatedValueEntry C={C} st={st} isMobile={isMobile} stat={s} dated={datedValues[s.id] || {}}
+                    onSaved={async (msg) => { await reloadDated(stats); setDone(msg); }}
+                    onError={setErr} />
+                ) : (
+                  <ValueEntry C={C} st={st} isMobile={isMobile} stat={s} periodId={periodId}
+                    curValue={r.curValue} curQuota={r.curQuota} curDescription={r.curDescription}
+                    onSaved={async (msg) => { await reloadValues(); setDone(msg); }}
+                    onError={setErr} />
+                )}
                 {isAdmin && (
                   <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
                     <button style={{ ...st.btnGhost, padding: "7px 12px", fontSize: 12 }} className="btn" onClick={() => setEditing(s)}>
@@ -380,6 +415,92 @@ function ValueEntry({ C, st, isMobile, stat, periodId, curValue, curQuota, curDe
 }
 
 
+// ---------------------------------------------------------------- Ввод датированного значения (день/месяц)
+// Для статистик с периодичностью day/month: выбор даты (для месяца — месяц,
+// хранится как 1-е число) + факт/квота/заметка → statistic_dated_values.
+function DatedValueEntry({ C, st, isMobile, stat, dated, onSaved, onError }) {
+  const isMonth = stat.frequency === "month";
+  const today = isoDate(new Date());
+  const initKey = isMonth ? today.slice(0, 7) + "-01" : today;
+  const [dateKey, setDateKey] = useState(initKey);
+  const cell = dated[dateKey] || {};
+  const [val, setVal] = useState("");
+  const [quota, setQuota] = useState("");
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+  // При смене выбранной даты подставляем уже введённые значения
+  useEffect(() => {
+    const c = dated[dateKey] || {};
+    setVal(c.value ?? ""); setQuota(c.quota ?? ""); setNote(c.description ?? "");
+  }, [dateKey, dated]);
+
+  // <input type=month> даёт YYYY-MM → храним как YYYY-MM-01; type=date — как есть
+  const onDate = (e) => {
+    const v = e.target.value;
+    setDateKey(isMonth ? (v ? v + "-01" : "") : v);
+  };
+  const dateInputValue = isMonth ? dateKey.slice(0, 7) : dateKey;
+
+  const save = async () => {
+    if (busy) return;
+    onError("");
+    if (!dateKey) return onError(isMonth ? "Выберите месяц" : "Выберите дату");
+    const v = val === "" ? null : Number(String(val).replace(",", "."));
+    const q = quota === "" ? null : Number(String(quota).replace(",", "."));
+    const desc = note.trim() || null;
+    if (v == null && q == null) return onError("Укажите факт или квоту");
+    if (v != null && Number.isNaN(v)) return onError("Факт — не число");
+    if (q != null && Number.isNaN(q)) return onError("Квота — не число");
+    if (v == null && desc) return onError("Заметка относится к факту — укажите факт или очистите заметку");
+    setBusy(true);
+    try {
+      if (v != null) await upsertStatisticDatedValue(stat.id, dateKey, v, false, desc);
+      if (q != null) await upsertStatisticDatedValue(stat.id, dateKey, q, true);
+      await onSaved(`«${stat.name}»: значение сохранено`);
+    } catch (e) { onError(e?.message || String(e)); }
+    finally { setBusy(false); }
+  };
+
+  return (
+    <div style={{ paddingTop: 14, marginTop: 4, borderTop: `1px solid ${C.line}` }}>
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-end" }}>
+        <label style={{ ...st.reqField, flex: isMobile ? "1 1 100%" : 1 }}>
+          <span style={st.reqFieldLbl}>{isMonth ? "Месяц" : "Дата"}</span>
+          <input type={isMonth ? "month" : "date"} value={dateInputValue} onChange={onDate}
+            style={{ ...st.numInput, width: "100%", textAlign: "left" }} className="amtIn fin" />
+        </label>
+        <label style={{ ...st.reqField, flex: isMobile ? "1 1 100%" : 1 }}>
+          <span style={st.reqFieldLbl}>Факт{stat.unit ? `, ${stat.unit}` : ""}</span>
+          <input type="number" inputMode="decimal" value={val} placeholder="0"
+            onChange={(e) => setVal(e.target.value)} onWheel={(e) => e.target.blur()}
+            onKeyDown={(e) => e.key === "Enter" && save()} style={{ ...st.numInput, width: "100%" }} className="amtIn" />
+        </label>
+        <label style={{ ...st.reqField, flex: isMobile ? "1 1 100%" : 1 }}>
+          <span style={st.reqFieldLbl}>Квота (план){stat.unit ? `, ${stat.unit}` : ""}</span>
+          <input type="number" inputMode="decimal" value={quota} placeholder="—"
+            onChange={(e) => setQuota(e.target.value)} onWheel={(e) => e.target.blur()}
+            onKeyDown={(e) => e.key === "Enter" && save()} style={{ ...st.numInput, width: "100%" }} className="amtIn" />
+        </label>
+        <button style={{ ...st.btnGreen, opacity: busy ? 0.7 : 1 }} className="btn glass" onClick={save} disabled={busy}>
+          {busy ? <Loader2 size={15} className="spin" /> : <Plus size={15} />} Сохранить
+        </button>
+      </div>
+      {(cell.value != null || cell.quota != null) && (
+        <div style={{ fontSize: 11.5, color: C.faint, marginTop: 6 }}>
+          За {isMonth ? dateKey.slice(0, 7) : dateKey} уже внесено — сохранение перезапишет.
+        </div>
+      )}
+      <label style={{ ...st.reqField, marginTop: 10, display: "block" }}>
+        <span style={st.reqFieldLbl}>Заметка к факту (необязательно)</span>
+        <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2}
+          placeholder="Почему значение такое? Что повлияло…"
+          style={{ ...st.numInput, width: "100%", textAlign: "left", resize: "vertical", fontFamily: "inherit", lineHeight: 1.4 }} className="amtIn" />
+      </label>
+    </div>
+  );
+}
+
+
 // ---------------------------------------------------------------- Новая / Редактировать статистика
 function StatFormModal({ C, st, isMobile, positions, stat, busy, onArchive, onClose, onSaved }) {
   useScrollLock();
@@ -390,6 +511,7 @@ function StatFormModal({ C, st, isMobile, positions, stat, busy, onArchive, onCl
     minVal: stat?.min_val != null ? String(stat.min_val) : "",
     maxVal: stat?.max_val != null ? String(stat.max_val) : "",
     statType: stat?.stat_type != null ? String(stat.stat_type) : "",
+    frequency: stat?.frequency || "week",
   });
   const numOrNull = (v) => { const n = parseFloat(String(v).replace(",", ".")); return Number.isFinite(n) ? n : null; };
   const [confirmArch, setConfirmArch] = useState(false);
@@ -407,10 +529,10 @@ function StatFormModal({ C, st, isMobile, positions, stat, busy, onArchive, onCl
       const payload = {
         name: f.name.trim(), unit: f.unit.trim() || null, invert: f.invert,
         position_id: f.positionId || null, source: f.source.trim() || null,
-        min_val: minVal, max_val: maxVal, stat_type: statType,
+        min_val: minVal, max_val: maxVal, stat_type: statType, frequency: f.frequency || "week",
       };
       if (isEdit) { await updateStatistic(stat.id, payload); onSaved("Статистика обновлена"); }
-      else { await createStatistic({ ...payload, positionId: f.positionId, minVal, maxVal, statType }); onSaved("Статистика создана"); }
+      else { await createStatistic({ ...payload, positionId: f.positionId, minVal, maxVal, statType, frequency: f.frequency }); onSaved("Статистика создана"); }
     } catch (e) { setErr(e?.message || String(e)); setSaving(false); }
   };
 
@@ -457,6 +579,20 @@ function StatFormModal({ C, st, isMobile, positions, stat, busy, onArchive, onCl
                 {f.statType && !STAT_TYPES[Number(f.statType)] && <option value={f.statType}>Тип {f.statType}</option>}
               </select>
             </div>
+          </div>
+          <div style={st.reqField}>
+            <span style={st.reqFieldLbl}>Периодичность</span>
+            <select style={st.mdSelect} className="fin" value={f.frequency}
+              onChange={(e) => setF((p) => ({ ...p, frequency: e.target.value }))}>
+              <option value="week">Недельная (по периодам ФП)</option>
+              <option value="day">Дневная (значение на дату)</option>
+              <option value="month">Месячная (значение на месяц)</option>
+            </select>
+            {isEdit && f.frequency !== (stat?.frequency || "week") && (
+              <span style={{ fontSize: 11, color: C.warning, marginTop: 4 }}>
+                Смена периодичности: уже внесённые значения хранятся отдельно для недель и для дат/месяцев.
+              </span>
+            )}
           </div>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
             <div style={{ ...st.reqField, flex: 1, minWidth: 120 }}>

@@ -1817,13 +1817,58 @@ export async function resetDistribution(periodId, stage) {
 export async function fetchStatistics() {
   const { data, error } = await supabase
     .from("statistics")
-    .select(`id, name, unit, invert, is_auto, source, location_id, owner_id, position_id, min_val, max_val, stat_type,
+    .select(`id, name, unit, invert, is_auto, source, location_id, owner_id, position_id, min_val, max_val, stat_type, frequency,
       owner:profiles(full_name),
       position:org_positions(code, name, division:org_divisions(code, name))`)
     .eq("is_archived", false)
     .order("name");
   if (error) throw error;
   return data;
+}
+
+// Датированные значения статистики (день/месяц) за диапазон дат:
+// { [value_date]: { value, quota, description } }. Для frequency='day'/'month'
+// (для месяца value_date — 1-е число месяца). Недельные значения — fetchStatisticValues.
+export async function fetchStatisticDatedValues(statisticId, fromDate, toDate) {
+  if (!statisticId) return {};
+  let q = supabase
+    .from("statistic_dated_values")
+    .select("value_date, value, is_quota, description")
+    .eq("statistic_id", statisticId)
+    .order("value_date");
+  if (fromDate) q = q.gte("value_date", fromDate);
+  if (toDate) q = q.lte("value_date", toDate);
+  const { data, error } = await q;
+  if (error) throw error;
+  const m = {};
+  for (const r of data) {
+    const cell = (m[r.value_date] ??= { value: null, quota: null, description: null });
+    if (r.is_quota) cell.quota = Number(r.value);
+    else { cell.value = Number(r.value); cell.description = r.description || null; }
+  }
+  return m;
+}
+
+// Апсерт датированного значения (день/месяц). description — только к факту.
+export async function upsertStatisticDatedValue(statisticId, valueDate, value, isQuota = false, description = null) {
+  if (!valueDate) throw new Error("Не указана дата значения");
+  const enteredBy = (await supabase.auth.getUser()).data.user?.id ?? null;
+  const note = isQuota ? null : (description || null);
+  const found = await supabase
+    .from("statistic_dated_values").select("id")
+    .eq("statistic_id", statisticId).eq("value_date", valueDate).eq("is_quota", isQuota)
+    .maybeSingle();
+  if (found.error) throw found.error;
+  if (found.data) {
+    const { error } = await supabase
+      .from("statistic_dated_values").update({ value, entered_by: enteredBy, description: note }).eq("id", found.data.id);
+    if (error) throw error;
+    return;
+  }
+  const { error } = await supabase
+    .from("statistic_dated_values")
+    .insert({ statistic_id: statisticId, value_date: valueDate, value, is_quota: isQuota, entered_by: enteredBy, description: note });
+  if (error) throw error;
 }
 
 // Значения за указанные периоды:
@@ -1847,14 +1892,14 @@ export async function fetchStatisticValues(periodIds) {
   return m;
 }
 
-export async function createStatistic({ name, unit, invert = false, positionId, ownerId, locationId, source, minVal = null, maxVal = null, statType = null }) {
+export async function createStatistic({ name, unit, invert = false, positionId, ownerId, locationId, source, minVal = null, maxVal = null, statType = null, frequency = "week" }) {
   const { data, error } = await supabase
     .from("statistics")
     .insert({
       name, unit: unit || null, invert,
       position_id: positionId || null, owner_id: ownerId || null,
       location_id: locationId || null, source: source || null,
-      min_val: minVal, max_val: maxVal, stat_type: statType,
+      min_val: minVal, max_val: maxVal, stat_type: statType, frequency: frequency || "week",
     })
     .select().single();
   if (error) throw error;
