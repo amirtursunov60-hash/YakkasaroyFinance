@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Search, CalendarDays, Plus, X, XCircle, Trophy,
   Loader2, AlertCircle, CheckCircle2, Settings2, GripVertical, Trash2, Check,
-  ListChecks, ArrowUp, ArrowDown,
+  ListChecks, ArrowUp, ArrowDown, History,
 } from "lucide-react";
 import { Stat } from "../../components/common";
 import { useTheme } from "../../theme/theme";
@@ -11,7 +11,7 @@ import { fmt, avatarColor } from "../../utils/format";
 import {
   fetchCrmLeads, fetchCrmClients, fetchCrmHalls, createCrmLead, createCrmClient,
   fetchCrmStages, createCrmStage, updateCrmStage, archiveCrmStage,
-  moveCrmLead, updateCrmLead, fetchPeopleBrief,
+  moveCrmLead, updateCrmLead, fetchPeopleBrief, fetchLeadHistory,
   fetchCrmChecklist, addCrmChecklistItem, setCrmChecklistDone, deleteCrmChecklistItem,
 } from "../../lib/api";
 
@@ -407,7 +407,81 @@ function CardModal({ C, st, isMobile, lead, stages, people, hallName, items, onC
 
         {err && <div role="alert" style={{ ...st.reqError, marginTop: 10 }}><AlertCircle size={14} /> {err}</div>}
         {busy && <div style={{ fontSize: 12, color: C.faint, marginTop: 8 }}><Loader2 size={12} className="spin" style={{ verticalAlign: -2 }} /> сохранение…</div>}
+
+        {/* История изменений лида */}
+        <LeadHistory C={C} leadId={lead.id} stages={stages} people={people} hallName={hallName}
+          reloadKey={`${lead.stage_id}|${lead.responsible_id}|${lead.due_date}|${lead.note}`} />
       </div>
+    </div>
+  );
+}
+
+
+// ---------------------------------------------------------------- Таймлайн лида
+// Человекочитаемая история изменений по audit_log (gap-map CRM §16).
+const LEAD_FIELDS = {
+  name: "Имя", phone: "Телефон", event_type: "Тип мероприятия", event_date: "Дата события",
+  guests: "Гости", budget: "Бюджет", source: "Источник", note: "Заметка",
+  stage_id: "Этап", responsible_id: "Ответственный", due_date: "Срок", hall_id: "Зал",
+};
+function LeadHistory({ C, leadId, stages, people, hallName, reloadKey }) {
+  const [items, setItems] = useState(null);
+  const [err, setErr] = useState("");
+  useEffect(() => {
+    let on = true;
+    fetchLeadHistory(leadId)
+      .then((d) => { if (on) setItems(d); })
+      .catch((e) => { if (on) setErr(e?.message || String(e)); });
+    return () => { on = false; };
+  }, [leadId, reloadKey]);
+
+  const stageName = (id) => stages.find((s) => s.id === id)?.name || (id ? "—" : "не задан");
+  const personName = (id) => people.find((p) => p.id === id)?.full_name || (id ? "—" : "не назначен");
+  const fieldVal = (key, v) => {
+    if (v == null || v === "") return "—";
+    if (key === "stage_id") return stageName(v);
+    if (key === "responsible_id") return personName(v);
+    if (key === "hall_id") return hallName(v);
+    if (key === "budget") return `${fmt(Number(v))} TJS`;
+    if (key === "event_date" || key === "due_date") return fmtDate(v);
+    return String(v);
+  };
+  const changesOf = (ev) => {
+    if (ev.action === "insert") return ["Лид создан"];
+    if (ev.action === "delete") return ["Лид удалён"];
+    const o = ev.old_data || {}, n = ev.new_data || {};
+    const out = [];
+    for (const key of Object.keys(LEAD_FIELDS)) {
+      if ((o[key] ?? null) !== (n[key] ?? null)) out.push(`${LEAD_FIELDS[key]}: ${fieldVal(key, o[key])} → ${fieldVal(key, n[key])}`);
+    }
+    return out.length ? out : ["изменение без значимых полей"];
+  };
+
+  return (
+    <div style={{ marginTop: 16, paddingTop: 12, borderTop: `1px solid ${C.line}` }}>
+      <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: 0.5, color: C.faint, fontWeight: 700, marginBottom: 8, display: "flex", alignItems: "center", gap: 5 }}>
+        <History size={13} /> История
+      </div>
+      {err && <div style={{ fontSize: 11.5, color: C.danger }}>{err}</div>}
+      {items === null && !err && <div style={{ fontSize: 12, color: C.faint }}><Loader2 size={12} className="spin" style={{ verticalAlign: -2 }} /> загрузка…</div>}
+      {items && items.length === 0 && <div style={{ fontSize: 12, color: C.faint }}>Изменений пока нет</div>}
+      {items && items.length > 0 && (
+        <div style={{ display: "grid", gap: 8 }}>
+          {items.map((ev) => (
+            <div key={ev.id} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+              <span style={{ width: 7, height: 7, borderRadius: "50%", background: C.green, flexShrink: 0, marginTop: 6 }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 11.5, color: C.faint }}>
+                  <b style={{ color: C.sub }}>{ev.author?.full_name || "Система"}</b> · {new Date(ev.created_at).toLocaleString("ru-RU", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                </div>
+                {changesOf(ev).map((line, i) => (
+                  <div key={i} style={{ fontSize: 12.5, color: C.text, lineHeight: 1.4 }}>{line}</div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
