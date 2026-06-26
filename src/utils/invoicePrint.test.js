@@ -61,6 +61,14 @@ describe("buildInvoiceHtml", () => {
     expect(html).toContain("&lt;img src=x");
   });
 
+  it("экранирует комментарий и банковские реквизиты", () => {
+    const html = buildInvoiceHtml(
+      { ...baseInvoice, comment: "<b>hack</b>", counterparty: { name: "X", bank_name: "<i>bank</i>" } }, company, 0);
+    expect(html).not.toContain("<b>hack</b>");
+    expect(html).toContain("&lt;b&gt;hack&lt;/b&gt;");
+    expect(html).not.toContain("<i>bank</i>");
+  });
+
   it("показывает физ/юрлицо покупателя", () => {
     const legal = buildInvoiceHtml({ ...baseInvoice, counterparty: { name: "ООО Ромашка", entity_type: "legal" } }, company, 0);
     expect(legal).toContain("Юридическое лицо");
