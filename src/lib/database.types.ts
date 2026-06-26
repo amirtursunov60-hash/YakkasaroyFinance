@@ -396,6 +396,48 @@ export type Database = {
           },
         ]
       }
+      counterparty_attachments: {
+        Row: {
+          counterparty_id: string
+          created_at: string
+          file_name: string
+          file_path: string
+          id: string
+          uploaded_by: string
+        }
+        Insert: {
+          counterparty_id: string
+          created_at?: string
+          file_name: string
+          file_path: string
+          id?: string
+          uploaded_by: string
+        }
+        Update: {
+          counterparty_id?: string
+          created_at?: string
+          file_name?: string
+          file_path?: string
+          id?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "counterparty_attachments_counterparty_id_fkey"
+            columns: ["counterparty_id"]
+            isOneToOne: false
+            referencedRelation: "counterparties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "counterparty_attachments_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       counterparties: {
         Row: {
           address: string | null

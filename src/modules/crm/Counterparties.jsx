@@ -4,13 +4,14 @@ import {
   Archive, ArchiveRestore, Pencil, Trash2, Tag, User, MapPin, Landmark,
 } from "lucide-react";
 import { Stat } from "../../components/common";
+import { AttachmentsBlock } from "../../components/AttachmentsBlock";
 import { useTheme } from "../../theme/theme";
 import { useScrollLock } from "../../hooks/useScrollLock";
 import { useActionFeedback } from "../../hooks/useActionFeedback";
 import {
   fetchCounterpartiesFull, fetchCounterpartyCategories, createCounterpartyCategory,
   createCounterpartyFull, updateCounterparty, setCounterpartyArchived,
-  addCounterpartyContact, deleteCounterpartyContact,
+  addCounterpartyContact, deleteCounterpartyContact, fetchCounterpartyAttachments,
 } from "../../lib/api";
 
 
@@ -31,6 +32,7 @@ export function Counterparties() {
   useActionFeedback(done, err);
   const [rows, setRows] = useState([]);
   const [cats, setCats] = useState([]);
+  const [atts, setAtts] = useState({});
   const [q, setQ] = useState("");
   const [role, setRole] = useState("all");
   const [categoryId, setCategoryId] = useState("");
@@ -50,6 +52,7 @@ export function Counterparties() {
         fetchCounterpartyCategories(),
       ]);
       setRows(data); setCats(cs);
+      setAtts(await fetchCounterpartyAttachments(data.map((c) => c.id)));
     } catch (e) {
       setErr("Не удалось загрузить контрагентов: " + (e?.message || e));
     } finally { setLoading(false); }
@@ -195,6 +198,11 @@ export function Counterparties() {
               </div>
             ))}
             {cp.comment && <div style={{ color: C.faint }}>{cp.comment}</div>}
+          </div>
+
+          <div style={{ marginTop: 10 }}>
+            <AttachmentsBlock kind="counterparty" parentId={cp.id} attachments={atts[cp.id] || []}
+              canUpload={canEdit} profileId={profile?.id} onChanged={load} />
           </div>
 
           {canEdit && (
