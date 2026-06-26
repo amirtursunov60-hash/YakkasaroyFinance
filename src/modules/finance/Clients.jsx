@@ -1,11 +1,13 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { Banknote, Loader2, AlertCircle, CheckCircle2, Plus, X, Ban, ChevronRight, CalendarDays, PartyPopper, Receipt, Undo2 } from "lucide-react";
+import { Banknote, Loader2, AlertCircle, CheckCircle2, Plus, X, Ban, ChevronRight, CalendarDays, PartyPopper, Receipt, Undo2, Printer } from "lucide-react";
 import { Stat } from "../../components/common";
 import { AttachmentsBlock } from "../../components/AttachmentsBlock";
 import { useTheme } from "../../theme/theme";
 import { useScrollLock } from "../../hooks/useScrollLock";
 import { useActionFeedback } from "../../hooks/useActionFeedback";
 import { fmt } from "../../utils/format";
+import { openInvoicePrint } from "../../utils/invoicePrint";
+import { COMPANY } from "../../data/company";
 import { usePeriod } from "../../lib/PeriodCtx";
 import { MjPanel, MjSwitch } from "../manajet/MjPanel";
 import {
@@ -293,6 +295,10 @@ export function Clients() {
                   canUpload={canSubmit} profileId={profile.id} onChanged={load} />
 
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  <button style={st.btnGhost} className="btn"
+                    onClick={() => { setErr(""); setDone(""); const ok = openInvoicePrint(inv, COMPANY, paid); if (!ok) setErr("Разрешите всплывающие окна, чтобы открыть печать счёта"); }}>
+                    <Printer size={14} /> Печать счёта
+                  </button>
                   {canPay && !["paid", "cancelled"].includes(inv.status) && (
                     <button style={st.btnGreen} className="btn" disabled={!!busy} onClick={() => setPaying(inv)}>
                       <Banknote size={14} /> Принять оплату

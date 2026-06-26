@@ -763,8 +763,8 @@ export async function fetchInvoices(locationId) {
   let q = supabase
     .from("client_invoices")
     .select(`id, number, status, amount, event_name, hall, event_on, comment, created_at,
-      counterparty:counterparties(id, name),
-      location:locations(id, name),
+      counterparty:counterparties(id, name, entity_type, inn, address, phone, contact_person, bank_name, bank_account, bank_mfo),
+      location:locations(id, name, city),
       income_type:income_types(code, name),
       currency:currencies(id, code, is_base)`)
     .eq("is_archived", false)
