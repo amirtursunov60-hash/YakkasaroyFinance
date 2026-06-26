@@ -1091,6 +1091,25 @@ export async function requestAiReview(requestId) {
   }
 }
 
+// --- In-app уведомления (наполняются триггерами БД; RLS — только свои) ---
+export async function fetchNotifications({ limit = 20 } = {}) {
+  const { data, error } = await supabase
+    .from("notifications")
+    .select("id, kind, title, body, module, view_key, request_id, is_read, created_at")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return data;
+}
+
+// Пометить прочитанными: ids — массив id, либо null = все непрочитанные.
+export async function markNotificationsRead(ids = null) {
+  let q = supabase.from("notifications").update({ is_read: true }).eq("is_read", false);
+  if (ids && ids.length) q = q.in("id", ids);
+  const { error } = await q;
+  if (error) throw error;
+}
+
 // Оплаты заявок из Реестра (op_type='request_payment') — лента «Операции с
 // заявками» внизу вкладки «Заявки». Заявка попадает в Реестр только при оплате.
 // periodId — показываем оплаты только выбранной недели (период оплаты в Реестре).
