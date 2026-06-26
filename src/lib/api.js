@@ -1080,6 +1080,20 @@ export async function fetchAuditLog({ limit = 200 } = {}) {
   return data;
 }
 
+// История изменений одного лида (gap-map CRM §16). Видна благодаря точечной
+// политике audit_read_crm_leads. С old_data/new_data для расшифровки изменений.
+export async function fetchLeadHistory(leadId) {
+  const { data, error } = await supabase
+    .from("audit_log")
+    .select(`id, action, record_id, old_data, new_data, created_at,
+      author:profiles!audit_log_user_id_fkey(full_name)`)
+    .eq("table_name", "crm_leads")
+    .eq("record_id", leadId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return data;
+}
+
 // Комментарии/переписка по заявке (ЗРС-тред, таблица request_comments).
 // Автор — request_comments_author_id_fkey → profiles. RLS: чтение и вставка.
 export async function fetchRequestComments(requestId) {
