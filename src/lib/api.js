@@ -830,10 +830,12 @@ export async function cashTransfer(fromId, toId, amount, periodId, comment) {
 // kind: 'request' | 'bill' | 'invoice'; файл кладём в Storage, ссылку — в таблицу
 const ATT_TABLE = { request: "request_attachments", bill: "bill_attachments", invoice: "invoice_attachments", counterparty: "counterparty_attachments" };
 const ATT_FK = { request: "request_id", bill: "bill_id", invoice: "invoice_id", counterparty: "counterparty_id" };
+// Префикс пути в Storage (по умолчанию `${kind}s`, но для counterparty — правильное мн. число)
+const ATT_PREFIX = { request: "requests", bill: "bills", invoice: "invoices", counterparty: "counterparties" };
 
 export async function uploadAttachment(kind, parentId, file, uploadedBy) {
   const safe = file.name.replace(/[^\wа-яА-ЯёЁ.-]+/gu, "_").slice(-80);
-  const path = `${kind}s/${parentId}/${Date.now()}_${safe}`;
+  const path = `${ATT_PREFIX[kind] || `${kind}s`}/${parentId}/${Date.now()}_${safe}`;
   const up = await supabase.storage.from("attachments").upload(path, file);
   if (up.error) throw up.error;
   const { error } = await supabase.from(ATT_TABLE[kind])
