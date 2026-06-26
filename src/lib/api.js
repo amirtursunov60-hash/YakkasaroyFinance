@@ -1915,7 +1915,7 @@ export async function createCrmClient(row) {
 export async function fetchTasks() {
   const { data, error } = await supabase
     .from("tasks")
-    .select(`id, title, due_date, status, priority, from_id, to_id, position_id,
+    .select(`id, title, description, due_date, status, priority, from_id, to_id, position_id,
       from:profiles!tasks_from_id_fkey(full_name),
       assignee:profiles!tasks_to_id_fkey(full_name),
       position:org_positions(code, name)`)
@@ -1925,10 +1925,10 @@ export async function fetchTasks() {
   return data;
 }
 
-export async function createTask({ title, toId, positionId, dueDate, priority }) {
+export async function createTask({ title, description, toId, positionId, dueDate, priority }) {
   const { data, error } = await supabase
     .from("tasks")
-    .insert({ title, to_id: toId || null, position_id: positionId || null, due_date: dueDate || null, priority: priority || "mid" })
+    .insert({ title, description: description || null, to_id: toId || null, position_id: positionId || null, due_date: dueDate || null, priority: priority || "mid" })
     .select().single();
   if (error) throw error;
   return data;
@@ -1937,6 +1937,30 @@ export async function createTask({ title, toId, positionId, dueDate, priority })
 export async function setTaskStatus(id, status) {
   const { error } = await supabase.from("tasks").update({ status }).eq("id", id);
   if (error) throw error;
+}
+
+// Тред комментариев задачи (gap-map Задачи §6; образец — request_comments).
+export async function fetchTaskComments(taskId) {
+  const { data, error } = await supabase
+    .from("task_comments")
+    .select(`id, body, created_at, author_id,
+      author:profiles!task_comments_author_id_fkey(full_name, avatar_url)`)
+    .eq("task_id", taskId)
+    .order("created_at");
+  if (error) throw error;
+  return data;
+}
+
+export async function addTaskComment(taskId, body) {
+  const authorId = (await supabase.auth.getUser()).data.user?.id ?? null;
+  const { data, error } = await supabase
+    .from("task_comments")
+    .insert({ task_id: taskId, author_id: authorId, body })
+    .select(`id, body, created_at, author_id,
+      author:profiles!task_comments_author_id_fkey(full_name, avatar_url)`)
+    .single();
+  if (error) throw error;
+  return data;
 }
 
 export async function fetchBattlePlan() {

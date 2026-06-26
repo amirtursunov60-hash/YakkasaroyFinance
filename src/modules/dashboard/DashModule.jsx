@@ -1,14 +1,16 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
   CalendarDays, Plus, Check, Flame, Loader2, AlertCircle, CheckCircle2,
+  MessageSquare, Send,
 } from "lucide-react";
 import { StatChart } from "../../components/charts/StatChart";
 import { Stat } from "../../components/common";
 import { useTheme } from "../../theme/theme";
-import { fmt } from "../../utils/format";
+import { fmt, avatarColor } from "../../utils/format";
 import { calcState, STAT_STATES } from "../../utils/stats";
 import {
-  fetchTasks, createTask, setTaskStatus, fetchBattlePlan, createBattleItem,
+  fetchTasks, createTask, setTaskStatus, fetchTaskComments, addTaskComment,
+  fetchBattlePlan, createBattleItem,
   setBattleDone, fetchPeopleBrief, fetchPositionsBrief, fetchStatistics, fetchStatisticValues,
   fetchPeriods, fetchMyRequests,
 } from "../../lib/api";
@@ -42,7 +44,7 @@ export function DashModule({ view }) {
 
   const [bForm, setBForm] = useState({ text: "", statisticId: "", positionId: "", isStatsVisible: false });
   const [taskFilter, setTaskFilter] = useState("active");
-  const [tForm, setTForm] = useState({ title: "", toId: "", positionId: "", due: "", priority: "mid" });
+  const [tForm, setTForm] = useState({ title: "", description: "", toId: "", positionId: "", due: "", priority: "mid" });
 
   const load = useCallback(async () => {
     setErr("");
@@ -101,8 +103,8 @@ export function DashModule({ view }) {
     const title = tForm.title.trim(); if (!title || busy) return;
     setBusy("addtask"); setErr("");
     try {
-      await createTask({ title, toId: tForm.toId, positionId: tForm.positionId, dueDate: tForm.due || null, priority: tForm.priority });
-      setTForm((f) => ({ ...f, title: "", due: "" }));
+      await createTask({ title, description: tForm.description.trim(), toId: tForm.toId, positionId: tForm.positionId, dueDate: tForm.due || null, priority: tForm.priority });
+      setTForm((f) => ({ ...f, title: "", description: "", due: "" }));
       await load(); setDone("Задача поручена");
     } catch (e) { setErr(e?.message || String(e)); }
     finally { setBusy(null); }
@@ -126,56 +128,10 @@ export function DashModule({ view }) {
 
   if (loading) return <div style={st.empty}><Loader2 size={18} className="spin" /> Загрузка…</div>;
 
-  const T_META = {
-    new: { label: "Новая", color: C.info, next: "Взять в работу", nextStatus: "progress" },
-    progress: { label: "В работе", color: C.warning, next: "Завершить", nextStatus: "done" },
-    done: { label: "Выполнена", color: C.green, next: null },
-  };
-  const P_META = { high: { label: "срочно", color: C.danger }, mid: { label: "обычный", color: C.warning }, low: { label: "низкий", color: C.faint } };
-
   const banners = (<>
     {err && <div role="alert" style={{ ...st.reqError, marginBottom: 14 }}><AlertCircle size={15} /> {err}</div>}
     {done && <div style={{ ...st.reqSuccess, marginBottom: 14 }}><CheckCircle2 size={15} /> {done}</div>}
   </>);
-
-  const TaskCard = ({ t }) => {
-    const m = T_META[t.status]; const pm = P_META[t.priority] || P_META.mid;
-    return (
-      <div style={{ ...st.locCard, padding: "14px 16px", opacity: t.status === "done" ? 0.65 : 1 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "flex-start" }}>
-          <div style={{ fontSize: 14, fontWeight: 700, lineHeight: 1.35, textDecoration: t.status === "done" ? "line-through" : "none" }}>{t.title}</div>
-          <span style={{ fontSize: 10.5, fontWeight: 700, padding: "3px 9px", borderRadius: 20, whiteSpace: "nowrap", color: m.color, background: `${m.color}1a`, flexShrink: 0 }}>{m.label}</span>
-        </div>
-        <div style={{ fontSize: 12, color: C.sub, marginTop: 6 }}>
-          {t.from?.full_name || "—"} → <b style={{ color: C.text }}>{t.assignee?.full_name || (t.position ? `пост ${t.position.code} ${t.position.name}` : "не назначен")}</b>
-        </div>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 10, gap: 10, flexWrap: "wrap" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11.5, color: C.faint }}><CalendarDays size={13} /> {t.due_date ? new Date(t.due_date + "T00:00:00").toLocaleDateString("ru-RU", { day: "2-digit", month: "short" }) : "без срока"}</span>
-            <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11.5, color: pm.color }}><span style={{ width: 7, height: 7, borderRadius: "50%", background: pm.color }} /> {pm.label}</span>
-          </div>
-          {m.next && <button style={{ ...st.btnGhost, padding: "7px 12px" }} className="btn" disabled={!!busy} onClick={() => advanceTask(t, m.nextStatus)}>{busy === `t:${t.id}` ? <Loader2 size={13} className="spin" /> : m.next}</button>}
-        </div>
-      </div>
-    );
-  };
-
-  const BpRow = ({ b }) => (
-    <div style={{ display: "flex", alignItems: "flex-start", gap: 12, padding: "10px 0", borderBottom: `1px solid ${C.line}` }}>
-      <button onClick={() => toggleBp(b)} className="btn" disabled={busy === `bp:${b.id}`} style={{ width: 24, height: 24, borderRadius: 8, flexShrink: 0, cursor: "pointer", display: "grid", placeItems: "center", border: `1.5px solid ${b.done ? C.green : C.line}`, background: b.done ? C.green : "transparent", color: C.onAccent, marginTop: 1 }}>
-        {b.done && <Check size={15} strokeWidth={3} />}
-      </button>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 13.5, fontWeight: 600, textDecoration: b.done ? "line-through" : "none", color: b.done ? C.faint : C.text }}>{b.text}</div>
-        <div style={{ fontSize: 11, color: C.faint, marginTop: 2, display: "flex", gap: 8, flexWrap: "wrap" }}>
-          {b.statistic
-            ? <span style={{ color: C.money }}>↗ {b.statistic.name}{b.statistic.unit ? `, ${b.statistic.unit}` : ""}</span>
-            : <span>→ {b.target || "Личный план"}</span>}
-          {b.position && <span>· пост {b.position.code} {b.position.name}</span>}
-        </div>
-      </div>
-    </div>
-  );
 
   // ============ БОЕВОЕ ПЛАНИРОВАНИЕ ============
   if (view === "d_battle") {
@@ -198,7 +154,7 @@ export function DashModule({ view }) {
           <span style={st.reqSectionSub}>каждое действие ведёт к ЦКП или статистике</span>
         </div>
         {battle.length === 0 && <div style={{ ...st.empty, padding: "16px 0" }}>Пунктов пока нет — добавьте первое действие</div>}
-        {battle.map((b) => <BpRow key={b.id} b={b} />)}
+        {battle.map((b) => <BpRow key={b.id} b={b} C={C} busy={busy} onToggle={toggleBp} />)}
         <div style={{ display: "flex", gap: 10, marginTop: 16, flexWrap: "wrap", alignItems: "flex-end" }}>
           <input value={bForm.text} onChange={(e) => setBForm((f) => ({ ...f, text: e.target.value }))} onKeyDown={(e) => e.key === "Enter" && addBp()}
             placeholder="Новое действие на день…" style={{ ...st.numInput, flex: 1, minWidth: 200, textAlign: "left" }} className="amtIn" />
@@ -257,6 +213,12 @@ export function DashModule({ view }) {
               onKeyDown={(e) => e.key === "Enter" && addTask()}
               placeholder="Что нужно сделать…" style={{ ...st.numInput, width: "100%", textAlign: "left" }} className="amtIn" />
           </label>
+          <label style={{ ...st.reqField, flexBasis: "100%" }}>
+            <span style={st.reqFieldLbl}>Описание (необязательно)</span>
+            <textarea value={tForm.description} onChange={(e) => setTForm((f) => ({ ...f, description: e.target.value }))}
+              placeholder="Детали, контекст, критерий готовности…" rows={2}
+              style={{ ...st.numInput, width: "100%", textAlign: "left", resize: "vertical", fontFamily: "inherit", lineHeight: 1.4 }} className="amtIn" />
+          </label>
           <label style={st.reqField}>
             <span style={st.reqFieldLbl}>Исполнитель</span>
             <select style={st.reqSelect} value={tForm.toId} onChange={(e) => setTForm((f) => ({ ...f, toId: e.target.value }))}>
@@ -295,7 +257,7 @@ export function DashModule({ view }) {
         ))}
       </div>
       <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill, minmax(290px, 1fr))", gap: 12 }} className="stagger">
-        {shown.map((t) => <TaskCard key={t.id} t={t} />)}
+        {shown.map((t) => <TaskCard key={t.id} t={t} C={C} st={st} busy={busy} profile={profile} onAdvance={advanceTask} />)}
         {shown.length === 0 && <div style={st.empty}>В этом списке задач нет</div>}
       </div>
     </>);
@@ -346,13 +308,13 @@ export function DashModule({ view }) {
         </div>
         <div style={{ ...st.bar, marginBottom: 8 }}><div style={{ ...st.barFill, width: `${bpPct}%` }} /></div>
         {battle.length === 0 && <div style={{ ...st.empty, padding: "12px 0" }}>Плана ещё нет</div>}
-        {battle.slice(0, 4).map((b) => <BpRow key={b.id} b={b} />)}
+        {battle.slice(0, 4).map((b) => <BpRow key={b.id} b={b} C={C} busy={busy} onToggle={toggleBp} />)}
       </div>
 
       {/* Мои задачи кратко */}
       <div style={{ ...st.locCard, padding: 16, display: "flex", flexDirection: "column", gap: 10 }}>
         <div style={{ fontSize: 14, fontWeight: 800 }}>Мои задачи</div>
-        {activeTasks.map((t) => <TaskCard key={t.id} t={t} />)}
+        {activeTasks.map((t) => <TaskCard key={t.id} t={t} C={C} st={st} busy={busy} profile={profile} onAdvance={advanceTask} />)}
         {activeTasks.length === 0 && <div style={{ ...st.empty, padding: "16px 0" }}>Активных задач нет</div>}
       </div>
 
@@ -381,4 +343,146 @@ export function DashModule({ view }) {
       </div>
     </div>
   </>);
+}
+
+
+// ---------------------------------------------------------------- Карточка задачи
+// Вынесена на уровень модуля (не замыкание внутри DashModule), иначе при каждом
+// ререндере родителя поддерево ремоунтилось бы и теряло состояние обсуждения/черновик.
+function TaskCard({ t, C, st, busy, profile, onAdvance }) {
+  const T_META = {
+    new: { label: "Новая", color: C.info, next: "Взять в работу", nextStatus: "progress" },
+    progress: { label: "В работе", color: C.warning, next: "Завершить", nextStatus: "done" },
+    done: { label: "Выполнена", color: C.green, next: null },
+  };
+  const P_META = { high: { label: "срочно", color: C.danger }, mid: { label: "обычный", color: C.warning }, low: { label: "низкий", color: C.faint } };
+  const m = T_META[t.status]; const pm = P_META[t.priority] || P_META.mid;
+  const [showComments, setShowComments] = useState(false);
+  return (
+    <div style={{ ...st.locCard, padding: "14px 16px", opacity: t.status === "done" ? 0.65 : 1 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "flex-start" }}>
+        <div style={{ fontSize: 14, fontWeight: 700, lineHeight: 1.35, textDecoration: t.status === "done" ? "line-through" : "none" }}>{t.title}</div>
+        <span style={{ fontSize: 10.5, fontWeight: 700, padding: "3px 9px", borderRadius: 20, whiteSpace: "nowrap", color: m.color, background: `${m.color}1a`, flexShrink: 0 }}>{m.label}</span>
+      </div>
+      {t.description && <div style={{ fontSize: 12.5, color: C.sub, marginTop: 6, lineHeight: 1.4, whiteSpace: "pre-wrap" }}>{t.description}</div>}
+      <div style={{ fontSize: 12, color: C.sub, marginTop: 6 }}>
+        {t.from?.full_name || "—"} → <b style={{ color: C.text }}>{t.assignee?.full_name || (t.position ? `пост ${t.position.code} ${t.position.name}` : "не назначен")}</b>
+      </div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 10, gap: 10, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11.5, color: C.faint }}><CalendarDays size={13} /> {t.due_date ? new Date(t.due_date + "T00:00:00").toLocaleDateString("ru-RU", { day: "2-digit", month: "short" }) : "без срока"}</span>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11.5, color: pm.color }}><span style={{ width: 7, height: 7, borderRadius: "50%", background: pm.color }} /> {pm.label}</span>
+        </div>
+        <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+          <button style={{ ...st.btnGhost, padding: "7px 12px", color: showComments ? C.green : C.sub }} className="btn"
+            onClick={() => setShowComments((v) => !v)} aria-expanded={showComments}>
+            <MessageSquare size={13} /> Обсуждение
+          </button>
+          {m.next && <button style={{ ...st.btnGhost, padding: "7px 12px" }} className="btn" disabled={!!busy} onClick={() => onAdvance(t, m.nextStatus)}>{busy === `t:${t.id}` ? <Loader2 size={13} className="spin" /> : m.next}</button>}
+        </div>
+      </div>
+      {showComments && <TaskComments C={C} st={st} taskId={t.id} profile={profile} />}
+    </div>
+  );
+}
+
+
+// ---------------------------------------------------------------- Строка боевого планирования
+function BpRow({ b, C, busy, onToggle }) {
+  return (
+    <div style={{ display: "flex", alignItems: "flex-start", gap: 12, padding: "10px 0", borderBottom: `1px solid ${C.line}` }}>
+      <button onClick={() => onToggle(b)} className="btn" disabled={busy === `bp:${b.id}`} style={{ width: 24, height: 24, borderRadius: 8, flexShrink: 0, cursor: "pointer", display: "grid", placeItems: "center", border: `1.5px solid ${b.done ? C.green : C.line}`, background: b.done ? C.green : "transparent", color: C.onAccent, marginTop: 1 }}>
+        {b.done && <Check size={15} strokeWidth={3} />}
+      </button>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 13.5, fontWeight: 600, textDecoration: b.done ? "line-through" : "none", color: b.done ? C.faint : C.text }}>{b.text}</div>
+        <div style={{ fontSize: 11, color: C.faint, marginTop: 2, display: "flex", gap: 8, flexWrap: "wrap" }}>
+          {b.statistic
+            ? <span style={{ color: C.money }}>↗ {b.statistic.name}{b.statistic.unit ? `, ${b.statistic.unit}` : ""}</span>
+            : <span>→ {b.target || "Личный план"}</span>}
+          {b.position && <span>· пост {b.position.code} {b.position.name}</span>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+// ---------------------------------------------------------------- Тред комментариев задачи
+// Раскрывающееся обсуждение под карточкой (gap-map Задачи §6; образец — RequestComments).
+function TaskComments({ C, st, taskId, profile }) {
+  const [items, setItems] = useState(null);   // null = ещё не загружено
+  const [text, setText] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  const mounted = useRef(true);
+  useEffect(() => () => { mounted.current = false; }, []);
+
+  const load = useCallback(() => {
+    fetchTaskComments(taskId)
+      .then((d) => { if (mounted.current) setItems(d); })
+      .catch((e) => { if (mounted.current) setErr(e?.message || String(e)); });
+  }, [taskId]);
+  useEffect(() => { load(); }, [load]);
+
+  const send = async () => {
+    const body = text.trim();
+    if (!body || busy) return;
+    setBusy(true); setErr("");
+    const tmp = { id: `tmp-${Date.now()}`, body, created_at: new Date().toISOString(), author_id: profile?.id, author: { full_name: profile?.full_name } };
+    setItems((x) => [...(x || []), tmp]);
+    setText("");
+    try {
+      const saved = await addTaskComment(taskId, body);
+      if (mounted.current) setItems((x) => (x || []).map((i) => (i.id === tmp.id ? saved : i)));
+    } catch (e) {
+      if (mounted.current) {
+        setItems((x) => (x || []).filter((i) => i.id !== tmp.id));
+        const msg = e?.message || String(e);
+        setErr(msg.includes("row-level security") ? "Нет прав на комментарий к этой задаче." : msg);
+        setText(body);
+      }
+    } finally { if (mounted.current) setBusy(false); }
+  };
+
+  return (
+    <div style={{ marginTop: 12, paddingTop: 12, borderTop: `1px solid ${C.line}` }}>
+      {items === null ? (
+        <div style={{ ...st.empty, padding: "8px 0", fontSize: 12 }}><Loader2 size={13} className="spin" /> Загрузка…</div>
+      ) : items.length === 0 ? (
+        <div style={{ fontSize: 12, color: C.faint, marginBottom: 8 }}>Комментариев пока нет — начните обсуждение</div>
+      ) : (
+        <div style={{ display: "grid", gap: 8, marginBottom: 8 }}>
+          {items.map((c) => {
+            const name = c.author?.full_name || "Сотрудник";
+            return (
+              <div key={c.id} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+                <div style={{ width: 26, height: 26, borderRadius: "50%", flexShrink: 0, display: "grid", placeItems: "center",
+                  background: avatarColor(name), color: "#fff", fontSize: 11, fontWeight: 700 }}>
+                  {name.slice(0, 1).toUpperCase()}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 11.5, color: C.faint }}>
+                    <b style={{ color: C.sub }}>{name}</b> · {new Date(c.created_at).toLocaleString("ru-RU", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                  </div>
+                  <div style={{ fontSize: 13, color: C.text, whiteSpace: "pre-wrap", lineHeight: 1.4 }}>{c.body}</div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+      {err && <div role="alert" style={{ fontSize: 11.5, color: C.danger, marginBottom: 6 }}>{err}</div>}
+      <div style={{ display: "flex", gap: 6, alignItems: "flex-end" }}>
+        <textarea value={text} onChange={(e) => setText(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
+          placeholder="Написать комментарий…" rows={1}
+          style={{ ...st.numInput, flex: 1, textAlign: "left", resize: "vertical", minHeight: 36, fontFamily: "inherit", fontSize: 13, lineHeight: 1.4 }} className="amtIn" />
+        <button style={{ ...st.btnGreen, padding: "9px 12px", opacity: busy || !text.trim() ? 0.6 : 1 }} className="btn"
+          onClick={send} disabled={busy || !text.trim()} aria-label="Отправить">
+          {busy ? <Loader2 size={15} className="spin" /> : <Send size={15} />}
+        </button>
+      </div>
+    </div>
+  );
 }
