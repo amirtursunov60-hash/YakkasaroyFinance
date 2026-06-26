@@ -1,0 +1,8 @@
+{
+  "pkg": "yakkasaroy-management",
+  "globalName": "YakkasaroyDS",
+  "shape": "package",
+  "srcDir": "src",
+  "tsconfig": "tsconfig.json",
+  "cssEntry": "src/index.css"
+}
