@@ -5,7 +5,7 @@
 -- Проверки структурные — ничего не пишут, безопасно везде.
 -- ============================================================================
 begin;
-select plan(8);
+select plan(9);
 
 set search_path = extensions, public;
 
@@ -24,6 +24,13 @@ select has_check('public', 'counterparties', 'на counterparties есть CHECK
 select lives_ok(
   $$ insert into public.counterparties (name, entity_type) values ('pgTAP юрлицо', 'legal') $$,
   'entity_type=legal проходит'
+);
+
+-- недопустимое значение типа отвергается CHECK-констрейнтом
+select throws_ok(
+  $$ insert into public.counterparties (name, entity_type) values ('pgTAP плохой', 'foo') $$,
+  '23514', null,
+  'недопустимый entity_type отвергается CHECK'
 );
 
 select * from finish();

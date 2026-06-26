@@ -157,7 +157,8 @@ export function Counterparties() {
               <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginTop: 5 }}>
                 {cp.is_supplier && <span style={{ ...st.weekTag, marginLeft: 0, color: C.info, background: `${C.info}1a` }}>поставщик</span>}
                 {cp.is_client && <span style={{ ...st.weekTag, marginLeft: 0, color: C.violet, background: `${C.violet}1a` }}>клиент</span>}
-                {cp.entity_type && <span style={{ ...st.weekTag, marginLeft: 0, color: C.sub, background: `${C.faint}1a` }}>{cp.entity_type === "legal" ? "юрлицо" : "физлицо"}</span>}
+                {cp.entity_type === "legal" && <span style={{ ...st.weekTag, marginLeft: 0, color: C.sub, background: `${C.faint}1a` }}>юрлицо</span>}
+                {cp.entity_type === "individual" && <span style={{ ...st.weekTag, marginLeft: 0, color: C.sub, background: `${C.faint}1a` }}>физлицо</span>}
                 {cp.category && <span style={{ ...st.weekTag, marginLeft: 0, color: cp.category.color || C.green, background: `${cp.category.color || C.green}1a` }}><Tag size={10} style={{ verticalAlign: -1, marginRight: 3 }} />{cp.category.name}</span>}
                 {cp.is_archived && <span style={{ ...st.weekTag, marginLeft: 0, color: C.faint, background: `${C.faint}1a` }}>в архиве</span>}
               </div>
