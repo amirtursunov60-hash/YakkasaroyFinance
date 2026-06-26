@@ -1586,6 +1586,21 @@ export async function fetchFunds() {
   return data;
 }
 
+// Остаток фондов и счетов ДС на конец выбранного периода (gap-map Фонды §2/§9):
+// накопленная сумма движений Реестра до конца недели N включительно. Считается
+// в БД (RPC fp_period_balances, read-only). Возвращает { funds: {id: bal}, cash: {id: bal} }.
+export async function fetchPeriodBalances(periodId) {
+  if (!periodId) return { funds: {}, cash: {} };
+  const { data, error } = await supabase.rpc("fp_period_balances", { p_period_id: periodId });
+  if (error) throw error;
+  const out = { funds: {}, cash: {} };
+  for (const r of data || []) {
+    if (r.kind === "fund") out.funds[r.entity_id] = Number(r.balance || 0);
+    else if (r.kind === "cash") out.cash[r.entity_id] = Number(r.balance || 0);
+  }
+  return out;
+}
+
 // Остаток (одобренное-неоплаченное) по фондам: { [fund_id]: сумма }.
 // Производная (docs/funds-spec.md §11): одобренные, но НЕ оплаченные заявки +
 // одобренные, но не оплаченные счета/обязательства поставщиков. Леджер не трогаем.
