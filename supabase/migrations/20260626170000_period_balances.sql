@@ -25,7 +25,7 @@ as $$
   left join public.fp_periods p on p.id = fr.period_id
   cross join target t
   where fr.fund_id is not null
-    and coalesce(p.ends_on, fr.created_at::date) <= t.ends_on
+    and coalesce(p.ends_on, (fr.created_at at time zone 'Asia/Dushanbe')::date) <= t.ends_on
   group by fr.fund_id
   union all
   select 'cash'::text, fr.cash_account_id, sum(fr.cash_amount)
@@ -33,7 +33,7 @@ as $$
   left join public.fp_periods p on p.id = fr.period_id
   cross join target t
   where fr.cash_account_id is not null
-    and coalesce(p.ends_on, fr.created_at::date) <= t.ends_on
+    and coalesce(p.ends_on, (fr.created_at at time zone 'Asia/Dushanbe')::date) <= t.ends_on
   group by fr.cash_account_id;
 $$;
 
