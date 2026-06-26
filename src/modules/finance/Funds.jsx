@@ -16,7 +16,7 @@ import {
   fetchFundDebts, fetchFundCommitments, fetchFundJournal, fetchFundLoans,
   fundTransfer, fundLoan, fundLoanReturn, fundIncome, fundReturn,
   fetchFundStatement, fetchFundFolders, createFundFolder, updateFundFolder,
-  archiveFundFolder, fetchFolderStatement, reverseFundOp,
+  archiveFundFolder, fetchFolderStatement, reverseFundOp, fetchPeriodBalances,
 } from "../../lib/api";
 
 // ---------------------------------------------------------------- FUNDS
@@ -65,6 +65,7 @@ export function Funds() {
   const [loansOf, setLoansOf] = useState(null); // { fund, rows } для клика по «Долгу»
   const [folders, setFolders] = useState([]);
   const [openFolders, setOpenFolders] = useState({});
+  const [periodBal, setPeriodBal] = useState(null);   // { [fund_id]: остаток на конец выбранной недели }
 
   // форма операции
   const [from, setFrom] = useState("");
@@ -92,6 +93,18 @@ export function Funds() {
     }
   }, []);
   useEffect(() => { load(); }, [load]);
+
+  // Остатки фондов на конец выбранной недели (накопленный итог из Реестра).
+  // Перезагружается при смене недели в шапке и после операций (journal меняется).
+  useEffect(() => {
+    let on = true;
+    if (!periodId) { setPeriodBal(null); return; }
+    setPeriodBal(null);
+    fetchPeriodBalances(periodId)
+      .then((b) => { if (on) setPeriodBal(b.funds); })
+      .catch(() => { if (on) setPeriodBal(null); });
+    return () => { on = false; };
+  }, [periodId, journal]);
 
   // Импорт справочников ManaJet (фонды/виды дохода/статьи/статистики) в наши таблицы
   const importRefs = async () => {
@@ -362,6 +375,7 @@ export function Funds() {
             <FundCard key={r.fund.id} C={C} st={st} fund={r.fund} m={metrics(r.fund)}
               color={colorOf(r.fund)} typeBadge={typeBadge} debtColor={debtColor} debtLabel={debtLabel} availColor={availColor}
               isFinAdmin={isFinAdmin} busy={busy}
+              periodBalance={periodBal ? (periodBal[r.fund.id] || 0) : undefined} periodEnd={period?.ends_on}
               onStatement={() => openStatement(r.fund)} onEdit={() => setEditing(r.fund)}
               onLoans={() => openLoans(r.fund)} onArchive={() => doArchive(r.fund)} />
           ))}
@@ -459,7 +473,7 @@ export function Funds() {
 
 
 // ---------------------------------------------------------------- Карточка фонда
-function FundCard({ C, st, fund: f, m, color, typeBadge, debtColor, debtLabel, availColor, isFinAdmin, busy, onStatement, onEdit, onLoans, onArchive }) {
+function FundCard({ C, st, fund: f, m, color, typeBadge, debtColor, debtLabel, availColor, isFinAdmin, busy, periodBalance, periodEnd, onStatement, onEdit, onLoans, onArchive }) {
   const [confirmArch, setConfirmArch] = useState(false);
   const mini = (label, value, opts = {}) => (
     <div style={{ minWidth: 0, ...(opts.onClick && f && m.debt !== 0 ? { cursor: "pointer" } : {}) }} onClick={opts.onClick}>
@@ -490,6 +504,12 @@ function FundCard({ C, st, fund: f, m, color, typeBadge, debtColor, debtLabel, a
         {mini("Доступно", fmt(m.available), { color: availColor(m.available), big: true })}
         {mini("Долг", debtLabel(m.debt), { color: debtColor(m.debt), onClick: m.debt !== 0 ? onLoans : undefined, loading: busy === `loans:${f.id}` })}
       </div>
+      {periodBalance !== undefined && (
+        <div style={{ fontSize: 11.5, color: C.faint, display: "flex", justifyContent: "space-between", gap: 8, marginTop: -2 }}>
+          <span>На конец недели{periodEnd ? ` ${new Date(periodEnd + "T00:00:00").toLocaleDateString("ru-RU", { day: "2-digit", month: "short" })}` : ""}</span>
+          <b style={{ color: C.sub, fontVariantNumeric: "tabular-nums" }}>{fmt(periodBalance)}</b>
+        </div>
+      )}
       <div style={{ display: "flex", gap: 6 }}>
         <button style={{ ...st.btnGhost, flex: 1, justifyContent: "center", padding: "7px 8px", fontSize: 12 }} className="btn" disabled={!!busy} onClick={onStatement}>
           {busy === `stmt:${f.id}` ? <Loader2 size={13} className="spin" /> : <List size={13} />} Подробно
