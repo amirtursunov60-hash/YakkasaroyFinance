@@ -2942,6 +2942,54 @@ export type Database = {
           },
         ]
       }
+      statistic_dated_values: {
+        Row: {
+          created_at: string
+          description: string | null
+          entered_by: string | null
+          id: string
+          is_quota: boolean
+          statistic_id: string
+          value: number
+          value_date: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          entered_by?: string | null
+          id?: string
+          is_quota?: boolean
+          statistic_id: string
+          value: number
+          value_date: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          entered_by?: string | null
+          id?: string
+          is_quota?: boolean
+          statistic_id?: string
+          value?: number
+          value_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "statistic_dated_values_entered_by_fkey"
+            columns: ["entered_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "statistic_dated_values_statistic_id_fkey"
+            columns: ["statistic_id"]
+            isOneToOne: false
+            referencedRelation: "statistics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       statistic_values: {
         Row: {
           created_at: string
@@ -2999,6 +3047,7 @@ export type Database = {
       }
       statistics: {
         Row: {
+          frequency: string
           id: string
           invert: boolean
           is_archived: boolean
@@ -3016,6 +3065,7 @@ export type Database = {
           unit: string | null
         }
         Insert: {
+          frequency?: string
           id?: string
           invert?: boolean
           is_archived?: boolean
@@ -3033,6 +3083,7 @@ export type Database = {
           unit?: string | null
         }
         Update: {
+          frequency?: string
           id?: string
           invert?: boolean
           is_archived?: boolean
