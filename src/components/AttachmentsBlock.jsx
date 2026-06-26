@@ -12,6 +12,7 @@ const UPLOAD_LABEL = {
   request: "Прикрепить документ",
   bill: "Прикрепить фото счёта",
   invoice: "Прикрепить договор/смету",
+  counterparty: "Прикрепить договор/документ",
 };
 
 export function AttachmentsBlock({ kind, parentId, attachments = [], canUpload, canDelete = canUpload, profileId, onChanged }) {

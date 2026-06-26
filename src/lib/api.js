@@ -828,8 +828,8 @@ export async function cashTransfer(fromId, toId, amount, periodId, comment) {
 
 // ---------------------------------------------------------------- Вложения
 // kind: 'request' | 'bill' | 'invoice'; файл кладём в Storage, ссылку — в таблицу
-const ATT_TABLE = { request: "request_attachments", bill: "bill_attachments", invoice: "invoice_attachments" };
-const ATT_FK = { request: "request_id", bill: "bill_id", invoice: "invoice_id" };
+const ATT_TABLE = { request: "request_attachments", bill: "bill_attachments", invoice: "invoice_attachments", counterparty: "counterparty_attachments" };
+const ATT_FK = { request: "request_id", bill: "bill_id", invoice: "invoice_id", counterparty: "counterparty_id" };
 
 export async function uploadAttachment(kind, parentId, file, uploadedBy) {
   const safe = file.name.replace(/[^\wа-яА-ЯёЁ.-]+/gu, "_").slice(-80);
@@ -860,6 +860,20 @@ export async function fetchInvoiceAttachments(invoiceIds) {
   if (error) throw error;
   const m = {};
   for (const r of data) (m[r.invoice_id] ??= []).push(r);
+  return m;
+}
+
+// Вложения по списку контрагентов: { [counterparty_id]: [{...}] }
+export async function fetchCounterpartyAttachments(counterpartyIds) {
+  if (!counterpartyIds.length) return {};
+  const { data, error } = await supabase
+    .from("counterparty_attachments")
+    .select("id, counterparty_id, file_path, file_name, uploaded_by, created_at")
+    .in("counterparty_id", counterpartyIds)
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+  const m = {};
+  for (const r of data) (m[r.counterparty_id] ??= []).push(r);
   return m;
 }
 
