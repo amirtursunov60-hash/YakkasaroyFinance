@@ -11,6 +11,7 @@ import { useActionFeedback } from "../../hooks/useActionFeedback";
 import { fmt } from "../../utils/format";
 import { usePeriod, periodTitle } from "../../lib/PeriodCtx";
 import { PaymentTypesManager } from "./PaymentTypesManager";
+import { CurrenciesManager, ExchangeRatesManager } from "./CurrencyManager";
 import {
   fetchFunds, fetchIncomeRefs, createFund, updateFund, archiveFund, triggerMjImportRefs,
   fetchFundDebts, fetchFundCommitments, fetchFundJournal, fetchFundLoans,
@@ -447,6 +448,8 @@ export function Funds() {
 
     {/* Справочник способов оплаты (Фонды §8) — CRUD для фин-админов */}
     {isFinAdmin && <PaymentTypesManager />}
+    {isFinAdmin && <CurrenciesManager />}
+    {isFinAdmin && <ExchangeRatesManager />}
 
     {statement && (
       <FundStatementModal C={C} st={st} statement={statement} period={period}
