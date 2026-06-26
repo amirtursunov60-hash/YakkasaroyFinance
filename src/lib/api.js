@@ -1712,7 +1712,7 @@ export async function resetDistribution(periodId, stage) {
 export async function fetchStatistics() {
   const { data, error } = await supabase
     .from("statistics")
-    .select(`id, name, unit, invert, is_auto, source, location_id, owner_id, position_id, min_val, max_val,
+    .select(`id, name, unit, invert, is_auto, source, location_id, owner_id, position_id, min_val, max_val, stat_type,
       owner:profiles(full_name),
       position:org_positions(code, name, division:org_divisions(code, name))`)
     .eq("is_archived", false)
@@ -1741,14 +1741,14 @@ export async function fetchStatisticValues(periodIds) {
   return m;
 }
 
-export async function createStatistic({ name, unit, invert = false, positionId, ownerId, locationId, source, minVal = null, maxVal = null }) {
+export async function createStatistic({ name, unit, invert = false, positionId, ownerId, locationId, source, minVal = null, maxVal = null, statType = null }) {
   const { data, error } = await supabase
     .from("statistics")
     .insert({
       name, unit: unit || null, invert,
       position_id: positionId || null, owner_id: ownerId || null,
       location_id: locationId || null, source: source || null,
-      min_val: minVal, max_val: maxVal,
+      min_val: minVal, max_val: maxVal, stat_type: statType,
     })
     .select().single();
   if (error) throw error;
