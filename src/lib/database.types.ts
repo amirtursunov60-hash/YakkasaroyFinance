@@ -2945,6 +2945,7 @@ export type Database = {
       statistic_values: {
         Row: {
           created_at: string
+          description: string | null
           entered_by: string | null
           id: string
           is_quota: boolean
@@ -2954,6 +2955,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          description?: string | null
           entered_by?: string | null
           id?: string
           is_quota?: boolean
@@ -2963,6 +2965,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          description?: string | null
           entered_by?: string | null
           id?: string
           is_quota?: boolean

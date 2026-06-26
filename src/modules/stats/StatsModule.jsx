@@ -83,7 +83,8 @@ export function StatsModule({ view }) {
     const curCell = periodId ? values[s.id]?.[periodId] : null;
     const achievement = quotaAchievement(curCell?.value, curCell?.quota, s.invert);
     return { s, series, quotaSeries, hasQuota, state, last, delta, divCode, divName, owner,
-      curValue: curCell?.value ?? null, curQuota: curCell?.quota ?? null, achievement };
+      curValue: curCell?.value ?? null, curQuota: curCell?.quota ?? null,
+      curDescription: curCell?.description ?? null, achievement };
   }), [stats, values, periodsAsc, periodId]);
 
   const summary = useMemo(() => {
@@ -288,8 +289,13 @@ export function StatsModule({ view }) {
                     )}
                   </div>
                 )}
+                {r.curDescription && (
+                  <div style={{ fontSize: 12.5, color: C.sub, marginTop: 10, padding: "8px 12px", background: `${C.faint}1a`, borderRadius: 8, whiteSpace: "pre-wrap" }}>
+                    <b style={{ color: C.text }}>Заметка к факту:</b> {r.curDescription}
+                  </div>
+                )}
                 <ValueEntry C={C} st={st} isMobile={isMobile} stat={s} periodId={periodId}
-                  curValue={r.curValue} curQuota={r.curQuota}
+                  curValue={r.curValue} curQuota={r.curQuota} curDescription={r.curDescription}
                   onSaved={async (msg) => { await reloadValues(); setDone(msg); }}
                   onError={setErr} />
                 {isAdmin && (
@@ -316,11 +322,12 @@ export function StatsModule({ view }) {
 
 
 // ---------------------------------------------------------------- Ввод значения за неделю
-function ValueEntry({ C, st, isMobile, stat, periodId, curValue, curQuota, onSaved, onError }) {
+function ValueEntry({ C, st, isMobile, stat, periodId, curValue, curQuota, curDescription, onSaved, onError }) {
   const [val, setVal] = useState(curValue ?? "");
   const [quota, setQuota] = useState(curQuota ?? "");
+  const [note, setNote] = useState(curDescription ?? "");
   const [busy, setBusy] = useState(false);
-  useEffect(() => { setVal(curValue ?? ""); setQuota(curQuota ?? ""); }, [curValue, curQuota, periodId]);
+  useEffect(() => { setVal(curValue ?? ""); setQuota(curQuota ?? ""); setNote(curDescription ?? ""); }, [curValue, curQuota, curDescription, periodId]);
 
   const save = async () => {
     if (busy) return;
@@ -328,12 +335,15 @@ function ValueEntry({ C, st, isMobile, stat, periodId, curValue, curQuota, onSav
     if (!periodId) return onError("Нет выбранной недели ФП — добавьте неделю в шапке");
     const v = val === "" ? null : Number(String(val).replace(",", "."));
     const q = quota === "" ? null : Number(String(quota).replace(",", "."));
+    const desc = note.trim() || null;
     if (v == null && q == null) return onError("Укажите факт или квоту");
     if (v != null && Number.isNaN(v)) return onError("Факт — не число");
     if (q != null && Number.isNaN(q)) return onError("Квота — не число");
+    // Заметка относится к факту: если её ввели, но факта нет — попросим факт.
+    if (v == null && desc) return onError("Заметка относится к факту — укажите факт за неделю");
     setBusy(true);
     try {
-      if (v != null) await upsertStatisticValue(stat.id, periodId, v, false);
+      if (v != null) await upsertStatisticValue(stat.id, periodId, v, false, desc);
       if (q != null) await upsertStatisticValue(stat.id, periodId, q, true);
       await onSaved(`«${stat.name}»: значение за неделю сохранено`);
     } catch (e) { onError(e?.message || String(e)); }
@@ -341,22 +351,30 @@ function ValueEntry({ C, st, isMobile, stat, periodId, curValue, curQuota, onSav
   };
 
   return (
-    <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-end", paddingTop: 14, marginTop: 4, borderTop: `1px solid ${C.line}` }}>
-      <label style={{ ...st.reqField, flex: isMobile ? "1 1 100%" : 1 }}>
-        <span style={st.reqFieldLbl}>Факт за неделю{stat.unit ? `, ${stat.unit}` : ""}</span>
-        <input type="number" inputMode="decimal" value={val} placeholder="0"
-          onChange={(e) => setVal(e.target.value)} onWheel={(e) => e.target.blur()}
-          onKeyDown={(e) => e.key === "Enter" && save()} style={{ ...st.numInput, width: "100%" }} className="amtIn" />
+    <div style={{ paddingTop: 14, marginTop: 4, borderTop: `1px solid ${C.line}` }}>
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-end" }}>
+        <label style={{ ...st.reqField, flex: isMobile ? "1 1 100%" : 1 }}>
+          <span style={st.reqFieldLbl}>Факт за неделю{stat.unit ? `, ${stat.unit}` : ""}</span>
+          <input type="number" inputMode="decimal" value={val} placeholder="0"
+            onChange={(e) => setVal(e.target.value)} onWheel={(e) => e.target.blur()}
+            onKeyDown={(e) => e.key === "Enter" && save()} style={{ ...st.numInput, width: "100%" }} className="amtIn" />
+        </label>
+        <label style={{ ...st.reqField, flex: isMobile ? "1 1 100%" : 1 }}>
+          <span style={st.reqFieldLbl}>Квота (план){stat.unit ? `, ${stat.unit}` : ""}</span>
+          <input type="number" inputMode="decimal" value={quota} placeholder="—"
+            onChange={(e) => setQuota(e.target.value)} onWheel={(e) => e.target.blur()}
+            onKeyDown={(e) => e.key === "Enter" && save()} style={{ ...st.numInput, width: "100%" }} className="amtIn" />
+        </label>
+        <button style={{ ...st.btnGreen, opacity: busy ? 0.7 : 1 }} className="btn glass" onClick={save} disabled={busy}>
+          {busy ? <Loader2 size={15} className="spin" /> : <Plus size={15} />} Сохранить
+        </button>
+      </div>
+      <label style={{ ...st.reqField, marginTop: 10, display: "block" }}>
+        <span style={st.reqFieldLbl}>Заметка к факту (необязательно)</span>
+        <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2}
+          placeholder="Почему значение такое? Что повлияло на отклонение от плана…"
+          style={{ ...st.numInput, width: "100%", textAlign: "left", resize: "vertical", fontFamily: "inherit", lineHeight: 1.4 }} className="amtIn" />
       </label>
-      <label style={{ ...st.reqField, flex: isMobile ? "1 1 100%" : 1 }}>
-        <span style={st.reqFieldLbl}>Квота (план){stat.unit ? `, ${stat.unit}` : ""}</span>
-        <input type="number" inputMode="decimal" value={quota} placeholder="—"
-          onChange={(e) => setQuota(e.target.value)} onWheel={(e) => e.target.blur()}
-          onKeyDown={(e) => e.key === "Enter" && save()} style={{ ...st.numInput, width: "100%" }} className="amtIn" />
-      </label>
-      <button style={{ ...st.btnGreen, opacity: busy ? 0.7 : 1 }} className="btn glass" onClick={save} disabled={busy}>
-        {busy ? <Loader2 size={15} className="spin" /> : <Plus size={15} />} Сохранить
-      </button>
     </div>
   );
 }

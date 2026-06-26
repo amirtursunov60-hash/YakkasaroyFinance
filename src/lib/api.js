@@ -1738,21 +1738,22 @@ export async function fetchStatistics() {
 }
 
 // Значения за указанные периоды:
-// { [statistic_id]: { [period_id]: { value: number|null, quota: number|null } } }
+// { [statistic_id]: { [period_id]: { value, quota, description } } }
+// description — заметка к ФАКТУ (is_quota=false): почему значение такое.
 export async function fetchStatisticValues(periodIds) {
   const ids = (periodIds || []).filter(Boolean);
   if (!ids.length) return {};
   const { data, error } = await supabase
     .from("statistic_values")
-    .select("statistic_id, period_id, value, is_quota")
+    .select("statistic_id, period_id, value, is_quota, description")
     .in("period_id", ids);
   if (error) throw error;
   const m = {};
   for (const r of data) {
     const byPeriod = (m[r.statistic_id] ??= {});
-    const cell = (byPeriod[r.period_id] ??= { value: null, quota: null });
+    const cell = (byPeriod[r.period_id] ??= { value: null, quota: null, description: null });
     if (r.is_quota) cell.quota = Number(r.value);
-    else cell.value = Number(r.value);
+    else { cell.value = Number(r.value); cell.description = r.description || null; }
   }
   return m;
 }
@@ -1783,10 +1784,12 @@ export async function archiveStatistic(id) {
 
 // Внести/обновить значение статистики за неделю (факт или квота). Уникальна
 // тройка (statistic_id, period_id, is_quota) — апсертим вручную select→update/insert.
-export async function upsertStatisticValue(statisticId, periodId, value, isQuota = false) {
+// description — заметка к факту (is_quota=false); для квоты игнорируется (всегда null).
+export async function upsertStatisticValue(statisticId, periodId, value, isQuota = false, description = null) {
   if (!periodId) throw new Error("Не выбрана неделя ФП");
   // Кто внёс значение — для аудита (колонка entered_by ранее не заполнялась).
   const enteredBy = (await supabase.auth.getUser()).data.user?.id ?? null;
+  const note = isQuota ? null : (description || null);
   const found = await supabase
     .from("statistic_values").select("id")
     .eq("statistic_id", statisticId).eq("period_id", periodId).eq("is_quota", isQuota)
@@ -1794,13 +1797,13 @@ export async function upsertStatisticValue(statisticId, periodId, value, isQuota
   if (found.error) throw found.error;
   if (found.data) {
     const { error } = await supabase
-      .from("statistic_values").update({ value, entered_by: enteredBy }).eq("id", found.data.id);
+      .from("statistic_values").update({ value, entered_by: enteredBy, description: note }).eq("id", found.data.id);
     if (error) throw error;
     return;
   }
   const { error } = await supabase
     .from("statistic_values")
-    .insert({ statistic_id: statisticId, period_id: periodId, value, is_quota: isQuota, entered_by: enteredBy });
+    .insert({ statistic_id: statisticId, period_id: periodId, value, is_quota: isQuota, entered_by: enteredBy, description: note });
   if (error) throw error;
 }
 
