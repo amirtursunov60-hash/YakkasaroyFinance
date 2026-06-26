@@ -253,6 +253,10 @@ export function ExchangeRatesManager() {
             </button>
           </div>
 
+          <div style={{ fontSize: 11.5, color: C.faint, marginBottom: 10 }}>
+            Курс направленный: «из → в». Для обратной конвертации заведите отдельную строку (например, USD → TJS и TJS → USD).
+          </div>
+
           {loading && <div style={{ ...st.empty, padding: "14px 0" }}><Loader2 size={16} className="spin" /> Загрузка…</div>}
           {!loading && !rows.length && <div style={{ ...st.empty, padding: "14px 0" }}>Курсов пока нет — добавьте первый</div>}
 
