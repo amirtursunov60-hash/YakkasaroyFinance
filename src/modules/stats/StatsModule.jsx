@@ -340,7 +340,7 @@ function ValueEntry({ C, st, isMobile, stat, periodId, curValue, curQuota, curDe
     if (v != null && Number.isNaN(v)) return onError("Факт — не число");
     if (q != null && Number.isNaN(q)) return onError("Квота — не число");
     // Заметка относится к факту: если её ввели, но факта нет — попросим факт.
-    if (v == null && desc) return onError("Заметка относится к факту — укажите факт за неделю");
+    if (v == null && desc) return onError("Заметка относится к факту — укажите факт за неделю или очистите заметку");
     setBusy(true);
     try {
       if (v != null) await upsertStatisticValue(stat.id, periodId, v, false, desc);
