@@ -12,6 +12,7 @@ import { fmt } from "../../utils/format";
 import { usePeriod, periodTitle } from "../../lib/PeriodCtx";
 import { PaymentTypesManager } from "./PaymentTypesManager";
 import { CurrenciesManager, ExchangeRatesManager } from "./CurrencyManager";
+import { ChartAccountsManager } from "./ChartAccountsManager";
 import {
   fetchFunds, fetchIncomeRefs, createFund, updateFund, archiveFund, triggerMjImportRefs,
   fetchFundDebts, fetchFundCommitments, fetchFundJournal, fetchFundLoans,
@@ -450,6 +451,7 @@ export function Funds() {
     {isFinAdmin && <PaymentTypesManager />}
     {isFinAdmin && <CurrenciesManager />}
     {isFinAdmin && <ExchangeRatesManager />}
+    {isFinAdmin && <ChartAccountsManager />}
 
     {statement && (
       <FundStatementModal C={C} st={st} statement={statement} period={period}

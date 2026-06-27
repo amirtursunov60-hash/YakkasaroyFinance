@@ -303,6 +303,36 @@ export type Database = {
           },
         ]
       }
+      chart_accounts: {
+        Row: {
+          account_type: string
+          code: string
+          created_at: string
+          created_by: string | null
+          id: string
+          is_archived: boolean
+          name: string
+        }
+        Insert: {
+          account_type: string
+          code: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_archived?: boolean
+          name: string
+        }
+        Update: {
+          account_type?: string
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_archived?: boolean
+          name?: string
+        }
+        Relationships: []
+      }
       client_invoices: {
         Row: {
           amount: number
@@ -3644,6 +3674,17 @@ export type Database = {
           p_stage: Database["public"]["Enums"]["distribution_stage"]
         }
         Returns: undefined
+      }
+      fp_turnover_sheet: {
+        Args: { p_period_id: string }
+        Returns: {
+          closing: number
+          entity_id: string
+          inflow: number
+          kind: string
+          opening: number
+          outflow: number
+        }[]
       }
       fp_withdraw_request: { Args: { p_request_id: string }; Returns: undefined }
       has_fund_access: { Args: { f: string }; Returns: boolean }

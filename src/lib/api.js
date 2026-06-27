@@ -697,6 +697,48 @@ export async function setPaymentTypeArchived(id, archived) {
   if (error) throw error;
 }
 
+// ---- ОСВ (оборотно-сальдовая ведомость, Реестр §9) ------------------------
+// Read-only выборка из Реестра: по фондам и счетам ДС за период — вход/приход/
+// расход/исход. { funds: [{id,opening,inflow,outflow,closing}], cash: [...] }.
+export async function fetchTurnoverSheet(periodId) {
+  if (!periodId) return { funds: [], cash: [] };
+  const { data, error } = await supabase.rpc("fp_turnover_sheet", { p_period_id: periodId });
+  if (error) throw error;
+  const out = { funds: [], cash: [] };
+  for (const r of data || []) {
+    const row = { id: r.entity_id, opening: Number(r.opening || 0), inflow: Number(r.inflow || 0), outflow: Number(r.outflow || 0), closing: Number(r.closing || 0) };
+    if (r.kind === "fund") out.funds.push(row); else if (r.kind === "cash") out.cash.push(row);
+  }
+  return out;
+}
+
+// ---- План счетов (справочник chart_accounts, Реестр §12) -------------------
+// CRUD под RLS ca_* = is_fin_admin().
+export async function fetchChartAccounts({ includeArchived = false } = {}) {
+  let q = supabase.from("chart_accounts").select("id, code, name, account_type, is_archived");
+  if (!includeArchived) q = q.eq("is_archived", false);
+  const { data, error } = await q.order("code");
+  if (error) throw error;
+  return data;
+}
+
+export async function createChartAccount({ code, name, accountType }) {
+  const { data, error } = await supabase
+    .from("chart_accounts").insert({ code: code.trim(), name: name.trim(), account_type: accountType }).select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function updateChartAccount(id, patch) {
+  const { error } = await supabase.from("chart_accounts").update(patch).eq("id", id);
+  if (error) throw error;
+}
+
+export async function setChartAccountArchived(id, archived) {
+  const { error } = await supabase.from("chart_accounts").update({ is_archived: archived }).eq("id", id);
+  if (error) throw error;
+}
+
 // ---- Валюты (справочник currencies, Фонды §3) -----------------------------
 // CRUD под RLS currencies_insert/update = is_fin_admin(). Удаление не даём
 // (валюта ссылается из счетов/фондов/операций). Базовая — через RPC ниже.
