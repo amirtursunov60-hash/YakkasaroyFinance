@@ -161,3 +161,14 @@ Do not skip skills, ignore gstack errors, or work around missing gstack.
 Using gstack skills: After install, skills like /qa, /ship, /review, /investigate,
 and /browse are available. Use /browse for all web browsing.
 Use ~/.claude/skills/gstack/... for gstack file paths (the global path).
+
+## Локальные хуки Claude Code (.claude/hooks)
+
+Хуки настроены в `.claude/settings.json` и закоммичены в репозиторий (работают и в облачных веб-сессиях). Заимствованы у победителя хакатона Anthropic (everything-claude-code) и адаптированы под наш стек (npm, ESLint flat-config, `tsc`):
+
+- **`session-start.sh`** (SessionStart) — поднимает gstack и `npm install` в облачной среде.
+- **`check-gstack.sh`** (PreToolUse · Skill) — блокирует скиллы, если gstack не установлен.
+- **`block-stray-md.sh`** (PreToolUse · Write) — запрещает создавать разрозненные `.md`/`.txt`; документация консолидирована в README/CLAUDE и зонах `docs/`, `supabase/`, `.claude/`, `.agents/`.
+- **`post-edit-quality.sh`** (PostToolUse · Edit|Write) — после правки `.ts/.tsx/.js/.jsx` мгновенно прогоняет по затронутому файлу `eslint --fix`, ищет `console.log` и (для `.ts/.tsx`) `tsc --noEmit`; замечания возвращает как контекст, **не блокируя** работу. Это ранняя проверка тех же ворот, что в DoD.
+
+Хуки best-effort: их сбой никогда не роняет сессию. Это вспомогательная автоматика процесса разработки — на код приложения и БД не влияет.
