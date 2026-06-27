@@ -12,6 +12,7 @@ import { DashModule } from "../modules/dashboard/DashModule";
 import { OwnerDashboard } from "../modules/dashboard/OwnerDashboard";
 import { Clients } from "../modules/finance/Clients";
 import { Counterparties } from "../modules/crm/Counterparties";
+import { MassmailModule } from "../modules/crm/MassmailModule";
 import { Control } from "../modules/finance/Control";
 import { Directive } from "../modules/finance/Directive";
 import { Expenses } from "../modules/finance/Expenses";
@@ -243,7 +244,8 @@ export function App({ onLogout }) {
           {activeModule === "dashboard" && active !== "d_owner" && <DashModule view={active} />}
 
           {activeModule === "crm" && active === "c_counterparties" && <Counterparties />}
-          {activeModule === "crm" && active !== "c_counterparties" && <CrmModule view={active} />}
+          {activeModule === "crm" && active === "c_massmail" && <MassmailModule />}
+          {activeModule === "crm" && active !== "c_counterparties" && active !== "c_massmail" && <CrmModule view={active} />}
 
           {activeModule === "restaurant" && active === "r_orders" && <RestOrders />}
           {activeModule === "restaurant" && active === "r_tables" && <RestTables />}
