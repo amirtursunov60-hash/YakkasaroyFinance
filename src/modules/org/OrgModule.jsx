@@ -183,7 +183,7 @@ export function OrgModule({ view }) {
                   {sections.map((s) => (
                     <div key={s.name} style={{ padding: "10px 18px 4px" }}>
                       <div style={{ ...st.zoneTitle, marginBottom: 6 }}>{s.name}</div>
-                      {s.posts.map((p) => (
+                      {orderSectionPosts(s.posts).map((p) => (
                         <PostRow key={p.id} p={p} color={color} C={C} st={st}
                           canPos={canPos} people={people} busy={busy} act={act}
                           HatBadge={HatBadge} VacBadge={VacBadge}
@@ -304,13 +304,42 @@ export function OrgModule({ view }) {
 }
 
 
+// Упорядочить посты секции деревом: подчинённые идут сразу под руководителем
+// (parent_id в пределах той же секции), с глубиной _depth для отступа.
+function orderSectionPosts(posts) {
+  const byId = new Map(posts.map((p) => [p.id, p]));
+  const children = new Map();
+  const roots = [];
+  for (const p of posts) {
+    if (p.parentId && byId.has(p.parentId)) {
+      if (!children.has(p.parentId)) children.set(p.parentId, []);
+      children.get(p.parentId).push(p);
+    } else roots.push(p);
+  }
+  const out = [];
+  const seen = new Set();
+  const walk = (p, depth) => {
+    if (seen.has(p.id)) return;          // защита от цикла в легаси-данных (БД-триггер не даёт создать новый)
+    seen.add(p.id);
+    out.push({ ...p, _depth: depth });
+    (children.get(p.id) || []).forEach((c) => walk(c, depth + 1));
+  };
+  roots.forEach((r) => walk(r, 0));
+  // узлы, не попавшие в дерево (например, часть цикла) — показать на верхнем уровне, не терять
+  for (const p of posts) if (!seen.has(p.id)) out.push({ ...p, _depth: 0 });
+  return out;
+}
+
 // ---------------------------------------------------------------- Строка поста
 function PostRow({ p, color, C, st, canPos, people, busy, act, HatBadge, VacBadge, onEdit }) {
   const holder = p.holders[0];
   const assignedIds = new Set(p.holders.map((h) => h.id));
+  const depth = p._depth || 0;
   return (
-    <div style={{ padding: "9px 0", borderBottom: `1px solid ${C.line}` }}>
+    <div style={{ padding: "9px 0", borderBottom: `1px solid ${C.line}`, marginLeft: depth ? depth * 20 : 0,
+      ...(depth ? { borderLeft: `2px solid ${C.line}`, paddingLeft: 12 } : {}) }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        {depth > 0 && <span style={{ color: C.faint, fontSize: 13, flexShrink: 0 }} title="подчинённый пост">↳</span>}
         <div style={{ width: 34, height: 34, borderRadius: "50%", background: holder ? `${avatarColor(holder.name)}26` : `${C.danger}14`, color: holder ? avatarColor(holder.name) : C.danger, display: "grid", placeItems: "center", flexShrink: 0 }}>
           <User2 size={16} />
         </div>
@@ -433,6 +462,7 @@ function PositionModal({ C, st, isMobile, divisions, locations = [], position, d
     ckp: position?.ckp || "", statistic: position?.statistic || "",
     duties: (position?.duties || []).join("\n"),
     isExecutive: !!position?.isExecutive,
+    parentId: position?.parentId || "",
   });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
@@ -449,6 +479,7 @@ function PositionModal({ C, st, isMobile, divisions, locations = [], position, d
         statistic: f.statistic.trim() || null,
         duties: f.duties.split("\n").map((s) => s.trim()).filter(Boolean),
         is_executive: f.isExecutive,
+        parent_id: f.parentId || null,
       };
       if (edit) await updatePosition(position.id, patch);
       else await createPosition(patch);
@@ -478,7 +509,7 @@ function PositionModal({ C, st, isMobile, divisions, locations = [], position, d
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 10 }}>
             <div style={st.reqField}>
               <span style={st.reqFieldLbl}>Отделение</span>
-              <select style={st.mdSelect} className="fin" value={f.divisionId} onChange={(e) => setF((p) => ({ ...p, divisionId: e.target.value }))}>
+              <select style={st.mdSelect} className="fin" value={f.divisionId} onChange={(e) => setF((p) => ({ ...p, divisionId: e.target.value, parentId: "" }))}>
                 {divisions.map((d) => <option key={d.id} value={d.id}>{d.code} · {d.name}</option>)}
               </select>
             </div>
@@ -492,6 +523,15 @@ function PositionModal({ C, st, isMobile, divisions, locations = [], position, d
             <select style={st.mdSelect} className="fin" value={f.locationId} onChange={(e) => setF((p) => ({ ...p, locationId: e.target.value }))}>
               <option value="">— вся сеть —</option>
               {locations.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
+            </select>
+          </div>
+          <div style={st.reqField}>
+            <span style={st.reqFieldLbl}>Подчинён посту (руководитель, необязательно)</span>
+            <select style={st.mdSelect} className="fin" value={f.parentId} onChange={(e) => setF((p) => ({ ...p, parentId: e.target.value }))}>
+              <option value="">— подчинён напрямую отделению —</option>
+              {(divisions.find((d) => d.id === f.divisionId)?.positions || [])
+                .filter((p) => p.id !== position?.id)
+                .map((p) => <option key={p.id} value={p.id}>{p.code} · {p.name}</option>)}
             </select>
           </div>
           <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: C.text, cursor: "pointer" }}>
