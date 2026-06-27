@@ -51,7 +51,7 @@ export function MassmailModule() {
     setExpanded(camp.id);
     if (!recips[camp.id]) {
       try { setRecips((m) => ({ ...m, [camp.id]: null })); const r = await fetchMassmailRecipients(camp.id); setRecips((m) => ({ ...m, [camp.id]: r })); }
-      catch (e) { setErr(e?.message || String(e)); }
+      catch (e) { setErr(e?.message || String(e)); setRecips((m) => ({ ...m, [camp.id]: [] })); }
     }
   };
 
