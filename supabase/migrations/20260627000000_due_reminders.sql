@@ -14,6 +14,7 @@ as $$
 declare
   me uuid := (select auth.uid());
   cnt integer := 0;
+  today date := (now() at time zone 'Asia/Dushanbe')::date;  -- «сегодня» по местному времени
   r record;
 begin
   if me is null then return 0; end if;
@@ -26,7 +27,7 @@ begin
       and t.status <> 'done'::task_status
       and t.is_archived = false
       and t.due_date is not null
-      and t.due_date <= current_date
+      and t.due_date <= today
       and not exists (
         select 1 from public.notifications n
         where n.user_id = me and n.kind = 'reminder' and n.request_id = t.id and n.is_read = false
@@ -34,7 +35,7 @@ begin
   loop
     insert into public.notifications(user_id, kind, title, body, module, view_key, request_id)
     values (me, 'reminder',
-      case when r.due_date < current_date then 'Просрочена задача: ' || r.title
+      case when r.due_date < today then 'Просрочена задача: ' || r.title
            else 'Сегодня срок задачи: ' || r.title end,
       'Срок: ' || to_char(r.due_date, 'DD.MM.YYYY'),
       'dashboard', 'd_tasks', r.id);
@@ -48,7 +49,7 @@ begin
     left join public.crm_stages s on s.id = l.stage_id
     where l.responsible_id = me
       and l.due_date is not null
-      and l.due_date <= current_date
+      and l.due_date <= today
       and coalesce(s.is_won, false) = false
       and coalesce(s.is_lost, false) = false
       and not exists (
@@ -58,7 +59,7 @@ begin
   loop
     insert into public.notifications(user_id, kind, title, body, module, view_key, request_id)
     values (me, 'reminder',
-      case when r.due_date < current_date then 'Просрочен лид: ' || coalesce(r.name, 'без имени')
+      case when r.due_date < today then 'Просрочен лид: ' || coalesce(r.name, 'без имени')
            else 'Сегодня по лиду: ' || coalesce(r.name, 'без имени') end,
       'Следующий шаг: ' || to_char(r.due_date, 'DD.MM.YYYY'),
       'crm', 'c_funnel', r.id);
