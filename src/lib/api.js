@@ -2072,6 +2072,62 @@ export async function createCrmClient(row) {
   return data;
 }
 
+// ---------------------------------------------------------------- Рассылки клиентам (Massmail, §12)
+// SMS/email-шлюза нет: кампания = снимок получателей (имя+телефон) → WhatsApp-ссылки
+// и копируемый список + отметка «отправлено». RLS — по точке (родной CRM-паттерн).
+export async function fetchMassmailCampaigns() {
+  const { data, error } = await supabase
+    .from("massmail_campaigns")
+    .select("id, title, template_text, segment_type, segment_filters, location_id, created_at, recipients:massmail_recipients(count)")
+    .eq("is_archived", false)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data || []).map((c) => ({ ...c, recipientCount: c.recipients?.[0]?.count ?? 0 }));
+}
+
+export async function fetchMassmailRecipients(campaignId) {
+  const { data, error } = await supabase
+    .from("massmail_recipients")
+    .select("id, recipient_name, recipient_phone, source_type, note, is_sent, sent_at")
+    .eq("campaign_id", campaignId)
+    .order("recipient_name");
+  if (error) throw error;
+  return data;
+}
+
+// Создать кампанию + снимок получателей (recipients строит модуль из выбранного сегмента).
+export async function createMassmailCampaign({ title, templateText, segmentType, segmentFilters, locationId }, recipients) {
+  const { data: camp, error } = await supabase
+    .from("massmail_campaigns")
+    .insert({ title, template_text: templateText || null, segment_type: segmentType,
+      segment_filters: segmentFilters || null, location_id: locationId || null })
+    .select().single();
+  if (error) throw error;
+  if (recipients && recipients.length) {
+    const rows = recipients.map((r) => ({
+      campaign_id: camp.id, recipient_name: r.name, recipient_phone: r.phone,
+      source_type: r.sourceType, source_id: r.sourceId || null, note: r.note || null,
+    }));
+    const { error: rErr } = await supabase.from("massmail_recipients").insert(rows);
+    if (rErr) throw rErr;
+  }
+  return camp;
+}
+
+export async function markMassmailRecipientsSent(campaignId, ids = null) {
+  let q = supabase.from("massmail_recipients")
+    .update({ is_sent: true, sent_at: new Date().toISOString() })
+    .eq("campaign_id", campaignId).eq("is_sent", false);
+  if (ids && ids.length) q = q.in("id", ids);
+  const { error } = await q;
+  if (error) throw error;
+}
+
+export async function archiveMassmailCampaign(id) {
+  const { error } = await supabase.from("massmail_campaigns").update({ is_archived: true }).eq("id", id);
+  if (error) throw error;
+}
+
 // ---------------------------------------------------------------- Задачи и боевое планирование
 // Личный кабинет (миграция 20260620210000_dashboard_tasks_bp). Задача — поручение
 // от пользователя исполнителю; боевое планирование — личный список действий.

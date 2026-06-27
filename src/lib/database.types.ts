@@ -2337,6 +2337,94 @@ export type Database = {
           },
         ]
       }
+      massmail_campaigns: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          is_archived: boolean
+          location_id: string | null
+          segment_filters: Json | null
+          segment_type: string
+          template_text: string | null
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_archived?: boolean
+          location_id?: string | null
+          segment_filters?: Json | null
+          segment_type: string
+          template_text?: string | null
+          title: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_archived?: boolean
+          location_id?: string | null
+          segment_filters?: Json | null
+          segment_type?: string
+          template_text?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "massmail_campaigns_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      massmail_recipients: {
+        Row: {
+          campaign_id: string
+          id: string
+          is_sent: boolean
+          note: string | null
+          recipient_name: string
+          recipient_phone: string
+          sent_at: string | null
+          source_id: string | null
+          source_type: string
+        }
+        Insert: {
+          campaign_id: string
+          id?: string
+          is_sent?: boolean
+          note?: string | null
+          recipient_name: string
+          recipient_phone: string
+          sent_at?: string | null
+          source_id?: string | null
+          source_type: string
+        }
+        Update: {
+          campaign_id?: string
+          id?: string
+          is_sent?: boolean
+          note?: string | null
+          recipient_name?: string
+          recipient_phone?: string
+          sent_at?: string | null
+          source_id?: string | null
+          source_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "massmail_recipients_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "massmail_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           body: string | null
