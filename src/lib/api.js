@@ -1693,7 +1693,7 @@ export async function fetchPeriods(limit = 12) {
 export async function fetchFunds() {
   const { data, error } = await supabase
     .from("funds")
-    .select("id, code, name, kind, is_restricted, is_private, no_transfer, stage, color, description, balance, folder_id, location_id")
+    .select("id, code, name, kind, is_restricted, is_private, no_transfer, stage, color, description, balance, folder_id, location_id, currency:currencies(code, is_base)")
     .eq("is_archived", false);
   if (error) throw error;
   return data;
