@@ -317,8 +317,16 @@ function orderSectionPosts(posts) {
     } else roots.push(p);
   }
   const out = [];
-  const walk = (p, depth) => { out.push({ ...p, _depth: depth }); (children.get(p.id) || []).forEach((c) => walk(c, depth + 1)); };
+  const seen = new Set();
+  const walk = (p, depth) => {
+    if (seen.has(p.id)) return;          // защита от цикла в легаси-данных (БД-триггер не даёт создать новый)
+    seen.add(p.id);
+    out.push({ ...p, _depth: depth });
+    (children.get(p.id) || []).forEach((c) => walk(c, depth + 1));
+  };
   roots.forEach((r) => walk(r, 0));
+  // узлы, не попавшие в дерево (например, часть цикла) — показать на верхнем уровне, не терять
+  for (const p of posts) if (!seen.has(p.id)) out.push({ ...p, _depth: 0 });
   return out;
 }
 
@@ -501,7 +509,7 @@ function PositionModal({ C, st, isMobile, divisions, locations = [], position, d
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 10 }}>
             <div style={st.reqField}>
               <span style={st.reqFieldLbl}>Отделение</span>
-              <select style={st.mdSelect} className="fin" value={f.divisionId} onChange={(e) => setF((p) => ({ ...p, divisionId: e.target.value }))}>
+              <select style={st.mdSelect} className="fin" value={f.divisionId} onChange={(e) => setF((p) => ({ ...p, divisionId: e.target.value, parentId: "" }))}>
                 {divisions.map((d) => <option key={d.id} value={d.id}>{d.code} · {d.name}</option>)}
               </select>
             </div>
