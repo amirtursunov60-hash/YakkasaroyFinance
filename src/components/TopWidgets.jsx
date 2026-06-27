@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Bell, Search, Loader2, CheckCheck } from "lucide-react";
 import { useTheme } from "../theme/theme";
-import { globalSearch, fetchNotifications, markNotificationsRead } from "../lib/api";
+import { globalSearch, fetchNotifications, markNotificationsRead, generateDueReminders } from "../lib/api";
 
 
 // ---------------------------------------------------------------- Поиск в шапке
@@ -61,6 +61,7 @@ export function NotifyBell({ onGo }) {
   const [items, setItems] = useState([]);
   const [open, setOpen] = useState(false);
   const canSee = !!profile?.id;
+  const remindedRef = useRef(false);
 
   const refresh = useCallback(async () => {
     if (!canSee) return;
@@ -68,7 +69,14 @@ export function NotifyBell({ onGo }) {
   }, [canSee]);
   useEffect(() => {
     if (!canSee) return;
-    refresh();
+    // Один раз за сессию — сгенерировать напоминания по срокам, затем загрузить ленту.
+    (async () => {
+      if (!remindedRef.current) {
+        remindedRef.current = true;
+        try { await generateDueReminders(); } catch { /* не критично */ }
+      }
+      refresh();
+    })();
     const t = setInterval(refresh, 60000);   // лёгкий поллинг раз в минуту
     return () => clearInterval(t);
   }, [refresh, canSee]);
