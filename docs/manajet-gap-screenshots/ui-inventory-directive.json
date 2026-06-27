@@ -1,0 +1,3211 @@
+{
+  "buttons": [
+    {
+      "cls": "dropdown-toggle btn",
+      "text": "Действия (0)",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-success",
+      "text": "Добавить",
+      "type": "A"
+    },
+    {
+      "cls": "btn active btn-mini btn-rounded",
+      "text": "Список",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn  btn-mini btn-rounded",
+      "text": "Подробно",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-rounded",
+      "text": "Сброс",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "dropdown-toggle btn",
+      "text": "Действия (0)",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-success",
+      "text": "Добавить",
+      "type": "A"
+    },
+    {
+      "cls": "btn active btn-mini btn-rounded",
+      "text": "Список",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn  btn-mini btn-rounded",
+      "text": "Подробно",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-rounded",
+      "text": "Сброс",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn btn-success dropdown-toggle",
+      "text": "Одобрить рассчитанную сумму",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn btn-primary dropdown-toggle",
+      "text": "Сброс",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "dropdown-toggle btn",
+      "text": "Действия (0)",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-success",
+      "text": "Добавить",
+      "type": "A"
+    },
+    {
+      "cls": "btn active btn-mini btn-rounded",
+      "text": "Список",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn  btn-mini btn-rounded",
+      "text": "Подробно",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-rounded",
+      "text": "Сброс",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "dropdown-toggle btn",
+      "text": "Действия (0)",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-success",
+      "text": "Добавить",
+      "type": "A"
+    },
+    {
+      "cls": "btn active btn-mini btn-rounded",
+      "text": "Список",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn  btn-mini btn-rounded",
+      "text": "Подробно",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-rounded",
+      "text": "Сброс",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-sm btn-rounded btn-save btn-save btn-primary",
+      "text": "Сохранить",
+      "type": "BUTTON"
+    },
+    {
+      "cls": "btn btn-small btn-rounded btn-cancel btn-default",
+      "text": "Отмена",
+      "type": "BUTTON"
+    }
+  ],
+  "headings": [
+    "Заявки"
+  ],
+  "inputs": [
+    {
+      "id": "pushStateUrl",
+      "name": "pushStateUrl",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "TableCardChartView",
+      "name": "TableCardChartView",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "viewResult",
+      "name": "viewResult",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "GroopBy",
+      "name": "GroopBy",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "defaultTab",
+      "name": "defaultTab",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "guid",
+      "name": "guid",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "secondGuid",
+      "name": "secondGuid",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "page",
+      "name": "page",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "page_size",
+      "name": "page_size",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "sort",
+      "name": "sort",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "SortType",
+      "name": "SortType",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "call",
+      "name": "call",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "filterType",
+      "name": "filterType",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "selectedItemsStr",
+      "name": "selectedItemsStr",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "selectedItemsStr2",
+      "name": "selectedItemsStr2",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "showSelected",
+      "name": "showSelected",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "AllSelected",
+      "name": "AllSelected",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "error_list",
+      "name": "error_list",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "enable_tab_count",
+      "name": "enable_tab_count",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "ShowAll",
+      "name": "ShowAll",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "ShowHead",
+      "name": "ShowHead",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "ShowDragDrop",
+      "name": "ShowDragDrop",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "folderOpen",
+      "name": "folderOpen",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "preload",
+      "name": "preload",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "firstload",
+      "name": "firstload",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "settingsPageLoad",
+      "name": "settingsPageLoad",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "date_filter",
+      "name": "date_filter",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "id",
+      "name": "id",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "printTitle",
+      "name": "printTitle",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "ShowPin",
+      "name": "ShowPin",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "in_arhive",
+      "name": "in_arhive",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "id_fp_plan",
+      "name": "id_fp_plan",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "type",
+      "name": "type",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "fund_income_type",
+      "name": "fund_income_type",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "search",
+      "name": "search",
+      "placeholder": "Поиск",
+      "tag": "INPUT",
+      "type": "text"
+    },
+    {
+      "id": "filterTokeKey",
+      "name": "filterTokeKey",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "pushStateUrl",
+      "name": "pushStateUrl",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "TableCardChartView",
+      "name": "TableCardChartView",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "viewResult",
+      "name": "viewResult",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "GroopBy",
+      "name": "GroopBy",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "defaultTab",
+      "name": "defaultTab",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "guid",
+      "name": "guid",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "secondGuid",
+      "name": "secondGuid",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "page",
+      "name": "page",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "page_size",
+      "name": "page_size",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "sort",
+      "name": "sort",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "SortType",
+      "name": "SortType",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "call",
+      "name": "call",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "filterType",
+      "name": "filterType",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "selectedItemsStr",
+      "name": "selectedItemsStr",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "selectedItemsStr2",
+      "name": "selectedItemsStr2",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "showSelected",
+      "name": "showSelected",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "AllSelected",
+      "name": "AllSelected",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "error_list",
+      "name": "error_list",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "enable_tab_count",
+      "name": "enable_tab_count",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "ShowAll",
+      "name": "ShowAll",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "ShowHead",
+      "name": "ShowHead",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "ShowDragDrop",
+      "name": "ShowDragDrop",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "folderOpen",
+      "name": "folderOpen",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "preload",
+      "name": "preload",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "firstload",
+      "name": "firstload",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "settingsPageLoad",
+      "name": "settingsPageLoad",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "date_filter",
+      "name": "date_filter",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "id",
+      "name": "id",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "printTitle",
+      "name": "printTitle",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "ShowPin",
+      "name": "ShowPin",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "in_arhive",
+      "name": "in_arhive",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "id_fp_plan",
+      "name": "id_fp_plan",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "search",
+      "name": "search",
+      "placeholder": "Поиск",
+      "tag": "INPUT",
+      "type": "text"
+    },
+    {
+      "id": "filterTokeKey",
+      "name": "filterTokeKey",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "bd6a2c6ec78f4c249f0750adc83db460-check-97",
+      "name": null,
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "checkbox"
+    },
+    {
+      "id": "bd6a2c6ec78f4c249f0750adc83db460-check-4",
+      "name": null,
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "checkbox"
+    },
+    {
+      "id": "bd6a2c6ec78f4c249f0750adc83db460-check-43",
+      "name": null,
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "checkbox"
+    },
+    {
+      "id": "bd6a2c6ec78f4c249f0750adc83db460-check-107",
+      "name": null,
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "checkbox"
+    },
+    {
+      "id": "bd6a2c6ec78f4c249f0750adc83db460-check-20",
+      "name": null,
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "checkbox"
+    },
+    {
+      "id": "bd6a2c6ec78f4c249f0750adc83db460-check-45",
+      "name": null,
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "checkbox"
+    },
+    {
+      "id": "bd6a2c6ec78f4c249f0750adc83db460-check-47",
+      "name": null,
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "checkbox"
+    },
+    {
+      "id": "bd6a2c6ec78f4c249f0750adc83db460-check-98",
+      "name": null,
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "checkbox"
+    },
+    {
+      "id": "bd6a2c6ec78f4c249f0750adc83db460-check-5",
+      "name": null,
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "checkbox"
+    },
+    {
+      "id": "bd6a2c6ec78f4c249f0750adc83db460-check-44",
+      "name": null,
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "checkbox"
+    },
+    {
+      "id": "bd6a2c6ec78f4c249f0750adc83db460-check-2",
+      "name": null,
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "checkbox"
+    },
+    {
+      "id": "bd6a2c6ec78f4c249f0750adc83db460-check-56",
+      "name": null,
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "checkbox"
+    },
+    {
+      "id": "bd6a2c6ec78f4c249f0750adc83db460-check-113",
+      "name": null,
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "checkbox"
+    },
+    {
+      "id": "bd6a2c6ec78f4c249f0750adc83db460-check-89",
+      "name": null,
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "checkbox"
+    },
+    {
+      "id": "bd6a2c6ec78f4c249f0750adc83db460-check-96",
+      "name": null,
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "checkbox"
+    },
+    {
+      "id": "bd6a2c6ec78f4c249f0750adc83db460-check-all",
+      "name": null,
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "checkbox"
+    },
+    {
+      "id": "pushStateUrl",
+      "name": "pushStateUrl",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "TableCardChartView",
+      "name": "TableCardChartView",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "viewResult",
+      "name": "viewResult",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "GroopBy",
+      "name": "GroopBy",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "defaultTab",
+      "name": "defaultTab",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "guid",
+      "name": "guid",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "secondGuid",
+      "name": "secondGuid",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "page",
+      "name": "page",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "page_size",
+      "name": "page_size",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "sort",
+      "name": "sort",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "SortType",
+      "name": "SortType",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "call",
+      "name": "call",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "filterType",
+      "name": "filterType",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "selectedItemsStr",
+      "name": "selectedItemsStr",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "selectedItemsStr2",
+      "name": "selectedItemsStr2",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "showSelected",
+      "name": "showSelected",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "AllSelected",
+      "name": "AllSelected",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "error_list",
+      "name": "error_list",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "enable_tab_count",
+      "name": "enable_tab_count",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "ShowAll",
+      "name": "ShowAll",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "ShowHead",
+      "name": "ShowHead",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "ShowDragDrop",
+      "name": "ShowDragDrop",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "folderOpen",
+      "name": "folderOpen",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "preload",
+      "name": "preload",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "firstload",
+      "name": "firstload",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "settingsPageLoad",
+      "name": "settingsPageLoad",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "date_filter",
+      "name": "date_filter",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "id",
+      "name": "id",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "printTitle",
+      "name": "printTitle",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "ShowPin",
+      "name": "ShowPin",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "in_arhive",
+      "name": "in_arhive",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "id_fp_plan",
+      "name": "id_fp_plan",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "type",
+      "name": "type",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "fund_income_type",
+      "name": "fund_income_type",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "search",
+      "name": "search",
+      "placeholder": "Поиск",
+      "tag": "INPUT",
+      "type": "text"
+    },
+    {
+      "id": "filterTokeKey",
+      "name": "filterTokeKey",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "pushStateUrl",
+      "name": "pushStateUrl",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "TableCardChartView",
+      "name": "TableCardChartView",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "viewResult",
+      "name": "viewResult",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "GroopBy",
+      "name": "GroopBy",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "defaultTab",
+      "name": "defaultTab",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "guid",
+      "name": "guid",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "secondGuid",
+      "name": "secondGuid",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "page",
+      "name": "page",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "page_size",
+      "name": "page_size",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "sort",
+      "name": "sort",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "SortType",
+      "name": "SortType",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "call",
+      "name": "call",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "filterType",
+      "name": "filterType",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "selectedItemsStr",
+      "name": "selectedItemsStr",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "selectedItemsStr2",
+      "name": "selectedItemsStr2",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "showSelected",
+      "name": "showSelected",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "AllSelected",
+      "name": "AllSelected",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "error_list",
+      "name": "error_list",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "enable_tab_count",
+      "name": "enable_tab_count",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "ShowAll",
+      "name": "ShowAll",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "ShowHead",
+      "name": "ShowHead",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "ShowDragDrop",
+      "name": "ShowDragDrop",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "folderOpen",
+      "name": "folderOpen",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "preload",
+      "name": "preload",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "firstload",
+      "name": "firstload",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "settingsPageLoad",
+      "name": "settingsPageLoad",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "date_filter",
+      "name": "date_filter",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "id",
+      "name": "id",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "printTitle",
+      "name": "printTitle",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "ShowPin",
+      "name": "ShowPin",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "in_arhive",
+      "name": "in_arhive",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "id_fp_plan",
+      "name": "id_fp_plan",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "search",
+      "name": "search",
+      "placeholder": "Поиск",
+      "tag": "INPUT",
+      "type": "text"
+    },
+    {
+      "id": "filterTokeKey",
+      "name": "filterTokeKey",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "20d94f7da886435ba2d1e791c98d6670-check-100",
+      "name": null,
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "checkbox"
+    },
+    {
+      "id": "20d94f7da886435ba2d1e791c98d6670-check-3",
+      "name": null,
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "checkbox"
+    },
+    {
+      "id": "20d94f7da886435ba2d1e791c98d6670-check-72",
+      "name": null,
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "checkbox"
+    },
+    {
+      "id": "20d94f7da886435ba2d1e791c98d6670-check-88",
+      "name": null,
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "checkbox"
+    },
+    {
+      "id": "20d94f7da886435ba2d1e791c98d6670-check-42",
+      "name": null,
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "checkbox"
+    },
+    {
+      "id": "20d94f7da886435ba2d1e791c98d6670-check-99",
+      "name": null,
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "checkbox"
+    },
+    {
+      "id": "20d94f7da886435ba2d1e791c98d6670-check-16",
+      "name": null,
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "checkbox"
+    },
+    {
+      "id": "20d94f7da886435ba2d1e791c98d6670-check-101",
+      "name": null,
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "checkbox"
+    },
+    {
+      "id": "20d94f7da886435ba2d1e791c98d6670-check-6",
+      "name": null,
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "checkbox"
+    },
+    {
+      "id": "20d94f7da886435ba2d1e791c98d6670-check-52",
+      "name": null,
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "checkbox"
+    },
+    {
+      "id": "20d94f7da886435ba2d1e791c98d6670-check-62",
+      "name": null,
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "checkbox"
+    },
+    {
+      "id": "20d94f7da886435ba2d1e791c98d6670-check-61",
+      "name": null,
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "checkbox"
+    },
+    {
+      "id": "20d94f7da886435ba2d1e791c98d6670-check-114",
+      "name": null,
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "checkbox"
+    },
+    {
+      "id": "20d94f7da886435ba2d1e791c98d6670-check-17",
+      "name": null,
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "checkbox"
+    },
+    {
+      "id": "20d94f7da886435ba2d1e791c98d6670-check-109",
+      "name": null,
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "checkbox"
+    },
+    {
+      "id": "20d94f7da886435ba2d1e791c98d6670-check-115",
+      "name": null,
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "checkbox"
+    },
+    {
+      "id": "20d94f7da886435ba2d1e791c98d6670-check-41",
+      "name": null,
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "checkbox"
+    },
+    {
+      "id": "20d94f7da886435ba2d1e791c98d6670-check-56",
+      "name": null,
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "checkbox"
+    },
+    {
+      "id": "20d94f7da886435ba2d1e791c98d6670-check-7",
+      "name": null,
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "checkbox"
+    },
+    {
+      "id": "20d94f7da886435ba2d1e791c98d6670-check-74",
+      "name": null,
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "checkbox"
+    },
+    {
+      "id": "20d94f7da886435ba2d1e791c98d6670-check-18",
+      "name": null,
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "checkbox"
+    },
+    {
+      "id": "20d94f7da886435ba2d1e791c98d6670-check-111",
+      "name": null,
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "checkbox"
+    },
+    {
+      "id": "20d94f7da886435ba2d1e791c98d6670-check-103",
+      "name": null,
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "checkbox"
+    },
+    {
+      "id": "20d94f7da886435ba2d1e791c98d6670-check-106",
+      "name": null,
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "checkbox"
+    },
+    {
+      "id": "20d94f7da886435ba2d1e791c98d6670-check-8",
+      "name": null,
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "checkbox"
+    },
+    {
+      "id": "20d94f7da886435ba2d1e791c98d6670-check-67",
+      "name": null,
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "checkbox"
+    },
+    {
+      "id": "20d94f7da886435ba2d1e791c98d6670-check-104",
+      "name": null,
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "checkbox"
+    },
+    {
+      "id": "20d94f7da886435ba2d1e791c98d6670-check-9",
+      "name": null,
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "checkbox"
+    },
+    {
+      "id": "20d94f7da886435ba2d1e791c98d6670-check-105",
+      "name": null,
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "checkbox"
+    },
+    {
+      "id": "20d94f7da886435ba2d1e791c98d6670-check-19",
+      "name": null,
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "checkbox"
+    },
+    {
+      "id": "20d94f7da886435ba2d1e791c98d6670-check-all",
+      "name": null,
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "checkbox"
+    },
+    {
+      "id": "pushStateUrl",
+      "name": "pushStateUrl",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "TableCardChartView",
+      "name": "TableCardChartView",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "viewResult",
+      "name": "viewResult",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "GroopBy",
+      "name": "GroopBy",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "defaultTab",
+      "name": "defaultTab",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "guid",
+      "name": "guid",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "secondGuid",
+      "name": "secondGuid",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "page",
+      "name": "page",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "page_size",
+      "name": "page_size",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "sort",
+      "name": "sort",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "SortType",
+      "name": "SortType",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "call",
+      "name": "call",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    },
+    {
+      "id": "filterType",
+      "name": "filterType",
+      "placeholder": null,
+      "tag": "INPUT",
+      "type": "hidden"
+    }
+  ],
+  "links": [
+    {
+      "href": "https://app.manajet.org/MyOffice",
+      "text": ""
+    },
+    {
+      "href": "https://app.manajet.org/Person",
+      "text": ""
+    },
+    {
+      "href": "https://app.manajet.org/CRM",
+      "text": ""
+    },
+    {
+      "href": "https://app.manajet.org/OrgBoard",
+      "text": ""
+    },
+    {
+      "href": "https://app.manajet.org/OrgBoard/ICO",
+      "text": ""
+    },
+    {
+      "href": "https://app.manajet.org/DashBoard",
+      "text": ""
+    },
+    {
+      "href": "https://app.manajet.org/HatMaterial/Hat",
+      "text": ""
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home",
+      "text": ""
+    },
+    {
+      "href": "https://app.manajet.org/Task/AdminScale",
+      "text": ""
+    },
+    {
+      "href": "https://app.manajet.org/Setup",
+      "text": ""
+    },
+    {
+      "href": "https://app.manajet.org/History",
+      "text": ""
+    },
+    {
+      "href": "https://app.manajet.org/FAQ/Home",
+      "text": ""
+    },
+    {
+      "href": "",
+      "text": "Яккасарой Турсунов Амир"
+    },
+    {
+      "href": "https://app.manajet.org/Person/MySettings/Edit",
+      "text": "Мои настройки"
+    },
+    {
+      "href": "https://app.manajet.org/FAQ/Ticket",
+      "text": "Запросы в службу поддержки"
+    },
+    {
+      "href": "https://app.manajet.org/Person/Person/ChangePassword",
+      "text": "Изменить пароль"
+    },
+    {
+      "href": "https://app.manajet.org/Setup/Agreement?type=UserAgreement",
+      "text": "Пользовательское Соглашение"
+    },
+    {
+      "href": "https://app.manajet.org/Setup/Agreement?type=PrivacyAgreement",
+      "text": "Соглашение о конфиденциальности"
+    },
+    {
+      "href": "https://app.manajet.org/Logout/Logout",
+      "text": "Выход"
+    },
+    {
+      "href": "https://app.manajet.org/Msg",
+      "text": ""
+    },
+    {
+      "href": "https://app.manajet.org/Task/Home",
+      "text": ""
+    },
+    {
+      "href": "https://app.manajet.org/Task/Home?filterView=My&filterType=New",
+      "text": ""
+    },
+    {
+      "href": "https://app.manajet.org/Task/Home?filterView=My&filterType=Overdue",
+      "text": ""
+    },
+    {
+      "href": "https://app.manajet.org/Task/Home?filterView=Appointments&filterType=ToApprove",
+      "text": ""
+    },
+    {
+      "href": "https://app.manajet.org/Task/Home?filterView=My&filterType=New",
+      "text": ""
+    },
+    {
+      "href": "https://app.manajet.org/RoutingForm/RoutingForm",
+      "text": ""
+    },
+    {
+      "href": "https://app.manajet.org/WorkflowList/Home",
+      "text": ""
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": ""
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home?mode=Directive&finPlanID=322",
+      "text": ""
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "25 июн - 01 июл 2026"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home?mode=Assets&finPlanID=323",
+      "text": "Контроль средств"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home?mode=Income&finPlanID=323",
+      "text": "Доходы"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home?mode=Funds&finPlanID=323",
+      "text": "Фонды"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home?mode=Expenses&finPlanID=323",
+      "text": "Расходы"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home?mode=Bills&finPlanID=323",
+      "text": "Счета поставщиков"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home?mode=Invoices&finPlanID=323",
+      "text": "Счета клиентам"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home?mode=Purchase_orders&finPlanID=323",
+      "text": "Заявки"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home?mode=Directive&finPlanID=323",
+      "text": "Директива"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home?mode=Salary&finPlanID=323",
+      "text": "Расчёт зарплаты"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home?mode=Report&finPlanID=323",
+      "text": "Управленческие отчёты"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": ""
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "Способ оплаты"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "Вкладка по умолчанию"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "Контроль средств"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "Доходы"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "Фонды"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "Расходы"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "Счета клиентам"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "Счета поставщиков"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "Заявки"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "Директива"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "Выбрать всё на странице"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "Снять отметки‏"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "Добавить"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home",
+      "text": "Все"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#custom",
+      "text": ""
+    },
+    {
+      "href": "https://app.manajet.org/FAQ/Home/Index/?q=%23%D0%94%D0%BE%D1%85%D0%BE%D0%B4&t=linkFpIncomeTable",
+      "text": ""
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "Сортировать"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "Добавлен"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "Название"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "По возрастанию"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "По убыванию"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "Способы оплаты"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "Настройки"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "D1 - Душанбе Яккасарой"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "D1/1 - ВИП зал"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "D1/2 - ВИП Доп стол"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "D1/3 - ЛЮКС зал"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "D1/4 - Люкс Доп стол"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "D1/5 - Оши нахор ВИП Зал"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "D1/6 - Оши Нахор Люкс"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "D1/7 - Оформление"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "D1/8 - Видео камера Душанбе"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "D1/9 - Торт Душанбе"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "D1.1 - Яккасарой Марказ"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "D1/1/1 - Grand Hall Марказ"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "D1/1/2 - Grand доп стол"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "D1/1/3 - Grand оши нахор"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "D1/1/4 - Grand Hall Поставщики услуг"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "D1/1/5 - Grand Hall Торт"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "D1/1/6 - Grand Hall Оформление"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "D1.2 - Флай гарден"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "D/1/2/5 - Fly Garden Доп стол"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "D1/2/1 - Fly Garden Приходной"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "D1/2/2 - Fly Garden Оформление"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "D1/2/3 - Fly Garden Торт"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "D1/2/4 - Fly Garden Оши Нахор"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "D1.3 - Фемали 1"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "D1/3/1 - Фемели"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "D1.4 - Фемали 2 Марказ"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "D1/4/1 - Фемали 2"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "D1.5 - Кейтринг"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "D1/5/1 - Кейтринг"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "D1.6 - Прямой фонд"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "D1/6/1 - Прямой фонд"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "Выбрать всё на странице"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "Снять отметки‏"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "Добавить"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home",
+      "text": "Все"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#custom",
+      "text": ""
+    },
+    {
+      "href": "https://app.manajet.org/FAQ/Home/Index/?q=%23%D0%A4%D0%BE%D0%BD%D0%B4&t=linkFpFundTable",
+      "text": ""
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "Сортировать"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "Добавлен"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "Название"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "По возрастанию"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "По убыванию"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "Способы оплаты"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "Настройки"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "FD1 - Поставщики и Фирмы"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "1 385,45"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "ФД1/1 - Поставщики Яккасарой"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "1 385,18"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "ФФ1/2 - Поставщики Фемали"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "0,27"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "FD1/1 - Поставщики доп услуги"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "74 050,08"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "ФУ1 - Поставщик Услуг Душанбе"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "0,00"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "ФУ2/1 - Поставщики Оформление"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "28 100,10"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "ФУ2/2 - Поставщики Кейтринг"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "45 949,98"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "FD2 - Хизматрасони"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "389 976,78"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "1/ФД - Хизматрасони Яккасарой"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "204 481,00"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "2/ФФ - Хизматрасони Фемали"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "144 894,75"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "3/ФД - Фонд % С продаж"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "40 601,03"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "FD6 - Фонд Резервов"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "363 739,04"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "FD1/11 - Поставщики Резерв"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "300 851,15"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "ФМ1 - Поставщики Фемали резерв"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "10 509,14"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "ФМ2/1 - Хизматрасони Резерв"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "52 378,75"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "Выбрать всё на странице"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "Снять отметки‏"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "Добавить"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home",
+      "text": "Все"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#custom",
+      "text": ""
+    },
+    {
+      "href": "https://app.manajet.org/FAQ/Home/Index/?q=%23%D0%94%D0%BE%D1%85%D0%BE%D0%B4&t=linkFpIncomeTable",
+      "text": ""
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "Сортировать"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "Добавлен"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "Название"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "По возрастанию"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "По убыванию"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "Способы оплаты"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "Настройки"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "D1 - Душанбе Яккасарой"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "D1/1 - ВИП зал"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "D1/2 - ВИП Доп стол"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "D1/3 - ЛЮКС зал"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "D1/4 - Люкс Доп стол"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "D1/5 - Оши нахор ВИП Зал"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "D1/6 - Оши Нахор Люкс"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "D1/7 - Оформление"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "D1/8 - Видео камера Душанбе"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "D1/9 - Торт Душанбе"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "D1.1 - Яккасарой Марказ"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "D1/1/1 - Grand Hall Марказ"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "D1/1/2 - Grand доп стол"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "D1/1/3 - Grand оши нахор"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "D1/1/4 - Grand Hall Поставщики услуг"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "D1/1/5 - Grand Hall Торт"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "D1/1/6 - Grand Hall Оформление"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "D1.2 - Флай гарден"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "D/1/2/5 - Fly Garden Доп стол"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "D1/2/1 - Fly Garden Приходной"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "D1/2/2 - Fly Garden Оформление"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "D1/2/3 - Fly Garden Торт"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "D1/2/4 - Fly Garden Оши Нахор"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "D1.3 - Фемали 1"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "D1/3/1 - Фемели"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "D1.4 - Фемали 2 Марказ"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "D1/4/1 - Фемали 2"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "D1.5 - Кейтринг"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "D1/5/1 - Кейтринг"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "D1.6 - Прямой фонд"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "D1/6/1 - Прямой фонд"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "Выбрать всё на странице"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "Снять отметки‏"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "Добавить"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home",
+      "text": "Все"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#custom",
+      "text": ""
+    },
+    {
+      "href": "https://app.manajet.org/FAQ/Home/Index/?q=%23%D0%A4%D0%BE%D0%BD%D0%B4&t=linkFpFundTable",
+      "text": ""
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "Сортировать"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "Добавлен"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "Название"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "По возрастанию"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "По убыванию"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "Способы оплаты"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "Настройки"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "FD3 - Фонда зарплаты"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "179 458,96"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "1/ФД5 - Фонд Зарплаты Яккасарой"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "100 432,32"
+    },
+    {
+      "href": "https://app.manajet.org/Finance/Home#",
+      "text": "2/ФФ5 - Фонд Зарплаты Фемали"
+    }
+  ]
+}

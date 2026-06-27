@@ -1,0 +1,1373 @@
+[
+  {
+    "slug": "assets",
+    "label": "Контроль средств",
+    "buttons": [
+      "Действия",
+      "Добавить",
+      "Список",
+      "Подробно",
+      "Сброс"
+    ],
+    "inputs": [
+      {
+        "name": "search",
+        "options": "",
+        "placeholder": "Поиск",
+        "tag": "INPUT",
+        "type": "text"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "дд.мм.гггг",
+        "tag": "INPUT",
+        "type": "text"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "дд.мм.гггг",
+        "tag": "INPUT",
+        "type": "text"
+      },
+      {
+        "name": "search",
+        "options": "",
+        "placeholder": "Поиск",
+        "tag": "INPUT",
+        "type": "text"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      }
+    ],
+    "tables": [
+      {
+        "headers": [],
+        "idx": 0,
+        "rows": 2
+      },
+      {
+        "headers": [
+          "ID",
+          "Название",
+          "Предыдущий период",
+          "Приход",
+          "Расход",
+          "Рассчитанный остаток",
+          "Сумма на 01.07.2026"
+        ],
+        "idx": 1,
+        "rows": 13
+      },
+      {
+        "headers": [],
+        "idx": 2,
+        "rows": 7
+      },
+      {
+        "headers": [
+          "ID",
+          "Дата оплаты",
+          "Источник",
+          "Назначение",
+          "Тип операции",
+          "Информация",
+          "Сумма"
+        ],
+        "idx": 3,
+        "rows": 1
+      }
+    ],
+    "text": " \n           \nЯккасарой\t\t\nТурсунов Амир\n0\n    \n \n25 июн - 01 июл 2026\n $$$ \nКонтроль средств\n \nДоходы\n \nФонды\n \nРасходы\n \nСчета поставщиков\n \nСчета клиентам\n \nЗаявки\n \nДиректива\n \nРасчёт зарплаты\n \nУправленческие отчёты\nДействия\nДобавить\nВсе\n Список\n Подробно\nСброс\n\t\nID\n\t\nНазвание\n\tПредыдущий период\tПриход\tРасход\tРассчитанный остаток\tСумма на 01.07.2026\t\n\n\t21\tМ1 - Приходной\t\n4 012 911,00\n\t\n0,00\n\t\n0,00\n\t\n4 012 911,00\n\t\n0,00\n\t\n\n\t16\tД1 - Расходной\t\n1 927 379,00\n\t\n0,00\n\t\n0,00\n\t\n1 927 379,00\n\t\n0,00\n\t\n\tВыбрано на странице:\t\n0,00\n\t\n0,00\n\t\n0,00\n\t\n0,00\n\t\n0,00\n\t\n\tВсего:\t\n5 940 290,00\n\t\n0,00\n\t\n0,00\n\t\n5 940 290,00\n\t\n0,00\n\t\nВсего: 12\nКонтрольная сумма\nКонтрольная сумма актуальна до момента одобрения ФП.\n\tСумма по всем валютам\nДоходы\t\n\tОстаток:\t333 755,00\nФонды: Доступная сумма на 01.07.2026\t2 792 171,45\nНевыплаченная сумма заявок на 01.07.2026\t180 762,00\nНевыплаченная сумма счетов на 01.07.2026\t2 191 092,00\nВсего\t5 497 780,45\nРазница\t-5 497 780,45\nОперации денежных средств\nДействия\nДобавить\n \nСброс\n\t\nID\n\t\nДата оплаты\n\tИсточник\tНазначение\tТип операции\tИнформация\t\nСумма\n\t\n\nНе было найдено ни одной записи\nКонтакт: info@manajet.org · Пользовательское Соглашение · Соглашение о конфиденциальности",
+    "title": "Контроль средств",
+    "url": "https://app.manajet.org/Finance/Home?mode=Assets&finPlanID=323&filterTokeKey=9aeb962d-c038-4509-83c7-538437bcbe3b"
+  },
+  {
+    "slug": "income",
+    "label": "Доходы",
+    "buttons": [
+      "Действия",
+      "Добавить",
+      "Список",
+      "Подробно",
+      "Сброс"
+    ],
+    "inputs": [
+      {
+        "name": "search",
+        "options": "",
+        "placeholder": "Поиск",
+        "tag": "INPUT",
+        "type": "text"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "id_personInput",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "text"
+      },
+      {
+        "name": "search",
+        "options": "",
+        "placeholder": "Поиск",
+        "tag": "INPUT",
+        "type": "text"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "дд.мм.гггг",
+        "tag": "INPUT",
+        "type": "text"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "дд.мм.гггг",
+        "tag": "INPUT",
+        "type": "text"
+      },
+      {
+        "name": "search",
+        "options": "",
+        "placeholder": "Поиск",
+        "tag": "INPUT",
+        "type": "text"
+      }
+    ],
+    "tables": [
+      {
+        "headers": [],
+        "idx": 0,
+        "rows": 2
+      },
+      {
+        "headers": [
+          "ID",
+          "Название",
+          "Предыдущий период",
+          "Сумма на 25.06.2026 - 01.07.2026"
+        ],
+        "idx": 1,
+        "rows": 31
+      }
+    ],
+    "text": " \n           \nЯккасарой\t\t\nТурсунов Амир\n0\n    \n \n25 июн - 01 июл 2026\n $$$ \nКонтроль средств\n \nДоходы\n \nФонды\n \nРасходы\n \nСчета поставщиков\n \nСчета клиентам\n \nЗаявки\n \nДиректива\n \nРасчёт зарплаты\n \nУправленческие отчёты\nДействия\nДобавить\nВсе\n Список\n Подробно\nСброс\n\t\nID\n\t\nНазвание\n\tПредыдущий период\tСумма на 25.06.2026 - 01.07.2026\t\n\n\t14\tD1 - Душанбе Яккасарой\t\n1 862 318,20\n\t\n0,00\n\t\n\n\t35\tD1.1 - Яккасарой Марказ\t\n515 300,00\n\t\n0,00\n\t\n\n\t25\tD1.2 - Флай гарден\t\n807 320,00\n\t\n333 400,00\n\t\n\n\t29\tD1.3 - Фемали 1\t\n525 457,00\n\t\n0,00\n\t\n\n\t47\tD1.4 - Фемали 2 Марказ\t\n152 029,20\n\t\n355,00\n\t\n\n\t46\tD1.5 - Кейтринг\t\n150 494,00\n\t\n0,00\n\t\n\n\t48\tD1.6 - Прямой фонд\t\n0,00\n\t\n0,00\n\t\n\tВыбрано на странице:\t\n0,00\n\t\n0,00\n\t\n\tВсего:\t\n4 012 918,40\n\t\n333 755,00\n\t\nВсего: 31\nСтатистики\nДействия\nДобавить\n \n \nСброс\nОперации дохода\nДействия\nДобавить\n \nСброс\nКонтакт: info@manajet.org · Пользовательское Соглашение · Соглашение о конфиденциальности",
+    "title": "Доходы",
+    "url": "https://app.manajet.org/Finance/Home?mode=Income&finPlanID=323&filterTokeKey=9a4cad7c-7653-4c82-bb79-2b190e8ebf72"
+  },
+  {
+    "slug": "funds",
+    "label": "Фонды",
+    "buttons": [
+      "Действия",
+      "Добавить",
+      "Список",
+      "Подробно",
+      "Сброс"
+    ],
+    "inputs": [
+      {
+        "name": "search",
+        "options": "",
+        "placeholder": "Поиск",
+        "tag": "INPUT",
+        "type": "text"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "дд.мм.гггг",
+        "tag": "INPUT",
+        "type": "text"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "дд.мм.гггг",
+        "tag": "INPUT",
+        "type": "text"
+      },
+      {
+        "name": "search",
+        "options": "",
+        "placeholder": "Поиск",
+        "tag": "INPUT",
+        "type": "text"
+      }
+    ],
+    "tables": [
+      {
+        "headers": [],
+        "idx": 0,
+        "rows": 2
+      },
+      {
+        "headers": [
+          "ID",
+          "Название",
+          "Остаток на 25.06.2026",
+          "Приход",
+          "Расход",
+          "Остаток на 01.07.2026",
+          "Доступная сумма",
+          "Долг"
+        ],
+        "idx": 1,
+        "rows": 49
+      }
+    ],
+    "text": " \n           \nЯккасарой\t\t\nТурсунов Амир\n1\n    \n \n25 июн - 01 июл 2026\n $$$ \nКонтроль средств\n \nДоходы\n \nФонды\n \nРасходы\n \nСчета поставщиков\n \nСчета клиентам\n \nЗаявки\n \nДиректива\n \nРасчёт зарплаты\n \nУправленческие отчёты\nДействия\nДобавить\nВсе\n Список\n Подробно\nСброс\n\t\nID\n\t\nНазвание\n\tОстаток на 25.06.2026\tПриход\tРасход\tОстаток на 01.07.2026\tДоступная сумма\tДолг\t\n\n\t97\tFD1 - Поставщики и Фирмы\t\n2 092 477,45\n\t\n0,00\n\t\n0,00\n\t\n2 092 477,45\n\t\n1 385,45\n\t\n-9 000,00\n\t\n\n\t107\tFD1/1 - Поставщики доп услуги\t\n113 067,08\n\t\n0,00\n\t\n24 767,00\n\t\n88 300,08\n\t\n74 050,08\n\t\n0,00\n\t\n\n\t98\tFD2 - Хизматрасони\t\n404 056,78\n\t\n0,00\n\t\n14 080,00\n\t\n389 976,78\n\t\n389 976,78\n\t\n33 099,66\n\t\n\n\t100\tFD3 - Фонда зарплаты\t\n193 680,96\n\t\n0,00\n\t\n14 222,00\n\t\n179 458,96\n\t\n179 458,96\n\t\n664 000,00\n\t\n\n\t88\tFD3/3 - Флай Гарден\t\n59 306,40\n\t\n0,00\n\t\n58 202,00\n\t\n1 104,40\n\t\n1 104,40\n\t\n-566 000,00\n\t\n\n\t99\tFD4 - Налог\t\n173 427,89\n\t\n0,00\n\t\n146 538,40\n\t\n26 889,49\n\t\n25 629,49\n\t\n608 000,00\n\t\n\n\t101\tFD5 - Фонд учредителей\t\n1 769 312,46\n\t\n0,00\n\t\n162 300,00\n\t\n1 607 012,46\n\t\n1 455 630,46\n\t\n158 500,00\n\t\n\n\t56\tFD6 - Фонд Резервов\t\n646 474,31\n\t\n0,00\n\t\n0,00\n\t\n646 474,31\n\t\n646 474,31\n\t\n-5 471 599,66\n\t\n\n\t103\tFD7 - Строительный\t\n247 843,94\n\t\n0,00\n\t\n128 840,00\n\t\n119 003,94\n\t\n15 013,94\n\t\n4 553 592,33\n\t\n\n\t104\tFD8 - Комунальные Услуги\t\n93 408,23\n\t\n0,00\n\t\n88 073,00\n\t\n5 335,23\n\t\n1 335,23\n\t\n39 400,00\n\t\n\n\t105\tFD9 - Процент Руководителям\t\n76 397,87\n\t\n0,00\n\t\n76 300,00\n\t\n97,87\n\t\n97,87\n\t\n0,00\n\t\n\n\t85\tFD9/1 - Развитие\t\n49 228,48\n\t\n0,00\n\t\n41 334,00\n\t\n7 894,48\n\t\n2 014,48\n\t\n-9 992,33\n\t\n\tВыбрано на странице:\t\n0,00\n\t\n0,00\n\t\n0,00\n\t\n0,00\n\t\n0,00\n\t\n0,00\n\t\n\tВсего:\t\n5 918 681,85\n\t\n0,00\n\t\n754 656,40\n\t\n5 164 025,45\n\t\n2 792 171,45\n\t\n0,00\n\t\nВсего: 49\nОперации с фондами\nДействия\nДобавить\n \nСброс\nКонтакт: info@manajet.org · Пользовательское Соглашение · Соглашение о конфиденциальности",
+    "title": "Фонды",
+    "url": "https://app.manajet.org/Finance/Home/Index/?mode=Funds&finPlanID=323&filterTokeKey=8f7846a3-fd94-4191-85c2-479153519925"
+  },
+  {
+    "slug": "expenses",
+    "label": "Расходы",
+    "buttons": [
+      "Действия",
+      "Добавить",
+      "Список",
+      "Подробно",
+      "Сброс",
+      "20",
+      "100"
+    ],
+    "inputs": [
+      {
+        "name": "search",
+        "options": "",
+        "placeholder": "Поиск",
+        "tag": "INPUT",
+        "type": "text"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "id_personInput",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "text"
+      },
+      {
+        "name": "search",
+        "options": "",
+        "placeholder": "Поиск",
+        "tag": "INPUT",
+        "type": "text"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "дд.мм.гггг",
+        "tag": "INPUT",
+        "type": "text"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "дд.мм.гггг",
+        "tag": "INPUT",
+        "type": "text"
+      },
+      {
+        "name": "search",
+        "options": "",
+        "placeholder": "Поиск",
+        "tag": "INPUT",
+        "type": "text"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      }
+    ],
+    "tables": [
+      {
+        "headers": [],
+        "idx": 0,
+        "rows": 2
+      },
+      {
+        "headers": [
+          "ID",
+          "Название",
+          "Остаток на начало периода 25.06.2026",
+          "Одобрено",
+          "Выплачено",
+          "Остаток на конец периода 01.07.2026"
+        ],
+        "idx": 1,
+        "rows": 44
+      },
+      {
+        "headers": [
+          "ID",
+          "Дата оплаты",
+          "Источник",
+          "Назначение",
+          "Тип операции",
+          "Информация",
+          "Сумма"
+        ],
+        "idx": 2,
+        "rows": 52
+      }
+    ],
+    "text": " \n           \nЯккасарой\t\t\nТурсунов Амир\n0\n    \n \n25 июн - 01 июл 2026\n $$$ \nКонтроль средств\n \nДоходы\n \nФонды\n \nРасходы\n \nСчета поставщиков\n \nСчета клиентам\n \nЗаявки\n \nДиректива\n \nРасчёт зарплаты\n \nУправленческие отчёты\nДействия\nДобавить\nВсе\n Список\n Подробно\nСброс\n\t\nID\n\t\nНазвание\n\tОстаток на начало периода 25.06.2026\tОдобрено\tВыплачено\tОстаток на конец периода 01.07.2026\t\n\n\t1\tРД1 - Поставщики и фирмы\nИсточник: ФД1/1 - Поставщики Яккасарой\n\t\n2 091 092,00\n\t\n0,00\n\t\n0,00\n\t\n2 091 092,00\n\t\n\n\t3\tРД2 - Зарплата Официантам\nИсточник: 1/ФД - Хизматрасони Яккасарой\n\t\n0,00\n\t\n0,00\n\t\n0,00\n\t\n0,00\n\t\n\n\t27\tРД3 - Хайрот Даруна\nИсточник: ФД9/6 - Хайрот\n\t\n3 500,00\n\t\n0,00\n\t\n3 500,00\n\t\n0,00\n\t\n\n\t2\tРД3/1 - Хайрот Беруна\nИсточник: ФД9/6 - Хайрот\n\t\n990,00\n\t\n0,00\n\t\n0,00\n\t\n990,00\n\t\n\n\t12\tРД4 - Налог на прибыль\nИсточник: ФД4 - Налог Яккасарой\n\t\n147 438,40\n\t\n0,00\n\t\n146 538,40\n\t\n900,00\n\t\n\n\t102\tРД4/1 - Налог на сотрудника\nИсточник: ФД4 - Налог Яккасарой\n\t\n0,00\n\t\n0,00\n\t\n0,00\n\t\n0,00\n\t\n\n\t103\tРД4/2 - Налог на Недвижимость\nИсточник: ФД4 - Налог Яккасарой\n\t\n0,00\n\t\n0,00\n\t\n0,00\n\t\n0,00\n\t\n\n\t5\tРД5 - Зарплата (Администрация)\nИсточник: 1/ФД5 - Фонд Зарплаты Яккасарой\n\t\n0,00\n\t\n0,00\n\t\n0,00\n\t\n0,00\n\t\n\n\t4\tРД5/1 - Зарплата (Поваров)\nИсточник: 1/ФД - Хизматрасони Яккасарой\n\t\n14 080,00\n\t\n0,00\n\t\n14 080,00\n\t\n0,00\n\t\n\n\t6\tРД6 - Зарплата (Ком-Персонала)\nИсточник: 3/ФД - Фонд % С продаж\n\t\n0,00\n\t\n0,00\n\t\n0,00\n\t\n0,00\n\t\n\n\t22\tРД7/1 - Дивиденды Турсунов\nИсточник: 1/ФД5.1 - Фонд Турсуновхо. Яккасарой\n\t\n176 882,00\n\t\n0,00\n\t\n25 500,00\n\t\n151 382,00\n\t\n\n\t29\tРД7/2 - Дивиденд Алиматов\nИсточник: 5/ФД5.2 - Фонд Алиматов Яккасарой\n\t\n0,00\n\t\n0,00\n\t\n0,00\n\t\n0,00\n\t\n\n\t21\tРД8//4 - Оплата просрочных платежей\nИсточник: 1/ФД8/3 - Фонд Обязательств Яккасарой\n\t\n0,00\n\t\n0,00\n\t\n0,00\n\t\n0,00\n\t\n\n\t13\tРД8/1 - Ремонт ОС\nИсточник: ФД8/2 - Фонд Строительный Яккасарой\n\t\n197 762,00\n\t\n0,00\n\t\n97 762,00\n\t\n100 000,00\n\t\n\n\t14\tРД8/2 - Фоиз барои Рохбархо\nИсточник: ФД8/1 - Процент Руководителям\n\t\n76 300,00\n\t\n0,00\n\t\n76 300,00\n\t\n0,00\n\t\n\n\t20\tРД8/3 - Оборудование нав\nИсточник: ФД8/2 - Фонд Строительный Яккасарой\n\t\n1 950,00\n\t\n0,00\n\t\n1 950,00\n\t\n0,00\n\t\n\n\t19\tРД8/4 - Возврат клиентам\nИсточник: 1/ФД8/3 - Фонд Обязательств Яккасарой\n\t\n0,00\n\t\n0,00\n\t\n0,00\n\t\n0,00\n\t\n\n\t18\tРД8/5 - Ремонт\nИсточник: ФД8/2 - Фонд Строительный Яккасарой\n\t\n270,00\n\t\n0,00\n\t\n270,00\n\t\n0,00\n\t\n\n\t10\tРД9 - Комунальные услуги\nИсточник: 1/ФД8/3 - Фонд Обязательств Яккасарой\n\t\n90 720,00\n\t\n0,00\n\t\n90 720,00\n\t\n0,00\n\t\n\n\t23\tРД9/1 - Хознужды\nИсточник: ФД1/1 - Поставщики Яккасарой\n\t\n0,00\n\t\n0,00\n\t\n0,00\n\t\n0,00\n\t\n\n\t25\tРД9/2 - Транспортные расходы\nИсточник: ФД9/1 - Фонд Упр\n\t\n14 130,00\n\t\n0,00\n\t\n7 250,00\n\t\n6 880,00\n\t\n\n\t7\tРД9/3 - Маркетинг и Реклама\nИсточник: ФД9/2 - Фонд Рекламы\n\t\n15 000,00\n\t\n0,00\n\t\n15 000,00\n\t\n0,00\n\t\n\n\t8\tРД9/4 - Продвижение\nИсточник: ФД9/2 - Фонд Рекламы\n\t\n0,00\n\t\n0,00\n\t\n0,00\n\t\n0,00\n\t\n\n\t9\tРД9/5 - Оплата гос структуры\nИсточник: ФД9/1 - Фонд Упр\n\t\n19 060,00\n\t\n0,00\n\t\n17 060,00\n\t\n2 000,00\n\t\n\n\t11\tРД9/6 - Печатная и сувенирная продукция\nИсточник: ФД9/2 - Фонд Рекламы\n\t\n19 800,00\n\t\n0,00\n\t\n19 800,00\n\t\n0,00\n\t\n\n\t26\tРД9/7 - Связь и Интернет\nИсточник: ФД9/1 - Фонд Упр\n\t\n12 537,00\n\t\n0,00\n\t\n10 537,00\n\t\n2 000,00\n\t\n\n\t17\tРД9/8 - Обучение Персонала\nИсточник: ФД9/1 - Фонд Упр\n\t\n0,00\n\t\n0,00\n\t\n0,00\n\t\n0,00\n\t\n\n\t40\tРД9/9 - Бонусы и Командировки\nИсточник: ФД9/4 - Фонд Бонус сотрудникам\n\t\n22 600,00\n\t\n0,00\n\t\n22 600,00\n\t\n0,00\n\t\n\n\t28\tРД9/9/1 - Офисные расходы\nИсточник: ФД9/1 - Фонд Упр\n\t\n0,00\n\t\n0,00\n\t\n0,00\n\t\n0,00\n\t\n\n\t65\tРУ6/1 - Кейтеринг Поставщики\nИсточник: ФУ2/2 - Поставщики Кейтринг\n\t\n14 250,00\n\t\n0,00\n\t\n0,00\n\t\n14 250,00\n\t\n\n\t30\tРУ7 - Оформление Расходы\nИсточник: ФУ2/1 - Поставщики Оформление\n\t\n161 567,00\n\t\n0,00\n\t\n161 567,00\n\t\n0,00\n\t\n\n\t24\tРУ8 - Оформление Зарплата\nИсточник: ФУ2/1 - Поставщики Оформление\n\t\n0,00\n\t\n0,00\n\t\n0,00\n\t\n0,00\n\t\n\n\t67\tФР2 - Процент Официантам РФ\nИсточник: 2/ФФ - Хизматрасони Фемали\n\t\n0,00\n\t\n0,00\n\t\n0,00\n\t\n0,00\n\t\n\n\t146\tФР3/3 - Зарплата (Ком-персонала) Фемили\nИсточник: Доход\n\t\n0,00\n\t\n0,00\n\t\n0,00\n\t\n0,00\n\t\n\n\t63\tФР4/1 - Налог на Прибыль РФ\nИсточник: ФД4 - Налог Яккасарой\n\t\n360,00\n\t\n0,00\n\t\n0,00\n\t\n360,00\n\t\n\n\t77\tФР5 - Зарплата Поваров РФ\nИсточник: 2/ФФ5 - Фонд Зарплаты Фемали\n\t\n14 222,00\n\t\n0,00\n\t\n14 222,00\n\t\n0,00\n\t\n\n\t78\tФР5/1 - Зарплата Администрация РФ\nИсточник: 2/ФФ5 - Фонд Зарплаты Фемали\n\t\n0,00\n\t\n0,00\n\t\n0,00\n\t\n0,00\n\t\n\n\t82\tФР7/2 - Дивиденд Алиматов РФ\nИсточник: 3/ФФ7/2 - Фонд Алиматов Фемали\n\t\n0,00\n\t\n0,00\n\t\n0,00\n\t\n0,00\n\t\n\n\t84\tФР8 - Оборудование нав РФ\nИсточник: ФФ8 - Фонд Строительный Фемали\n\t\n0,00\n\t\n0,00\n\t\n0,00\n\t\n0,00\n\t\n\n\t85\tФР8/1 - Оборудование Ремонт РФ\nИсточник: ФФ8 - Фонд Строитель",
+    "title": "Расходы",
+    "url": "https://app.manajet.org/Finance/Home?mode=Expenses&finPlanID=323&filterTokeKey=d6fb06ba-b5aa-4abe-ac78-6f163a5fc386"
+  },
+  {
+    "slug": "bills",
+    "label": "Счета поставщиков",
+    "buttons": [
+      "Действия",
+      "Добавить",
+      "Сброс"
+    ],
+    "inputs": [
+      {
+        "name": "search",
+        "options": "",
+        "placeholder": "Поиск",
+        "tag": "INPUT",
+        "type": "text"
+      },
+      {
+        "name": "search",
+        "options": "",
+        "placeholder": "Поиск",
+        "tag": "INPUT",
+        "type": "text"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "дд.мм.гггг",
+        "tag": "INPUT",
+        "type": "text"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "дд.мм.гггг",
+        "tag": "INPUT",
+        "type": "text"
+      },
+      {
+        "name": "search",
+        "options": "",
+        "placeholder": "Поиск",
+        "tag": "INPUT",
+        "type": "text"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "дд.мм.гггг",
+        "tag": "INPUT",
+        "type": "text"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "дд.мм.гггг",
+        "tag": "INPUT",
+        "type": "text"
+      },
+      {
+        "name": "search",
+        "options": "",
+        "placeholder": "Поиск",
+        "tag": "INPUT",
+        "type": "text"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      }
+    ],
+    "tables": [
+      {
+        "headers": [],
+        "idx": 0,
+        "rows": 2
+      },
+      {
+        "headers": [
+          "ID",
+          "ФП Период",
+          "Источник",
+          "Назначение",
+          "Счет поставщика",
+          "Одобрено"
+        ],
+        "idx": 1,
+        "rows": 1
+      },
+      {
+        "headers": [
+          "ID",
+          "Дата оплаты",
+          "Источник",
+          "Назначение",
+          "Тип операции",
+          "Информация",
+          "Сумма"
+        ],
+        "idx": 2,
+        "rows": 1
+      },
+      {
+        "headers": [
+          "ID",
+          "Дата",
+          "Информация",
+          "Отгрузка"
+        ],
+        "idx": 3,
+        "rows": 1
+      }
+    ],
+    "text": " \n           \nЯккасарой\t\t\nТурсунов Амир\n0\n    \n \n25 июн - 01 июл 2026\n $$$ \nКонтроль средств\n \nДоходы\n \nФонды\n \nРасходы\n \nСчета поставщиков\n \nСчета клиентам\n \nЗаявки\n \nДиректива\n \nРасчёт зарплаты\n \nУправленческие отчёты\nДействия\nДобавить\nВсе\nПросроченые\nОплаченые\nНеоплаченные\nВсе одобренные\nПланируется\nОдобренные в текущем ФП\nДля одобрения\nСброс\nОдобрения\nДействия\nСброс\n\t\nID\n\t\nФП Период\n\t\nИсточник\n\t\nНазначение\n\t\nСчет поставщика\n\t\nОдобрено\n\t\n\nНе было найдено ни одной записи\nОплаты\nДействия\n \nСброс\n\t\nID\n\t\nДата оплаты\n\tИсточник\tНазначение\tТип операции\tИнформация\t\nСумма\n\t\n\nНе было найдено ни одной записи\nОтгрузки\nДействия\n \nСброс\n\t\nID\n\t\nДата\n\tИнформация\t\nОтгрузка\n\t\n\nНе было найдено ни одной записи\nКонтакт: info@manajet.org · Пользовательское Соглашение · Соглашение о конфиденциальности",
+    "title": "Счета поставщиков",
+    "url": "https://app.manajet.org/StockDocument/Home/Index/?type=0&filtered_uniqey=main_3b4deee7b5774b0d80a98d7406af43bf&filterTokeKey=46663faf-5520-4496-af16-7bcfe687dc10"
+  },
+  {
+    "slug": "invoices",
+    "label": "Счета клиентам",
+    "buttons": [
+      "Действия",
+      "Добавить",
+      "Сброс"
+    ],
+    "inputs": [
+      {
+        "name": "search",
+        "options": "",
+        "placeholder": "Поиск",
+        "tag": "INPUT",
+        "type": "text"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "дд.мм.гггг",
+        "tag": "INPUT",
+        "type": "text"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "дд.мм.гггг",
+        "tag": "INPUT",
+        "type": "text"
+      },
+      {
+        "name": "search",
+        "options": "",
+        "placeholder": "Поиск",
+        "tag": "INPUT",
+        "type": "text"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "дд.мм.гггг",
+        "tag": "INPUT",
+        "type": "text"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "дд.мм.гггг",
+        "tag": "INPUT",
+        "type": "text"
+      },
+      {
+        "name": "search",
+        "options": "",
+        "placeholder": "Поиск",
+        "tag": "INPUT",
+        "type": "text"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      }
+    ],
+    "tables": [
+      {
+        "headers": [],
+        "idx": 0,
+        "rows": 2
+      },
+      {
+        "headers": [
+          "ID",
+          "Дата",
+          "Информация",
+          "Отгрузка"
+        ],
+        "idx": 1,
+        "rows": 1
+      }
+    ],
+    "text": " \n           \nЯккасарой\t\t\nТурсунов Амир\n0\n    \n \n25 июн - 01 июл 2026\n $$$ \nКонтроль средств\n \nДоходы\n \nФонды\n \nРасходы\n \nСчета поставщиков\n \nСчета клиентам\n \nЗаявки\n \nДиректива\n \nРасчёт зарплаты\n \nУправленческие отчёты\nДействия\nДобавить\nВсе\nПросроченые\nОплаченые\nНеоплаченные\nПланируется\nОплаченные в текущем ФП\nСброс\nОплаты\nДействия\n \nСброс\nОтгрузки\nДействия\n \nСброс\n\t\nID\n\t\nДата\n\tИнформация\t\nОтгрузка\n\t\n\nНе было найдено ни одной записи\nКонтакт: info@manajet.org · Пользовательское Соглашение · Соглашение о конфиденциальности",
+    "title": "Счета клиентам",
+    "url": "https://app.manajet.org/StockDocument/Home/Index/?type=1&filtered_uniqey=main_1b8061ff5ce94ba187ae879f368a2077&filterTokeKey=aef779ac-732e-46e7-bc3b-00c9f96881fc"
+  },
+  {
+    "slug": "purchase-orders",
+    "label": "Заявки",
+    "buttons": [
+      "Действия",
+      "Добавить",
+      "Сброс"
+    ],
+    "inputs": [
+      {
+        "name": "search",
+        "options": "",
+        "placeholder": "Поиск",
+        "tag": "INPUT",
+        "type": "text"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "дд.мм.гггг",
+        "tag": "INPUT",
+        "type": "text"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "дд.мм.гггг",
+        "tag": "INPUT",
+        "type": "text"
+      },
+      {
+        "name": "search",
+        "options": "",
+        "placeholder": "Поиск",
+        "tag": "INPUT",
+        "type": "text"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "дд.мм.гггг",
+        "tag": "INPUT",
+        "type": "text"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "дд.мм.гггг",
+        "tag": "INPUT",
+        "type": "text"
+      },
+      {
+        "name": "search",
+        "options": "",
+        "placeholder": "Поиск",
+        "tag": "INPUT",
+        "type": "text"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      }
+    ],
+    "tables": [
+      {
+        "headers": [],
+        "idx": 0,
+        "rows": 2
+      },
+      {
+        "headers": [
+          "ID",
+          "Дата",
+          "Информация",
+          "Отгрузка"
+        ],
+        "idx": 1,
+        "rows": 1
+      }
+    ],
+    "text": " \n           \nЯккасарой\t\t\nТурсунов Амир\n0\n    \n \n25 июн - 01 июл 2026\n $$$ \nКонтроль средств\n \nДоходы\n \nФонды\n \nРасходы\n \nСчета поставщиков\n \nСчета клиентам\n \nЗаявки\n \nДиректива\n \nРасчёт зарплаты\n \nУправленческие отчёты\nДействия\nДобавить\nВсе\nОдобрено\nОтклонено\nОплачено\nК рассмотрению на ФП\nАлиматов\nТурсунов\nСброс\nОплаты заявок\nДействия\n \nСброс\nОтгрузки\nДействия\n \nСброс\n\t\nID\n\t\nДата\n\tИнформация\t\nОтгрузка\n\t\n\nНе было найдено ни одной записи\nКонтакт: info@manajet.org · Пользовательское Соглашение · Соглашение о конфиденциальности",
+    "title": "Заявки",
+    "url": "https://app.manajet.org/FpPurchaseOrder/Home/Index/?filtered_uniqey=main_0e69db1df1c544089474c54d05b16828&filterTokeKey=c9c6223c-e2a7-4d41-a28b-bdb3b060c978"
+  },
+  {
+    "slug": "salary",
+    "label": "Расчёт зарплаты",
+    "buttons": [
+      "Добавить",
+      "Действия",
+      "Добавить всех сотрудников",
+      "Копировать из предыдущего периода",
+      "Сброс"
+    ],
+    "inputs": [
+      {
+        "name": "search",
+        "options": "",
+        "placeholder": "Поиск",
+        "tag": "INPUT",
+        "type": "text"
+      }
+    ],
+    "tables": [
+      {
+        "headers": [],
+        "idx": 0,
+        "rows": 2
+      }
+    ],
+    "text": " \n           \nЯккасарой\t\t\nТурсунов Амир\n0\n    \n \n25 июн - 01 июл 2026\n $$$ \nКонтроль средств\n \nДоходы\n \nФонды\n \nРасходы\n \nСчета поставщиков\n \nСчета клиентам\n \nЗаявки\n \nДиректива\n \nРасчёт зарплаты\n \nУправленческие отчёты\nПлатёжные ведомости\nДобавить\nНе было найдено ни одной записи\nРасчёт зарплаты\nДействия\nДобавить Добавить всех сотрудников Копировать из предыдущего периода\nВсе\nСброс\nКонтакт: info@manajet.org · Пользовательское Соглашение · Соглашение о конфиденциальности",
+    "title": "Расчёт зарплаты",
+    "url": "https://app.manajet.org/FpSalaryPerson/Home?filtered_uniqey=main_a9f36a1a95d5446eaadcb72880d6941e&filterTokeKey=9066dc69-d993-456b-b498-20c0030b4bc3"
+  },
+  {
+    "slug": "report",
+    "label": "Управленческие отчёты",
+    "buttons": [
+      "Действия",
+      "Сброс"
+    ],
+    "inputs": [
+      {
+        "name": "search",
+        "options": "",
+        "placeholder": "Поиск",
+        "tag": "INPUT",
+        "type": "text"
+      }
+    ],
+    "tables": [
+      {
+        "headers": [],
+        "idx": 0,
+        "rows": 2
+      }
+    ],
+    "text": " \n           \nЯккасарой\t\t\nТурсунов Амир\n0\n    \n \n25 июн - 01 июл 2026\n $$$ \nКонтроль средств\n \nДоходы\n \nФонды\n \nРасходы\n \nСчета поставщиков\n \nСчета клиентам\n \nЗаявки\n \nДиректива\n \nРасчёт зарплаты\n \nУправленческие отчёты\nДействия\nДДС по доходам и расходам\nДДС по доходам и фондам\nПрибыль / Убытки\nПоставщики - ДДС и отгрузки\nКлиенты - ДДС и отгрузки\nСброс\nКонтакт: info@manajet.org · Пользовательское Соглашение · Соглашение о конфиденциальности",
+    "title": "Управленческие отчёты",
+    "url": "https://app.manajet.org/Finance/Home?mode=Report&finPlanID=323"
+  }
+]

@@ -1,0 +1,3636 @@
+[
+  {
+    "slug": "myoffice",
+    "label": "Личный кабинет",
+    "buttons": [
+      "Действия",
+      "Добавить",
+      "Сброс",
+      "50"
+    ],
+    "inputs": [
+      {
+        "name": "id_personInput",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "text"
+      },
+      {
+        "name": "search",
+        "options": "",
+        "placeholder": "Поиск",
+        "tag": "INPUT",
+        "type": "text"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      }
+    ],
+    "links": [
+      {
+        "href": "",
+        "text": "Яккасарой Турсунов Амир"
+      },
+      {
+        "href": "https://app.manajet.org/MyOffice?mode=MyOffice",
+        "text": "Главная"
+      },
+      {
+        "href": "https://app.manajet.org/MyOffice?mode=Position",
+        "text": "Должности"
+      },
+      {
+        "href": "https://app.manajet.org/MyOffice?mode=statistics",
+        "text": "Статистики"
+      },
+      {
+        "href": "https://app.manajet.org/MyOffice?mode=purchaseOrders",
+        "text": "Расходы"
+      },
+      {
+        "href": "https://app.manajet.org/MyOffice?mode=HatMaterials",
+        "text": "Должностные инструкции"
+      },
+      {
+        "href": "https://app.manajet.org/Task/BattlePlan",
+        "text": "Боевое планирование"
+      },
+      {
+        "href": "https://app.manajet.org/MyOffice#",
+        "text": "Добавить"
+      },
+      {
+        "href": "https://app.manajet.org/MyOffice",
+        "text": "Все"
+      },
+      {
+        "href": "https://app.manajet.org/MyOffice#Myself",
+        "text": "Личные"
+      },
+      {
+        "href": "https://app.manajet.org/MyOffice#Subordinates",
+        "text": "Статистики подчинёных"
+      },
+      {
+        "href": "https://app.manajet.org/MyOffice#",
+        "text": "Доход больше чем расходы +резерв 01.04.2026 22.04.2026 13.05.2026 03.06.2026 24.06.2026 355 320 879.34 641 403.68 961 928.02 1 282 452.36 1 602 976.70 1 923 501.04 2 244 025.38 2 564 549.72 2 885 074.06 3 205 598.40"
+      },
+      {
+        "href": "https://app.manajet.org/MyOffice#",
+        "text": "Сумма отчислений в фонды управления 31.05.2025 31.08.2025 30.11.2025 28.02.2026 31.05.2026 100 000 2 622 647.12 5 145 294.23 7 667 941.35 10 190 588.46 12 713 235.58 15 235 882.70 17 758 529.81 20 281 176.93 22 803 824.04 25 326 471.16"
+      },
+      {
+        "href": "https://app.manajet.org/MyOffice#",
+        "text": "Дивиденд Душанбе 01.04.2026 22.04.2026 13.05.2026 03.06.2026 24.06.2026 15 000 47 500 80 000 112 500 145 000 177 500 210 000 242 500 275 000 307 500 340 000"
+      },
+      {
+        "href": "https://app.manajet.org/MyOffice#",
+        "text": "Дивиденд Душанбе доп 07.05.2025 06.08.2025 05.11.2025 04.02.2026 50 000 206 600 363 200 519 800 676 400 833 000 989 600 1 146 200 1 302 800 1 459 400 1 616 000"
+      },
+      {
+        "href": "https://app.manajet.org/MyOffice#",
+        "text": "Флай гарден 08.04.2026 29.04.2026 20.05.2026 10.06.2026 26.06.2026 122 640 210 376 298 112 385 848 473 584 561 320 649 056 736 792 824 528 912 264 1 000 000"
+      },
+      {
+        "href": "https://app.manajet.org/MyOffice#",
+        "text": "Марказ Выручка 01.04.2026 22.04.2026 13.05.2026 03.06.2026 24.06.2026 355 150 319.50 300 284 450 248.50 600 213 750 177.50 900 142 1 050 106.50 1 200 071 1 350 035.50 1 500 000"
+      },
+      {
+        "href": "https://app.manajet.org/MyOffice#",
+        "text": "Торт общий 01.04.2026 22.04.2026 13.05.2026 03.06.2026 24.06.2026 3 680 8 312 12 944 17 576 22 208 26 840 31 472 36 104 40 736 45 368 50 000"
+      },
+      {
+        "href": "https://app.manajet.org/Setup/Agreement?type=UserAgreement",
+        "text": "Пользовательское Соглашение"
+      },
+      {
+        "href": "https://app.manajet.org/Setup/Agreement?type=PrivacyAgreement",
+        "text": "Соглашение о конфиденциальности"
+      }
+    ],
+    "tables": [
+      {
+        "headers": [],
+        "idx": 0,
+        "rows": 2
+      }
+    ],
+    "text": " \n           \nЯккасарой\t\t\nТурсунов Амир\n0\n    \nГлавная\n \nДолжности\n \nСтатистики\n \nРасходы\n \nДолжностные инструкции\n \nБоевое планирование\nДолгосрочная цель\nСоздать ведущую сеть ресторанов в Таджикистане, формирующую культуру семейных и торжественных встреч высокого уровня, где люди отмечают важные события жизни — от семейных ужинов до свадебных торжеств — и создают долговечные воспоминания о радости, единстве и начале семейной жизни.\nМои Статистики\nДействия\nДобавить\nВсе\nЛичные\nСтатистики подчинёных\n \n \nСброс\nДобавить\nПериод: Недели\nПериод просмотра: Недели\nТип: Выручка\nСегодня: 355,00\nДоход больше чем расходы +резерв\n01.04.2026\n22.04.2026\n13.05.2026\n03.06.2026\n24.06.2026\n355\n320 879.34\n641 403.68\n961 928.02\n1 282 452.36\n1 602 976.70\n1 923 501.04\n2 244 025.38\n2 564 549.72\n2 885 074.06\n3 205 598.40\n1 день назад\nДобавить\nПериод: Недели\nПериод просмотра: Месяц\nТип: Расходы\nСегодня: 25 500,00\nСумма отчислений в фонды управления\n31.05.2025\n31.08.2025\n30.11.2025\n28.02.2026\n31.05.2026\n100 000\n2 622 647.12\n5 145 294.23\n7 667 941.35\n10 190 588.46\n12 713 235.58\n15 235 882.70\n17 758 529.81\n20 281 176.93\n22 803 824.04\n25 326 471.16\n8 часов назад\nДобавить\nПериод: Недели\nПериод просмотра: Недели\nТип: Расходы\nСегодня: 25 500,00\nДивиденд Душанбе\n01.04.2026\n22.04.2026\n13.05.2026\n03.06.2026\n24.06.2026\n15 000\n47 500\n80 000\n112 500\n145 000\n177 500\n210 000\n242 500\n275 000\n307 500\n340 000\n8 часов назад\nДобавить\nПериод: Недели\nПериод просмотра: Недели\nТип: Расходы\nСегодня: 0,00\nДивиденд Душанбе доп\n07.05.2025\n06.08.2025\n05.11.2025\n04.02.2026\n50 000\n206 600\n363 200\n519 800\n676 400\n833 000\n989 600\n1 146 200\n1 302 800\n1 459 400\n1 616 000\n8 часов назад\nДобавить\nПериод: Дни\nПериод просмотра: Недели\nТип: Выручка\nСегодня: 0,00\nФлай гарден\n08.04.2026\n29.04.2026\n20.05.2026\n10.06.2026\n26.06.2026\n122 640\n210 376\n298 112\n385 848\n473 584\n561 320\n649 056\n736 792\n824 528\n912 264\n1 000 000\n1 день назад\nДобавить\nПериод: Дни\nПериод просмотра: Недели\nТип: Выручка\nСегодня: 0,00\nМарказ Выручка\n01.04.2026\n22.04.2026\n13.05.2026\n03.06.2026\n24.06.2026\n355\n150 319.50\n300 284\n450 248.50\n600 213\n750 177.50\n900 142\n1 050 106.50\n1 200 071\n1 350 035.50\n1 500 000\n1 день назад\nДобавить\nПериод: Дни\nПериод просмотра: Недели\nТип: Выручка\nСегодня: 0,00\nТорт общий\n01.04.2026\n22.04.2026\n13.05.2026\n03.06.2026\n24.06.2026\n3 680\n8 312\n12 944\n17 576\n22 208\n26 840\n31 472\n36 104\n40 736\n45 368\n50 000\n1 день назад\nЗаписей на странице 50 Всего: 7\nКонтакт: info@manajet.org · Пользовательское Соглашение · Соглашение о конфиденциальности",
+    "title": "Личный кабинет",
+    "url": "https://app.manajet.org/MyOffice"
+  },
+  {
+    "slug": "person",
+    "label": "Сотрудники",
+    "buttons": [
+      "Добавить",
+      "Действия",
+      "Добавить сотрудника",
+      "Приглашение",
+      "Сброс",
+      "100"
+    ],
+    "inputs": [
+      {
+        "name": "search",
+        "options": "",
+        "placeholder": "Поиск",
+        "tag": "INPUT",
+        "type": "text"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      }
+    ],
+    "links": [
+      {
+        "href": "",
+        "text": "Яккасарой Турсунов Амир"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Home/Persons?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6&filterTokeKey=7395d15d-c107-467e-a685-85c901a7164e#",
+        "text": "Добавить"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Home/Persons?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6&filterTokeKey=7395d15d-c107-467e-a685-85c901a7164e#",
+        "text": "Все"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Home/Persons?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6&filterTokeKey=7395d15d-c107-467e-a685-85c901a7164e#",
+        "text": "Family (78)"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Home/Persons?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6&filterTokeKey=7395d15d-c107-467e-a685-85c901a7164e#",
+        "text": "FAMILY 2 (78)"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Home/Persons?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6&filterTokeKey=7395d15d-c107-467e-a685-85c901a7164e#",
+        "text": "FLY GARDEN (25)"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Home/Persons?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6&filterTokeKey=7395d15d-c107-467e-a685-85c901a7164e#",
+        "text": "Админ Персонал (37)"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Home/Persons?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6&filterTokeKey=7395d15d-c107-467e-a685-85c901a7164e#",
+        "text": "ГРАНД ХОЛЛ (33)"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Home/Persons?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6&filterTokeKey=7395d15d-c107-467e-a685-85c901a7164e#",
+        "text": "Яккасарой Luxe официанты (18)"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Home/Persons?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6&filterTokeKey=7395d15d-c107-467e-a685-85c901a7164e#",
+        "text": "Яккасарой VIP официанты (38)"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Home/Persons?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6&filterTokeKey=7395d15d-c107-467e-a685-85c901a7164e#",
+        "text": "Яккасарой повара (31)"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Home/Persons?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6&filterTokeKey=7395d15d-c107-467e-a685-85c901a7164e#",
+        "text": "Яккасарой/Family Худжанд (119)"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Добавить сотрудника"
+      },
+      {
+        "href": "",
+        "text": "Приглашение"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Home/Persons?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6&filterTokeKey=7395d15d-c107-467e-a685-85c901a7164e",
+        "text": "Все"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Home/Persons?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6&filterTokeKey=7395d15d-c107-467e-a685-85c901a7164e#Online",
+        "text": "Онлайн"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Home/Persons?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6&filterTokeKey=7395d15d-c107-467e-a685-85c901a7164e#Birthday",
+        "text": "Дни рождения"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Home/Persons?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6&filterTokeKey=7395d15d-c107-467e-a685-85c901a7164e#Quit",
+        "text": "Увольнение"
+      },
+      {
+        "href": "",
+        "text": "Имя"
+      },
+      {
+        "href": "",
+        "text": "День рождения"
+      },
+      {
+        "href": "",
+        "text": "Начало работы"
+      },
+      {
+        "href": "",
+        "text": "Должность"
+      },
+      {
+        "href": "",
+        "text": "E-mail"
+      },
+      {
+        "href": "",
+        "text": "Телефон"
+      },
+      {
+        "href": "",
+        "text": "Группа"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/353?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Хасанов Абдулатиф Абдурафикович"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/10?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Мухаммадиев Бахтиер Алиджонович"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/11?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Турсунов Алишер"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/8?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Рустамов Сироч"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/3?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Турсунов Амир Шакирджонович"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/6?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Нурматов Абдукаюм Чуракулович"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/14?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Сатторов Хусрав Джамшедович"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/5?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Мунавваров Гуломчон"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/16?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Бузруков Беха"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/12?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Юнусов Бахтиер"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/183?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Мавлонов Абдумалик Мавлонович"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/20?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Ализода Парисо"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/7?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Муаззама МОХ"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/1039?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Каландаров Човид"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/1038?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Баротов Мухаммадсадам"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/1037?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Табаров Эхромиддин"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/1036?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Алихон Даврони"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/1035?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Курбонзода Аминчон"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/1034?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Рахматов Ислом"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/1033?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Файхуллоев Мухаммадрахим"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/1032?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Киргизбоев Абдурауф"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/1031?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Тешаева Махбуба"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/1030?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Чумаев Бобур"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/1029?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Фирузов Фарахруз"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/1028?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Сохиб Сохиб"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/1027?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Довуд Довуд"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/1026?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Мохрухсор Мохрухсор"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/1025?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Сатторзода Фируз"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/1024?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Хамидов Фахриддин"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/1022?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Каландаров Умед"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/1021?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Хасанов Сухроб"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/1020?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Бобоева Фирдавс"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/1019?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Тохирзода Махмадулло"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/1018?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Зарипов Нуриддин"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/1017?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Боев Чумабой"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/1016?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Шарипова Шахноза"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/1015?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Абдунабиева Машхура"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/1014?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Ганиева Мадина"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/1013?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Чалол Дилшодаи"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/1012?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Назаров Оятулло"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/1011?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Саидов Абдумумин"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/1010?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Ализода Каерамз"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/1009?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Мехроб Мехроб"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/1008?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Эмомов Мухаммад"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/1007?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Сидикзода Сулаймон"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/1006?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Ерзода Мухаммад"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/1005?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Мукимова Сабохат"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/1004?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Хилолов Хилол"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/1003?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Асроров Исмоил"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/1002?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Холов Умед"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/1001?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Гадаева Мавлюда"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/1000?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Куватова Дилором"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/999?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Чураев Мухаммад"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/998?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Элчонова Мох"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/997?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Насимова Сабрия"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/996?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Салимова Сановбар"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/995?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Исупова Чахоноро"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/994?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Анварова Дилафруз"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/993?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Курбонов Мехроб"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/992?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Расулов Рахматулло"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/991?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Мирзоева Саида"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/990?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Чураев Фаридун"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/989?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Сафарова Шахноза"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/988?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Рахмонкулова Аниса"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/987?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Чураев Охун"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/986?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Одиназода Сабина"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/985?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Раджабов Фируз"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/984?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Махмадалиев Фирдавс"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/983?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Сайдалиев Бахтиер"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/982?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Ализода Дилафзо"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/981?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Мухаммадиев Аличон"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/980?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Исхакова Махбуба"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/979?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Абдурахмонов Гулруз"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/978?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Амуров Хайем"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/977?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Вохидов Шухратджон"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/976?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Боймурадова Мадина"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/975?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Хакимов Фаридун"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/972?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Хамзаев Дилшод"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/969?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Одинаев Умар"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/968?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Саидов Камолиддин"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/966?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Розиков Зарагул"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/964?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Саидмахмадов Саидчон"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/963?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Исмоил Шахринисои"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/962?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Довуд Довуд"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/960?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Ахмедов Махмадали"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/959?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Юнусова Ганчина"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/958?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Ичронова Тамано Чивоншоевна"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/957?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Холова Анора"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/956?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Набиева Дилором"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/954?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Мунаварзода Боиршо"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/950?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Собиров Сухайб"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/945?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Файхулллоев Мухаммадрахим"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/944?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Зокиров Усмонали"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/943?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Боев Парвиз"
+      },
+      {
+        "href": "https://app.manajet.org/Person/Edit/Index/938?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6",
+        "text": "Ризоева Сафина"
+      }
+    ],
+    "tables": [
+      {
+        "headers": [],
+        "idx": 0,
+        "rows": 2
+      },
+      {
+        "headers": [
+          "Имя",
+          "День рождения",
+          "Начало работы",
+          "Должность",
+          "E-mail",
+          "Телефон",
+          "Группа"
+        ],
+        "idx": 1,
+        "rows": 100
+      }
+    ],
+    "text": " \n           \nЯккасарой\t\t\nТурсунов Амир\n0\n    \nГруппы\nДобавить\nВсе\nFamily (78)\nFAMILY 2 (78)\nFLY GARDEN (25)\nАдмин Персонал (37)\nГРАНД ХОЛЛ (33)\nЯккасарой Luxe официанты (18)\nЯккасарой VIP официанты (38)\nЯккасарой повара (31)\nЯккасарой/Family Худжанд (119)\nСотрудники\nДействия\nДобавить сотрудника Приглашение\nВсе\nОнлайн\nДни рождения\nУвольнение\nСброс\n\t\t\nИмя\n\t\nДень рождения\n\t\nНачало работы\n\t\nДолжность\n\t\nE-mail\n\t\nТелефон\n\t\nГруппа\n\t\n\n\t\n\tХасанов Абдулатиф Абдурафикович\t19.09.1997\t01.10.2023\tИнжинер\txasanov119@gmail.com\t928588848\tАдмин Персонал\t\n\n\t\n\tМухаммадиев Бахтиер Алиджонович\t26.12.1987\t01.11.2020\tКоммерческий директор\tufbakhtik@gmail.com\t+992006112020\tАдмин Персонал\t\n\n\t\n\tТурсунов Алишер\t20.02.1989\t01.06.2019\tфинансовый Директор\ttursunovalisher043@gmail.com\t550012000\tАдмин Персонал\t\n\n\t\n\tРустамов Сироч\t\t01.10.2019\tИнжинер по технике\tsirojrustamov26@gmail.com\t988406340\tАдмин Персонал\t\n\n\t\n\tТурсунов Амир Шакирджонович\t15.05.1992\t01.06.2019\tГенеральный Директор\tshoiraluxe@gmail.com\t+992502227676\tАдмин Персонал\t\n\n\t\n\tНурматов Абдукаюм Чуракулович\t01.05.1982\t01.06.2019\tБухгалтер\trohbar2010@gmail.com\t907063696\tАдмин Персонал\t\n\n\t\n\tСатторов Хусрав Джамшедович\t29.08.2000\t01.07.2019\tМенеджер зала\tkhusravsattorov@gmail.com\t+992915133312\tFLY GARDEN\t\n\n\t\n\tМунавваров Гуломчон\t20.12.1987\t01.06.2019\tРуководитель отдел производство\tgulomconmm@gmaaail.com\t927794439\tАдмин Персонал\t\n\n\t\n\tБузруков Беха\t26.10.1997\t01.01.2021\tИсполнительный Директ\tbuzrukovb26@gmail.com\t+992929777755\tАдмин Персонал\t\n\n\t\n\tЮнусов Бахтиер\t24.02.1986\t01.06.2019\tБухгалтер\tbahtierunosov@gmail.com\t927173533\tАдмин Персонал\t\n\n\t\n\tМавлонов Абдумалик Мавлонович\t04.09.1990\t20.10.2023\tHR\tamavlonov.55spirit@gmail.com\t+992905443939\tАдмин Персонал\t\n\n\t\n\tАлизода Парисо\t01.09.2002\t01.01.2022\tДиректор по Развитию\talizodapariso@mail.ru\t+992000088891\tАдмин Персонал\t\n\n\t\n\tМуаззама МОХ\t27.02.1999\t02.01.2021\tДело производитель\takkasaroypremium@gmail.com\t901082893\tАдмин Персонал\t\n\n\t\n\tКаландаров Човид\t\t\tГрузчик\t\t\tГРАНД ХОЛЛ\t\n\n\t\n\tБаротов Мухаммадсадам\t\t\tтехник\t\t\tГРАНД ХОЛЛ\t\n\n\t\n\tТабаров Эхромиддин\t\t\tводитель\t\t\tГРАНД ХОЛЛ\t\n\n\t\n\tАлихон Даврони\t\t\tохранник\t\t\tГРАНД ХОЛЛ\t\n\n\t\n\tКурбонзода Аминчон\t\t\tохранник\t\t\tГРАНД ХОЛЛ\t\n\n\t\n\tРахматов Ислом\t\t\tзавсклад\t\t\tГРАНД ХОЛЛ\t\n\n\t\n\tФайхуллоев Мухаммадрахим\t\t\tповар\t\t\tFLY GARDEN\t\n\n\t\n\tКиргизбоев Абдурауф\t\t\tОшпаз\t\t\tFLY GARDEN\t\n\n\t\n\tТешаева Махбуба\t\t\tсалатница\t\t\tFLY GARDEN\t\n\n\t\n\tЧумаев Бобур\t\t\tпомощник повара\t\t\tFLY GARDEN\t\n\n\t\n\tФирузов Фарахруз\t\t\tмангал\t\t\tFLY GARDEN\t\n\n\t\n\tСохиб Сохиб\t\t\tповар овощная нарезка\t\t\tFLY GARDEN\t\n\n\t\n\tДовуд Довуд\t\t\tповар тандури\t\t\tFLY GARDEN\t\n\n\t\n\tМохрухсор Мохрухсор\t\t\tмясная нарезка\t\t\tFLY GARDEN\t\n\n\t\n\tСатторзода Фируз\t\t\tфруктовая нарезка\t\t\tFLY GARDEN\t\n\n\t\n\tХамидов Фахриддин\t30.04.1998\t\tменеджер по продажам\t\t\tFLY GARDEN\t\n\n\t\n\tКаландаров Умед\t\t\tофициант\t\t\tFLY GARDEN\t\n\n\t\n\tХасанов Сухроб\t\t\tофициант\t\t\tFLY GARDEN\t\n\n\t\n\tБобоева Фирдавс\t\t\tофициант\t\t\tFLY GARDEN\t\n\n\t\n\tТохирзода Махмадулло\t\t\tофициант\t\t\tFLY GARDEN\t\n\n\t\n\tЗарипов Нуриддин\t\t\tохрана\t\t\tFLY GARDEN\t\n\n\t\n\tБоев Чумабой\t\t\tсадовник\t\t\tFLY GARDEN\t\n\n\t\n\tШарипова Шахноза\t\t\tуборщица\t\t\tFLY GARDEN\t\n\n\t\n\tАбдунабиева Машхура\t\t\tуборщица\t\t\tFLY GARDEN\t\n\n\t\n\tГаниева Мадина\t\t\tуборщица\t\t\tFLY GARDEN\t\n\n\t\n\tЧалол Дилшодаи\t\t\tуборщица\t\t\tFLY GARDEN\t\n\n\t\n\tНазаров Оятулло\t\t\tвынос мусора\t\t\tFLY GARDEN\t\n\n\t\n\tСаидов Абдумумин\t\t\tмастер\t\t\tFLY GARDEN\t\n\n\t\n\tАлизода Каерамз\t\t\tсмм-специалист\t\t\tFLY GARDEN\t\n\n\t\n\tМехроб Мехроб\t\t\tранер\t\t\tFamily\t\n\n\t\n\tЭмомов Мухаммад\t\t\tранер\t\t\tFamily\t\n\n\t\n\tСидикзода Сулаймон\t\t\tранер\t\t\tFamily\t\n\n\t\n\tЕрзода Мухаммад\t\t\tранер\t\t\tFamily\t\n\n\t\n\tМукимова Сабохат\t\t\tранер\t\t\tFamily\t\n\n\t\n\tХилолов Хилол\t\t\tвынос мусора\t\t\tFamily\t\n\n\t\n\tАсроров Исмоил\t\t\tбармен\t\t\tFamily\t\n\n\t\n\tХолов Умед\t\t\tбармен\t\t\tFamily\t\n\n\t\n\tГадаева Мавлюда\t\t\tсмм-специалист\t\t\tFamily\t\n\n\t\n\tКуватова Дилором\t\t\tменеджер по опросам\t\t\tFamily\t\n\n\t\n\tЧураев Мухаммад\t\t\tразвозка\t\t\tFamily\t\n\n\t\n\tЭлчонова Мох\t\t\tфрин\t\t\tFamily\t\n\n\t\n\tНасимова Сабрия\t\t\tраздача\t\t\tFamily\t\n\n\t\n\tСалимова Сановбар\t\t\tсалатница\t\t\tFamily\t\n\n\t\n\tИсупова Чахоноро\t\t\tсалатница\t\t\tFamily\t\n\n\t\n\tАнварова Дилафруз\t\t\tповар для персонала\t\t\tЯккасарой повара\t\n\n\t\n\tКурбонов Мехроб\t\t\tнарезчик\t\t\tFamily\t\n\n\t\n\tРасулов Рахматулло\t\t\tлагман\t\t\tFamily\t\n\n\t\n\tМирзоева Саида\t\t\tкондитер\t\t\tFamily\t\n\n\t\n\tЧураев Фаридун\t\t\tкебаб\t\t\tFamily\t\n\n\t\n\tСафарова Шахноза\t\t\tхостес\t\t\tFamily\t\n\n\t\n\tРахмонкулова Аниса\t\t\tхостес\t\t\tFamily\t\n\n\t\n\tЧураев Охун\t\t\tМенеджер по Опросам\t\t\tАдмин Персонал\t\n\n\t\n\tОдиназода Сабина\t\t\tайко\t\t\tАдмин Персонал\t\n\n\t\n\tРаджабов Фируз\t\t\tмастер\t\t\tАдмин Персонал\t\n\n\t\n\tМахмадалиев Фирдавс\t\t\tмастер\t\t\tАдмин Персонал\t\n\n\t\n\tСайдалиев Бахтиер\t\t\tЗавсклад мясной\t\t\tАдмин Персонал\t\n\n",
+    "title": "Сотрудники",
+    "url": "https://app.manajet.org/Person/Home/Persons?filtered_uniqey=main_d6bc168e31874b72b17f8771921802f6&filterTokeKey=7395d15d-c107-467e-a685-85c901a7164e"
+  },
+  {
+    "slug": "crm",
+    "label": "CRM",
+    "buttons": [
+      "Действия",
+      "Добавить",
+      "Добавить компанию",
+      "Добавить частное лицо",
+      "Сброс"
+    ],
+    "inputs": [
+      {
+        "name": "search",
+        "options": "",
+        "placeholder": "Поиск",
+        "tag": "INPUT",
+        "type": "text"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "10|20|50|100",
+        "placeholder": "",
+        "tag": "SELECT",
+        "type": "select-one"
+      }
+    ],
+    "links": [
+      {
+        "href": "",
+        "text": "Яккасарой Турсунов Амир"
+      },
+      {
+        "href": "https://app.manajet.org/CRM?mode=Companies",
+        "text": "Компании"
+      },
+      {
+        "href": "https://app.manajet.org/CRM?mode=Contacts",
+        "text": "Контакты"
+      },
+      {
+        "href": "https://app.manajet.org/CRM?mode=Address&View=1",
+        "text": "Адреса"
+      },
+      {
+        "href": "https://app.manajet.org/CRM?mode=Birthday",
+        "text": "Дни рождения"
+      },
+      {
+        "href": "https://app.manajet.org/CRM?mode=Bills",
+        "text": "Счета поставщиков"
+      },
+      {
+        "href": "https://app.manajet.org/CRM?mode=Invoices",
+        "text": "Счета клиентам"
+      },
+      {
+        "href": "https://app.manajet.org/StockCard/Home?mode=Cards",
+        "text": "Ассортимент"
+      },
+      {
+        "href": "https://app.manajet.org/Company/Home/Index?viewResult=1136",
+        "text": "Активность работы с клиентами"
+      },
+      {
+        "href": "https://app.manajet.org/CRM?mode=MassMail",
+        "text": "Рассылка"
+      },
+      {
+        "href": "https://app.manajet.org/History?holderTypeStr=1&viewResult=None",
+        "text": "История"
+      },
+      {
+        "href": "https://app.manajet.org/CRM?filterTokeKey=ed5cf675-b13d-40a2-a9ad-7541efc5e973#",
+        "text": "Добавить"
+      },
+      {
+        "href": "",
+        "text": "Добавить компанию"
+      },
+      {
+        "href": "",
+        "text": "Добавить частное лицо"
+      },
+      {
+        "href": "",
+        "text": "Все"
+      },
+      {
+        "href": "",
+        "text": "Мои"
+      },
+      {
+        "href": "",
+        "text": "Название"
+      },
+      {
+        "href": "https://app.manajet.org/CRM/Edit/Index/3510",
+        "text": ".. Дилшод"
+      },
+      {
+        "href": "https://app.manajet.org/CRM/Edit/Index/765",
+        "text": "01.06 Сухробака"
+      },
+      {
+        "href": "https://app.manajet.org/CRM/Edit/Index/748",
+        "text": "01.07 Мунаввар"
+      },
+      {
+        "href": "https://app.manajet.org/CRM/Edit/Index/487",
+        "text": "01.11. Парвиз"
+      },
+      {
+        "href": "https://app.manajet.org/CRM/Edit/Index/3566",
+        "text": "02.02.25 Мирзоали"
+      },
+      {
+        "href": "https://app.manajet.org/CRM/Edit/Index/799",
+        "text": "02.07 Гуландом"
+      },
+      {
+        "href": "https://app.manajet.org/CRM/Edit/Index/800",
+        "text": "02.07 Гуландом"
+      },
+      {
+        "href": "https://app.manajet.org/CRM/Edit/Index/3561",
+        "text": "02.08.25 Зарина"
+      },
+      {
+        "href": "https://app.manajet.org/CRM/Edit/Index/1351",
+        "text": "02.09 Равшанако"
+      },
+      {
+        "href": "https://app.manajet.org/CRM/Edit/Index/1352",
+        "text": "02.09 Равшанако"
+      },
+      {
+        "href": "https://app.manajet.org/CRM/Edit/Index/1276",
+        "text": "02.10 Сухроб"
+      },
+      {
+        "href": "https://app.manajet.org/CRM/Edit/Index/967",
+        "text": "02-07 Манижа"
+      },
+      {
+        "href": "https://app.manajet.org/CRM/Edit/Index/373",
+        "text": "03.10 Фирдавс"
+      },
+      {
+        "href": "https://app.manajet.org/CRM/Edit/Index/564",
+        "text": "04.12. Зубайдулло"
+      },
+      {
+        "href": "https://app.manajet.org/CRM/Edit/Index/563",
+        "text": "04.12. Убайдулло"
+      },
+      {
+        "href": "https://app.manajet.org/CRM/Edit/Index/606",
+        "text": "05.02 Масрур"
+      },
+      {
+        "href": "https://app.manajet.org/CRM/Edit/Index/820",
+        "text": "05.05 Хочи Зинхор"
+      },
+      {
+        "href": "https://app.manajet.org/CRM/Edit/Index/751",
+        "text": "05.08 Ниссо"
+      },
+      {
+        "href": "https://app.manajet.org/CRM/Edit/Index/1330",
+        "text": "05.08 Хочиако"
+      },
+      {
+        "href": "https://app.manajet.org/CRM/Edit/Index/1328",
+        "text": "05.10 Фирдавс"
+      },
+      {
+        "href": "https://app.manajet.org/CRM/Edit/Index/548",
+        "text": "05.11. Амир"
+      },
+      {
+        "href": "https://app.manajet.org/CRM/Edit/Index/488",
+        "text": "05.11. Шоира"
+      },
+      {
+        "href": "https://app.manajet.org/CRM/Edit/Index/540",
+        "text": "05.12 Комрон"
+      },
+      {
+        "href": "https://app.manajet.org/CRM/Edit/Index/787",
+        "text": "06.08 Нилуфар"
+      },
+      {
+        "href": "https://app.manajet.org/CRM/Edit/Index/3016",
+        "text": "06.08.2024 Комилчон"
+      },
+      {
+        "href": "https://app.manajet.org/CRM/Edit/Index/374",
+        "text": "06.10 Тоир"
+      },
+      {
+        "href": "https://app.manajet.org/CRM/Edit/Index/511",
+        "text": "06.11 Парвиз"
+      },
+      {
+        "href": "https://app.manajet.org/CRM/Edit/Index/2388",
+        "text": "07.01.2024 Кароматулло"
+      },
+      {
+        "href": "https://app.manajet.org/CRM/Edit/Index/739",
+        "text": "07.05 Фирдавс"
+      },
+      {
+        "href": "https://app.manajet.org/CRM/Edit/Index/1320",
+        "text": "07.08 Исроил"
+      },
+      {
+        "href": "https://app.manajet.org/CRM/Edit/Index/308",
+        "text": "08.10. Хусрав"
+      },
+      {
+        "href": "https://app.manajet.org/CRM/Edit/Index/580",
+        "text": "08.12 Акбар"
+      },
+      {
+        "href": "https://app.manajet.org/CRM/Edit/Index/672",
+        "text": "09.01 Коримдод"
+      },
+      {
+        "href": "https://app.manajet.org/CRM/Edit/Index/740",
+        "text": "09.05 Расул"
+      },
+      {
+        "href": "https://app.manajet.org/CRM/Edit/Index/798",
+        "text": "09.07 Сафарали"
+      },
+      {
+        "href": "https://app.manajet.org/CRM/Edit/Index/745",
+        "text": "09.07 Фаридун"
+      },
+      {
+        "href": "https://app.manajet.org/CRM/Edit/Index/2352",
+        "text": "1.01.24 Салима"
+      },
+      {
+        "href": "https://app.manajet.org/CRM/Edit/Index/2309",
+        "text": "1.01.24 Хабибулло"
+      },
+      {
+        "href": "https://app.manajet.org/CRM/Edit/Index/3488",
+        "text": "1.02.25 Бахтиёр"
+      },
+      {
+        "href": "https://app.manajet.org/CRM/Edit/Index/3492",
+        "text": "1.02.25 Мухиддин"
+      },
+      {
+        "href": "https://app.manajet.org/CRM/Edit/Index/3524",
+        "text": "1.02.25 Хусейн"
+      },
+      {
+        "href": "https://app.manajet.org/CRM/Edit/Index/4376",
+        "text": "1.02.26 Кутфия"
+      },
+      {
+        "href": "https://app.manajet.org/CRM/Edit/Index/4464",
+        "text": "1.02.26 Самад"
+      },
+      {
+        "href": "https://app.manajet.org/CRM/Edit/Index/1710",
+        "text": "1.03.23 Махтун"
+      },
+      {
+        "href": "https://app.manajet.org/CRM/Edit/Index/2437",
+        "text": "1.03.24 Нигина"
+      },
+      {
+        "href": "https://app.manajet.org/CRM/Edit/Index/2512",
+        "text": "1.03.24 Сиёвуш"
+      },
+      {
+        "href": "https://app.manajet.org/CRM/Edit/Index/3728",
+        "text": "1.05.2025 Рустам"
+      },
+      {
+        "href": "https://app.manajet.org/CRM/Edit/Index/1795",
+        "text": "1.05.23 Мансур"
+      },
+      {
+        "href": "https://app.manajet.org/CRM/Edit/Index/4596",
+        "text": "1.05.26 Фаршед"
+      },
+      {
+        "href": "https://app.manajet.org/CRM/Edit/Index/2420",
+        "text": "1.06.2024 Изатой Набиева"
+      },
+      {
+        "href": "",
+        "text": "1"
+      },
+      {
+        "href": "https://app.manajet.org/CRM/Home/FilteredCompanies/?page=2",
+        "text": "2"
+      },
+      {
+        "href": "https://app.manajet.org/CRM/Home/FilteredCompanies/?page=3",
+        "text": "3"
+      },
+      {
+        "href": "https://app.manajet.org/CRM/Home/FilteredCompanies/?page=4",
+        "text": "4"
+      },
+      {
+        "href": "https://app.manajet.org/CRM/Home/FilteredCompanies/?page=5",
+        "text": "5"
+      },
+      {
+        "href": "https://app.manajet.org/CRM/Home/FilteredCompanies/?page=6",
+        "text": "6"
+      },
+      {
+        "href": "https://app.manajet.org/CRM/Home/FilteredCompanies/?page=7",
+        "text": "7"
+      },
+      {
+        "href": "https://app.manajet.org/CRM/Home/FilteredCompanies/?page=8",
+        "text": "8"
+      },
+      {
+        "href": "https://app.manajet.org/CRM/Home/FilteredCompanies/?page=9",
+        "text": "9"
+      },
+      {
+        "href": "https://app.manajet.org/CRM/Home/FilteredCompanies/?page=10",
+        "text": "10"
+      },
+      {
+        "href": "https://app.manajet.org/CRM/Home/FilteredCompanies/?page=90",
+        "text": "»»"
+      },
+      {
+        "href": "https://app.manajet.org/Setup/Agreement?type=UserAgreement",
+        "text": "Пользовательское Соглашение"
+      },
+      {
+        "href": "https://app.manajet.org/Setup/Agreement?type=PrivacyAgreement",
+        "text": "Соглашение о конфиденциальности"
+      }
+    ],
+    "tables": [
+      {
+        "headers": [],
+        "idx": 0,
+        "rows": 2
+      },
+      {
+        "headers": [
+          "Название",
+          "Ответственный",
+          "E-mail"
+        ],
+        "idx": 1,
+        "rows": 50
+      }
+    ],
+    "text": " \n           \nЯккасарой\t\t\nТурсунов Амир\n0\n    \nКомпании\n \nКонтакты\n \nАдреса\n \nДни рождения\n \nСчета поставщиков\n \nСчета клиентам\n \nАссортимент\n \nАктивность работы с клиентами\n \nРассылка\n \nИстория\nДействия \nДобавить\nДобавить компанию\nДобавить частное лицо\nВсе\nМои\n \n  Сброс  \n\t\nНазвание\n\tОтветственный\tE-mail\t\n\t.. Дилшод\t\nМуаззама МОХ\n\t\t\n\t01.06 Сухробака\t\nАвазов Сафиаллох Одинаевич\n\t\t\n\t01.07 Мунаввар\t\nАвазов Сафиаллох Одинаевич\n\t\t\n\t01.11. Парвиз\t\nАвазов Сафиаллох Одинаевич\n\t\t\n\t02.02.25 Мирзоали\t\nКомилов Мухаммадчон\n\t\t\n\t02.07 Гуландом\t\nАвазов Сафиаллох Одинаевич\n\t\t\n\t02.07 Гуландом\t\nАвазов Сафиаллох Одинаевич\n\t\t\n\t02.08.25 Зарина\t\nКомилов Мухаммадчон\n\t\t\n\t02.09 Равшанако\t\nБузруков Беха\n\t\t\n\t02.09 Равшанако\t\nБузруков Беха\n\t\t\n\t02.10 Сухроб\t\nБузруков Беха\n\t\t\n\t02-07 Манижа\t\nМухаммадиев Бахтиер Алиджонович\n\t\t\n\t03.10 Фирдавс\t\nАвазов Сафиаллох Одинаевич\n\t\t\n\t04.12. Зубайдулло\t\nАвазов Сафиаллох Одинаевич\n\t\t\n\t04.12. Убайдулло\t\nАвазов Сафиаллох Одинаевич\n\t\t\n\t05.02 Масрур\t\nАвазов Сафиаллох Одинаевич\n\t\t\n\t05.05 Хочи Зинхор\t\nАвазов Сафиаллох Одинаевич\n\t\t\n\t05.08 Ниссо\t\nАвазов Сафиаллох Одинаевич\n\t\t\n\t05.08 Хочиако\t\nБузруков Беха\n\t\t\n\t05.10 Фирдавс\t\nБузруков Беха\n\t\t\n\t05.11. Амир\t\nАвазов Сафиаллох Одинаевич\n\t\t\n\t05.11. Шоира\t\nАвазов Сафиаллох Одинаевич\n\t\t\n\t05.12 Комрон\t\nАвазов Сафиаллох Одинаевич\n\t\t\n\t06.08 Нилуфар\t\nАвазов Сафиаллох Одинаевич\n\t\t\n\t06.08.2024 Комилчон\t\nКомилов Мухаммадчон\n\t\t\n\t06.10 Тоир\t\nАвазов Сафиаллох Одинаевич\n\t\t\n\t06.11 Парвиз\t\nАвазов Сафиаллох Одинаевич\n\t\t\n\t07.01.2024 Кароматулло\t\nМухаммадиев Бахтиер Алиджонович\n\t\t\n\t07.05 Фирдавс\t\nАвазов Сафиаллох Одинаевич\n\t\t\n\t07.08 Исроил\t\nБузруков Беха\n\t\t\n\t08.10. Хусрав\t\nАвазов Сафиаллох Одинаевич\n\t\t\n\t08.12 Акбар\t\nАвазов Сафиаллох Одинаевич\n\t\t\n\t09.01 Коримдод\t\nАвазов Сафиаллох Одинаевич\n\t\t\n\t09.05 Расул\t\nАвазов Сафиаллох Одинаевич\n\t\t\n\t09.07 Сафарали\t\nАвазов Сафиаллох Одинаевич\n\t\t\n\t09.07 Фаридун\t\nАвазов Сафиаллох Одинаевич\n\t\t\n\t1.01.24 Салима\t\nМуаззама МОХ\n\t\t\n\t1.01.24 Хабибулло\t\nМуаззама МОХ\n\t\t\n\t1.02.25 Бахтиёр\t\nМуаззама МОХ\n\t\t\n\t1.02.25 Мухиддин\t\nМуаззама МОХ\n\t\t\n\t1.02.25 Хусейн\t\nМуаззама МОХ\n\t\t\n\t1.02.26 Кутфия\t\nМуаззама МОХ\n\t\t\n\t1.02.26 Самад\t\nКомилов Мухаммадчон\n\t\t\n\t1.03.23 Махтун\t\nАвазов Сафиаллох Одинаевич\n\t\t\n\t1.03.24 Нигина\t\nМуаззама МОХ\n\t\t\n\t1.03.24 Сиёвуш\t\nМуаззама МОХ\n\t\t\n\t1.05.2025 Рустам\t\nМухаммадиев Бахтиер Алиджонович\n\t\t\n\t1.05.23 Мансур\t\nАвазов Сафиаллох Одинаевич\n\t\t\n\t1.05.26 Фаршед\t\nКомилов Мухаммадчон\n\t\t\n\t1.06.2024 Изатой Набиева\t\nМухаммадиев Бахтиер Алиджонович\n\t\t\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n»»\n\tЗаписей на странице \n10\n20\n50\n100\n Всего: 4 485\nКонтакт: info@manajet.org · Пользовательское Соглашение · Соглашение о конфиденциальности",
+    "title": "Компании",
+    "url": "https://app.manajet.org/CRM?filterTokeKey=ed5cf675-b13d-40a2-a9ad-7541efc5e973"
+  },
+  {
+    "slug": "orgboard",
+    "label": "Оргсхема",
+    "buttons": [],
+    "inputs": [],
+    "links": [
+      {
+        "href": "",
+        "text": "Яккасарой Турсунов Амир"
+      },
+      {
+        "href": "https://app.manajet.org/OrgBoard",
+        "text": "Структура"
+      },
+      {
+        "href": "https://app.manajet.org/OrgBoard/ICO",
+        "text": "Информационный Центр"
+      },
+      {
+        "href": "https://app.manajet.org/OrgBoard/CommCenter",
+        "text": "Коммуникационный центр"
+      },
+      {
+        "href": "https://app.manajet.org/OrgBoard/Task",
+        "text": "Центр задач"
+      },
+      {
+        "href": "https://app.manajet.org/OrgBoard/Functional",
+        "text": "Структура функций"
+      },
+      {
+        "href": "https://app.manajet.org/OrgBoard/Print",
+        "text": "Печать структуры компании‏"
+      },
+      {
+        "href": "https://app.manajet.org/OrgBoard/OrgboardPosition/Edit/25",
+        "text": "Учредитель"
+      },
+      {
+        "href": "https://app.manajet.org/orgboard/OrgboardDivision/EditRoot/1",
+        "text": "Яккасарой"
+      },
+      {
+        "href": "https://app.manajet.org/OrgBoard/OrgboardPosition/Edit/40",
+        "text": "Генеральный директор"
+      },
+      {
+        "href": "https://app.manajet.org/OrgBoard/OrgboardPosition/Edit/41",
+        "text": "Административный директор (1,2)"
+      },
+      {
+        "href": "https://app.manajet.org/OrgBoard/OrgboardPosition/Edit/42",
+        "text": "Технический директор (3,4,5)"
+      },
+      {
+        "href": "https://app.manajet.org/OrgBoard/OrgboardPosition/Edit/43",
+        "text": "Директор по развитию (6)"
+      },
+      {
+        "href": "https://app.manajet.org/OrgBoard/OrgboardPosition/Edit/125",
+        "text": "Руководитель"
+      },
+      {
+        "href": "https://app.manajet.org/OrgBoard/OrgboardPosition/Edit/65",
+        "text": "Руководитель"
+      },
+      {
+        "href": "https://app.manajet.org/OrgBoard/OrgboardPosition/Edit/76",
+        "text": "Руководитель"
+      },
+      {
+        "href": "https://app.manajet.org/OrgBoard/OrgboardPosition/Edit/92",
+        "text": "Руководитель"
+      },
+      {
+        "href": "https://app.manajet.org/OrgBoard/OrgboardPosition/Edit/99",
+        "text": "Руководитель"
+      },
+      {
+        "href": "https://app.manajet.org/OrgBoard/OrgboardPosition/Edit/109",
+        "text": "Руководитель"
+      },
+      {
+        "href": "https://app.manajet.org/OrgBoard/OrgboardPosition/Edit/123",
+        "text": "Руководитель"
+      },
+      {
+        "href": "javascript:",
+        "text": "7.21 - Офис Учредителя"
+      },
+      {
+        "href": "javascript:",
+        "text": "1 - Учредитель"
+      },
+      {
+        "href": "javascript:",
+        "text": "7.21.1 - Секция стратегического маркетинга и изучения конкурентов"
+      },
+      {
+        "href": "javascript:",
+        "text": "1 - отв.."
+      },
+      {
+        "href": "javascript:",
+        "text": "7.21.2 - Секция стратегического планирования"
+      },
+      {
+        "href": "javascript:",
+        "text": "1 - Отв."
+      },
+      {
+        "href": "javascript:",
+        "text": "1 - Отв"
+      },
+      {
+        "href": "javascript:",
+        "text": "7.21.3 - Секция создания оргполитики"
+      },
+      {
+        "href": "javascript:",
+        "text": "1 - Начальник"
+      },
+      {
+        "href": "javascript:",
+        "text": "7.21.4 - Секция развития технологий"
+      },
+      {
+        "href": "javascript:",
+        "text": "1 - Специалист по айко"
+      },
+      {
+        "href": "javascript:",
+        "text": "1 - Техник"
+      },
+      {
+        "href": "javascript:",
+        "text": "1 - Техник"
+      },
+      {
+        "href": "javascript:",
+        "text": "2 - Инженер"
+      },
+      {
+        "href": "javascript:",
+        "text": "3 - Аналитик"
+      },
+      {
+        "href": "javascript:",
+        "text": "7.21.5 - Финансовый Офис"
+      },
+      {
+        "href": "javascript:",
+        "text": "1 - Финансовый Директор"
+      },
+      {
+        "href": "javascript:",
+        "text": "7.21.6 - Секция недвижимости"
+      },
+      {
+        "href": "javascript:",
+        "text": "1 - Отв."
+      },
+      {
+        "href": "javascript:",
+        "text": "2 - Отв."
+      },
+      {
+        "href": "javascript:",
+        "text": "3 - Отв."
+      },
+      {
+        "href": "javascript:",
+        "text": "4 - Отв."
+      },
+      {
+        "href": "javascript:",
+        "text": "5 - Отв."
+      },
+      {
+        "href": "javascript:",
+        "text": "6 - Отв."
+      },
+      {
+        "href": "javascript:",
+        "text": "7.20 - Офис внешних дел"
+      },
+      {
+        "href": "javascript:",
+        "text": "1 - Начальник"
+      },
+      {
+        "href": "javascript:",
+        "text": "7.20.1 - Секция юридической безопасности"
+      },
+      {
+        "href": "javascript:",
+        "text": "1 - Юрист"
+      },
+      {
+        "href": "javascript:",
+        "text": "7.20.2 - Секция по официальным вопросам"
+      },
+      {
+        "href": "javascript:",
+        "text": "1 - Юрист"
+      },
+      {
+        "href": "javascript:",
+        "text": "7.19 - Офис Генерального директора"
+      },
+      {
+        "href": "javascript:",
+        "text": "1 - Генеральный директор"
+      },
+      {
+        "href": "javascript:",
+        "text": "7.19.1 - Офис Административного директора"
+      },
+      {
+        "href": "javascript:",
+        "text": "1 - Административный директор (1,2)"
+      },
+      {
+        "href": "javascript:",
+        "text": "7.19.2 - Офис Директора по производству"
+      },
+      {
+        "href": "javascript:",
+        "text": "1 - Технический директор (3,4,5)"
+      },
+      {
+        "href": "javascript:",
+        "text": "7.19.3 - Офис директора по развитию"
+      },
+      {
+        "href": "javascript:",
+        "text": "1 - Директор по развитию (6)"
+      },
+      {
+        "href": "https://app.manajet.org/Setup/Agreement?type=UserAgreement",
+        "text": "Пользовательское Соглашение"
+      },
+      {
+        "href": "https://app.manajet.org/Setup/Agreement?type=PrivacyAgreement",
+        "text": "Соглашение о конфиденциальности"
+      }
+    ],
+    "tables": [
+      {
+        "headers": [],
+        "idx": 0,
+        "rows": 2
+      },
+      {
+        "headers": [],
+        "idx": 1,
+        "rows": 2
+      },
+      {
+        "headers": [],
+        "idx": 2,
+        "rows": 2
+      },
+      {
+        "headers": [],
+        "idx": 3,
+        "rows": 7
+      },
+      {
+        "headers": [],
+        "idx": 4,
+        "rows": 2
+      },
+      {
+        "headers": [],
+        "idx": 5,
+        "rows": 2
+      },
+      {
+        "headers": [],
+        "idx": 6,
+        "rows": 2
+      },
+      {
+        "headers": [],
+        "idx": 7,
+        "rows": 17
+      },
+      {
+        "headers": [],
+        "idx": 8,
+        "rows": 2
+      },
+      {
+        "headers": [],
+        "idx": 9,
+        "rows": 2
+      },
+      {
+        "headers": [],
+        "idx": 10,
+        "rows": 2
+      },
+      {
+        "headers": [],
+        "idx": 11,
+        "rows": 2
+      }
+    ],
+    "text": " \n           \nЯккасарой\t\t\nТурсунов Амир\n1\n    \nСтруктура\nИнформационный Центр\nКоммуникационный центр\nЦентр задач\nСтруктура функций\nПечать структуры компании‏\n\tУчредитель\nТурсунов Амир Шакирджонович\nСтруктура\nЯккасарой\n\tГенеральный директор\nТурсунов Амир Шакирджонович\n\tАдминистративный директор (1,2)\nМухаммадиев Бахтиер Алиджонович\n\t\n\tТехнический директор (3,4,5)\nЮнусов Бахтиер\n\t\n\tДиректор по развитию (6)\nАлизода Парисо\n\t\t\t\t\t\t\n7 - Административное управление\t1 - Управление персонала и коммуникации\t2 - Управление распространения\t3 - Управление финансов и бухгалтерии\t4 - Производственное управление Банкетного Зала\t5 - Отделение квалификации\t6 - Отделение развития\n\n\tРуководитель\nТурсунов Амир Шакирджонович\n\t\n\tРуководитель\nМавлонов Абдумалик Мавлонович\n\t\n\tРуководитель\nМухаммадиев Бахтиер Алиджонович\n\t\n\tРуководитель\nЮнусов Дилшод Умарович\n\t\n\tРуководитель\nМунавваров Гуломчон\n\t\n\tРуководитель\nБоймурадова Мадина\n\t\n\tРуководитель\nАлизода Парисо\n7.21 - Офис Учредителя\nИсточник\n\t1 - Учредитель\nТурсунов Амир Шакирджонович\n7.21.1 - Секция стратегического маркетинга и изучения конкурентов\n\t1 - отв..\nНе назначен\n7.21.2 - Секция стратегического планирования\n\t1 - Отв.\nНе назначен\n\t1 - Отв\nНе назначен\n7.21.3 - Секция создания оргполитики\n\t1 - Начальник\nНе назначен\n7.21.4 - Секция развития технологий\n\t1 - Специалист по айко\nОдинаева Гуля\n\t1 - Техник\nСалимов Навруз Назруллоевич\n\t1 - Техник\nФатхудинов Мухаммадризо Зайнидинович\n\t2 - Инженер\nНе назначен\n\t3 - Аналитик\nХаджибаев Азам Амирхамзаевич\n7.21.5 - Финансовый Офис\n\t1 - Финансовый Директор\nНе назначен\n7.21.6 - Секция недвижимости\n\t1 - Отв.\nТурсунов Алишер\n\t2 - Отв.\nНе назначен\n\t3 - Отв.\nНе назначен\n\t4 - Отв.\nНе назначен\n\t5 - Отв.\nНе назначен\n\t6 - Отв.\nНе назначен\n\t\n7.20 - Офис внешних дел\nСуществование\n\t1 - Начальник\nНурматов Абдукаюм Чуракулович\n7.20.1 - Секция юридической безопасности\n\t1 - Юрист\nЧалолов Точиддин\n7.20.2 - Секция по официальным вопросам\n\t1 - Юрист\nНе назначен\n\t\n7.19 - Офис Генерального директора\nСостояния\n\t1 - Генеральный директор\nТурсунов Амир Шакирджонович\n7.19.1 - Офис Административного директора\n\t1 - Административный директор (1,2)\nМухаммадиев Бахтиер Алиджонович\n7.19.2 - Офис Директора по производству\n\t1 - Технический директор (3,4,5)\nЮнусов Бахтиер\n7.19.3 - Офис директора по развитию\n\t1 - Директор по развитию (6)\nАлизода Парисо\n\nЦКП: Жизнеспособная расширяющаяся компания, где выплаты в фонды управления растут и персонал получает высокую заработную плату\tЦКП: 1. Общественное признание, юридическая и внешняя безопасность компании. 2. Высокий имидж компании в государственных органах.\tЦКП: Жизнеспособная, расширяющаяся компания, производящая свои ЦКП и достигающая целей поставленных учредителями it\nЦКП: Жизнеспособная, расширяющаяся компания.\nЦКП компании: Стабильно и предсказуемо предоставляем гостям ценную услугу ресторанного обслуживания — в срок и чётко организуем семейные ужины, праздники и свадебные торжества по единым стандартам сервиса, кухни и атмосферы.\nКонтакт: info@manajet.org · Пользовательское Соглашение · Соглашение о конфиденциальности",
+    "title": "Managet",
+    "url": "https://app.manajet.org/OrgBoard"
+  },
+  {
+    "slug": "ico",
+    "label": "ИЦО",
+    "buttons": [],
+    "inputs": [
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      }
+    ],
+    "links": [
+      {
+        "href": "",
+        "text": "Яккасарой Турсунов Амир"
+      },
+      {
+        "href": "https://app.manajet.org/OrgBoard",
+        "text": "Структура"
+      },
+      {
+        "href": "https://app.manajet.org/OrgBoard/ICO",
+        "text": "Информационный Центр"
+      },
+      {
+        "href": "https://app.manajet.org/OrgBoard/CommCenter",
+        "text": "Коммуникационный центр"
+      },
+      {
+        "href": "https://app.manajet.org/OrgBoard/Task",
+        "text": "Центр задач"
+      },
+      {
+        "href": "https://app.manajet.org/OrgBoard/Functional",
+        "text": "Структура функций"
+      },
+      {
+        "href": "https://app.manajet.org/OrgBoard/Print",
+        "text": "Печать структуры компании‏"
+      },
+      {
+        "href": "https://app.manajet.org/OrgBoard/OrgboardPosition/Edit/25",
+        "text": "Учредитель"
+      },
+      {
+        "href": "https://app.manajet.org/orgboard/OrgboardDivision/EditRoot/1",
+        "text": "Яккасарой"
+      },
+      {
+        "href": "https://app.manajet.org/OrgBoard/OrgboardPosition/Edit/40",
+        "text": "Генеральный директор"
+      },
+      {
+        "href": "https://app.manajet.org/OrgBoard/OrgboardPosition/Edit/41",
+        "text": "Административный директор (1,2)"
+      },
+      {
+        "href": "https://app.manajet.org/OrgBoard/OrgboardPosition/Edit/42",
+        "text": "Технический директор (3,4,5)"
+      },
+      {
+        "href": "https://app.manajet.org/OrgBoard/OrgboardPosition/Edit/43",
+        "text": "Директор по развитию (6)"
+      },
+      {
+        "href": "",
+        "text": "7 - Административное управление"
+      },
+      {
+        "href": "",
+        "text": "1 - Управление персонала и коммуникации"
+      },
+      {
+        "href": "",
+        "text": "2 - Управление распространения"
+      },
+      {
+        "href": "",
+        "text": "3 - Управление финансов и бухгалтерии"
+      },
+      {
+        "href": "",
+        "text": "4 - Производственное управление Банкетного Зала"
+      },
+      {
+        "href": "",
+        "text": "5 - Отделение квалификации"
+      },
+      {
+        "href": "",
+        "text": "6 - Отделение развития"
+      },
+      {
+        "href": "https://app.manajet.org/OrgBoard/OrgboardPosition/Edit/125",
+        "text": "0 - Руководитель"
+      },
+      {
+        "href": "https://app.manajet.org/OrgBoard/OrgboardPosition/Edit/65",
+        "text": "1 - Руководитель"
+      },
+      {
+        "href": "https://app.manajet.org/OrgBoard/OrgboardPosition/Edit/76",
+        "text": "1 - Руководитель"
+      },
+      {
+        "href": "https://app.manajet.org/OrgBoard/OrgboardPosition/Edit/92",
+        "text": "1 - Руководитель"
+      },
+      {
+        "href": "https://app.manajet.org/OrgBoard/OrgboardPosition/Edit/99",
+        "text": "1 - Руководитель"
+      },
+      {
+        "href": "https://app.manajet.org/OrgBoard/OrgboardPosition/Edit/109",
+        "text": "1 - Руководитель"
+      },
+      {
+        "href": "https://app.manajet.org/OrgBoard/OrgboardPosition/Edit/123",
+        "text": "1 - Руководитель"
+      },
+      {
+        "href": "",
+        "text": "21 - Офис Учредителя"
+      },
+      {
+        "href": "https://app.manajet.org/OrgBoard/OrgboardPosition/Edit/25",
+        "text": "1 - Учредитель"
+      },
+      {
+        "href": "",
+        "text": "20 - Офис внешних дел"
+      },
+      {
+        "href": "https://app.manajet.org/OrgBoard/OrgboardPosition/Edit/37",
+        "text": "1 - Начальник"
+      },
+      {
+        "href": "",
+        "text": "19 - Офис Генерального директора"
+      },
+      {
+        "href": "https://app.manajet.org/OrgBoard/OrgboardPosition/Edit/40",
+        "text": "1 - Генеральный директор"
+      },
+      {
+        "href": "https://app.manajet.org/OrgBoard/ICO#",
+        "text": "Доход больше чем расходы +резерв"
+      },
+      {
+        "href": "",
+        "text": "1 - Отдел Направления и персонала"
+      },
+      {
+        "href": "https://app.manajet.org/OrgBoard/OrgboardPosition/Edit/54",
+        "text": "1 - Начальник"
+      },
+      {
+        "href": "",
+        "text": "2 - Отдел Коммуникаций"
+      },
+      {
+        "href": "https://app.manajet.org/OrgBoard/OrgboardPosition/Edit/56",
+        "text": "1 - Начальник"
+      },
+      {
+        "href": "",
+        "text": "3 - Отдел инспекций"
+      },
+      {
+        "href": "https://app.manajet.org/OrgBoard/OrgboardPosition/Edit/60",
+        "text": "1 - Отв."
+      },
+      {
+        "href": "",
+        "text": "4 - Отдел Маркетинга и рекламы"
+      },
+      {
+        "href": "https://app.manajet.org/OrgBoard/OrgboardPosition/Edit/66",
+        "text": "1 - Начальник"
+      },
+      {
+        "href": "",
+        "text": "5 - Отдел Публикаций и продвижения"
+      },
+      {
+        "href": "https://app.manajet.org/OrgBoard/OrgboardPosition/Edit/70",
+        "text": "1 - Начальник"
+      },
+      {
+        "href": "",
+        "text": "6 - Отдел постоянных клиентов"
+      },
+      {
+        "href": "https://app.manajet.org/OrgBoard/OrgboardPosition/Edit/73",
+        "text": "1 - Начальник"
+      },
+      {
+        "href": "",
+        "text": "7 - Отдел Доходов"
+      },
+      {
+        "href": "https://app.manajet.org/OrgBoard/OrgboardPosition/Edit/77",
+        "text": "1 - Начальник"
+      },
+      {
+        "href": "",
+        "text": "8 - Отдел Расходов"
+      },
+      {
+        "href": "https://app.manajet.org/OrgBoard/OrgboardPosition/Edit/81",
+        "text": "1 - Начальник"
+      },
+      {
+        "href": "",
+        "text": "9 - Отдел Документации, активов и материальной части"
+      },
+      {
+        "href": "https://app.manajet.org/OrgBoard/OrgboardPosition/Edit/87",
+        "text": "1 - Начальник"
+      },
+      {
+        "href": "",
+        "text": "10 - Отдел обеспечения производства"
+      },
+      {
+        "href": "https://app.manajet.org/OrgBoard/OrgboardPosition/Edit/93",
+        "text": "1 - Начальник"
+      },
+      {
+        "href": "",
+        "text": "11 - Отдел подготовки"
+      },
+      {
+        "href": "https://app.manajet.org/OrgBoard/OrgboardPosition/Edit/95",
+        "text": "1 - Шеф повар"
+      },
+      {
+        "href": "",
+        "text": "12 - Отдел предоставления услуг"
+      },
+      {
+        "href": "https://app.manajet.org/OrgBoard/OrgboardPosition/Edit/97",
+        "text": "1 - Менеджер Фемили2"
+      },
+      {
+        "href": "",
+        "text": "13 - Отдел Качества"
+      },
+      {
+        "href": "https://app.manajet.org/OrgBoard/OrgboardPosition/Edit/100",
+        "text": "1 - Начальник"
+      },
+      {
+        "href": "",
+        "text": "14 - Отдел Совершенствования персонала"
+      },
+      {
+        "href": "https://app.manajet.org/OrgBoard/OrgboardPosition/Edit/102",
+        "text": "1 - Начальник"
+      },
+      {
+        "href": "",
+        "text": "15 - Отдел Коррекции"
+      },
+      {
+        "href": "https://app.manajet.org/OrgBoard/OrgboardPosition/Edit/106",
+        "text": "1 - Начальник"
+      },
+      {
+        "href": "",
+        "text": "16 - Отдел Информирования новых клиентов"
+      },
+      {
+        "href": "https://app.manajet.org/OrgBoard/OrgboardPosition/Edit/110",
+        "text": "1 - Начальник"
+      },
+      {
+        "href": "",
+        "text": "17 - Отдел Первых продаж и вводных услуг"
+      },
+      {
+        "href": "https://app.manajet.org/OrgBoard/OrgboardPosition/Edit/114",
+        "text": "1 - Начальник"
+      },
+      {
+        "href": "",
+        "text": "18 - Отдел расширения и СО"
+      },
+      {
+        "href": "https://app.manajet.org/OrgBoard/OrgboardPosition/Edit/117",
+        "text": "1 - Начальник"
+      },
+      {
+        "href": "https://app.manajet.org/OrgBoard/ICO#",
+        "text": "Количество нанятых сотрудников"
+      },
+      {
+        "href": "https://app.manajet.org/OrgBoard/ICO#",
+        "text": "Количество проведенных мероприятий"
+      },
+      {
+        "href": "https://app.manajet.org/OrgBoard/ICO#",
+        "text": "Количество выпусков"
+      },
+      {
+        "href": "https://app.manajet.org/OrgBoard/ICO#",
+        "text": "Ценность сотрудника"
+      },
+      {
+        "href": "https://app.manajet.org/Setup/Agreement?type=UserAgreement",
+        "text": "Пользовательское Соглашение"
+      },
+      {
+        "href": "https://app.manajet.org/Setup/Agreement?type=PrivacyAgreement",
+        "text": "Соглашение о конфиденциальности"
+      }
+    ],
+    "tables": [
+      {
+        "headers": [],
+        "idx": 0,
+        "rows": 2
+      },
+      {
+        "headers": [],
+        "idx": 1,
+        "rows": 2
+      },
+      {
+        "headers": [],
+        "idx": 2,
+        "rows": 2
+      },
+      {
+        "headers": [],
+        "idx": 3,
+        "rows": 7
+      },
+      {
+        "headers": [],
+        "idx": 4,
+        "rows": 2
+      },
+      {
+        "headers": [],
+        "idx": 5,
+        "rows": 2
+      },
+      {
+        "headers": [],
+        "idx": 6,
+        "rows": 2
+      },
+      {
+        "headers": [],
+        "idx": 7,
+        "rows": 62
+      },
+      {
+        "headers": [],
+        "idx": 8,
+        "rows": 2
+      },
+      {
+        "headers": [],
+        "idx": 9,
+        "rows": 2
+      },
+      {
+        "headers": [],
+        "idx": 10,
+        "rows": 2
+      },
+      {
+        "headers": [],
+        "idx": 11,
+        "rows": 2
+      }
+    ],
+    "text": " \n           \nЯккасарой\t\t\nТурсунов Амир\n0\n    \nСтруктура\nИнформационный Центр\nКоммуникационный центр\nЦентр задач\nСтруктура функций\nПечать структуры компании‏\nПоказывать названия статистик\n\tУчредитель\nТурсунов Амир Шакирджонович\nСтруктура\nЯккасарой\n\tГенеральный директор\nТурсунов Амир Шакирджонович\n\tАдминистративный директор (1,2)\nМухаммадиев Бахтиер Алиджонович\n\t\n\tТехнический директор (3,4,5)\nЮнусов Бахтиер\n\t\n\tДиректор по развитию (6)\nАлизода Парисо\n\t\t\t\t\t\t\n7 - Административное управление\t1 - Управление персонала и коммуникации\t2 - Управление распространения\t3 - Управление финансов и бухгалтерии\t4 - Производственное управление Банкетного Зала\t5 - Отделение квалификации\t6 - Отделение развития\n\n\t0 - Руководитель\nТурсунов Амир Шакирджонович\n\t\n\t1 - Руководитель\nМавлонов Абдумалик Мавлонович\n\t\n\t1 - Руководитель\nМухаммадиев Бахтиер Алиджонович\n\t\n\t1 - Руководитель\nЮнусов Дилшод Умарович\n\t\n\t1 - Руководитель\nМунавваров Гуломчон\n\t\n\t1 - Руководитель\nБоймурадова Мадина\n\t\n\t1 - Руководитель\nАлизода Парисо\n\n\n21 - Офис Учредителя\n\t1 - Учредитель\nТурсунов Амир Шакирджонович\n20 - Офис внешних дел\n\t1 - Начальник\nНурматов Абдукаюм Чуракулович\n19 - Офис Генерального директора\n\t1 - Генеральный директор\nТурсунов Амир Шакирджонович\nДоход больше чем расходы +резерв\n ;\t\n1 - Отдел Направления и персонала\n\t1 - Начальник\nМавлонов Абдумалик Мавлонович\n2 - Отдел Коммуникаций\n\t1 - Начальник\nНе назначен\n3 - Отдел инспекций\n\t1 - Отв.\nНе назначен\n\t\n4 - Отдел Маркетинга и рекламы\n\t1 - Начальник\nНе назначен\n5 - Отдел Публикаций и продвижения\n\t1 - Начальник\nНе назначен\n6 - Отдел постоянных клиентов\n\t1 - Начальник\nНе назначен\n\t\n7 - Отдел Доходов\n\t1 - Начальник\nAdmin Admin\n8 - Отдел Расходов\n\t1 - Начальник\nБахтиер Юнусов\n9 - Отдел Документации, активов и материальной части\n\t1 - Начальник\nНе назначен\n\t\n10 - Отдел обеспечения производства\n\t1 - Начальник\nУлмасов Бахром\n11 - Отдел подготовки\n\t1 - Шеф повар\nАшуров Шухрат Шавкатович\n12 - Отдел предоставления услуг\n\t1 - Менеджер Фемили2\nСалимзода Шохин\n\t\n13 - Отдел Качества\n\t1 - Начальник\nХаджибаев Азам Амирхамзаевич\n14 - Отдел Совершенствования персонала\n\t1 - Начальник\nНе назначен\n15 - Отдел Коррекции\n\t1 - Начальник\nНе назначен\n\t\n16 - Отдел Информирования новых клиентов\n\t1 - Начальник\nСинодухт Дилафзо\n17 - Отдел Первых продаж и вводных услуг\n\t1 - Начальник\nНе назначен\n18 - Отдел расширения и СО\n\t1 - Начальник\nСинодухт Дилафзо\n\n\nГлавные статистики\n\t\nГлавные статистики\nКоличество нанятых сотрудников\n ;\t\nГлавные статистики\n\t\nГлавные статистики\n\t\nГлавные статистики\nКоличество проведенных мероприятий\n ;\t\nГлавные статистики\nКоличество выпусков\n ; \nЦенность сотрудника\n ;\t\nГлавные статистики\n\n\nЦКП\nКонтакт: info@manajet.org · Пользовательское Соглашение · Соглашение о конфиденциальности",
+    "title": "Managet",
+    "url": "https://app.manajet.org/OrgBoard/ICO"
+  },
+  {
+    "slug": "dashboard",
+    "label": "DashBoard",
+    "buttons": [
+      "Создать плазму"
+    ],
+    "inputs": [],
+    "links": [
+      {
+        "href": "",
+        "text": "Яккасарой Турсунов Амир"
+      },
+      {
+        "href": "https://app.manajet.org/DashBoard/Home/Edit",
+        "text": "Создать плазму"
+      },
+      {
+        "href": "https://app.manajet.org/Setup/Agreement?type=UserAgreement",
+        "text": "Пользовательское Соглашение"
+      },
+      {
+        "href": "https://app.manajet.org/Setup/Agreement?type=PrivacyAgreement",
+        "text": "Соглашение о конфиденциальности"
+      }
+    ],
+    "tables": [
+      {
+        "headers": [],
+        "idx": 0,
+        "rows": 2
+      }
+    ],
+    "text": " \n           \nЯккасарой\t\t\nТурсунов Амир\n0\n    \nПлазма\nСоздать плазму\nКонтакт: info@manajet.org · Пользовательское Соглашение · Соглашение о конфиденциальности",
+    "title": "Плазма",
+    "url": "https://app.manajet.org/DashBoard"
+  },
+  {
+    "slug": "hat",
+    "label": "Шляпы",
+    "buttons": [
+      "Добавить папку",
+      "Все",
+      "Добавить документ",
+      "Сброс",
+      "Дополнительно"
+    ],
+    "inputs": [
+      {
+        "name": "search",
+        "options": "",
+        "placeholder": "Поиск",
+        "tag": "INPUT",
+        "type": "text"
+      },
+      {
+        "name": "",
+        "options": "10|20|50|100",
+        "placeholder": "",
+        "tag": "SELECT",
+        "type": "select-one"
+      }
+    ],
+    "links": [
+      {
+        "href": "",
+        "text": "Яккасарой Турсунов Амир"
+      },
+      {
+        "href": "https://app.manajet.org/HatMaterial/Home/EditHatFolder",
+        "text": "Добавить папку"
+      },
+      {
+        "href": "",
+        "text": "Все"
+      },
+      {
+        "href": "https://app.manajet.org/HatMaterial/Home/EditHat?admin_scale=False",
+        "text": "Добавить документ"
+      },
+      {
+        "href": "",
+        "text": "Папка"
+      },
+      {
+        "href": "https://app.manajet.org/HatMaterial/Home/EditHat/1",
+        "text": "Оргполитика для сотрудников"
+      },
+      {
+        "href": "https://app.manajet.org/Setup/Agreement?type=UserAgreement",
+        "text": "Пользовательское Соглашение"
+      },
+      {
+        "href": "https://app.manajet.org/Setup/Agreement?type=PrivacyAgreement",
+        "text": "Соглашение о конфиденциальности"
+      }
+    ],
+    "tables": [
+      {
+        "headers": [],
+        "idx": 0,
+        "rows": 2
+      }
+    ],
+    "text": " \n           \nЯккасарой\t\t\nТурсунов Амир\n0\n    \nДолжностные инструкции\nДобавить папку\nВсе\nНе было найдено ни одной записи\nДобавить документ\n  Сброс Дополнительно\nОписание\t\nПапка\n\tСсылки\t\t\n\nОргполитика для сотрудников\nКонфиденциально\nАвтор: Амир Турсунов, Основатель\nКомпания: Яккасарой\nДля кого: для всех сотрудников компании\nДата издания: 28.02.2024\nВерсия документа: 1 от 28.02.2024\n\n\nПро организационную политику компании для сотрудников\nПричина создания: в компании существуют правила и регламенты, но не все сотрудники их понимают, не знают для чего они нужны, не считают важным их использовать.\n\nЗадача письма: объяснить для чего необходима оргполитика и как она способствует развитию компании.\nВы держите в руках папку, в которой собраны инструктивные письма. В этих документах описан пережитый нами опыт и на основании этого опыта созданы определенные правила. Все эти письма вместе представляют собой оргполитику компании.\n\nОргполитика – это правила и модели поведения, по которым сотрудники действуют и координируют свою работу для достижения цели компании. Оргполитику компании разрабатывает только учредитель\nХорошая оргполитика, основанная на реальном опыте, позволяет упорядочить и скоординировать работу сотен человек и приводит к взлету компании. В своей работе организация может рассчитывать только на тех сотрудников, которые способны учиться и применять разумные правила, которые описаны в оргполитике компании.\nСоблюдать и следовать оргполитике – это значит разобраться в ситуации и знать оргполитику достаточно хорошо, чтобы применять тот или иной принцип в подходящей ситуации. Если возникает ситуация, которая еще не была описана в оргполитике, адекватный и сообразительный сотрудник зная, что она не описана, сможет легко распространить на неё общие принципы оргполитики.\nБывают сотрудники, которые оказываются не способны изучить и понять оргполитику из-за низких способностей к обучению, лени или слишком маленького опыта работы в каких-либо компаниях до этого. Им приходится действовать наобум, экспромтом в тех ситуациях, в которых другие сотрудники опираются на утвержденные компанией правила.\nКогда мы видим в каком-либо отделе, который хорошо работает и производит продукт, человека, постоянно нарушающего оргполитику, мы должны пресечь его действия. Поскольку его проступки ставят под угрозу существование действенной оргполитики и не позволяют компании расти.\nЕсли в компании существует оргполитика, неважно хорошая или плохая и ее не соблюдают, это значит, что в ней царит хаос, и она не сможет развиваться. Хорошая оргполитика основана на действительных ситуациях из реального опыта компании. Ей следуют и это является причиной высоких статистик и расширения.\nЕсли оргполитика применяется, то буквально тысячи препятствий теряют значимость или вовсе перестают существовать. Чем больше людей она затрагивает и чем больше размер компании, тем строже она должна соблюдаться.\nЧтобы оргполитика была полезной и уместной она должна быть основана только на реальном опыте, который продвигает компанию к достижению цели. Письма и инструкции, которые создаются секретарями, которые ни разу не отрывали свой зад от стула в кабинете и никогда не общались ни клиентами ни с сотрудниками – глупые. Такая оргполитика не работает, ее не получается применять, и она приносит лишь неприятности и проблемы.\nКогда сотрудники работают над реализацией цели компании, преодолевают то, что мешает её осуществлению или вообще останавливает движение к цели они усваивают важные уроки. В такие времена рождаются и изобретаются определенные способы действия, линии поведения, правила и законы. Некоторые из них привели к провалу и были плохими, другие же оказались очень успешными.\nУспешные идеи, правила, законы и принципы, которые двигали компанию к цели стали основой этой оргполитики. Нет смысла описывать опыт и ситуации, которые не отражают действительные обстоятельства, никогда не возникали, а если и возникнут не будут иметь какого-либо существенного значения для компании.\nОргполитика не может быть основана на сомнительных и непроверенных слухах, на интересах маленькой группы заинтересованных лиц без учета интересов большинства и цели компании. Оргполитика не может отвлекать от достижения к основной цели компании.\nРезультат: сотрудник понимает важность оргполитики компании, способен её изучать и соблюдать.\n\t\t\t\t\nЗаписей на странице \n10\n20\n50\n100\n Всего: 1\nКонтакт: info@manajet.org · Пользовательское Соглашение · Соглашение о конфиденциальности",
+    "title": "Managet",
+    "url": "https://app.manajet.org/HatMaterial/Hat"
+  },
+  {
+    "slug": "task-admin-scale",
+    "label": "Админшкала",
+    "buttons": [
+      "Редактировать"
+    ],
+    "inputs": [
+      {
+        "name": "first.description",
+        "options": "",
+        "placeholder": "",
+        "tag": "TEXTAREA",
+        "type": "textarea"
+      }
+    ],
+    "links": [
+      {
+        "href": "",
+        "text": "Яккасарой Турсунов Амир"
+      },
+      {
+        "href": "https://app.manajet.org/Task/AdminScale#Step_JH0zbti1L51",
+        "text": "Долгосрочная цель"
+      },
+      {
+        "href": "https://app.manajet.org/Task/AdminScale#Step_JH0zbti1L52",
+        "text": "Цель"
+      },
+      {
+        "href": "https://app.manajet.org/Task/AdminScale#Step_JH0zbti1L53",
+        "text": "Оргполитика"
+      },
+      {
+        "href": "https://app.manajet.org/Task/AdminScale#Step_JH0zbti1L54",
+        "text": "Стратегический план"
+      },
+      {
+        "href": "https://app.manajet.org/Task/AdminScale#Step_JH0zbti1L55",
+        "text": "Программы Проекты Приказы"
+      },
+      {
+        "href": "https://app.manajet.org/Task/AdminScale#Step_JH0zbti1L56",
+        "text": "Идеальная Картина"
+      },
+      {
+        "href": "https://app.manajet.org/Task/AdminScale#Step_JH0zbti1L57",
+        "text": "Статистики"
+      },
+      {
+        "href": "https://app.manajet.org/Task/AdminScale#Step_JH0zbti1L58",
+        "text": "ЦКП"
+      },
+      {
+        "href": "",
+        "text": "Редактировать"
+      },
+      {
+        "href": "https://app.manajet.org/Setup/Agreement?type=UserAgreement",
+        "text": "Пользовательское Соглашение"
+      },
+      {
+        "href": "https://app.manajet.org/Setup/Agreement?type=PrivacyAgreement",
+        "text": "Соглашение о конфиденциальности"
+      }
+    ],
+    "tables": [
+      {
+        "headers": [],
+        "idx": 0,
+        "rows": 2
+      }
+    ],
+    "text": " \n           \nЯккасарой\t\t\nТурсунов Амир\n0\n    \nУправление проектами\nДолгосрочная цель\nЦель\nОргполитика\nСтратегический план\nПрограммы   Проекты   Приказы\nИдеальная Картина\nСтатистики\nЦКП\nРедактировать\nКонтакт: info@manajet.org · Пользовательское Соглашение · Соглашение о конфиденциальности",
+    "title": "Index",
+    "url": "https://app.manajet.org/Task/AdminScale"
+  },
+  {
+    "slug": "setup",
+    "label": "Setup",
+    "buttons": [
+      "Пн",
+      "Вт",
+      "Ср",
+      "Чт",
+      "Пт",
+      "Сб",
+      "Вс",
+      "Сохранить",
+      "ami******@gmail.com Отключить",
+      "Синхронизация данных с MakeCommerce",
+      "Синхронизация данных с Пигу",
+      "Синхронизация данных с Shopify",
+      "Синхронизация данных с MyFusion"
+    ],
+    "inputs": [
+      {
+        "name": "setup.company_name",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "text"
+      },
+      {
+        "name": "file",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "file"
+      },
+      {
+        "name": "setup.time_zone_in_minutes",
+        "options": "(UTC-12: 00) Международная линия перемены дат Запад|(UTC-11: 00) Универсальное координированное время-11|(UTC-10: 00) Гавайи|(UTC-09: 00) Аляска|(UTC-08: 00) Нижняя Калифорния|(UTC-07: 00) Аризона|(UTC-06: 00) Центральная Америка|(UTC-05: 00) Восточное время (США)",
+        "placeholder": "",
+        "tag": "SELECT",
+        "type": "select-one"
+      },
+      {
+        "name": "setup.week_begin_day",
+        "options": "Понедельник|Вторник|Среда|Четверг|Пятница|Суббота|Воскресенье",
+        "placeholder": "",
+        "tag": "SELECT",
+        "type": "select-one"
+      },
+      {
+        "name": "setup.begin_hours",
+        "options": "0|1|2|3|4|5|6|7",
+        "placeholder": "",
+        "tag": "SELECT",
+        "type": "select-one"
+      },
+      {
+        "name": "setup.end_hours",
+        "options": "0|1|2|3|4|5|6|7",
+        "placeholder": "",
+        "tag": "SELECT",
+        "type": "select-one"
+      },
+      {
+        "name": "setup.culture",
+        "options": "Русский|English|Latviešu|Deutsch|Česky|Slovensko|Italiano|Français",
+        "placeholder": "",
+        "tag": "SELECT",
+        "type": "select-one"
+      },
+      {
+        "name": "setup.tech_culture",
+        "options": "Русский|English|Latviešu|Deutsch|Česky|Slovensko|Italiano|Français",
+        "placeholder": "",
+        "tag": "SELECT",
+        "type": "select-one"
+      },
+      {
+        "name": "name_format",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "name_format",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "MyCompanyInput",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "text"
+      },
+      {
+        "name": "setup.callgear_api_key",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "text"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "submit"
+      }
+    ],
+    "links": [
+      {
+        "href": "",
+        "text": "Яккасарой Турсунов Амир"
+      },
+      {
+        "href": "https://app.manajet.org/Setup?mode=settings",
+        "text": "Настройки"
+      },
+      {
+        "href": "https://app.manajet.org/StatSource/Home",
+        "text": "Отбор данных"
+      },
+      {
+        "href": "https://app.manajet.org/Setup?mode=companyUniqueSettings",
+        "text": "Дополнительно"
+      },
+      {
+        "href": "https://app.manajet.org/Setup?mode=apiKeys",
+        "text": "API-ключи"
+      },
+      {
+        "href": "https://app.manajet.org/Setup/License",
+        "text": "Лицензия"
+      },
+      {
+        "href": "https://app.manajet.org/MakeCommerce/Home",
+        "text": "Синхронизация данных с MakeCommerce"
+      },
+      {
+        "href": "https://app.manajet.org/PiguSync/Home",
+        "text": "Синхронизация данных с Пигу"
+      },
+      {
+        "href": "https://app.manajet.org/Shopify/Home",
+        "text": "Синхронизация данных с Shopify"
+      },
+      {
+        "href": "https://app.manajet.org/MyFusion/Home",
+        "text": "Синхронизация данных с MyFusion"
+      },
+      {
+        "href": "https://app.manajet.org/Setup/Agreement?type=UserAgreement",
+        "text": "Пользовательское Соглашение"
+      },
+      {
+        "href": "https://app.manajet.org/Setup/Agreement?type=PrivacyAgreement",
+        "text": "Соглашение о конфиденциальности"
+      }
+    ],
+    "tables": [
+      {
+        "headers": [],
+        "idx": 0,
+        "rows": 2
+      }
+    ],
+    "text": " \n           \nЯккасарой\t\t\nТурсунов Амир\n0\n    \nНастройки\nОтбор данных\nДополнительно\nAPI-ключи\n \nЛицензия\nТекущее время: 28 июн 2026 01:54\nНазвание компании\nЛого\nДобавить лого\n выбрать из Google Диска\n \nЧасовой пояс\n(UTC-12: 00) Международная линия перемены дат Запад\n(UTC-11: 00) Универсальное координированное время-11\n(UTC-10: 00) Гавайи\n(UTC-09: 00) Аляска\n(UTC-08: 00) Нижняя Калифорния\n(UTC-07: 00) Аризона\n(UTC-06: 00) Центральная Америка\n(UTC-05: 00) Восточное время (США)\n(UTC-04: 30) Каракас\n(UTC-04: 00) Атлантическое время (Канада)\n(UTC-03: 30) Ньюфаундленд\n(UTC-03: 00) Бразилия, Клируотер\n(UTC-02: 00) Универсальное координированное время-02\n(UTC-01:00) Азорские острова\n(UTC 00:00) Дублин, Эдинбург, Лиссабон, Лондон\n(UTC 01:00) Брюссель, Копенгаген, Мадрид, Париж\n(UTC 02:00) Хельсинки, Киев, Рига, София, Таллин, Вильнюс, Калининград\n(UTC 03:00) Москва, Санкт-Петербург, Волгоград, Минск\n(UTC 03:30) Тегеран\n(UTC 04:00) Абу-Даби, Баку, Самара, Ульяновск, Тбилиси\n(UTC 05:00) Екатеринбург\n(UTC 06:00) Кыргызстан\n(UTC 07:00) Новосибирск\n(UTC 08:00) Красноярск\n(UTC 09:00) Иркутск\n(UTC 10:00) Якутск\n(UTC 11:00) Владивосток\n(UTC 12:00) Магадан\n(UTC 13:00) Самоа\nНачало недели\nПонедельник\nВторник\nСреда\nЧетверг\nПятница\nСуббота\nВоскресенье\nРабочее время\nС \n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n   До \n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\nРабочие дни\nПн Вт Ср Чт Пт Сб Вс\nЯзык аккаунта\nРусский\nEnglish\nLatviešu\nDeutsch\nČesky\nSlovensko\nItaliano\nFrançais\nEspañol\nLietuvių\nPolski\nУкраїнський\nRomanian\nქართული\nЯзык техподдержки\nРусский\nEnglish\nLatviešu\nDeutsch\nČesky\nSlovensko\nItaliano\nFrançais\nEspañol\nLietuvių\nPolski\nУкраїнський\nRomanian\nქართული\nПорядок показа имени\nИмя, Отчество, Фамилия\nФамилия, Имя, Отчество\nМоя компания (CRM)\nCallGear\n ami******@gmail.com Отключить\n Синхронизация данных с MakeCommerce\n Синхронизация данных с Пигу\n Синхронизация данных с Shopify\n Синхронизация данных с MyFusion\nКонтакт: info@manajet.org · Пользовательское Соглашение · Соглашение о конфиденциальности",
+    "title": "Настройки",
+    "url": "https://app.manajet.org/Setup"
+  },
+  {
+    "slug": "history",
+    "label": "History",
+    "buttons": [
+      "Сброс"
+    ],
+    "inputs": [],
+    "links": [
+      {
+        "href": "",
+        "text": "Яккасарой Турсунов Амир"
+      },
+      {
+        "href": "https://app.manajet.org/History#",
+        "text": "Все"
+      },
+      {
+        "href": "https://app.manajet.org/History#",
+        "text": "Системные"
+      },
+      {
+        "href": "https://app.manajet.org/History#",
+        "text": "Воронка продаж"
+      },
+      {
+        "href": "https://app.manajet.org/History#",
+        "text": "Пользовательские"
+      },
+      {
+        "href": "https://app.manajet.org/History#",
+        "text": "Все"
+      },
+      {
+        "href": "https://app.manajet.org/History#",
+        "text": "Персонал"
+      },
+      {
+        "href": "https://app.manajet.org/History#",
+        "text": "Компания"
+      },
+      {
+        "href": "https://app.manajet.org/History#",
+        "text": "Структура"
+      },
+      {
+        "href": "https://app.manajet.org/History#",
+        "text": "Бизнес-процесс"
+      },
+      {
+        "href": "https://app.manajet.org/History#",
+        "text": "Финансовое Планирование"
+      },
+      {
+        "href": "https://app.manajet.org/History#",
+        "text": "Настройка аккунта"
+      },
+      {
+        "href": "https://app.manajet.org/History",
+        "text": "Все"
+      },
+      {
+        "href": "https://app.manajet.org/Setup/Agreement?type=UserAgreement",
+        "text": "Пользовательское Соглашение"
+      },
+      {
+        "href": "https://app.manajet.org/Setup/Agreement?type=PrivacyAgreement",
+        "text": "Соглашение о конфиденциальности"
+      }
+    ],
+    "tables": [
+      {
+        "headers": [],
+        "idx": 0,
+        "rows": 2
+      }
+    ],
+    "text": " \n           \nЯккасарой\t\t\nТурсунов Амир\n1\n    \nСобытие\nВсе\nСистемные\nВоронка продаж\nПользовательские\nТип\nВсе\nПерсонал\nКомпания\nСтруктура\nБизнес-процесс\nФинансовое Планирование\nНастройка аккунта\nИстория\nВсе\nСброс\nКонтакт: info@manajet.org · Пользовательское Соглашение · Соглашение о конфиденциальности",
+    "title": "История",
+    "url": "https://app.manajet.org/History"
+  },
+  {
+    "slug": "msg",
+    "label": "Сообщения",
+    "buttons": [
+      "Написать сообщение",
+      "Сброс"
+    ],
+    "inputs": [
+      {
+        "name": "msg-search",
+        "options": "",
+        "placeholder": "Поиск по метке",
+        "tag": "INPUT",
+        "type": "text"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "fa_id_recipientInput",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "text"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "",
+        "options": "10|20|50",
+        "placeholder": "",
+        "tag": "SELECT",
+        "type": "select-one"
+      }
+    ],
+    "links": [
+      {
+        "href": "",
+        "text": "Яккасарой Турсунов Амир"
+      },
+      {
+        "href": "",
+        "text": "Входящие"
+      },
+      {
+        "href": "",
+        "text": "Отложенные"
+      },
+      {
+        "href": "",
+        "text": "Исходящие"
+      },
+      {
+        "href": "",
+        "text": "Черновики"
+      },
+      {
+        "href": "",
+        "text": "КарзиСтройка"
+      },
+      {
+        "href": "",
+        "text": "Карзишеф"
+      },
+      {
+        "href": "https://app.manajet.org/Msg/Write",
+        "text": "Написать сообщение"
+      },
+      {
+        "href": "https://app.manajet.org/Msg#",
+        "text": "Все"
+      },
+      {
+        "href": "",
+        "text": "Зарплата"
+      },
+      {
+        "href": "",
+        "text": "Fwd: Зарплата"
+      },
+      {
+        "href": "",
+        "text": "Fwd: Зарплата"
+      },
+      {
+        "href": "",
+        "text": "Масалаи Меваги"
+      },
+      {
+        "href": "",
+        "text": "Зарплата"
+      },
+      {
+        "href": "",
+        "text": "свето музыка"
+      },
+      {
+        "href": "",
+        "text": "барк"
+      },
+      {
+        "href": "",
+        "text": "барк"
+      },
+      {
+        "href": "",
+        "text": "Предложение о приёме двух новых учеников в технический отдел"
+      },
+      {
+        "href": "",
+        "text": "Повышение заработной платы"
+      },
+      {
+        "href": "",
+        "text": "1"
+      },
+      {
+        "href": "https://app.manajet.org/Msg/Home/example_filtered_container?page=2",
+        "text": "2"
+      },
+      {
+        "href": "https://app.manajet.org/Msg/Home/example_filtered_container?page=3",
+        "text": "3"
+      },
+      {
+        "href": "https://app.manajet.org/Msg/Home/example_filtered_container?page=4",
+        "text": "4"
+      },
+      {
+        "href": "https://app.manajet.org/Msg/Home/example_filtered_container?page=5",
+        "text": "5"
+      },
+      {
+        "href": "https://app.manajet.org/Setup/Agreement?type=UserAgreement",
+        "text": "Пользовательское Соглашение"
+      },
+      {
+        "href": "https://app.manajet.org/Setup/Agreement?type=PrivacyAgreement",
+        "text": "Соглашение о конфиденциальности"
+      }
+    ],
+    "tables": [
+      {
+        "headers": [],
+        "idx": 0,
+        "rows": 2
+      },
+      {
+        "headers": [],
+        "idx": 1,
+        "rows": 12
+      },
+      {
+        "headers": [],
+        "idx": 2,
+        "rows": 10
+      }
+    ],
+    "text": " \n           \nЯккасарой\t\t\nТурсунов Амир\n0\n    \nКоммуникации\nВходящие\nОтложенные\nИсходящие\nЧерновики\n2\n \nКарзиСтройка\nКарзишеф\n\t\nНаписать сообщение\nВсе\n Сброс  \n\tХасанов Абдулатиф Абдурафикович\n4.10.1.2 Инженер\t\tЗарплата\nДобрый день Шеф. Хотел уточнить по поводу моего обращения о повышении заработной платы. Прошёл у\n\t\n29\nмай\n2026\n20:21\n\n\n\tХасанов Абдулатиф Абдурафикович\n4.10.1.2 Инженер\t\tFwd: Зарплата\nВ данный момент моя фиксированная заработная плата составляет 16 000 сомон  \n\t\n8\nмай\n2026\n1:38\n\n\n\tХасанов Абдулатиф Абдурафикович\n4.10.1.2 Инженер\t\tFwd: Зарплата\nПересланное сообщение От: 4.10.1.2 - Инженер Хасанов Абдулатиф Абдурафикович Дата отправки: 23 ап\n\t\n30\nапр\n2026\n12:35\n\n\n\tСамехзода Бобочон\n6.17.1.2 Администратор\t\tМасалаи Меваги\nСалом алейкум мухтарам рохбарият!  чанд рузи охир аз тарафи мехмоно жалоба шудестай ки дар видео ни\n\t\n25\nапр\n2026\n18:58\n\n\n\tХасанов Абдулатиф Абдурафикович\n4.10.1.2 Инженер\t\tЗарплата\nУважаемый руководство     Обращаюсь к Вам с просьбой рассмотреть возможность пересмотра мое\n\t\n23\nапр\n2026\n11:18\n\n\n\tХасанов Абдулатиф Абдурафикович\n4.10.1.2 Инженер\t\tсвето музыка\nсалом алейкум шеф хамин документа аз назар гузаронед дополнытылный свет для грандхол и парк айни \n\t\n11\nфев\n2026\n12:47\n\n\n\tХасанов Абдулатиф Абдурафикович\n4.10.1.2 Инженер\t\tбарк\nКабул шеф  \n\t\n5\nфев\n2026\n10:57\n\n\n\tХасанов Абдулатиф Абдурафикович\n4.10.1.2 Инженер\t\tбарк\nсалом алейкум шеф дар маркази ош мо 2 счетчик дорем якумаш суратхисоби 1010006102 ин счетчик аз руи\n\t\n4\nфев\n2026\n21:46\n\n\n\tХасанов Абдулатиф Абдурафикович\n4.10.1.2 Инженер\t\tПредложение о приёме двух новых учеников в технический отдел\nУважаемое руководство В целях обеспечения стабильной работы компании в будущем предлагаю рассмо\n\t\n24\nиюл\n2025\n9:34\n\n\n\tМавлонов Абдумалик Мавлонович\n1.1.1 Начальник\t\tПовышение заработной платы\nБольше года я работаю в ресторане Яккасарой. Начинал как hr менеджер в Маркази Ош и на данный момент\n\t\n28\nноя\n2024\n11:15\n1\n2\n3\n4\n5\n\tЗаписей на странице \n10\n20\n50\n Выбрано: 0Всего: 46\nКонтакт: info@manajet.org · Пользовательское Соглашение · Соглашение о конфиденциальности",
+    "title": "Managet",
+    "url": "https://app.manajet.org/Msg"
+  },
+  {
+    "slug": "task-home",
+    "label": "Задачи",
+    "buttons": [
+      "Сброс",
+      "Добавить",
+      "Добавить задачу"
+    ],
+    "inputs": [
+      {
+        "name": "filter_text_simple",
+        "options": "",
+        "placeholder": "Поиск",
+        "tag": "INPUT",
+        "type": "text"
+      },
+      {
+        "name": "name",
+        "options": "",
+        "placeholder": "",
+        "tag": "TEXTAREA",
+        "type": "textarea"
+      },
+      {
+        "name": "",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "checkbox"
+      },
+      {
+        "name": "id_personInput",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "text"
+      },
+      {
+        "name": "search",
+        "options": "",
+        "placeholder": "Поиск",
+        "tag": "INPUT",
+        "type": "text"
+      }
+    ],
+    "links": [
+      {
+        "href": "",
+        "text": "Яккасарой Турсунов Амир"
+      },
+      {
+        "href": "https://app.manajet.org/Task/Home?filterTokeKey=1c20d157-f98e-407b-9ddb-f84ed0d2b199#taskTemplateFilter1",
+        "text": "Список дел"
+      },
+      {
+        "href": "https://app.manajet.org/Task/Home?filterTokeKey=1c20d157-f98e-407b-9ddb-f84ed0d2b199#taskTemplateFilter2",
+        "text": "Шаблоны"
+      },
+      {
+        "href": "https://app.manajet.org/Task/Home?filterTokeKey=1c20d157-f98e-407b-9ddb-f84ed0d2b199#taskTemplateFilter3",
+        "text": "Метки"
+      },
+      {
+        "href": "",
+        "text": "Сброс"
+      },
+      {
+        "href": "",
+        "text": "Добавить"
+      },
+      {
+        "href": "",
+        "text": "Добавить задачу"
+      },
+      {
+        "href": "https://app.manajet.org/Task/Home?filterTokeKey=1c20d157-f98e-407b-9ddb-f84ed0d2b199#taskFilter1",
+        "text": "Сейчас"
+      },
+      {
+        "href": "https://app.manajet.org/Task/Home?filterTokeKey=1c20d157-f98e-407b-9ddb-f84ed0d2b199#taskFilter2",
+        "text": "Просроченные"
+      },
+      {
+        "href": "https://app.manajet.org/Task/Home?filterTokeKey=1c20d157-f98e-407b-9ddb-f84ed0d2b199#taskfilter3",
+        "text": "Новые"
+      },
+      {
+        "href": "https://app.manajet.org/Task/Home?filterTokeKey=1c20d157-f98e-407b-9ddb-f84ed0d2b199#taskfilter4",
+        "text": "Боевое планирование"
+      },
+      {
+        "href": "https://app.manajet.org/Task/Home?filterTokeKey=1c20d157-f98e-407b-9ddb-f84ed0d2b199#taskFilter1",
+        "text": "Для одобрения"
+      },
+      {
+        "href": "https://app.manajet.org/Task/Home?filterTokeKey=1c20d157-f98e-407b-9ddb-f84ed0d2b199#taskFilter1",
+        "text": "Все"
+      },
+      {
+        "href": "https://app.manajet.org/Setup/Agreement?type=UserAgreement",
+        "text": "Пользовательское Соглашение"
+      },
+      {
+        "href": "https://app.manajet.org/Setup/Agreement?type=PrivacyAgreement",
+        "text": "Соглашение о конфиденциальности"
+      }
+    ],
+    "tables": [
+      {
+        "headers": [],
+        "idx": 0,
+        "rows": 2
+      }
+    ],
+    "text": " \n           \nЯккасарой\t\t\nТурсунов Амир\n1\n    \nЗадачи 28 июн 2026 01:54\nСписок дел\nШаблоны\nМетки\n Сброс\nПеретяните сюда, чтобы создать список дел\nНе было найдено ни одной записи\n Добавить\n\t\n \nДобавить задачу\n  \n  Сброс  \nСейчас\nПросроченные\nНовые\nБоевое планирование\nДля одобрения\nВсе\nНе было найдено ни одной записи\nКонтакт: info@manajet.org · Пользовательское Соглашение · Соглашение о конфиденциальности",
+    "title": "Managet",
+    "url": "https://app.manajet.org/Task/Home?filterTokeKey=1c20d157-f98e-407b-9ddb-f84ed0d2b199"
+  },
+  {
+    "slug": "routing-form",
+    "label": "RoutingForm",
+    "buttons": [
+      "Начать бизнес-процесс",
+      "Сброс"
+    ],
+    "inputs": [
+      {
+        "name": "search",
+        "options": "",
+        "placeholder": "Поиск",
+        "tag": "INPUT",
+        "type": "text"
+      }
+    ],
+    "links": [
+      {
+        "href": "",
+        "text": "Яккасарой Турсунов Амир"
+      },
+      {
+        "href": "https://app.manajet.org/RoutingForm/RoutingForm",
+        "text": "Бизнес-процессы"
+      },
+      {
+        "href": "https://app.manajet.org/RoutingForm/Home",
+        "text": "Шаблоны бизнес-процессов"
+      },
+      {
+        "href": "",
+        "text": "Личные"
+      },
+      {
+        "href": "",
+        "text": "Прямые подчиненные"
+      },
+      {
+        "href": "",
+        "text": "Подчиненые"
+      },
+      {
+        "href": "",
+        "text": "Все"
+      },
+      {
+        "href": "",
+        "text": "Первый Бизнес процес"
+      },
+      {
+        "href": "https://app.manajet.org/RoutingForm/Home/AddFormListIndex?idRoutingFormTemplate=0",
+        "text": "Начать бизнес-процесс"
+      },
+      {
+        "href": "https://app.manajet.org/RoutingForm/RoutingForm#taskFilter2",
+        "text": "Входящие"
+      },
+      {
+        "href": "https://app.manajet.org/RoutingForm/RoutingForm#taskFilter1",
+        "text": "Текущие"
+      },
+      {
+        "href": "https://app.manajet.org/RoutingForm/RoutingForm#taskFilter1",
+        "text": "Просроченныe"
+      },
+      {
+        "href": "https://app.manajet.org/RoutingForm/RoutingForm#taskFilter2",
+        "text": "Завершённые"
+      },
+      {
+        "href": "https://app.manajet.org/RoutingForm/RoutingForm#taskfilter3",
+        "text": "Запрос на шаг назад"
+      },
+      {
+        "href": "https://app.manajet.org/RoutingForm/RoutingForm#taskfilter3",
+        "text": "Все"
+      },
+      {
+        "href": "https://app.manajet.org/Setup/Agreement?type=UserAgreement",
+        "text": "Пользовательское Соглашение"
+      },
+      {
+        "href": "https://app.manajet.org/Setup/Agreement?type=PrivacyAgreement",
+        "text": "Соглашение о конфиденциальности"
+      }
+    ],
+    "tables": [
+      {
+        "headers": [],
+        "idx": 0,
+        "rows": 2
+      },
+      {
+        "headers": [],
+        "idx": 1,
+        "rows": 2
+      }
+    ],
+    "text": " \n           \nЯккасарой\t\t\nТурсунов Амир\n0\n    \nБизнес-процессы\n \nШаблоны бизнес-процессов\nЛичные\nПрямые подчиненные\nПодчиненые\nВсе\n\nПервый Бизнес процес\n\n\t\n\t\nНачать бизнес-процесс\nВходящие\nТекущие\nПросроченныe\nЗавершённые\nЗапрос на шаг назад\nВсе\n  \n  Сброс\nНе было найдено ни одной записи\nКонтакт: info@manajet.org · Пользовательское Соглашение · Соглашение о конфиденциальности",
+    "title": "Managet",
+    "url": "https://app.manajet.org/RoutingForm/RoutingForm"
+  },
+  {
+    "slug": "workflow",
+    "label": "Workflow",
+    "buttons": [
+      "Действия",
+      "Сброс"
+    ],
+    "inputs": [
+      {
+        "name": "id_personInput",
+        "options": "",
+        "placeholder": "",
+        "tag": "INPUT",
+        "type": "text"
+      },
+      {
+        "name": "search",
+        "options": "",
+        "placeholder": "Поиск",
+        "tag": "INPUT",
+        "type": "text"
+      }
+    ],
+    "links": [
+      {
+        "href": "",
+        "text": "Яккасарой Турсунов Амир"
+      },
+      {
+        "href": "https://app.manajet.org/WorkflowList/Home#",
+        "text": "Доска процесса:ВИП ЗАЛ"
+      },
+      {
+        "href": "https://app.manajet.org/WorkflowList/Home?mode=Cards&IdParent=2",
+        "text": "Карточки"
+      },
+      {
+        "href": "https://app.manajet.org/WorkflowCard/Home?mode=CardsList&IdParent=2",
+        "text": "Список"
+      },
+      {
+        "href": "https://app.manajet.org/WorkflowStep/Home?mode=Steps&viewFrom=1351&IdBoard=2",
+        "text": "Действия"
+      },
+      {
+        "href": "https://app.manajet.org/Statistic/Home?viewResult=WorkflowCard&mode=Statistic&id_workflow_board2=2",
+        "text": "Статистики"
+      },
+      {
+        "href": "https://app.manajet.org/WorkflowList/Home?mode=Templates&viewFrom=1351&IdParent=2",
+        "text": "Шаблоны"
+      },
+      {
+        "href": "https://app.manajet.org/WorkflowList/Home",
+        "text": "Все"
+      },
+      {
+        "href": "https://app.manajet.org/Setup/Agreement?type=UserAgreement",
+        "text": "Пользовательское Соглашение"
+      },
+      {
+        "href": "https://app.manajet.org/Setup/Agreement?type=PrivacyAgreement",
+        "text": "Соглашение о конфиденциальности"
+      }
+    ],
+    "tables": [
+      {
+        "headers": [],
+        "idx": 0,
+        "rows": 2
+      }
+    ],
+    "text": " \n           \nЯккасарой\t\t\nТурсунов Амир\n0\n    \nДоска процесса:ВИП ЗАЛ\n \nКарточки\n \nСписок\n \nДействия\n \nСтатистики\n \nШаблоны\nВИП ЗАЛ\nДействия\nВсе\n  \n \nСброс\nСегодня\nВчера\nВ течение трех дней\nЗа последние 7 дней\nЗа последние 2 недели\nКонтакт: info@manajet.org · Пользовательское Соглашение · Соглашение о конфиденциальности",
+    "title": "Этап",
+    "url": "https://app.manajet.org/WorkflowList/Home"
+  }
+]
