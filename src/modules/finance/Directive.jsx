@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { ClipboardList, Calculator, CalendarDays, Check, RotateCcw, RotateCw, Lock, Unlock, Ban, ArrowRightLeft, Loader2, AlertCircle, CheckCircle2, X, Layers, ChevronRight, Scale, Banknote, Wallet, FileText, List, LayoutList, Undo2 } from "lucide-react";
+import { ClipboardList, Calculator, CalendarDays, Check, RotateCcw, RotateCw, Lock, Unlock, Ban, ArrowRightLeft, Loader2, AlertCircle, CheckCircle2, X, Layers, ChevronRight, Scale, Banknote, Wallet, FileText, List, LayoutList, ShieldCheck, Undo2 } from "lucide-react";
 import { Stat, ConfirmModal } from "../../components/common";
 import { useTheme } from "../../theme/theme";
 import { useScrollLock } from "../../hooks/useScrollLock";
@@ -299,10 +299,21 @@ export function Directive() {
     finally { setBusy(null); }
   };
 
-  // Закрыть/открыть неделю может только финдиректор или владелец. Отдельных кнопок
-  // подтверждения нет: закрытие само проставляет оба контура (исполнительный +
-  // финкомитет/BAF) — то есть закрытие финдиректором = «одобрено финкомитетом».
+  // Исполнительное подтверждение недели дают директора (исполнительный контур).
+  // Закрытие недели (= одобрение финкомитетом + закрытие) — только финдиректор/
+  // владелец, и только после исполнительного подтверждения.
+  const canConfirmExec = ["owner", "fin_director", "ops_director"].includes(profile?.role);
   const canClose = ["owner", "fin_director"].includes(profile?.role);
+  const doConfirm = async (value) => {
+    if (busy || !period || isClosed) return;
+    setBusy("confirm:executive"); setErr(""); setDone("");
+    try {
+      await setPeriodConfirmation(periodId, "executive", value);
+      await reloadPeriods(true);
+      setDone(value ? "Исполнительное подтверждение проставлено" : "Исполнительное подтверждение снято");
+    } catch (e) { setErr(e?.message || String(e)); }
+    finally { setBusy(null); }
+  };
 
   // Переключатель: закрытая неделя открывается обратно, открытая — закрывается
   const doToggleClose = async () => {
@@ -321,16 +332,16 @@ export function Directive() {
       return;
     }
     // Правила закрытия недели: показываем ВСЕ нарушения сразу над кнопкой (кнопка
-    // доступна). Подтверждения проставятся автоматически при закрытии, поэтому в
-    // проверку блокеров передаём их как уже стоящие.
+    // доступна). Финкомитет проставится автоматически при закрытии, поэтому в
+    // проверку блокеров передаём BAF как уже стоящий; исполнительное подтверждение
+    // остаётся реальным блокером — без одобрения директоров закрыть нельзя.
     const blockers = weekCloseBlockReasons({ prevPeriod, weekReqs, remainder, funds,
-      period: { ...period, is_executive_confirmed: true, is_baf_confirmed: true } });
+      period: { ...period, is_baf_confirmed: true } });
     if (blockers.length) { setCloseMsg(blockers); return; }
     if (!(await askConfirm({ title: "Закрыть период ФП", message: "Неделя будет одобрена финкомитетом и закрыта: все операции периода будут заблокированы, протокол Директивы сохранится.", tone: "warning", confirmLabel: "Одобрить и закрыть" }))) return;
     setBusy("close");
     try {
-      // Закрытие финдиректором/владельцем = одобрение обоих контуров недели.
-      if (!period.is_executive_confirmed) await setPeriodConfirmation(periodId, "executive", true);
+      // Закрытие финдиректором/владельцем = одобрение финкомитетом (BAF).
       if (!period.is_baf_confirmed) await setPeriodConfirmation(periodId, "baf", true);
       const protocol = {
         income,
@@ -470,6 +481,20 @@ export function Directive() {
         ))}
       </div>
     )}
+    {/* Исполнительное подтверждение недели — одобряют директора (исполнительный
+        контур). Без него финдиректор/владелец не сможет закрыть неделю. */}
+    {period && !isClosed && (
+      <section style={{ ...st.fpCard, marginTop: 14 }}>
+        <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: 0.5, color: C.faint, fontWeight: 700, marginBottom: 10 }}>
+          Подтверждение недели
+        </div>
+        <ConfirmRow C={C} st={st} icon={ShieldCheck} label="Исполнительное одобрение"
+          confirmed={!!period.is_executive_confirmed} canToggle={canConfirmExec}
+          busy={busy === "confirm:executive"} disabled={!!busy}
+          onToggle={() => doConfirm(!period.is_executive_confirmed)} />
+      </section>
+    )}
+
     {/* Закрытая неделя помечается как одобренная финкомитетом (закрытие = одобрение). */}
     {isClosed && period?.is_baf_confirmed && (
       <div style={{ display: "flex", alignItems: "center", gap: 7, color: C.money, fontSize: 12.5, fontWeight: 700, marginTop: 14 }}>
@@ -477,9 +502,9 @@ export function Directive() {
       </div>
     )}
 
-    {/* Закрытие/открытие периода Директивой — одной кнопкой. Доступно только
-        финдиректору/владельцу; правила закрытия проверяются по нажатию
-        (doToggleClose). Закрытие само проставляет оба контура подтверждения. */}
+    {/* Закрытие/открытие периода Директивой. Доступно только финдиректору/
+        владельцу; правила закрытия проверяются по нажатию (doToggleClose).
+        Закрытие = одобрение финкомитетом (BAF) + закрытие недели. */}
     <button style={{ ...(isClosed ? st.btnGhost : st.btnGreen), width: "100%", justifyContent: "center", marginTop: (!isClosed && closeMsg.length) || (isClosed && period?.is_baf_confirmed) ? 10 : 14, opacity: (busy === "close" || !canClose) ? 0.6 : 1, cursor: canClose ? "pointer" : "not-allowed" }}
       className="btn glass" onClick={doToggleClose} disabled={busy || !period || !canClose}
       title={!canClose ? "Закрыть неделю может только финдиректор или владелец" : (isClosed ? "Открыть неделю" : "Закрыть период ФП")}>
@@ -511,6 +536,37 @@ export function Directive() {
         onConfirm={() => resolveConfirm(true)} onCancel={() => resolveConfirm(false)} />
     )}
   </>);
+}
+
+
+// ---------------------------------------------------------------- Строка подтверждения недели
+// Исполнительный контур: подтверждённый — зелёная плашка с возможностью снять;
+// неподтверждённый — кнопка «Подтвердить».
+function ConfirmRow({ C, st, icon: Icon, label, confirmed, canToggle, busy, disabled, onToggle }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 12,
+      border: `1px solid ${confirmed ? C.money : C.line}`, background: confirmed ? `${C.money}14` : C.panel2 }}>
+      <div style={{ width: 32, height: 32, borderRadius: 9, display: "grid", placeItems: "center", flexShrink: 0,
+        background: confirmed ? `${C.money}22` : `${C.faint}1a`, color: confirmed ? C.money : C.faint }}>
+        <Icon size={17} />
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontWeight: 700, fontSize: 13.5 }}>{label}</div>
+        <div style={{ fontSize: 11.5, color: confirmed ? C.money : C.faint, fontWeight: 600 }}>
+          {confirmed ? "подтверждено" : "не подтверждено"}
+        </div>
+      </div>
+      {canToggle ? (
+        <button style={{ ...(confirmed ? st.btnGhost : st.btnGreen), padding: "7px 12px", fontSize: 12.5, opacity: busy ? 0.7 : 1 }}
+          className="btn" disabled={disabled} onClick={onToggle}>
+          {busy ? <Loader2 size={14} className="spin" /> : confirmed ? <RotateCcw size={14} /> : <Check size={14} />}
+          {confirmed ? " Снять" : " Подтвердить"}
+        </button>
+      ) : confirmed ? (
+        <CheckCircle2 size={18} color={C.money} />
+      ) : null}
+    </div>
+  );
 }
 
 
