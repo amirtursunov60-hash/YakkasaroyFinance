@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Loader2, AlertCircle, Download, ListChecks, Search, X, BookOpen, ChevronRight } from "lucide-react";
 import { Stat } from "../../components/common";
 import { useTheme } from "../../theme/theme";
@@ -70,29 +70,38 @@ export function Register() {
     limit: PAGE, offset,
   }), [f, periodId]);
 
+  // «Эпоха» запроса: каждый новый load() её инкрементит, и устаревшие ответы
+  // (в т.ч. долетевший loadMore после смены фильтра) отбрасываются — иначе
+  // страница старой выборки дописалась бы к новой ленте (гонка).
+  const reqEpoch = useRef(0);
+
   // Первая страница: грузится заново при смене фильтров/недели.
   const load = useCallback(async () => {
     if (periodsLoading) return;
-    setErr("");
+    const epoch = ++reqEpoch.current;
+    setErr(""); setLoadingMore(false);
     try {
       const data = await fetchRegister(queryArgs(0));
+      if (epoch !== reqEpoch.current) return; // устаревший ответ
       setRows(data);
       setHasMore(data.length === PAGE);
-    } catch (e) { setErr("Не удалось загрузить Реестр: " + (e?.message || e)); }
-    finally { setLoading(false); }
+    } catch (e) { if (epoch === reqEpoch.current) setErr("Не удалось загрузить Реестр: " + (e?.message || e)); }
+    finally { if (epoch === reqEpoch.current) setLoading(false); }
   }, [queryArgs, periodsLoading]);
   useEffect(() => { load(); }, [load]);
 
   // «Показать ещё» — догружает следующую страницу и дополняет ленту.
   const loadMore = useCallback(async () => {
     if (loadingMore || !hasMore) return;
+    const epoch = reqEpoch.current;
     setLoadingMore(true); setErr("");
     try {
       const data = await fetchRegister(queryArgs(rows.length));
+      if (epoch !== reqEpoch.current) return; // фильтр сменился во время подгрузки
       setRows((prev) => [...prev, ...data]);
       setHasMore(data.length === PAGE);
-    } catch (e) { setErr("Не удалось догрузить Реестр: " + (e?.message || e)); }
-    finally { setLoadingMore(false); }
+    } catch (e) { if (epoch === reqEpoch.current) setErr("Не удалось догрузить Реестр: " + (e?.message || e)); }
+    finally { if (epoch === reqEpoch.current) setLoadingMore(false); }
   }, [loadingMore, hasMore, queryArgs, rows.length]);
 
   // Клиентский поиск по ленте: тип, фонд, счёт, контрагент, способ оплаты,
