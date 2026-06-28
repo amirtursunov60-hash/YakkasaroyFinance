@@ -146,12 +146,12 @@ export function Income() {
 
   // Архивирование вида дохода прямо из дерева (только финадмин, RLS
   // itypes_write = is_fin_admin). Восстановление — в разделе «Архив».
-  // Кнопка показывается лишь у видов без вложенных статей: архив папки с
-  // активными статьями скрыл бы их из дерева, поэтому такой случай отсекаем.
+  // Кнопка показывается лишь у видов без вложенных видов дохода: архив папки с
+  // активными видами скрыл бы их из дерева, поэтому такой случай отсекаем.
   const doArchiveType = async (t) => {
     if (archBusy) return;
     if (t.children?.length) {
-      setLoadError(`«${t.name}» содержит активные статьи — сначала заархивируйте их.`);
+      setLoadError(`«${t.name}» содержит активные виды дохода — сначала заархивируйте их.`);
       return;
     }
     if (!window.confirm(`Заархивировать вид дохода «${t.code ? t.code + " " : ""}${t.name}»? Он исчезнет из выбора при вводе дохода. Восстановить можно в разделе «Архив». Проведённые операции в Реестре не затрагиваются.`)) return;
@@ -286,7 +286,7 @@ export function Income() {
               </div>
               <div style={st.locTitle}>
                 <div style={st.locName}>{loc.name}</div>
-                <div style={st.locCode}>{loc.code}{hasChildren ? ` · ${loc.children.length} статей` : ""}</div>
+                <div style={st.locCode}>{loc.code}{hasChildren ? ` · ${loc.children.length} видов дохода` : ""}</div>
               </div>
               <div style={st.locRight}>
                 <div style={st.locSum}>{fmt(r.cur)} <span style={st.locUnit}>TJS</span></div>
@@ -656,7 +656,7 @@ function IncomeTypeFormModal({ st, node, folders, locations, onClose, onSaved })
             <span style={st.reqFieldLbl}>Тип</span>
             <select style={st.mdSelect} className="fin" value={isFolder ? "folder" : "leaf"} disabled={isEdit}
               onChange={(e) => setIsFolder(e.target.value === "folder")}>
-              <option value="leaf">Вид дохода (статья)</option>
+              <option value="leaf">Вид дохода</option>
               <option value="folder">Папка (направление)</option>
             </select>
           </div>
