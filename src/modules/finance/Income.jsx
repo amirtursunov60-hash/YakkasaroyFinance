@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { ArrowUpRight, ArrowDownRight, ChevronRight, Plus, X, Loader2, AlertCircle, Calculator, Trash2, Store, List, Undo2, Pencil, CalendarDays, FileText } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, ChevronRight, Plus, X, Loader2, AlertCircle, Calculator, Trash2, Store, List, Undo2, Pencil, CalendarDays, FileText, Archive } from "lucide-react";
 import { useTheme } from "../../theme/theme";
 import { useScrollLock } from "../../hooks/useScrollLock";
 import { fmt } from "../../utils/format";
@@ -8,9 +8,9 @@ import {
   isoDate, getPeriodFor,
   fetchIncomeTypes, fetchIncomeSums, fetchIncomeRefs, findRate, insertIncome,
   fetchRulesByIncomeType, fetchFunds, addDistributionRule, deleteDistributionRule,
-  fetchIncomeOperations, reverseIncome,
+  fetchIncomeOperations, reverseIncome, setIncomeTypeArchived,
+  createIncomeType, updateIncomeType,
 } from "../../lib/api";
-import { IncomeTypesManager } from "./IncomeTypesManager";
 
 
 // ---------------------------------------------------------------- INCOME
@@ -40,6 +40,8 @@ export function Income() {
   const [rulesByType, setRulesByType] = useState({}); // схемы распределения по видам дохода
   const [funds, setFunds] = useState([]);
   const [schemeType, setSchemeType] = useState(null); // вид дохода для модала «Схема»
+  const [archBusy, setArchBusy] = useState(null);     // id вида дохода в процессе архивирования
+  const [editingType, setEditingType] = useState(null); // "new" | объект вида/папки для правки | null
 
   // Неделя — из общего контекста (выбирается в шапке)
   const periods = useMemo(() => ({ cur: period, prev: prevPeriod }), [period, prevPeriod]);
@@ -65,6 +67,8 @@ export function Income() {
   const reloadRules = useCallback(async () => {
     if (isFinAdmin) setRulesByType(await fetchRulesByIncomeType());
   }, [isFinAdmin]);
+
+  const reloadTypes = useCallback(async () => { setTypes(await fetchIncomeTypes()); }, []);
 
   const loadSums = useCallback(async () => {
     try {
@@ -138,6 +142,27 @@ export function Income() {
       setShowForm(true);
     } catch (e) { setLoadError(e?.message || String(e)); }
     finally { setOpBusy(null); }
+  };
+
+  // Архивирование вида дохода прямо из дерева (только финадмин, RLS
+  // itypes_write = is_fin_admin). Восстановление — в разделе «Архив».
+  // Кнопка показывается лишь у видов без вложенных статей: архив папки с
+  // активными статьями скрыл бы их из дерева, поэтому такой случай отсекаем.
+  const doArchiveType = async (t) => {
+    if (archBusy) return;
+    if (t.children?.length) {
+      setLoadError(`«${t.name}» содержит активные статьи — сначала заархивируйте их.`);
+      return;
+    }
+    if (!window.confirm(`Заархивировать вид дохода «${t.code ? t.code + " " : ""}${t.name}»? Он исчезнет из выбора при вводе дохода. Восстановить можно в разделе «Архив». Проведённые операции в Реестре не затрагиваются.`)) return;
+    setArchBusy(t.id); setLoadError("");
+    try {
+      await setIncomeTypeArchived(t.id, true);
+      setTypes((ts) => ts.filter((x) => x.id !== t.id));
+    } catch (e) {
+      const msg = e?.message || String(e);
+      setLoadError(msg.includes("row-level security") ? "Нет прав на изменение справочника видов дохода." : msg);
+    } finally { setArchBusy(null); }
   };
 
   // Дерево из плоского списка; сортировка по коду
@@ -234,6 +259,14 @@ export function Income() {
     )}
 
     {/* Дерево видов дохода */}
+    {isFinAdmin && (
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, margin: "2px 2px 10px" }}>
+        <span style={{ fontSize: 13, fontWeight: 700, color: C.sub }}>Виды дохода</span>
+        <button style={st.btnGhost} className="btn" onClick={() => setEditingType("new")}>
+          <Plus size={15} /> Вид дохода
+        </button>
+      </div>
+    )}
     {!tree.length && !loadError && (
       <div style={{ ...st.dataCard, ...st.empty }}>
         Справочник видов дохода пуст. Примените сид-миграцию из supabase/migrations (см. supabase/README.md).
@@ -265,6 +298,19 @@ export function Income() {
                   <Calculator size={16} />
                 </button>
               )}
+              {isFinAdmin && (
+                <button style={{ ...st.iconBtn, padding: 4, color: C.faint, flexShrink: 0 }} className="btn"
+                  title="Редактировать" onClick={(e) => { e.stopPropagation(); setEditingType(loc); }}>
+                  <Pencil size={15} />
+                </button>
+              )}
+              {isFinAdmin && !hasChildren && (
+                <button style={{ ...st.iconBtn, padding: 4, color: C.faint, flexShrink: 0 }} className="btn"
+                  title="В архив" disabled={archBusy === loc.id}
+                  onClick={(e) => { e.stopPropagation(); doArchiveType(loc); }}>
+                  {archBusy === loc.id ? <Loader2 size={15} className="spin" /> : <Archive size={16} />}
+                </button>
+              )}
               {hasChildren && <span style={{ ...st.locChevron, transform: isOpen ? "rotate(90deg)" : "none" }}><ChevronRight size={18} /></span>}
             </div>
 
@@ -288,6 +334,21 @@ export function Income() {
                       <Calculator size={15} />
                     </button>
                   ) : null;
+                  const editBtn = isFinAdmin ? (
+                    <button style={{ width: 30, height: 30, borderRadius: 9, display: "grid", placeItems: "center", flexShrink: 0,
+                        border: `1px solid ${C.line}`, background: "transparent", color: C.faint, cursor: "pointer" }}
+                      className="btn" title="Редактировать" onClick={(e) => { e.stopPropagation(); setEditingType(c); }}>
+                      <Pencil size={15} />
+                    </button>
+                  ) : null;
+                  const archBtn = isFinAdmin && !c.children.length ? (
+                    <button style={{ width: 30, height: 30, borderRadius: 9, display: "grid", placeItems: "center", flexShrink: 0,
+                        border: `1px solid ${C.line}`, background: "transparent", color: C.faint, cursor: "pointer" }}
+                      className="btn" title="В архив" disabled={archBusy === c.id}
+                      onClick={(e) => { e.stopPropagation(); doArchiveType(c); }}>
+                      {archBusy === c.id ? <Loader2 size={15} className="spin" /> : <Archive size={15} />}
+                    </button>
+                  ) : null;
 
                   if (isMobile) {
                     return (
@@ -296,6 +357,8 @@ export function Income() {
                           <span style={st.itemCode}>{c.code}</span>
                           <span style={{ fontWeight: 600, fontSize: 13, flex: 1, minWidth: 0 }}>{c.name}</span>
                           {calcBtn}
+                          {editBtn}
+                          {archBtn}
                         </div>
                         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                           <div>
@@ -316,6 +379,8 @@ export function Income() {
                         <span style={st.itemCode}>{c.code}</span>
                         <span>{c.name}</span>
                         {calcBtn}
+                        {editBtn}
+                        {archBtn}
                       </div>
                       <div style={st.itemPrev}>{fmt(rc.prev)}</div>
                       <div style={{ ...st.itemCur, color: rc.cur ? C.money : C.faint }}>{fmt(rc.cur)}</div>
@@ -432,9 +497,13 @@ export function Income() {
         rules={rulesByType[schemeType.id] || []} funds={funds}
         onChanged={reloadRules} onClose={() => setSchemeType(null)} />
     )}
-
-    {/* Справочник видов дохода (D-коды, §8) — CRUD для фин-админов */}
-    {isFinAdmin && <IncomeTypesManager />}
+    {editingType && (
+      <IncomeTypeFormModal st={st}
+        node={editingType === "new" ? null : editingType}
+        folders={tree} locations={refs?.locations || []}
+        onClose={() => setEditingType(null)}
+        onSaved={async () => { setEditingType(null); await reloadTypes(); }} />
+    )}
   </>);
 }
 
@@ -520,6 +589,115 @@ function SchemeModal({ C, st, type, rules, funds, onChanged, onClose }) {
   );
 }
 
+
+// ---------------------------------------------------------------- Вид дохода / папка
+// Создание и правка справочника income_types (только финадмин, RLS
+// itypes_write = is_fin_admin). Тип: «папка-направление» (parent_id = null,
+// со своей точкой) или «вид дохода» (лист в выбранной папке). Оформление —
+// как у модалки фонда (Funds.jsx). Схема распределения — отдельной кнопкой.
+function IncomeTypeFormModal({ st, node, folders, locations, onClose, onSaved }) {
+  useScrollLock();
+  const isEdit = !!node;
+  const [isFolder, setIsFolder] = useState(isEdit ? !node.parent_id : false);
+  const [f, setF] = useState({
+    code: node?.code || "", name: node?.name || "",
+    parentId: node?.parent_id || "", locationId: node?.location_id || "",
+  });
+  const [newFolder, setNewFolder] = useState(""); // создать папку на лету (как у фонда)
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+
+  const submit = async () => {
+    if (busy) return;
+    setErr("");
+    if (!f.name.trim()) return setErr("Укажите название");
+    if (!isFolder && !f.parentId && !newFolder.trim()) return setErr("Выберите папку или впишите новую");
+    setBusy(true);
+    try {
+      // Для вида дохода: если вписана новая папка — создаём её и кладём вид туда.
+      let parentId = f.parentId;
+      if (!isFolder && newFolder.trim()) {
+        parentId = (await createIncomeType({ name: newFolder.trim(), parentId: null })).id;
+      }
+      if (isEdit) {
+        const patch = isFolder
+          ? { code: f.code.trim() || null, name: f.name.trim(), location_id: f.locationId || null }
+          : { code: f.code.trim() || null, name: f.name.trim(), parent_id: parentId };
+        await updateIncomeType(node.id, patch);
+      } else if (isFolder) {
+        await createIncomeType({ code: f.code.trim(), name: f.name.trim(), parentId: null, locationId: f.locationId || null });
+      } else {
+        await createIncomeType({ code: f.code.trim(), name: f.name.trim(), parentId });
+      }
+      await onSaved();
+    } catch (e) {
+      const msg = e?.message || String(e);
+      setErr(
+        msg.includes("row-level security") ? "Нет прав на изменение справочника видов дохода."
+          : msg.includes("duplicate") ? "Вид дохода с таким кодом уже существует" : msg,
+      );
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div style={st.mdOverlay} data-modal="1" onClick={onClose}>
+      <div style={{ ...st.mdCard, width: "min(460px, 100%)", maxHeight: "92vh", overflowY: "auto" }} onClick={(e) => e.stopPropagation()}>
+        <div style={st.mdHead}>
+          <div style={st.mdTitle}>{isEdit ? (isFolder ? "Редактировать папку" : "Редактировать вид дохода") : "Новый вид дохода"}</div>
+          <button style={st.iconBtn} onClick={onClose} aria-label="Закрыть"><X size={17} /></button>
+        </div>
+        <div style={{ display: "grid", gap: 10 }}>
+          <div style={st.reqField}>
+            <span style={st.reqFieldLbl}>Код (номер)</span>
+            <input style={st.mdInput} className="fin" placeholder="напр. D10" autoFocus
+              value={f.code} onChange={(e) => setF((p) => ({ ...p, code: e.target.value }))} />
+          </div>
+          <div style={st.reqField}>
+            <span style={st.reqFieldLbl}>Название</span>
+            <input style={st.mdInput} className="fin" placeholder={isFolder ? "Направление…" : "Название вида дохода…"}
+              value={f.name} onChange={(e) => setF((p) => ({ ...p, name: e.target.value }))} />
+          </div>
+          <div style={st.reqField}>
+            <span style={st.reqFieldLbl}>Тип</span>
+            <select style={st.mdSelect} className="fin" value={isFolder ? "folder" : "leaf"} disabled={isEdit}
+              onChange={(e) => setIsFolder(e.target.value === "folder")}>
+              <option value="leaf">Вид дохода (статья)</option>
+              <option value="folder">Папка (направление)</option>
+            </select>
+          </div>
+          {isFolder ? (
+            <div style={st.reqField}>
+              <span style={st.reqFieldLbl}>Точка</span>
+              <select style={st.mdSelect} className="fin" value={f.locationId} onChange={(e) => setF((p) => ({ ...p, locationId: e.target.value }))}>
+                <option value="">— вся сеть —</option>
+                {locations.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
+              </select>
+            </div>
+          ) : (
+            <div style={st.reqField}>
+              <span style={st.reqFieldLbl}>Находится в папке</span>
+              <select style={st.mdSelect} className="fin" value={f.parentId}
+                onChange={(e) => setF((p) => ({ ...p, parentId: e.target.value }))} disabled={!!newFolder.trim()}>
+                <option value="">— выберите папку —</option>
+                {folders.map((fl) => <option key={fl.id} value={fl.id}>{fl.code ? `${fl.code} ` : ""}{fl.name}</option>)}
+              </select>
+              <input style={{ ...st.mdInput, marginTop: 6 }} className="fin" placeholder="…или новая папка"
+                value={newFolder} onChange={(e) => setNewFolder(e.target.value)} />
+            </div>
+          )}
+        </div>
+        {err && <div role="alert" style={st.reqError}><AlertCircle size={15} /> {err}</div>}
+        <div style={st.mdActions}>
+          <button style={st.btnGhost} className="btn" onClick={onClose}>Отмена</button>
+          <button style={{ ...st.btnGreen, opacity: busy ? 0.7 : 1 }} className="btn" onClick={submit} disabled={busy}>
+            {busy ? <Loader2 size={15} className="spin" /> : <Plus size={15} />} {isEdit ? "Сохранить" : "Создать"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ---------------------------------------------------------------- Форма ввода дохода
 // Field — на уровне модуля, иначе пересоздание компонента на каждый рендер

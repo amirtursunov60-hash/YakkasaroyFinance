@@ -65,8 +65,10 @@ export async function fetchIncomeTypes() {
 }
 
 // ---- Виды дохода (справочник income_types, Доход §8) -----------------------
-// CRUD под RLS-политикой itypes_write = is_fin_admin() (см. baseline-схему).
-// Дерево: папки (parent_id IS NULL, с привязкой к точке) → листья (parent_id).
+// CRUD + переключение архива под RLS-политикой itypes_write = is_fin_admin()
+// (см. baseline-схему). Дерево: папки-направления (parent_id IS NULL,
+// с привязкой к точке) → листья-статьи (parent_id). Используется вкладкой
+// «Доходы» (создание/правка прямо в дереве) и модулем «Архив» (восстановление).
 export async function fetchIncomeTypesManage({ includeArchived = false } = {}) {
   let query = supabase
     .from("income_types")
@@ -77,15 +79,18 @@ export async function fetchIncomeTypesManage({ includeArchived = false } = {}) {
   return data;
 }
 
-export async function createIncomeType({ code, name, parentId = null }) {
+// Создать вид дохода (parentId задан) или папку-направление (parentId = null,
+// locationId — точка папки; null = вся сеть).
+export async function createIncomeType({ code, name, parentId = null, locationId = null }) {
   const { data, error } = await supabase
     .from("income_types")
-    .insert({ code: code || null, name, parent_id: parentId || null })
+    .insert({ code: code || null, name, parent_id: parentId || null, location_id: locationId || null })
     .select().single();
   if (error) throw error;
   return data;
 }
 
+// Частичное обновление (code/name/parent_id/location_id).
 export async function updateIncomeType(id, patch) {
   const { error } = await supabase.from("income_types").update(patch).eq("id", id);
   if (error) throw error;
