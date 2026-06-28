@@ -21,5 +21,6 @@
       "cardMode": "single",
       "viewport": "560x560"
     }
-  }
+  },
+  "readmeHeader": ".design-sync/conventions.md"
 }
