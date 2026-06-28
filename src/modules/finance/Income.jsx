@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { ArrowUpRight, ArrowDownRight, ChevronRight, Plus, X, Loader2, AlertCircle, Calculator, Trash2, Store, List, Undo2, Pencil, CalendarDays, FileText } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, ChevronRight, Plus, X, Loader2, AlertCircle, Calculator, Trash2, Store, List, Undo2, Pencil, CalendarDays, FileText, Archive } from "lucide-react";
 import { useTheme } from "../../theme/theme";
 import { useScrollLock } from "../../hooks/useScrollLock";
 import { fmt } from "../../utils/format";
@@ -8,7 +8,7 @@ import {
   isoDate, getPeriodFor,
   fetchIncomeTypes, fetchIncomeSums, fetchIncomeRefs, findRate, insertIncome,
   fetchRulesByIncomeType, fetchFunds, addDistributionRule, deleteDistributionRule,
-  fetchIncomeOperations, reverseIncome,
+  fetchIncomeOperations, reverseIncome, setIncomeTypeArchived,
 } from "../../lib/api";
 
 
@@ -39,6 +39,7 @@ export function Income() {
   const [rulesByType, setRulesByType] = useState({}); // схемы распределения по видам дохода
   const [funds, setFunds] = useState([]);
   const [schemeType, setSchemeType] = useState(null); // вид дохода для модала «Схема»
+  const [archBusy, setArchBusy] = useState(null);     // id вида дохода в процессе архивирования
 
   // Неделя — из общего контекста (выбирается в шапке)
   const periods = useMemo(() => ({ cur: period, prev: prevPeriod }), [period, prevPeriod]);
@@ -137,6 +138,27 @@ export function Income() {
       setShowForm(true);
     } catch (e) { setLoadError(e?.message || String(e)); }
     finally { setOpBusy(null); }
+  };
+
+  // Архивирование вида дохода прямо из дерева (только финадмин, RLS
+  // itypes_write = is_fin_admin). Восстановление — в разделе «Архив».
+  // Кнопка показывается лишь у видов без вложенных статей: архив папки с
+  // активными статьями скрыл бы их из дерева, поэтому такой случай отсекаем.
+  const doArchiveType = async (t) => {
+    if (archBusy) return;
+    if (t.children?.length) {
+      setLoadError(`«${t.name}» содержит активные статьи — сначала заархивируйте их.`);
+      return;
+    }
+    if (!window.confirm(`Заархивировать вид дохода «${t.code ? t.code + " " : ""}${t.name}»? Он исчезнет из выбора при вводе дохода. Восстановить можно в разделе «Архив». Проведённые операции в Реестре не затрагиваются.`)) return;
+    setArchBusy(t.id); setLoadError("");
+    try {
+      await setIncomeTypeArchived(t.id, true);
+      setTypes((ts) => ts.filter((x) => x.id !== t.id));
+    } catch (e) {
+      const msg = e?.message || String(e);
+      setLoadError(msg.includes("row-level security") ? "Нет прав на изменение справочника видов дохода." : msg);
+    } finally { setArchBusy(null); }
   };
 
   // Дерево из плоского списка; сортировка по коду
@@ -264,6 +286,13 @@ export function Income() {
                   <Calculator size={16} />
                 </button>
               )}
+              {isFinAdmin && !hasChildren && (
+                <button style={{ ...st.iconBtn, padding: 4, color: C.faint, flexShrink: 0 }} className="btn"
+                  title="В архив" disabled={archBusy === loc.id}
+                  onClick={(e) => { e.stopPropagation(); doArchiveType(loc); }}>
+                  {archBusy === loc.id ? <Loader2 size={15} className="spin" /> : <Archive size={16} />}
+                </button>
+              )}
               {hasChildren && <span style={{ ...st.locChevron, transform: isOpen ? "rotate(90deg)" : "none" }}><ChevronRight size={18} /></span>}
             </div>
 
@@ -287,6 +316,14 @@ export function Income() {
                       <Calculator size={15} />
                     </button>
                   ) : null;
+                  const archBtn = isFinAdmin && !c.children.length ? (
+                    <button style={{ width: 30, height: 30, borderRadius: 9, display: "grid", placeItems: "center", flexShrink: 0,
+                        border: `1px solid ${C.line}`, background: "transparent", color: C.faint, cursor: "pointer" }}
+                      className="btn" title="В архив" disabled={archBusy === c.id}
+                      onClick={(e) => { e.stopPropagation(); doArchiveType(c); }}>
+                      {archBusy === c.id ? <Loader2 size={15} className="spin" /> : <Archive size={15} />}
+                    </button>
+                  ) : null;
 
                   if (isMobile) {
                     return (
@@ -295,6 +332,7 @@ export function Income() {
                           <span style={st.itemCode}>{c.code}</span>
                           <span style={{ fontWeight: 600, fontSize: 13, flex: 1, minWidth: 0 }}>{c.name}</span>
                           {calcBtn}
+                          {archBtn}
                         </div>
                         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                           <div>
@@ -315,6 +353,7 @@ export function Income() {
                         <span style={st.itemCode}>{c.code}</span>
                         <span>{c.name}</span>
                         {calcBtn}
+                        {archBtn}
                       </div>
                       <div style={st.itemPrev}>{fmt(rc.prev)}</div>
                       <div style={{ ...st.itemCur, color: rc.cur ? C.money : C.faint }}>{fmt(rc.cur)}</div>
