@@ -2,9 +2,10 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   RotateCcw, ArrowRightLeft, Clock, Lock, Loader2, AlertCircle, CheckCircle2,
   Plus, X, List, ChevronRight, Pencil, Archive, ArrowDownToLine,
-  ArrowUpFromLine, HandCoins, Layers, FileText,
+  ArrowUpFromLine, HandCoins, Layers, FileText, Trash2,
 } from "lucide-react";
 import { Stat } from "../../components/common";
+import { fundDeletePlan } from "./fundDelete";
 import { useTheme } from "../../theme/theme";
 import { useScrollLock } from "../../hooks/useScrollLock";
 import { useActionFeedback } from "../../hooks/useActionFeedback";
@@ -62,6 +63,7 @@ export function Funds() {
   const [statement, setStatement] = useState(null);
   const [editing, setEditing] = useState(null); // фонд для редактирования | "new"
   const [editingFolder, setEditingFolder] = useState(null); // папка | "new"
+  const [deleting, setDeleting] = useState(null); // фонд, который удаляем (модал)
   const [refs, setRefs] = useState(null);
   const [loansOf, setLoansOf] = useState(null); // { fund, rows } для клика по «Долгу»
   const [folders, setFolders] = useState([]);
@@ -228,13 +230,24 @@ export function Funds() {
     finally { setBusy(null); }
   };
 
-  const doArchive = async (fund) => {
-    setBusy(`arch:${fund.id}`); setErr(""); setDone("");
+  // «Удаление» фонда = слияние + архив (docs/funds-spec.md). Реестр неизменяем:
+  // историю не двигаем; денежный остаток переносим в фонд-приёмник новой
+  // операцией (fp_fund_transfer), затем фонд архивируется. Фонды с незакрытыми
+  // займами/обязательствами на этом этапе не удаляются (см. fundDeletePlan).
+  const doDelete = async (fund, targetId) => {
+    setBusy(`del:${fund.id}`); setErr(""); setDone("");
     try {
+      const m = metrics(fund);
+      const transfer = Math.round(m.available * 100) / 100;
+      if (transfer > 0.005) {
+        if (!targetId) throw new Error("Выберите фонд, куда перенести остаток");
+        if (!periodId) throw new Error("Нет открытой недели ФП для переноса остатка — добавьте неделю в шапке");
+        await fundTransfer(fund.id, targetId, transfer, periodId, `Перенос остатка при удалении фонда ${fund.code} — ${fund.name}`);
+      }
       await archiveFund(fund.id);
       await load();
-      setEditing(null);
-      setDone(`Фонд ${fund.code} архивирован`);
+      setDeleting(null);
+      setDone(`Фонд ${fund.code} удалён${transfer > 0.005 ? ` · остаток ${fmt(transfer)} TJS перенесён в ${nameOf(targetId)}` : ""}. История в Реестре сохранена.`);
     } catch (e) { setErr(e?.message || String(e)); }
     finally { setBusy(null); }
   };
@@ -378,7 +391,7 @@ export function Funds() {
               isFinAdmin={isFinAdmin} busy={busy}
               periodBalance={periodBal ? (periodBal[r.fund.id] || 0) : undefined} periodEnd={period?.ends_on}
               onStatement={() => openStatement(r.fund)} onEdit={() => setEditing(r.fund)}
-              onLoans={() => openLoans(r.fund)} onArchive={() => doArchive(r.fund)} />
+              onLoans={() => openLoans(r.fund)} onDelete={() => setDeleting(r.fund)} />
           ))}
         </div>
 
@@ -471,13 +484,88 @@ export function Funds() {
         onClose={() => setEditingFolder(null)}
         onSaved={async (msg) => { setEditingFolder(null); await load(); setDone(msg); }} />
     )}
+    {deleting && (
+      <DeleteFundModal C={C} st={st} isMobile={isMobile} fund={deleting} m={metrics(deleting)}
+        funds={funds} busy={busy === `del:${deleting.id}`}
+        onClose={() => setDeleting(null)} onDelete={(targetId) => doDelete(deleting, targetId)} />
+    )}
   </>);
+}
+
+// ---------------------------------------------------------------- Удаление фонда (слияние + архив)
+// Реестр неизменяем: историю не двигаем. Денежный остаток переносим в фонд-
+// приёмник новой операцией, затем фонд архивируется. Фонды с незакрытыми
+// займами/обязательствами удалять нельзя (см. fundDeletePlan).
+function DeleteFundModal({ C, st, isMobile, fund, m, funds, busy, onClose, onDelete }) {
+  useScrollLock();
+  const plan = fundDeletePlan({ balance: Number(fund.balance || 0), debt: m.debt, commitments: m.remaining });
+  const targets = funds.filter((f) => f.id !== fund.id);
+  const [targetId, setTargetId] = useState("");
+
+  return (
+    <div style={st.mdOverlay} data-modal="1" onClick={onClose}>
+      <div style={{ ...st.mdCard, width: "min(520px, 100%)" }} onClick={(e) => e.stopPropagation()}>
+        <div style={st.mdHead}>
+          <div style={st.mdTitle}>Удалить фонд</div>
+          <button style={st.iconBtn} onClick={onClose} aria-label="Закрыть"><X size={17} /></button>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, fontSize: 14 }}>
+          <span style={st.fundCode}>{fund.code}</span>
+          <span style={{ fontWeight: 700 }}>{fund.name}</span>
+        </div>
+
+        {!plan.deletable ? (
+          <>
+            <div role="alert" style={{ ...st.reqError, alignItems: "flex-start", flexDirection: "column", gap: 6 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 7, fontWeight: 700 }}>
+                <AlertCircle size={15} style={{ flexShrink: 0 }} /> Этот фонд пока нельзя удалить:
+              </div>
+              {plan.blockers.map((b, i) => <div key={i} style={{ paddingLeft: 22 }}>• {b}</div>)}
+            </div>
+            <div style={st.mdActions}>
+              <button style={st.btnGhost} className="btn" onClick={onClose}>Понятно</button>
+            </div>
+          </>
+        ) : (
+          <>
+            {plan.needsTransfer ? (
+              <>
+                <div style={{ fontSize: 12.5, color: C.sub, marginBottom: 10 }}>
+                  У фонда есть остаток <b style={{ color: C.info }}>{fmt(m.available)} TJS</b>. Выберите фонд, куда его перенести — операция уйдёт в Реестр, история удаляемого фонда сохранится.
+                </div>
+                <label style={{ display: "block", marginBottom: 6, fontSize: 12, color: C.faint }}>Фонд-приёмник остатка</label>
+                <select style={{ ...st.reqSelect, width: "100%" }} className="fin" value={targetId} onChange={(e) => setTargetId(e.target.value)}>
+                  <option value="">— выберите фонд —</option>
+                  {targets.map((f) => <option key={f.id} value={f.id}>{f.code} — {f.name}</option>)}
+                </select>
+              </>
+            ) : (
+              <div style={{ fontSize: 12.5, color: C.sub, marginBottom: 10 }}>
+                Фонд пуст (нет остатка, долгов и обязательств) — он будет удалён. История операций в Реестре сохранится.
+              </div>
+            )}
+            <div style={{ ...st.mdActions, ...(isMobile ? { flexDirection: "column" } : {}) }}>
+              <button style={st.btnGhost} className="btn" onClick={onClose} disabled={busy}>Отмена</button>
+              <button
+                style={{ ...st.btnGhost, color: C.danger, borderColor: `${C.danger}55`,
+                  opacity: (busy || (plan.needsTransfer && !targetId)) ? 0.6 : 1 }}
+                className="btn" disabled={busy || (plan.needsTransfer && !targetId)}
+                onClick={() => onDelete(targetId)}>
+                {busy ? <Loader2 size={15} className="spin" /> : <Trash2 size={15} />}
+                {plan.needsTransfer ? " Перенести остаток и удалить" : " Удалить фонд"}
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
 }
 
 
 // ---------------------------------------------------------------- Карточка фонда
-function FundCard({ C, st, fund: f, m, color, typeBadge, debtColor, debtLabel, availColor, isFinAdmin, busy, periodBalance, periodEnd, onStatement, onEdit, onLoans, onArchive }) {
-  const [confirmArch, setConfirmArch] = useState(false);
+function FundCard({ C, st, fund: f, m, color, typeBadge, debtColor, debtLabel, availColor, isFinAdmin, busy, periodBalance, periodEnd, onStatement, onEdit, onLoans, onDelete }) {
   const mini = (label, value, opts = {}) => (
     <div style={{ minWidth: 0, ...(opts.onClick && f && m.debt !== 0 ? { cursor: "pointer" } : {}) }} onClick={opts.onClick}>
       <div style={{ fontSize: 10, color: C.faint, textTransform: "uppercase", letterSpacing: 0.3, whiteSpace: "nowrap" }}>{label}</div>
@@ -524,17 +612,10 @@ function FundCard({ C, st, fund: f, m, color, typeBadge, debtColor, debtLabel, a
           </button>
         )}
         {isFinAdmin && (
-          confirmArch ? (
-            <button style={{ ...st.btnGhost, flex: 1.4, justifyContent: "center", padding: "7px 8px", fontSize: 12, color: C.danger, borderColor: `${C.danger}55` }} className="btn"
-              disabled={busy === `arch:${f.id}`} onClick={onArchive}>
-              {busy === `arch:${f.id}` ? <Loader2 size={13} className="spin" /> : <Archive size={13} />} Точно?
-            </button>
-          ) : (
-            <button style={{ ...st.btnGhost, justifyContent: "center", padding: "7px 9px", fontSize: 12, color: C.danger }} className="btn"
-              onClick={() => setConfirmArch(true)} title="Архивировать">
-              <Archive size={13} />
-            </button>
-          )
+          <button style={{ ...st.btnGhost, justifyContent: "center", padding: "7px 9px", fontSize: 12, color: C.danger }} className="btn"
+            disabled={busy === `del:${f.id}`} onClick={onDelete} title="Удалить фонд (с переносом остатка)">
+            {busy === `del:${f.id}` ? <Loader2 size={13} className="spin" /> : <Trash2 size={13} />}
+          </button>
         )}
       </div>
     </div>
