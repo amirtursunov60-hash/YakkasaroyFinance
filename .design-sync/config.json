@@ -4,5 +4,14 @@
   "shape": "package",
   "srcDir": "src",
   "tsconfig": "tsconfig.json",
-  "cssEntry": "src/index.css"
+  "cssEntry": "src/index.css",
+  "extraEntries": ["./.design-sync/preview-provider.tsx"],
+  "provider": { "component": "DSPreviewProvider" },
+  "componentSrcMap": {
+    "App": null,
+    "DSPreviewProvider": null
+  },
+  "overrides": {
+    "ConfirmModal": { "cardMode": "single", "viewport": "560x420" }
+  }
 }
