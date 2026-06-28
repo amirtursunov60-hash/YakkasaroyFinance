@@ -148,8 +148,10 @@ export const makeCss = (C) => {
     .heroTitle{font-size:21px;}
     /* iOS зумит страницу при фокусе инпута с font-size < 16px. Держим 16px на
        телефоне — это позволяет убрать user-scalable=no и вернуть зум жестами
-       (WCAG 1.4.4), не получая дёрганого авто-зума при вводе. */
-    input,select,textarea{font-size:16px;}
+       (WCAG 1.4.4), не получая дёрганого авто-зума при вводе. !important нужен,
+       чтобы перебить инлайн-стили полей (mdInput/mdSelect/search и т.п. задают
+       fontSize 13–13.5 инлайном, а инлайн сильнее обычного CSS-правила). */
+    input,select,textarea{font-size:16px !important;}
     /* Перф-бюджет стекла: на телефоне блюр дешевле (несколько backdrop-filter
        в видимой области ложатся на GPU тяжело). Блики/тени сохраняются. */
     .modbar,.gseg,.chiptray,.glass-surface{ backdrop-filter:blur(4px) saturate(${g.sat}); -webkit-backdrop-filter:blur(4px) saturate(${g.sat}); }
