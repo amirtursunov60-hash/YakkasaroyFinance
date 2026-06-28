@@ -36,6 +36,10 @@ const STAGES = [
 const byFundCode = (fundById) => (a, b) =>
   (fundById[a.fund_id]?.code || "").localeCompare(fundById[b.fund_id]?.code || "", "ru", { numeric: true });
 
+// Цвет фонда — как на вкладке «Фонды»: свой цвет фонда либо из палитры по хешу кода.
+const FUND_COLORS = ["#3ddc84", "#5b8def", "#e8911c", "#ff6b5e", "#9c6ade", "#5bd6c9", "#d6c14a", "#d64ad6"];
+const fundColor = (f) => f?.color || FUND_COLORS[[...(f?.code || f?.name || "?")].reduce((a, c) => a + c.charCodeAt(0), 0) % FUND_COLORS.length];
+
 export function Directive() {
   const { C, st, isMobile, profile } = useTheme();
   const { period, periodId, prevPeriod, loading: periodsLoading, reload: reloadPeriods } = usePeriod();
@@ -936,6 +940,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
     const fill = barVal > 0 ? Math.min(100, (barVal / barBase) * 100) : 0;
     const hasTypeRules = x.typeRules?.length > 0;
     const rowEditable = !locked && !(x.appr > 0);
+    const fc = fundColor(x.fund);
 
     if (isMobile) {
       return (
@@ -944,8 +949,8 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <input type="checkbox" style={cbStyle} checked={checked.has(x.fund.id)}
               disabled={!rowEditable} onChange={() => toggleOne(x.fund.id)} />
-            <FileText size={14} color={C.info} style={{ flexShrink: 0 }} />
-            <span style={st.fundCode}>{x.fund?.code}</span>
+            <span style={{ width: 26, height: 26, borderRadius: 8, display: "grid", placeItems: "center", flexShrink: 0, background: `${fc}22`, color: fc }}><FileText size={16} /></span>
+            <span style={{ ...st.fundCode, color: C.text }}>{x.fund?.code}</span>
             <span style={{ fontWeight: 700, fontSize: 13.5, flex: 1, minWidth: 0 }}>{x.fund?.name}</span>
             {x.fund?.is_restricted && <Lock size={12} color={C.faint} />}
             <span style={{ fontSize: 13, fontWeight: 800, color: C.sub, flexShrink: 0 }}>{pctOfRow(x)}%</span>
@@ -975,8 +980,8 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
           <div style={{ ...st.fundTop, minWidth: 0 }}>
             <input type="checkbox" style={cbStyle} checked={checked.has(x.fund.id)}
               disabled={!rowEditable} onChange={() => toggleOne(x.fund.id)} />
-            <FileText size={14} color={C.info} style={{ flexShrink: 0, ...(child ? { marginLeft: 14 } : {}) }} />
-            <span style={st.fundCode}>{x.fund?.code}</span>
+            <span style={{ width: 24, height: 24, borderRadius: 7, display: "grid", placeItems: "center", alignSelf: "center", flexShrink: 0, background: `${fc}22`, color: fc, ...(child ? { marginLeft: 14 } : {}) }}><FileText size={15} /></span>
+            <span style={{ ...st.fundCode, color: C.text }}>{x.fund?.code}</span>
             <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>{x.fund?.name}</span>
             {x.fund?.is_restricted && <Lock size={12} color={C.faint} />}
           </div>
