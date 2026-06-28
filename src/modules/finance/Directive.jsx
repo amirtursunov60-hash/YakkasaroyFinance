@@ -960,7 +960,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
             <div style={{ ...st.barFill, width: `${fill}%`, background: x.appr ? C.money : C.warning }} />
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginTop: 10 }}>
-            <MiniVal label="Доступно" value={fmt(avail)} bold />
+            <MiniVal label="Доступно" value={fmt(avail)} color={C.info} bold />
             <MiniVal label="Рассчитано" value={fmt(x.calc)} color={x.calc ? C.warning : C.faint} />
             <div style={{ minWidth: 0 }}>
               <div style={{ fontSize: 10, color: C.faint, marginBottom: 2 }}>Одобрено</div>
@@ -998,7 +998,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
             </button>
           </div>
         )}
-        {showBase && <div className="denseNum" style={{ ...st.fNum, fontWeight: 700 }}>{fmt(avail)}</div>}
+        {showBase && <div className="denseNum" style={{ ...st.fNum, fontWeight: 700, color: C.info }}>{fmt(avail)}</div>}
         {showResults && (
           <div className="denseNum" style={{ ...st.fNum, color: x.calc ? C.warning : C.faint, fontWeight: x.calc ? 600 : 400 }}>
             <span className={calcBusy ? "" : x.calc ? "pop" : ""}>{fmt(x.calc)}</span>
@@ -1107,7 +1107,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
                       <div style={{ ...st.barFill, width: `${gFill}%`, background: fsum.appr ? C.money : C.warning }} />
                     </div>
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginTop: 10 }}>
-                      <MiniVal label="Доступно" value={fmt(fsum.avail)} bold />
+                      <MiniVal label="Доступно" value={fmt(fsum.avail)} color={C.info} bold />
                       <MiniVal label="Рассчитано" value={fmt(fsum.calc)} color={fsum.calc ? C.warning : C.faint} bold />
                       <MiniVal label="Одобрено" value={fmt(fsum.appr)} color={fsum.appr ? C.money : C.faint} bold />
                     </div>
@@ -1127,7 +1127,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
                     </div>
                     <div style={st.fPct}><PctTag /></div>
                     <div />
-                    <div className="denseNum" style={{ ...st.fNum, fontWeight: 700 }}>{fmt(fsum.avail)}</div>
+                    <div className="denseNum" style={{ ...st.fNum, fontWeight: 700, color: C.info }}>{fmt(fsum.avail)}</div>
                     <div className="denseNum" style={{ ...st.fNum, color: fsum.calc ? C.warning : C.faint }}>{fmt(fsum.calc)}</div>
                     <div className="denseNum" style={{ ...st.fNum, color: fsum.appr ? C.money : C.faint, fontWeight: fsum.appr ? 700 : 400 }}>{fmt(fsum.appr)}</div>
                   </div>
@@ -1142,7 +1142,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
           <div style={{ ...st.frowTotal, padding: "12px 12px", borderTop: `1px solid ${C.line}` }}>
             <div style={{ fontSize: 12, fontWeight: 800, marginBottom: 8 }}>Итого по этапу</div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
-              <MiniVal label="Доступно" value={fmt(totals.avail)} bold />
+              <MiniVal label="Доступно" value={fmt(totals.avail)} color={C.info} bold />
               <MiniVal label="Рассчитано" value={fmt(totals.calc)} color={totals.calc ? C.warning : C.faint} bold />
               <div>
                 <div style={{ fontSize: 10, color: C.faint, marginBottom: 2 }}>Одобрено</div>
@@ -1155,7 +1155,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
             <div style={st.fName}><div style={st.actions}><CalcBtn /><ApproveBtn /><ResetBtn /></div></div>
             <div style={st.fPct} />
             <div />
-            <div className="denseNum" style={{ ...st.fNum, fontWeight: 700 }}>{fmt(totals.avail)}</div>
+            <div className="denseNum" style={{ ...st.fNum, fontWeight: 700, color: C.info }}>{fmt(totals.avail)}</div>
             <div className="denseNum" style={{ ...st.fNum, fontWeight: 700, color: totals.calc ? C.warning : C.faint }}>{fmt(totals.calc)}</div>
             <div className="denseNum" style={{ ...st.fNum, fontWeight: 700, color: C.money }}>
               {fmt(totals.appr)}

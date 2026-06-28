@@ -252,7 +252,7 @@ export function Funds() {
   const debtColor = (d) => d < -0.009 ? C.money : d > 0.009 ? C.danger : C.faint;
   const debtLabel = (d) => d === 0 ? "—" : (d > 0 ? "+" : "") + fmt(d);
   // Доступно: отрицательное (одобрено больше, чем есть) — тревога, красным
-  const availColor = (v) => v < -0.009 ? C.danger : C.money;
+  const availColor = (v) => v < -0.009 ? C.danger : C.info;
 
   // строки списка: сначала фонды без секции, потом секции с детьми
   const rows = [
