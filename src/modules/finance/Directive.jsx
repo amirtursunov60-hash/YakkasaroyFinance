@@ -883,8 +883,8 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
   // (см. ветку isMobile в FundRow), поэтому колонок всегда полный набор.
   const showBase = true;     // %, калькулятор, Доступно
   const showResults = true;  // Рассчитано, Одобрено
-  const GRID = "150px 58px 46px minmax(104px,1fr) 132px 132px";
-  const frow6 = { ...st.frow, gridTemplateColumns: GRID, minWidth: 760 };
+  const GRID = "185px 58px 46px minmax(104px,1fr) 132px 132px";
+  const frow6 = { ...st.frow, gridTemplateColumns: GRID, minWidth: 795 };
 
   // Три кнопки действий. eq — одинаковая ширина (для мобильного ряда mActions).
   const btnEq = { flex: 1, justifyContent: "center", minWidth: 0, padding: "11px 10px" };
@@ -1114,14 +1114,14 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
                   <div style={{ ...frow6, cursor: "pointer", background: C.panel2 }} className="frow"
                     onClick={() => setOpenFolders((o) => ({ ...o, [fid]: !o[fid] }))}>
                     <div style={st.fName}>
-                      <div style={st.fundTop}>
+                      <div style={{ ...st.fundTop, minWidth: 0 }}>
                         <input type="checkbox" style={cbStyle} checked={gChecked}
                           disabled={locked || !gSel.length}
                           onClick={(e) => e.stopPropagation()} onChange={toggleGroup} />
-                        <Landmark size={15} color={C.info} />
-                        <b>{folderById[fid]?.name || "Группа"}</b>
-                        <span style={{ fontSize: 11, color: C.faint }}>· {rows.length} фонд(ов)</span>
-                        <ChevronRight size={14} style={{ transform: isOpen ? "rotate(90deg)" : "none", transition: "transform .2s", color: C.faint }} />
+                        <Landmark size={15} color={C.info} style={{ flexShrink: 0 }} />
+                        <b style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>{folderById[fid]?.name || "Группа"}</b>
+                        <span style={{ fontSize: 11, color: C.faint, whiteSpace: "nowrap", flexShrink: 0 }}>· {rows.length} фонд(ов)</span>
+                        <ChevronRight size={14} style={{ flexShrink: 0, transform: isOpen ? "rotate(90deg)" : "none", transition: "transform .2s", color: C.faint }} />
                       </div>
                     </div>
                     <div style={st.fPct}><PctTag /></div>
