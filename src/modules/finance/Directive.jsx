@@ -970,12 +970,12 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
       );
     }
     return (
-      <div style={{ ...frow6, ...(child ? { paddingLeft: 14 } : {}) }} className="frow">
+      <div style={frow6} className="frow">
         <div style={st.fName}>
           <div style={{ ...st.fundTop, minWidth: 0 }}>
             <input type="checkbox" style={cbStyle} checked={checked.has(x.fund.id)}
               disabled={!rowEditable} onChange={() => toggleOne(x.fund.id)} />
-            <Coins size={14} color={C.money} style={{ flexShrink: 0 }} />
+            <Coins size={14} color={C.money} style={{ flexShrink: 0, ...(child ? { marginLeft: 14 } : {}) }} />
             <span style={st.fundCode}>{x.fund?.code}</span>
             <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>{x.fund?.name}</span>
             {x.fund?.is_restricted && <Lock size={12} color={C.faint} />}
