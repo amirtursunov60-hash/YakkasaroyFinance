@@ -883,10 +883,10 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
   // (см. ветку isMobile в FundRow), поэтому колонок всегда полный набор.
   const showBase = true;     // %, калькулятор, Доступно
   const showResults = true;  // Рассчитано, Одобрено
-  // Название тянется (minmax 185px→1fr), остальные колонки фиксированы и
-  // упакованы вплотную справа.
-  const GRID = "minmax(185px,1fr) 64px 64px 132px 132px 132px";
-  const frow6 = { ...st.frow, gridTemplateColumns: GRID, minWidth: 755 };
+  // Название тянется (minmax 260px→1fr), остальные колонки фиксированы и
+  // упакованы вплотную справа. %/калькулятор по 56px.
+  const GRID = "minmax(260px,1fr) 56px 56px 132px 132px 132px";
+  const frow6 = { ...st.frow, gridTemplateColumns: GRID, minWidth: 815 };
 
   // Три кнопки действий. eq — одинаковая ширина (для мобильного ряда mActions).
   const btnEq = { flex: 1, justifyContent: "center", minWidth: 0, padding: "11px 10px" };
