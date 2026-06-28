@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { ClipboardList, Calculator, CalendarDays, Check, RotateCcw, RotateCw, Lock, Unlock, Ban, ArrowRightLeft, Loader2, AlertCircle, CheckCircle2, X, Landmark, ChevronRight, Scale, Banknote, Wallet, Coins, List, LayoutList, ShieldCheck, Gavel, Undo2 } from "lucide-react";
+import { ClipboardList, Calculator, CalendarDays, Check, RotateCcw, RotateCw, Lock, Unlock, Ban, ArrowRightLeft, Loader2, AlertCircle, CheckCircle2, X, Layers, ChevronRight, Scale, Banknote, Wallet, FileText, List, LayoutList, Gavel, Undo2 } from "lucide-react";
 import { Stat, ConfirmModal } from "../../components/common";
 import { useTheme } from "../../theme/theme";
 import { useScrollLock } from "../../hooks/useScrollLock";
@@ -35,6 +35,7 @@ const STAGES = [
 
 const byFundCode = (fundById) => (a, b) =>
   (fundById[a.fund_id]?.code || "").localeCompare(fundById[b.fund_id]?.code || "", "ru", { numeric: true });
+
 
 export function Directive() {
   const { C, st, isMobile, profile } = useTheme();
@@ -298,19 +299,18 @@ export function Directive() {
     finally { setBusy(null); }
   };
 
-  // Подтверждения недели (ХМС-процедура: исполнительный контур + финкомитет/BAF).
-  // Закрытие Директивой требует обоих (страж + триггер БД).
+  // Исполнительное подтверждение недели дают директора (исполнительный контур).
+  // Закрытие недели (= одобрение финкомитетом + закрытие) — только финдиректор/
+  // владелец, и только после исполнительного подтверждения.
   const canConfirmExec = ["owner", "fin_director", "ops_director"].includes(profile?.role);
-  const canConfirmBaf = ["owner", "fin_director"].includes(profile?.role);
-  const doConfirm = async (kind, value) => {
+  const canClose = ["owner", "fin_director"].includes(profile?.role);
+  const doConfirm = async (value) => {
     if (busy || !period || isClosed) return;
-    setBusy(`confirm:${kind}`); setErr(""); setDone("");
+    setBusy("confirm:executive"); setErr(""); setDone("");
     try {
-      await setPeriodConfirmation(periodId, kind, value);
+      await setPeriodConfirmation(periodId, "executive", value);
       await reloadPeriods(true);
-      setDone(value
-        ? (kind === "executive" ? "Исполнительное подтверждение проставлено" : "Подтверждение финкомитета (BAF) проставлено")
-        : "Подтверждение снято");
+      setDone(value ? "Исполнительное подтверждение проставлено" : "Исполнительное подтверждение снято");
     } catch (e) { setErr(e?.message || String(e)); }
     finally { setBusy(null); }
   };
@@ -318,6 +318,7 @@ export function Directive() {
   // Переключатель: закрытая неделя открывается обратно, открытая — закрывается
   const doToggleClose = async () => {
     if (busy || !period) return;
+    if (!canClose) { setErr("Закрыть или открыть неделю может только финансовый директор или владелец."); return; }
     setErr(""); setDone(""); setCloseMsg([]);
     if (isClosed) {
       if (!(await askConfirm({ title: "Открыть неделю заново", message: "Протокол Директивы будет удалён, операции периода снова разрешены.", tone: "danger", confirmLabel: "Открыть неделю" }))) return;
@@ -330,12 +331,18 @@ export function Directive() {
       finally { setBusy(null); }
       return;
     }
-    // Правила закрытия недели: показываем ВСЕ нарушения сразу над кнопкой (кнопка доступна).
-    const blockers = weekCloseBlockReasons({ prevPeriod, weekReqs, remainder, funds, period });
+    // Правила закрытия недели: показываем ВСЕ нарушения сразу над кнопкой (кнопка
+    // доступна). Финкомитет проставится автоматически при закрытии, поэтому в
+    // проверку блокеров передаём BAF как уже стоящий; исполнительное подтверждение
+    // остаётся реальным блокером — без одобрения директоров закрыть нельзя.
+    const blockers = weekCloseBlockReasons({ prevPeriod, weekReqs, remainder, funds,
+      period: { ...period, is_baf_confirmed: true } });
     if (blockers.length) { setCloseMsg(blockers); return; }
-    if (!(await askConfirm({ title: "Закрыть период ФП", message: "Все операции периода будут заблокированы, протокол Директивы сохранится.", tone: "warning", confirmLabel: "Закрыть период" }))) return;
+    if (!(await askConfirm({ title: "Закрыть неделю ФП", message: "Все операции периода будут заблокированы, протокол Директивы сохранится.", tone: "warning", confirmLabel: "Закрыть неделю" }))) return;
     setBusy("close");
     try {
+      // Закрытие финдиректором/владельцем = одобрение финкомитетом (BAF).
+      if (!period.is_baf_confirmed) await setPeriodConfirmation(periodId, "baf", true);
       const protocol = {
         income,
         allocations: regRows.map((r) => ({
@@ -397,7 +404,7 @@ export function Directive() {
         </div>
         <div style={st.heroStats}>
           <Stat label="Доход на этой неделе" value={fmt(income)} unit="TJS" />
-          <Stat label="Доступно во всех фондах" value={fmt(fundsTotal)} unit="TJS" accent />
+          <Stat label="Доступно во всех фондах" value={fmt(fundsTotal)} unit="TJS" tone="info" />
           <Stat label="Доход за прошлую неделю" value={fmt(prevIncome)} unit="TJS" />
           <Stat label="Одобрено распределение" value={fmt(approvedTotal)} unit="TJS" />
         </div>
@@ -474,33 +481,54 @@ export function Directive() {
         ))}
       </div>
     )}
-    {/* Подтверждение недели — два контура ХМС (исполнительный + финкомитет/BAF).
-        Оба нужны для закрытия Директивой. */}
-    {period && (
-      <section style={{ ...st.fpCard, marginTop: 14 }}>
-        <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: 0.5, color: C.faint, fontWeight: 700, marginBottom: 10 }}>
-          Подтверждение недели
-        </div>
-        <div style={{ display: "grid", gap: 8, gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr" }}>
-          <ConfirmRow C={C} st={st} icon={ShieldCheck} label="Исполнительное"
-            confirmed={!!period.is_executive_confirmed} canToggle={canConfirmExec && !isClosed}
-            busy={busy === "confirm:executive"} disabled={!!busy}
-            onToggle={() => doConfirm("executive", !period.is_executive_confirmed)} />
-          <ConfirmRow C={C} st={st} icon={Gavel} label="Финкомитет (BAF)"
-            confirmed={!!period.is_baf_confirmed} canToggle={canConfirmBaf && !isClosed}
-            busy={busy === "confirm:baf"} disabled={!!busy}
-            onToggle={() => doConfirm("baf", !period.is_baf_confirmed)} />
-        </div>
-      </section>
+    {/* Закрытая неделя: одобрена финкомитетом и закрыта. */}
+    {isClosed && (
+      <div style={{ display: "flex", alignItems: "center", gap: 7, color: C.money, fontSize: 12.5, fontWeight: 700, marginTop: 14 }}>
+        <CheckCircle2 size={15} /> Неделя одобрена финкомитетом и закрыта
+      </div>
     )}
 
-    {/* Закрытие периода Директивой — отдельной кнопкой в самом низу. Кнопка
-        всегда доступна; правила закрытия проверяются по нажатию (см. doToggleClose). */}
-    <button style={{ ...(isClosed ? st.btnGhost : st.btnGreen), width: "100%", justifyContent: "center", marginTop: (!isClosed && closeMsg.length) ? 10 : 14, opacity: busy === "close" ? 0.7 : 1 }}
-      className="btn glass" onClick={doToggleClose} disabled={busy || !period}>
-      {busy === "close" ? <Loader2 size={15} className="spin" /> : isClosed ? <Unlock size={15} /> : <Lock size={15} />}
-      {isClosed ? " Открыть неделю" : " Закрыть период ФП"}
-    </button>
+    {/* Две кнопки в ряд (как «запрет подачи / перенос»): исполнительное одобрение
+        (директора) и «Одобрить Финкомитетом» (= закрыть, финдиректор/владелец).
+        Без исполнительного одобрения закрыть нельзя (реальный блокер). */}
+    {period && !isClosed && (
+      <div style={st.fpActions} className="fpActions">
+        <button
+          style={{ ...(period.is_executive_confirmed ? st.btnGhost : st.btnGreen), width: "100%", justifyContent: "center",
+            opacity: (busy === "confirm:executive" || !canConfirmExec) ? 0.6 : 1, cursor: canConfirmExec ? "pointer" : "not-allowed" }}
+          className="btn" disabled={busy || !canConfirmExec}
+          title={!canConfirmExec ? "Одобрение финкомитета даёт директор" : (period.is_executive_confirmed ? "Снять одобрение финкомитета" : "Одобрить неделю финкомитетом")}
+          onClick={() => doConfirm(!period.is_executive_confirmed)}>
+          {busy === "confirm:executive" ? <Loader2 size={15} className="spin" />
+            : period.is_executive_confirmed ? <Check size={15} /> : <Gavel size={15} />}
+          {period.is_executive_confirmed ? " Одобрено финкомитетом" : " Одобрить финкомитетом"}
+        </button>
+        <button
+          style={{ ...st.btnGreen, width: "100%", justifyContent: "center",
+            opacity: (busy === "close" || !canClose) ? 0.6 : 1, cursor: canClose ? "pointer" : "not-allowed" }}
+          className="btn glass" disabled={busy || !canClose}
+          title={!canClose ? "Закрыть неделю может только финдиректор/владелец" : "Закрыть неделю ФП (нужно одобрение финкомитета)"}
+          onClick={doToggleClose}>
+          {busy === "close" ? <Loader2 size={15} className="spin" /> : <Lock size={15} />}
+          {" Закрыть неделю ФП"}
+        </button>
+      </div>
+    )}
+
+    {/* Закрытая неделя — открыть заново (финдиректор/владелец). */}
+    {period && isClosed && (
+      <button style={{ ...st.btnGhost, width: "100%", justifyContent: "center", marginTop: period?.is_baf_confirmed ? 10 : 14, opacity: (busy === "close" || !canClose) ? 0.6 : 1, cursor: canClose ? "pointer" : "not-allowed" }}
+        className="btn glass" onClick={doToggleClose} disabled={busy || !canClose}
+        title={!canClose ? "Открыть неделю может только финдиректор/владелец" : "Открыть неделю заново"}>
+        {busy === "close" ? <Loader2 size={15} className="spin" /> : <Unlock size={15} />}
+        {" Открыть неделю"}
+      </button>
+    )}
+    {!canClose && period && (
+      <div style={{ fontSize: 11.5, color: C.faint, textAlign: "center", marginTop: 6 }}>
+        Закрыть неделю может только финансовый директор или владелец
+      </div>
+    )}
 
     {transferOpen && (
       <TransferModal C={C} st={st} funds={funds} remainder={remainder}
@@ -521,37 +549,6 @@ export function Directive() {
         onConfirm={() => resolveConfirm(true)} onCancel={() => resolveConfirm(false)} />
     )}
   </>);
-}
-
-
-// ---------------------------------------------------------------- Строка подтверждения недели
-// Один контур подтверждения (исполнительный / финкомитет). Подтверждённый —
-// зелёная плашка с возможностью снять; неподтверждённый — кнопка «Подтвердить».
-function ConfirmRow({ C, st, icon: Icon, label, confirmed, canToggle, busy, disabled, onToggle }) {
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 12,
-      border: `1px solid ${confirmed ? C.money : C.line}`, background: confirmed ? `${C.money}14` : C.panel2 }}>
-      <div style={{ width: 32, height: 32, borderRadius: 9, display: "grid", placeItems: "center", flexShrink: 0,
-        background: confirmed ? `${C.money}22` : `${C.faint}1a`, color: confirmed ? C.money : C.faint }}>
-        <Icon size={17} />
-      </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontWeight: 700, fontSize: 13.5 }}>{label}</div>
-        <div style={{ fontSize: 11.5, color: confirmed ? C.money : C.faint, fontWeight: 600 }}>
-          {confirmed ? "подтверждено" : "не подтверждено"}
-        </div>
-      </div>
-      {canToggle ? (
-        <button style={{ ...(confirmed ? st.btnGhost : st.btnGreen), padding: "7px 12px", fontSize: 12.5, opacity: busy ? 0.7 : 1 }}
-          className="btn" disabled={disabled} onClick={onToggle}>
-          {busy ? <Loader2 size={14} className="spin" /> : confirmed ? <RotateCcw size={14} /> : <Check size={14} />}
-          {confirmed ? " Снять" : " Подтвердить"}
-        </button>
-      ) : confirmed ? (
-        <CheckCircle2 size={18} color={C.money} />
-      ) : null}
-    </div>
-  );
 }
 
 
@@ -842,7 +839,7 @@ function RequestReviewControls({ C, st, isMobile, item, funds, isFinAdmin, onApp
 function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders, stageFact, onCalc, onApprove, onReset, onResetApproved, onOpenCalc }) {
   const [openFolders, setOpenFolders] = useState({});
   const [checked, setChecked] = useState(() => new Set());
-  const [collapsed, setCollapsed] = useState(true); // по умолчанию этап свёрнут
+  const [collapsed, setCollapsed] = useState(false); // по умолчанию этап развёрнут
   const calcBusy = busy === `calc:${sg.key}`;
   const apprBusy = busy === `appr:${sg.key}`;
   const resetBusy = busy === `reset:${sg.key}`;
@@ -883,8 +880,10 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
   // (см. ветку isMobile в FundRow), поэтому колонок всегда полный набор.
   const showBase = true;     // %, калькулятор, Доступно
   const showResults = true;  // Рассчитано, Одобрено
-  const GRID = "150px 58px 46px minmax(104px,1fr) 132px 132px";
-  const frow6 = { ...st.frow, gridTemplateColumns: GRID, minWidth: 760 };
+  // Название тянется (minmax 260px→1fr), остальные колонки фиксированы и
+  // упакованы вплотную справа. %/калькулятор по 56px.
+  const GRID = "minmax(260px,1fr) 56px 56px 132px 132px 132px";
+  const frow6 = { ...st.frow, gridTemplateColumns: GRID, minWidth: 815 };
 
   // Три кнопки действий. eq — одинаковая ширина (для мобильного ряда mActions).
   const btnEq = { flex: 1, justifyContent: "center", minWidth: 0, padding: "11px 10px" };
@@ -942,8 +941,8 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <input type="checkbox" style={cbStyle} checked={checked.has(x.fund.id)}
               disabled={!rowEditable} onChange={() => toggleOne(x.fund.id)} />
-            <Coins size={14} color={C.money} style={{ flexShrink: 0 }} />
-            <span style={st.fundCode}>{x.fund?.code}</span>
+            <span style={{ width: 26, height: 26, borderRadius: 8, display: "grid", placeItems: "center", flexShrink: 0, background: `${C.sub}22`, color: C.sub }}><FileText size={16} /></span>
+            <span style={{ ...st.fundCode, color: C.text }}>{x.fund?.code}</span>
             <span style={{ fontWeight: 700, fontSize: 13.5, flex: 1, minWidth: 0 }}>{x.fund?.name}</span>
             {x.fund?.is_restricted && <Lock size={12} color={C.faint} />}
             <span style={{ fontSize: 13, fontWeight: 800, color: C.sub, flexShrink: 0 }}>{pctOfRow(x)}%</span>
@@ -957,7 +956,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
             <div style={{ ...st.barFill, width: `${fill}%`, background: x.appr ? C.money : C.warning }} />
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginTop: 10 }}>
-            <MiniVal label="Доступно" value={fmt(avail)} bold />
+            <MiniVal label="Доступно" value={fmt(avail)} color={C.info} bold />
             <MiniVal label="Рассчитано" value={fmt(x.calc)} color={x.calc ? C.warning : C.faint} />
             <div style={{ minWidth: 0 }}>
               <div style={{ fontSize: 10, color: C.faint, marginBottom: 2 }}>Одобрено</div>
@@ -968,13 +967,13 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
       );
     }
     return (
-      <div style={{ ...frow6, ...(child ? { paddingLeft: 14 } : {}) }} className="frow">
+      <div style={frow6} className="frow">
         <div style={st.fName}>
           <div style={{ ...st.fundTop, minWidth: 0 }}>
             <input type="checkbox" style={cbStyle} checked={checked.has(x.fund.id)}
               disabled={!rowEditable} onChange={() => toggleOne(x.fund.id)} />
-            <Coins size={14} color={C.money} style={{ flexShrink: 0 }} />
-            <span style={st.fundCode}>{x.fund?.code}</span>
+            <span style={{ width: 24, height: 24, borderRadius: 7, display: "grid", placeItems: "center", alignSelf: "center", flexShrink: 0, background: `${C.sub}22`, color: C.sub, ...(child ? { marginLeft: 14 } : {}) }}><FileText size={15} /></span>
+            <span style={{ ...st.fundCode, color: C.text }}>{x.fund?.code}</span>
             <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>{x.fund?.name}</span>
             {x.fund?.is_restricted && <Lock size={12} color={C.faint} />}
           </div>
@@ -995,7 +994,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
             </button>
           </div>
         )}
-        {showBase && <div className="denseNum" style={{ ...st.fNum, fontWeight: 700 }}>{fmt(avail)}</div>}
+        {showBase && <div className="denseNum" style={{ ...st.fNum, fontWeight: 700, color: C.info }}>{fmt(avail)}</div>}
         {showResults && (
           <div className="denseNum" style={{ ...st.fNum, color: x.calc ? C.warning : C.faint, fontWeight: x.calc ? 600 : 400 }}>
             <span className={calcBusy ? "" : x.calc ? "pop" : ""}>{fmt(x.calc)}</span>
@@ -1089,14 +1088,13 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
                         disabled={locked || !gSel.length}
                         onClick={(e) => e.stopPropagation()} onChange={toggleGroup} />
                       <div style={{ width: 30, height: 30, borderRadius: 9, display: "grid", placeItems: "center",
-                        background: `${C.info}22`, color: C.info, flexShrink: 0 }}>
-                        <Landmark size={16} />
+                        background: `${C.warning}22`, color: C.warning, flexShrink: 0 }}>
+                        <Layers size={16} />
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontWeight: 800, fontSize: 13.5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                           {folderById[fid]?.name || "Группа"}
                         </div>
-                        <div style={{ fontSize: 10.5, color: C.faint, marginTop: 1 }}>{rows.length} фонд(ов)</div>
                       </div>
                       <span style={{ fontSize: 13, fontWeight: 800, color: C.sub, flexShrink: 0 }}><PctTag /></span>
                       <ChevronRight size={18} style={{ transform: isOpen ? "rotate(90deg)" : "none", transition: "transform .2s", color: C.faint, flexShrink: 0 }} />
@@ -1105,7 +1103,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
                       <div style={{ ...st.barFill, width: `${gFill}%`, background: fsum.appr ? C.money : C.warning }} />
                     </div>
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginTop: 10 }}>
-                      <MiniVal label="Доступно" value={fmt(fsum.avail)} bold />
+                      <MiniVal label="Доступно" value={fmt(fsum.avail)} color={C.info} bold />
                       <MiniVal label="Рассчитано" value={fmt(fsum.calc)} color={fsum.calc ? C.warning : C.faint} bold />
                       <MiniVal label="Одобрено" value={fmt(fsum.appr)} color={fsum.appr ? C.money : C.faint} bold />
                     </div>
@@ -1114,19 +1112,18 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
                   <div style={{ ...frow6, cursor: "pointer", background: C.panel2 }} className="frow"
                     onClick={() => setOpenFolders((o) => ({ ...o, [fid]: !o[fid] }))}>
                     <div style={st.fName}>
-                      <div style={st.fundTop}>
+                      <div style={{ ...st.fundTop, minWidth: 0 }}>
                         <input type="checkbox" style={cbStyle} checked={gChecked}
                           disabled={locked || !gSel.length}
                           onClick={(e) => e.stopPropagation()} onChange={toggleGroup} />
-                        <Landmark size={15} color={C.info} />
-                        <b>{folderById[fid]?.name || "Группа"}</b>
-                        <span style={{ fontSize: 11, color: C.faint }}>· {rows.length} фонд(ов)</span>
-                        <ChevronRight size={14} style={{ transform: isOpen ? "rotate(90deg)" : "none", transition: "transform .2s", color: C.faint }} />
+                        <Layers size={15} color={C.warning} style={{ flexShrink: 0 }} />
+                        <b style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>{folderById[fid]?.name || "Группа"}</b>
+                        <ChevronRight size={14} style={{ flexShrink: 0, transform: isOpen ? "rotate(90deg)" : "none", transition: "transform .2s", color: C.faint }} />
                       </div>
                     </div>
                     <div style={st.fPct}><PctTag /></div>
                     <div />
-                    <div className="denseNum" style={{ ...st.fNum, fontWeight: 700 }}>{fmt(fsum.avail)}</div>
+                    <div className="denseNum" style={{ ...st.fNum, fontWeight: 700, color: C.info }}>{fmt(fsum.avail)}</div>
                     <div className="denseNum" style={{ ...st.fNum, color: fsum.calc ? C.warning : C.faint }}>{fmt(fsum.calc)}</div>
                     <div className="denseNum" style={{ ...st.fNum, color: fsum.appr ? C.money : C.faint, fontWeight: fsum.appr ? 700 : 400 }}>{fmt(fsum.appr)}</div>
                   </div>
@@ -1141,7 +1138,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
           <div style={{ ...st.frowTotal, padding: "12px 12px", borderTop: `1px solid ${C.line}` }}>
             <div style={{ fontSize: 12, fontWeight: 800, marginBottom: 8 }}>Итого по этапу</div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
-              <MiniVal label="Доступно" value={fmt(totals.avail)} bold />
+              <MiniVal label="Доступно" value={fmt(totals.avail)} color={C.info} bold />
               <MiniVal label="Рассчитано" value={fmt(totals.calc)} color={totals.calc ? C.warning : C.faint} bold />
               <div>
                 <div style={{ fontSize: 10, color: C.faint, marginBottom: 2 }}>Одобрено</div>
@@ -1154,7 +1151,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
             <div style={st.fName}><div style={st.actions}><CalcBtn /><ApproveBtn /><ResetBtn /></div></div>
             <div style={st.fPct} />
             <div />
-            <div className="denseNum" style={{ ...st.fNum, fontWeight: 700 }}>{fmt(totals.avail)}</div>
+            <div className="denseNum" style={{ ...st.fNum, fontWeight: 700, color: C.info }}>{fmt(totals.avail)}</div>
             <div className="denseNum" style={{ ...st.fNum, fontWeight: 700, color: totals.calc ? C.warning : C.faint }}>{fmt(totals.calc)}</div>
             <div className="denseNum" style={{ ...st.fNum, fontWeight: 700, color: C.money }}>
               {fmt(totals.appr)}
