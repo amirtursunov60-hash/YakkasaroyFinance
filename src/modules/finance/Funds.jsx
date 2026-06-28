@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   RotateCcw, ArrowRightLeft, Clock, Lock, Loader2, AlertCircle, CheckCircle2,
   Plus, X, List, ChevronRight, Pencil, Archive, ArrowDownToLine,
-  ArrowUpFromLine, HandCoins, Layers,
+  ArrowUpFromLine, HandCoins, Layers, FileText,
 } from "lucide-react";
 import { Stat } from "../../components/common";
 import { useTheme } from "../../theme/theme";
@@ -492,6 +492,7 @@ function FundCard({ C, st, fund: f, m, color, typeBadge, debtColor, debtLabel, a
       <span style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 4, background: color }} />
       <div>
         <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+          <span style={{ width: 24, height: 24, borderRadius: 7, display: "grid", placeItems: "center", flexShrink: 0, background: `${C.sub}22`, color: C.sub }}><FileText size={15} /></span>
           <span style={st.fundCode}>{f.code}</span>
           <span style={{ fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.name}</span>
           {f.is_private && <Lock size={12} color={C.faint} style={{ flexShrink: 0, marginLeft: "auto" }} />}
