@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { ClipboardList, Calculator, CalendarDays, Check, RotateCcw, RotateCw, Lock, Unlock, Ban, ArrowRightLeft, Loader2, AlertCircle, CheckCircle2, X, Landmark, ChevronRight, Scale, Banknote, Wallet, Coins, List, LayoutList, ShieldCheck, Gavel, Undo2 } from "lucide-react";
+import { ClipboardList, Calculator, CalendarDays, Check, RotateCcw, RotateCw, Lock, Unlock, Ban, ArrowRightLeft, Loader2, AlertCircle, CheckCircle2, X, Boxes, ChevronRight, Scale, Banknote, Wallet, Coins, List, LayoutList, ShieldCheck, Gavel, Undo2 } from "lucide-react";
 import { Stat, ConfirmModal } from "../../components/common";
 import { useTheme } from "../../theme/theme";
 import { useScrollLock } from "../../hooks/useScrollLock";
@@ -1092,7 +1092,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
                         onClick={(e) => e.stopPropagation()} onChange={toggleGroup} />
                       <div style={{ width: 30, height: 30, borderRadius: 9, display: "grid", placeItems: "center",
                         background: `${C.info}22`, color: C.info, flexShrink: 0 }}>
-                        <Landmark size={16} />
+                        <Boxes size={16} />
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontWeight: 800, fontSize: 13.5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -1119,7 +1119,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
                         <input type="checkbox" style={cbStyle} checked={gChecked}
                           disabled={locked || !gSel.length}
                           onClick={(e) => e.stopPropagation()} onChange={toggleGroup} />
-                        <Landmark size={15} color={C.info} style={{ flexShrink: 0 }} />
+                        <Boxes size={15} color={C.info} style={{ flexShrink: 0 }} />
                         <b style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>{folderById[fid]?.name || "Группа"}</b>
                         <ChevronRight size={14} style={{ flexShrink: 0, transform: isOpen ? "rotate(90deg)" : "none", transition: "transform .2s", color: C.faint }} />
                       </div>
