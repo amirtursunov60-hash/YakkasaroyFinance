@@ -398,7 +398,7 @@ export function Directive() {
         </div>
         <div style={st.heroStats}>
           <Stat label="Доход на этой неделе" value={fmt(income)} unit="TJS" />
-          <Stat label="Доступно во всех фондах" value={fmt(fundsTotal)} unit="TJS" accent />
+          <Stat label="Доступно во всех фондах" value={fmt(fundsTotal)} unit="TJS" tone="info" />
           <Stat label="Доход за прошлую неделю" value={fmt(prevIncome)} unit="TJS" />
           <Stat label="Одобрено распределение" value={fmt(approvedTotal)} unit="TJS" />
         </div>
