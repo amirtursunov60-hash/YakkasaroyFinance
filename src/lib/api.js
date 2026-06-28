@@ -67,7 +67,7 @@ export async function fetchIncomeTypes() {
 // ---- Виды дохода (справочник income_types, Доход §8) -----------------------
 // CRUD + переключение архива под RLS-политикой itypes_write = is_fin_admin()
 // (см. baseline-схему). Дерево: папки-направления (parent_id IS NULL,
-// с привязкой к точке) → листья-статьи (parent_id). Используется вкладкой
+// с привязкой к точке) → листья-виды дохода (parent_id). Используется вкладкой
 // «Доходы» (создание/правка прямо в дереве) и модулем «Архив» (восстановление).
 export async function fetchIncomeTypesManage({ includeArchived = false } = {}) {
   let query = supabase
