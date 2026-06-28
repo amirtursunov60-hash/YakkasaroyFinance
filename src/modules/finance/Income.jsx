@@ -603,7 +603,6 @@ function IncomeTypeFormModal({ st, node, folders, locations, onClose, onSaved })
     code: node?.code || "", name: node?.name || "",
     parentId: node?.parent_id || "", locationId: node?.location_id || "",
   });
-  const [newFolder, setNewFolder] = useState(""); // создать папку на лету (как у фонда)
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
 
@@ -611,23 +610,18 @@ function IncomeTypeFormModal({ st, node, folders, locations, onClose, onSaved })
     if (busy) return;
     setErr("");
     if (!f.name.trim()) return setErr("Укажите название");
-    if (!isFolder && !f.parentId && !newFolder.trim()) return setErr("Выберите папку или впишите новую");
+    if (!isFolder && !f.parentId) return setErr("Выберите папку-направление для вида дохода");
     setBusy(true);
     try {
-      // Для вида дохода: если вписана новая папка — создаём её и кладём вид туда.
-      let parentId = f.parentId;
-      if (!isFolder && newFolder.trim()) {
-        parentId = (await createIncomeType({ name: newFolder.trim(), parentId: null })).id;
-      }
       if (isEdit) {
         const patch = isFolder
           ? { code: f.code.trim() || null, name: f.name.trim(), location_id: f.locationId || null }
-          : { code: f.code.trim() || null, name: f.name.trim(), parent_id: parentId };
+          : { code: f.code.trim() || null, name: f.name.trim(), parent_id: f.parentId };
         await updateIncomeType(node.id, patch);
       } else if (isFolder) {
         await createIncomeType({ code: f.code.trim(), name: f.name.trim(), parentId: null, locationId: f.locationId || null });
       } else {
-        await createIncomeType({ code: f.code.trim(), name: f.name.trim(), parentId });
+        await createIncomeType({ code: f.code.trim(), name: f.name.trim(), parentId: f.parentId });
       }
       await onSaved();
     } catch (e) {
@@ -678,12 +672,10 @@ function IncomeTypeFormModal({ st, node, folders, locations, onClose, onSaved })
             <div style={st.reqField}>
               <span style={st.reqFieldLbl}>Находится в папке</span>
               <select style={st.mdSelect} className="fin" value={f.parentId}
-                onChange={(e) => setF((p) => ({ ...p, parentId: e.target.value }))} disabled={!!newFolder.trim()}>
+                onChange={(e) => setF((p) => ({ ...p, parentId: e.target.value }))}>
                 <option value="">— выберите папку —</option>
                 {folders.map((fl) => <option key={fl.id} value={fl.id}>{fl.code ? `${fl.code} ` : ""}{fl.name}</option>)}
               </select>
-              <input style={{ ...st.mdInput, marginTop: 6 }} className="fin" placeholder="…или новая папка"
-                value={newFolder} onChange={(e) => setNewFolder(e.target.value)} />
             </div>
           )}
         </div>
