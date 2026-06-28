@@ -39,6 +39,13 @@ const STAGE_OPTS = [
 // фонды хранят выбранный цвет конкретным hex, поэтому пресеты статичны.
 const FUND_COLORS = ["#3ddc84", "#5b8def", "#e8911c", "#ff6b5e", "#9c6ade", "#5bd6c9", "#d6c14a", "#d64ad6"];
 
+// Сетка строки списка фондов (десктоп) — как таблица в «Директиве»:
+// Название · Доступно · К оплате · Долги · действия. На телефоне — карточки.
+const FUND_GRID = {
+  display: "grid", gridTemplateColumns: "minmax(190px,1fr) 120px 120px 110px 150px",
+  alignItems: "center", gap: 12, padding: "12px 18px", minWidth: 730,
+};
+
 const OP_LABELS = {
   income: "Доход", income_return: "Возврат дохода", distribution: "Распределение",
   request_payment: "Оплата заявки", bill_payment: "Оплата счёта", payroll_payment: "Выплата ЗП",
@@ -374,12 +381,22 @@ export function Funds() {
           </div>
         </div>
 
-        <div style={{ display: "grid", gap: 12, gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill, minmax(300px, 1fr))" }} className="stagger">
+        {/* Десктоп: заголовок колонок (как таблица в «Директиве») */}
+        {!isMobile && rows.length > 0 && (
+          <div style={{ ...FUND_GRID, ...st.frowHead, padding: "10px 18px", borderTop: `1px solid ${C.line}` }}>
+            <div>Название</div>
+            <div style={{ textAlign: "right" }}>Доступно</div>
+            <div style={{ textAlign: "right" }}>К оплате</div>
+            <div style={{ textAlign: "right" }}>Долги</div>
+            <div />
+          </div>
+        )}
+        <div className="stagger">
           {rows.map((r) => r.section ? (() => {
             const folder = folders.find((x) => x.id === r.section) || { id: r.section, name: "Раздел" };
             const sub = r.children.reduce((acc, c) => { const mm = metrics(c); acc.remaining += mm.remaining; acc.available += mm.available; acc.debt += mm.debt; return acc; }, { remaining: 0, available: 0, debt: 0 });
             return (
-              <FolderCard key={"sec" + r.section} C={C} st={st} folder={folder} sub={sub} childCount={r.children.length}
+              <FolderRow key={"sec" + r.section} C={C} st={st} isMobile={isMobile} grid={FUND_GRID} folder={folder} sub={sub} childCount={r.children.length}
                 color={C.warning} debtColor={debtColor} debtLabel={debtLabel} availColor={availColor}
                 open={openFolders[r.section]} isFinAdmin={isFinAdmin} busy={busy}
                 onToggle={() => setOpenFolders((o) => ({ ...o, [r.section]: !o[r.section] }))}
@@ -387,7 +404,7 @@ export function Funds() {
                 onArchive={() => doArchiveFolder(folder)} />
             );
           })() : (
-            <FundCard key={r.fund.id} C={C} st={st} fund={r.fund} m={metrics(r.fund)}
+            <FundRow key={r.fund.id} C={C} st={st} isMobile={isMobile} grid={FUND_GRID} child={r.child} fund={r.fund} m={metrics(r.fund)}
               color={colorOf(r.fund)} typeBadge={typeBadge} debtColor={debtColor} debtLabel={debtLabel} availColor={availColor}
               isFinAdmin={isFinAdmin} busy={busy}
               periodBalance={periodBal ? (periodBal[r.fund.id] || 0) : undefined} periodEnd={period?.ends_on}
@@ -567,56 +584,88 @@ function DeleteFundModal({ C, st, isMobile, fund, m, funds, busy, onClose, onDel
 
 
 // ---------------------------------------------------------------- Карточка фонда
-function FundCard({ C, st, fund: f, m, color, typeBadge, debtColor, debtLabel, availColor, isFinAdmin, busy, periodBalance, periodEnd, onStatement, onEdit, onLoans, onDelete }) {
-  const mini = (label, value, opts = {}) => (
-    <div style={{ minWidth: 0, ...(opts.onClick && f && m.debt !== 0 ? { cursor: "pointer" } : {}) }} onClick={opts.onClick}>
-      <div style={{ fontSize: 10, color: C.faint, textTransform: "uppercase", letterSpacing: 0.3, whiteSpace: "nowrap" }}>{label}</div>
-      <div style={{ fontSize: opts.big ? 15 : 13.5, fontWeight: opts.big ? 800 : 700, color: opts.color || C.text, fontVariantNumeric: "tabular-nums", lineHeight: 1.2, wordBreak: "break-word" }}>
-        {opts.loading ? <Loader2 size={13} className="spin" /> : value}
+function FundRow({ C, st, isMobile, grid, child, fund: f, m, color, typeBadge, debtColor, debtLabel, availColor, isFinAdmin, busy, periodBalance, periodEnd, onStatement, onEdit, onLoans, onDelete }) {
+  // -------- Телефон: строка-карточка внутри списка (как в «Директиве») --------
+  if (isMobile) {
+    const ab = { ...st.iconBtn, width: 30, height: 30, borderRadius: 9, padding: 0, flexShrink: 0 };
+    const mini = (label, value, col, oc) => (
+      <div style={{ minWidth: 0, ...(oc ? { cursor: "pointer" } : {}) }} onClick={oc}>
+        <div style={{ fontSize: 10, color: C.faint, marginBottom: 2 }}>{label}</div>
+        <div className="denseNum" style={{ fontSize: 13, fontWeight: 700, color: col || C.text, whiteSpace: "nowrap" }}>{value}</div>
       </div>
-    </div>
-  );
-  return (
-    <div style={{ position: "relative", display: "flex", flexDirection: "column", gap: 10,
-      padding: "13px 14px 13px 16px", borderRadius: 14, background: C.panel2, border: `1px solid ${C.line}`, overflow: "hidden" }}>
-      <span style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 4, background: color }} />
-      <div>
-        <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-          <span style={{ width: 24, height: 24, borderRadius: 7, display: "grid", placeItems: "center", flexShrink: 0, background: `${C.sub}22`, color: C.sub }}><FileText size={15} /></span>
+    );
+    return (
+      <div className="frow" style={{ padding: "12px 14px", borderTop: `1px solid ${C.line}`, ...(child ? { paddingLeft: 24 } : {}) }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ width: 26, height: 26, borderRadius: 8, display: "grid", placeItems: "center", flexShrink: 0, background: `${color}22`, color }}><FileText size={15} /></span>
           <span style={st.fundCode}>{f.code}</span>
-          <span style={{ fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.name}</span>
-          {f.is_private && <Lock size={12} color={C.faint} style={{ flexShrink: 0, marginLeft: "auto" }} />}
+          <span style={{ fontWeight: 700, fontSize: 13.5, flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.name}</span>
+          {f.is_private && <Lock size={12} color={C.faint} style={{ flexShrink: 0 }} />}
+          <button style={ab} className="btn" disabled={!!busy} title="Подробно" onClick={onStatement}>
+            {busy === `stmt:${f.id}` ? <Loader2 size={14} className="spin" /> : <List size={15} />}
+          </button>
+          {isFinAdmin && <button style={ab} className="btn" title="Изменить" onClick={onEdit}><Pencil size={14} /></button>}
+          {isFinAdmin && (
+            <button style={{ ...ab, color: C.danger }} className="btn" title="Удалить фонд (с переносом остатка)"
+              disabled={busy === `del:${f.id}`} onClick={onDelete}>
+              {busy === `del:${f.id}` ? <Loader2 size={14} className="spin" /> : <Trash2 size={14} />}
+            </button>
+          )}
         </div>
-        <div style={{ fontSize: 11, color: C.faint, marginTop: 4, display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+        <div style={{ fontSize: 11, color: C.faint, marginTop: 7, display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+          <span>{STAGE_LABEL[f.stage] || "этап не задан"}</span>
+          <span style={typeBadge(f.kind)}>{f.kind === "working" ? "рабочий" : "накопительный"}</span>
+          {f.no_transfer && <span style={{ fontSize: 10, fontWeight: 700, color: C.warning, background: `${C.warning}1a`, padding: "2px 7px", borderRadius: 20 }}>без перемещения</span>}
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginTop: 9 }}>
+          {mini("Доступно", fmt(m.available), availColor(m.available))}
+          {mini("К оплате", fmt(m.remaining), C.sub)}
+          {mini("Долги", busy === `loans:${f.id}` ? "…" : debtLabel(m.debt), debtColor(m.debt), m.debt !== 0 ? onLoans : undefined)}
+        </div>
+        {periodBalance !== undefined && (
+          <div style={{ fontSize: 11, color: C.faint, display: "flex", justifyContent: "space-between", gap: 8, marginTop: 8 }}>
+            <span>На конец недели{periodEnd ? ` ${new Date(periodEnd + "T00:00:00").toLocaleDateString("ru-RU", { day: "2-digit", month: "short" })}` : ""}</span>
+            <b style={{ color: C.sub, fontVariantNumeric: "tabular-nums" }}>{fmt(periodBalance)}</b>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // -------- Десктоп: строка таблицы (как в «Директиве») --------
+  const iconBtn = { ...st.iconBtn, width: 30, height: 30, borderRadius: 9, padding: 0, flexShrink: 0 };
+  return (
+    <div style={{ ...grid, borderTop: `1px solid ${C.line}` }} className="frow">
+      <div style={{ minWidth: 0, ...(child ? { paddingLeft: 14 } : {}) }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+          <span style={{ width: 26, height: 26, borderRadius: 8, display: "grid", placeItems: "center", flexShrink: 0, background: `${color}22`, color }}><FileText size={15} /></span>
+          <span style={st.fundCode}>{f.code}</span>
+          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0, fontWeight: 600 }}>{f.name}</span>
+          {f.is_private && <Lock size={12} color={C.faint} style={{ flexShrink: 0 }} />}
+        </div>
+        <div style={{ fontSize: 11, color: C.faint, marginTop: 3, display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
           <span>{STAGE_LABEL[f.stage] || "этап не задан"}</span>
           <span style={typeBadge(f.kind)}>{f.kind === "working" ? "рабочий" : "накопительный"}</span>
           {f.no_transfer && <span style={{ fontSize: 10, fontWeight: 700, color: C.warning, background: `${C.warning}1a`, padding: "2px 7px", borderRadius: 20 }}>без перемещения</span>}
         </div>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, padding: "10px 0", borderTop: `1px solid ${C.line}`, borderBottom: `1px solid ${C.line}` }}>
-        {mini("Остаток", fmt(m.remaining), { color: C.sub })}
-        {mini("Доступно", fmt(m.available), { color: availColor(m.available), big: true })}
-        {mini("Долг", debtLabel(m.debt), { color: debtColor(m.debt), onClick: m.debt !== 0 ? onLoans : undefined, loading: busy === `loans:${f.id}` })}
+      <div className="denseNum" style={{ ...st.fNum, fontWeight: 800, color: availColor(m.available) }}>{fmt(m.available)}</div>
+      <div className="denseNum" style={{ ...st.fNum, color: C.sub }}>{fmt(m.remaining)}</div>
+      <div className="denseNum" style={{ ...st.fNum, color: debtColor(m.debt), cursor: m.debt !== 0 ? "pointer" : "default" }}
+        title={m.debt !== 0 ? "Показать займы" : undefined} onClick={m.debt !== 0 ? onLoans : undefined}>
+        {busy === `loans:${f.id}` ? <Loader2 size={13} className="spin" /> : debtLabel(m.debt)}
       </div>
-      {periodBalance !== undefined && (
-        <div style={{ fontSize: 11.5, color: C.faint, display: "flex", justifyContent: "space-between", gap: 8, marginTop: -2 }}>
-          <span>На конец недели{periodEnd ? ` ${new Date(periodEnd + "T00:00:00").toLocaleDateString("ru-RU", { day: "2-digit", month: "short" })}` : ""}</span>
-          <b style={{ color: C.sub, fontVariantNumeric: "tabular-nums" }}>{fmt(periodBalance)}</b>
-        </div>
-      )}
-      <div style={{ display: "flex", gap: 6 }}>
-        <button style={{ ...st.btnGhost, flex: 1, justifyContent: "center", padding: "7px 8px", fontSize: 12 }} className="btn" disabled={!!busy} onClick={onStatement}>
-          {busy === `stmt:${f.id}` ? <Loader2 size={13} className="spin" /> : <List size={13} />} Подробно
+      <div style={{ display: "flex", gap: 6, justifyContent: "flex-end", alignItems: "center" }}>
+        <button style={iconBtn} className="btn" disabled={!!busy} title="Подробно" onClick={onStatement}>
+          {busy === `stmt:${f.id}` ? <Loader2 size={14} className="spin" /> : <List size={15} />}
         </button>
         {isFinAdmin && (
-          <button style={{ ...st.btnGhost, flex: 1, justifyContent: "center", padding: "7px 8px", fontSize: 12 }} className="btn" onClick={onEdit}>
-            <Pencil size={13} /> Изменить
-          </button>
+          <button style={iconBtn} className="btn" title="Изменить" onClick={onEdit}><Pencil size={14} /></button>
         )}
         {isFinAdmin && (
-          <button style={{ ...st.btnGhost, justifyContent: "center", padding: "7px 9px", fontSize: 12, color: C.danger }} className="btn"
-            disabled={busy === `del:${f.id}`} onClick={onDelete} title="Удалить фонд (с переносом остатка)">
-            {busy === `del:${f.id}` ? <Loader2 size={13} className="spin" /> : <Trash2 size={13} />}
+          <button style={{ ...iconBtn, color: C.danger }} className="btn" title="Удалить фонд (с переносом остатка)"
+            disabled={busy === `del:${f.id}`} onClick={onDelete}>
+            {busy === `del:${f.id}` ? <Loader2 size={14} className="spin" /> : <Trash2 size={14} />}
           </button>
         )}
       </div>
@@ -732,55 +781,80 @@ function FundLoansModal({ C, st, data, nameOf, isFinAdmin, busy, onReturn, onClo
 
 
 // ---------------------------------------------------------------- Карточка папки (раздела)
-function FolderCard({ C, st, folder, sub, childCount, color, debtColor, debtLabel, availColor, open, isFinAdmin, busy, onToggle, onStatement, onEdit, onArchive }) {
+function FolderRow({ C, st, isMobile, grid, folder, sub, childCount, color, debtColor, debtLabel, availColor, open, isFinAdmin, busy, onToggle, onStatement, onEdit, onArchive }) {
   const [confirmArch, setConfirmArch] = useState(false);
   const stop = (fn) => (e) => { e.stopPropagation(); fn(); };
-  const mini = (label, value, col) => (
-    <div style={{ minWidth: 0 }}>
-      <div style={{ fontSize: 10, color: C.faint, textTransform: "uppercase", letterSpacing: 0.3, whiteSpace: "nowrap" }}>{label}</div>
-      <div style={{ fontSize: 14, fontWeight: 700, color: col || C.text, fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{value}</div>
-    </div>
-  );
-  return (
-    <div onClick={onToggle} style={{ gridColumn: "1 / -1", position: "relative", display: "flex", flexDirection: "column", gap: 10,
-      padding: "14px 16px 14px 20px", borderRadius: 16,
-      background: C.panel2,
-      border: `1px solid ${color}55`, boxShadow: `0 2px 12px ${C.shadow}`, cursor: "pointer", overflow: "hidden" }}>
-      <span style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 6, background: color }} />
-      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-        <ChevronRight size={17} style={{ transform: open ? "rotate(90deg)" : "none", transition: "transform .2s", color, flexShrink: 0 }} />
-        <span style={{ display: "inline-flex", padding: 5, borderRadius: 9, background: `${color}2e`, color, flexShrink: 0 }}><Layers size={15} /></span>
-        <b style={{ textTransform: "uppercase", fontSize: 13, letterSpacing: 0.4 }}>{folder.name}</b>
-        <span style={{ fontSize: 11, color: C.faint }}>· {childCount} фонд(ов)</span>
-        {folder.description && <span style={{ fontSize: 11, color: C.faint, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>· {folder.description}</span>}
+
+  // -------- Телефон: строка-группа внутри списка (как в «Директиве») --------
+  if (isMobile) {
+    const ab = { ...st.iconBtn, width: 30, height: 30, borderRadius: 9, padding: 0, flexShrink: 0 };
+    const mini = (label, value, col) => (
+      <div style={{ minWidth: 0 }}>
+        <div style={{ fontSize: 10, color: C.faint, marginBottom: 2 }}>{label}</div>
+        <div className="denseNum" style={{ fontSize: 13, fontWeight: 700, color: col || C.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{value}</div>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, padding: "10px 0", borderTop: `1px solid ${color}33`, borderBottom: `1px solid ${color}33` }}>
-        {mini("Остаток", fmt(sub.remaining), C.sub)}
-        {mini("Доступно", fmt(sub.available), availColor(sub.available))}
-        {mini("Долг", debtLabel(sub.debt), debtColor(sub.debt))}
-      </div>
-      <div style={{ display: "flex", gap: 6 }}>
-        <button style={{ ...st.btnGhost, flex: 1, justifyContent: "center", padding: "7px 8px", fontSize: 12 }} className="btn" disabled={!!busy} onClick={stop(onStatement)}>
-          {busy === `stmt:${folder.id}` ? <Loader2 size={13} className="spin" /> : <List size={13} />} Подробно
-        </button>
-        {isFinAdmin && (
-          <button style={{ ...st.btnGhost, flex: 1, justifyContent: "center", padding: "7px 8px", fontSize: 12 }} className="btn" onClick={stop(onEdit)}>
-            <Pencil size={13} /> Изменить
+    );
+    return (
+      <div className="frow" onClick={onToggle} style={{ padding: "12px 14px", cursor: "pointer",
+        borderTop: `1px solid ${C.line}`, background: open ? `${color}14` : `${color}08` }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+          <span style={{ width: 30, height: 30, borderRadius: 9, display: "grid", placeItems: "center", background: `${color}22`, color, flexShrink: 0 }}><Layers size={16} /></span>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontWeight: 800, fontSize: 13, textTransform: "uppercase", letterSpacing: 0.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{folder.name}</div>
+            <div style={{ fontSize: 11, color: C.faint }}>{childCount} фонд(ов)</div>
+          </div>
+          <button style={ab} className="btn" disabled={!!busy} title="Подробно" onClick={stop(onStatement)}>
+            {busy === `stmt:${folder.id}` ? <Loader2 size={14} className="spin" /> : <List size={15} />}
           </button>
-        )}
-        {isFinAdmin && (
-          confirmArch ? (
-            <button style={{ ...st.btnGhost, flex: 1.4, justifyContent: "center", padding: "7px 8px", fontSize: 12, color: C.danger, borderColor: `${C.danger}55` }} className="btn"
+          {isFinAdmin && <button style={ab} className="btn" title="Изменить" onClick={stop(onEdit)}><Pencil size={14} /></button>}
+          {isFinAdmin && (confirmArch ? (
+            <button style={{ ...ab, width: "auto", padding: "0 9px", fontSize: 12, color: C.danger }} className="btn"
               disabled={busy === `arch:${folder.id}`} onClick={stop(onArchive)}>
-              {busy === `arch:${folder.id}` ? <Loader2 size={13} className="spin" /> : <Archive size={13} />} Точно?
+              {busy === `arch:${folder.id}` ? <Loader2 size={13} className="spin" /> : "Точно?"}
             </button>
           ) : (
-            <button style={{ ...st.btnGhost, justifyContent: "center", padding: "7px 9px", fontSize: 12, color: C.danger }} className="btn"
-              onClick={stop(() => setConfirmArch(true))} title="Архивировать раздел">
-              <Archive size={13} />
-            </button>
-          )
+            <button style={{ ...ab, color: C.danger }} className="btn" title="Архивировать раздел" onClick={stop(() => setConfirmArch(true))}><Archive size={14} /></button>
+          ))}
+          <ChevronRight size={18} style={{ transform: open ? "rotate(90deg)" : "none", transition: "transform .2s", color: C.faint, flexShrink: 0 }} />
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginTop: 10 }}>
+          {mini("Доступно", fmt(sub.available), availColor(sub.available))}
+          {mini("К оплате", fmt(sub.remaining), C.sub)}
+          {mini("Долги", debtLabel(sub.debt), debtColor(sub.debt))}
+        </div>
+      </div>
+    );
+  }
+
+  // -------- Десктоп: строка-группа (как заголовок папки в «Директиве») --------
+  const iconBtn = { ...st.iconBtn, width: 30, height: 30, borderRadius: 9, padding: 0, flexShrink: 0 };
+  return (
+    <div style={{ ...grid, borderTop: `1px solid ${C.line}`, background: C.panel2, cursor: "pointer" }} className="frow" onClick={onToggle}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+        <ChevronRight size={16} style={{ transform: open ? "rotate(90deg)" : "none", transition: "transform .2s", color, flexShrink: 0 }} />
+        <span style={{ display: "inline-flex", padding: 5, borderRadius: 8, background: `${color}2e`, color, flexShrink: 0 }}><Layers size={15} /></span>
+        <b style={{ textTransform: "uppercase", fontSize: 13, letterSpacing: 0.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>{folder.name}</b>
+        <span style={{ fontSize: 11, color: C.faint, flexShrink: 0 }}>· {childCount}</span>
+      </div>
+      <div className="denseNum" style={{ ...st.fNum, fontWeight: 800, color: availColor(sub.available) }}>{fmt(sub.available)}</div>
+      <div className="denseNum" style={{ ...st.fNum, color: C.sub }}>{fmt(sub.remaining)}</div>
+      <div className="denseNum" style={{ ...st.fNum, color: debtColor(sub.debt) }}>{debtLabel(sub.debt)}</div>
+      <div style={{ display: "flex", gap: 6, justifyContent: "flex-end", alignItems: "center" }}>
+        <button style={iconBtn} className="btn" disabled={!!busy} title="Подробно" onClick={stop(onStatement)}>
+          {busy === `stmt:${folder.id}` ? <Loader2 size={14} className="spin" /> : <List size={15} />}
+        </button>
+        {isFinAdmin && (
+          <button style={iconBtn} className="btn" title="Изменить" onClick={stop(onEdit)}><Pencil size={14} /></button>
         )}
+        {isFinAdmin && (confirmArch ? (
+          <button style={{ ...iconBtn, width: "auto", padding: "0 9px", fontSize: 12, color: C.danger }} className="btn"
+            disabled={busy === `arch:${folder.id}`} onClick={stop(onArchive)}>
+            {busy === `arch:${folder.id}` ? <Loader2 size={13} className="spin" /> : "Точно?"}
+          </button>
+        ) : (
+          <button style={{ ...iconBtn, color: C.danger }} className="btn" title="Архивировать раздел"
+            onClick={stop(() => setConfirmArch(true))}><Archive size={14} /></button>
+        ))}
       </div>
     </div>
   );
