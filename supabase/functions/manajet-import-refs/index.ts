@@ -74,6 +74,16 @@ Deno.serve(async (req) => {
     return { ok, skipped };
   }
 
+  // Импорт ТОЛЬКО архивирует (is_archived=true для архивных в ManaJet) и НИКОГДА
+  // не разархивирует — локальные удаления/архивы переживают импорт. is_archived
+  // намеренно НЕ входит в upsert: существующие значения сохраняются, новые
+  // записи получают дефолт БД (false).
+  async function archiveFromMj(table: string, rows: Record<string, unknown>[]) {
+    const ids = rows.filter((x) => !!x.in_archive).map((x) => String(x.id));
+    if (!ids.length) return;
+    await admin.from(table).update({ is_archived: true }).in("outer_id", ids);
+  }
+
   const result: Record<string, unknown> = {};
   let okAll = true; let errText: string | null = null;
   const startedAt = new Date().toISOString();
@@ -84,8 +94,9 @@ Deno.serve(async (req) => {
       const funds = await mjGet("FPFund");
       result.funds = await upsertRefs("funds", funds.map((x) => ({
         outer_id: String(x.id), code: x.number, name: x.name,
-        currency_id: baseCurrencyId, is_archived: !!x.in_archive,
+        currency_id: baseCurrencyId,
       })));
+      await archiveFromMj("funds", funds);
     } else {
       result.funds = "skip: нет базовой валюты";
     }
@@ -93,14 +104,16 @@ Deno.serve(async (req) => {
     // ---- Виды дохода (IncomeCategory → income_types). parent — плоско (NULL).
     const inc = await mjGet("IncomeCategory");
     result.income_types = await upsertRefs("income_types", inc.map((x) => ({
-      outer_id: String(x.id), code: x.number, name: x.name, is_archived: !!x.in_archive,
+      outer_id: String(x.id), code: x.number, name: x.name,
     })));
+    await archiveFromMj("income_types", inc);
 
     // ---- Статьи расхода (ExpenseCategory → expense_types). parent — плоско (NULL).
     const exp = await mjGet("ExpenseCategory");
     result.expense_types = await upsertRefs("expense_types", exp.map((x) => ({
-      outer_id: String(x.id), code: x.number, name: x.name, is_archived: !!x.in_archive,
+      outer_id: String(x.id), code: x.number, name: x.name,
     })));
+    await archiveFromMj("expense_types", exp);
 
     // ---- Статистики (Stat → statistics) + коридор состояний.
     const stats = await mjGet("Stat");
@@ -108,7 +121,7 @@ Deno.serve(async (req) => {
       outer_id: String(x.id), name: x.name, unit: x.unit,
       min_val: num(x.min_val), max_val: num(x.max_val),
       stat_type: x.stat_type ?? null, sign: x.sign ?? null,
-      source: "manajet", is_archived: false,
+      source: "manajet",
     })));
   } catch (e) {
     okAll = false; errText = e instanceof Error ? e.message : String(e);
