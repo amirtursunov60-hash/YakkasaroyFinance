@@ -65,8 +65,10 @@ export async function fetchIncomeTypes() {
 }
 
 // ---- Виды дохода (справочник income_types, Доход §8) -----------------------
-// CRUD под RLS-политикой itypes_write = is_fin_admin() (см. baseline-схему).
-// Дерево: папки (parent_id IS NULL, с привязкой к точке) → листья (parent_id).
+// Чтение справочника + переключение архива под RLS-политикой
+// itypes_write = is_fin_admin() (см. baseline-схему). Используется модулем
+// «Архив» (восстановление из архива). Дерево: папки (parent_id IS NULL,
+// с привязкой к точке) → листья (parent_id).
 export async function fetchIncomeTypesManage({ includeArchived = false } = {}) {
   let query = supabase
     .from("income_types")
@@ -75,20 +77,6 @@ export async function fetchIncomeTypesManage({ includeArchived = false } = {}) {
   const { data, error } = await query.order("code");
   if (error) throw error;
   return data;
-}
-
-export async function createIncomeType({ code, name, parentId = null }) {
-  const { data, error } = await supabase
-    .from("income_types")
-    .insert({ code: code || null, name, parent_id: parentId || null })
-    .select().single();
-  if (error) throw error;
-  return data;
-}
-
-export async function updateIncomeType(id, patch) {
-  const { error } = await supabase.from("income_types").update(patch).eq("id", id);
-  if (error) throw error;
 }
 
 export async function setIncomeTypeArchived(id, archived) {
