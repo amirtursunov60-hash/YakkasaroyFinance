@@ -108,3 +108,12 @@ node .ds-sync/package-validate.mjs ./ds-bundle
   этой формы обновить модуль провайдера.
 - Tailwind-классы в компонентах не стилизуются через esbuild (см. выше) — если ядро начнёт
   массово опираться на Tailwind вместо инлайн-`st`, понадобится прекомпиляция CSS Tailwind v4.
+
+## Known render warns (триаж — не новые ошибки при ре-синке)
+
+- **ErrorBoundary** — `bad`/pageerror в validate из-за НАМЕРЕННОГО throw в превью (дочерний `Boom`
+  кидает ошибку, чтобы показать fallback). Карточка рендерится нормально (PNG ~30 КБ), оценка good.
+- **LocationPicker / WeekPicker / AttachmentsBlock** — рендерятся пустыми без данных Supabase/PeriodCtx
+  (data-coupled). Реальные компоненты, но превью пустое — floor-подобное состояние, ожидаемо.
+- **SwitcherDemo, PeriodProvider** — исключены из карточек (демо с remote-картинками / чистый
+  провайдер контекста) через `componentSrcMap: null`.

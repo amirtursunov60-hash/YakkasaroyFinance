@@ -14,7 +14,9 @@
   "componentSrcMap": {
     "App": null,
     "YakkasaroyFinance": null,
-    "DSPreviewProvider": null
+    "DSPreviewProvider": null,
+    "SwitcherDemo": null,
+    "PeriodProvider": null
   },
   "overrides": {
     "ConfirmModal": {
