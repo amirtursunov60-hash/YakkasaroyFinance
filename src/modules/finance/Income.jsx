@@ -9,6 +9,7 @@ import {
   fetchIncomeTypes, fetchIncomeSums, fetchIncomeRefs, findRate, insertIncome,
   fetchRulesByIncomeType, fetchFunds, addDistributionRule, deleteDistributionRule,
   fetchIncomeOperations, reverseIncome, setIncomeTypeArchived,
+  createIncomeType, updateIncomeType,
 } from "../../lib/api";
 
 
@@ -40,6 +41,7 @@ export function Income() {
   const [funds, setFunds] = useState([]);
   const [schemeType, setSchemeType] = useState(null); // вид дохода для модала «Схема»
   const [archBusy, setArchBusy] = useState(null);     // id вида дохода в процессе архивирования
+  const [editingType, setEditingType] = useState(null); // "new" | объект вида/папки для правки | null
 
   // Неделя — из общего контекста (выбирается в шапке)
   const periods = useMemo(() => ({ cur: period, prev: prevPeriod }), [period, prevPeriod]);
@@ -65,6 +67,8 @@ export function Income() {
   const reloadRules = useCallback(async () => {
     if (isFinAdmin) setRulesByType(await fetchRulesByIncomeType());
   }, [isFinAdmin]);
+
+  const reloadTypes = useCallback(async () => { setTypes(await fetchIncomeTypes()); }, []);
 
   const loadSums = useCallback(async () => {
     try {
@@ -255,6 +259,14 @@ export function Income() {
     )}
 
     {/* Дерево видов дохода */}
+    {isFinAdmin && (
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, margin: "2px 2px 10px" }}>
+        <span style={{ fontSize: 13, fontWeight: 700, color: C.sub }}>Виды дохода</span>
+        <button style={st.btnGhost} className="btn" onClick={() => setEditingType("new")}>
+          <Plus size={15} /> Вид дохода
+        </button>
+      </div>
+    )}
     {!tree.length && !loadError && (
       <div style={{ ...st.dataCard, ...st.empty }}>
         Справочник видов дохода пуст. Примените сид-миграцию из supabase/migrations (см. supabase/README.md).
@@ -284,6 +296,12 @@ export function Income() {
                 <button style={{ ...st.iconBtn, padding: 4, color: (rulesByType[loc.id]?.length ? C.green : C.faint), flexShrink: 0 }} className="btn"
                   title="Схема распределения по фондам" onClick={(e) => { e.stopPropagation(); setSchemeType(loc); }}>
                   <Calculator size={16} />
+                </button>
+              )}
+              {isFinAdmin && (
+                <button style={{ ...st.iconBtn, padding: 4, color: C.faint, flexShrink: 0 }} className="btn"
+                  title="Редактировать" onClick={(e) => { e.stopPropagation(); setEditingType(loc); }}>
+                  <Pencil size={15} />
                 </button>
               )}
               {isFinAdmin && !hasChildren && (
@@ -330,7 +348,8 @@ export function Income() {
                       <div key={c.id} style={{ padding: "11px 18px", borderTop: `1px solid ${C.line}` }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
                           <span style={st.itemCode}>{c.code}</span>
-                          <span style={{ fontWeight: 600, fontSize: 13, flex: 1, minWidth: 0 }}>{c.name}</span>
+                          <span style={{ fontWeight: 600, fontSize: 13, flex: 1, minWidth: 0, ...(isFinAdmin ? { cursor: "pointer" } : {}) }}
+                            onClick={isFinAdmin ? () => setEditingType(c) : undefined}>{c.name}</span>
                           {calcBtn}
                           {archBtn}
                         </div>
@@ -351,7 +370,8 @@ export function Income() {
                     <div key={c.id} style={st.itemRow} className="itemRow">
                       <div style={st.itemName}>
                         <span style={st.itemCode}>{c.code}</span>
-                        <span>{c.name}</span>
+                        <span style={isFinAdmin ? { cursor: "pointer" } : undefined} title={isFinAdmin ? "Редактировать" : undefined}
+                          onClick={isFinAdmin ? () => setEditingType(c) : undefined}>{c.name}</span>
                         {calcBtn}
                         {archBtn}
                       </div>
@@ -470,6 +490,13 @@ export function Income() {
         rules={rulesByType[schemeType.id] || []} funds={funds}
         onChanged={reloadRules} onClose={() => setSchemeType(null)} />
     )}
+    {editingType && (
+      <IncomeTypeFormModal st={st}
+        node={editingType === "new" ? null : editingType}
+        folders={tree} locations={refs?.locations || []}
+        onClose={() => setEditingType(null)}
+        onSaved={async () => { setEditingType(null); await reloadTypes(); }} />
+    )}
   </>);
 }
 
@@ -555,6 +582,108 @@ function SchemeModal({ C, st, type, rules, funds, onChanged, onClose }) {
   );
 }
 
+
+// ---------------------------------------------------------------- Вид дохода / папка
+// Создание и правка справочника income_types (только финадмин, RLS
+// itypes_write = is_fin_admin). Тип: «папка-направление» (parent_id = null,
+// со своей точкой) или «вид дохода» (лист в выбранной папке). Оформление —
+// как у модалки фонда (Funds.jsx). Схема распределения — отдельной кнопкой.
+function IncomeTypeFormModal({ st, node, folders, locations, onClose, onSaved }) {
+  useScrollLock();
+  const isEdit = !!node;
+  const [isFolder, setIsFolder] = useState(isEdit ? !node.parent_id : false);
+  const [f, setF] = useState({
+    code: node?.code || "", name: node?.name || "",
+    parentId: node?.parent_id || "", locationId: node?.location_id || "",
+  });
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+
+  const submit = async () => {
+    if (busy) return;
+    setErr("");
+    if (!f.name.trim()) return setErr("Укажите название");
+    if (!isFolder && !f.parentId) return setErr("Выберите папку-направление для вида дохода");
+    setBusy(true);
+    try {
+      if (isEdit) {
+        const patch = isFolder
+          ? { code: f.code.trim() || null, name: f.name.trim(), location_id: f.locationId || null }
+          : { code: f.code.trim() || null, name: f.name.trim(), parent_id: f.parentId };
+        await updateIncomeType(node.id, patch);
+      } else if (isFolder) {
+        await createIncomeType({ code: f.code.trim(), name: f.name.trim(), parentId: null, locationId: f.locationId || null });
+      } else {
+        await createIncomeType({ code: f.code.trim(), name: f.name.trim(), parentId: f.parentId });
+      }
+      await onSaved();
+    } catch (e) {
+      const msg = e?.message || String(e);
+      setErr(
+        msg.includes("row-level security") ? "Нет прав на изменение справочника видов дохода."
+          : msg.includes("duplicate") ? "Вид дохода с таким кодом уже существует" : msg,
+      );
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div style={st.mdOverlay} data-modal="1" onClick={onClose}>
+      <div style={{ ...st.mdCard, width: "min(460px, 100%)", maxHeight: "92vh", overflowY: "auto" }} onClick={(e) => e.stopPropagation()}>
+        <div style={st.mdHead}>
+          <div style={st.mdTitle}>{isEdit ? (isFolder ? "Редактировать папку" : "Редактировать вид дохода") : "Новый вид дохода"}</div>
+          <button style={st.iconBtn} onClick={onClose} aria-label="Закрыть"><X size={17} /></button>
+        </div>
+        <div style={{ display: "grid", gap: 10 }}>
+          <div style={st.reqField}>
+            <span style={st.reqFieldLbl}>Тип</span>
+            <select style={st.mdSelect} className="fin" value={isFolder ? "folder" : "leaf"} disabled={isEdit}
+              onChange={(e) => setIsFolder(e.target.value === "folder")}>
+              <option value="leaf">Вид дохода (статья)</option>
+              <option value="folder">Папка (направление)</option>
+            </select>
+          </div>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <div style={{ ...st.reqField, flex: "0 0 120px" }}>
+              <span style={st.reqFieldLbl}>Код</span>
+              <input style={st.mdInput} className="fin" placeholder="напр. D10" autoFocus
+                value={f.code} onChange={(e) => setF((p) => ({ ...p, code: e.target.value }))} />
+            </div>
+            <div style={{ ...st.reqField, flex: 1, minWidth: 160 }}>
+              <span style={st.reqFieldLbl}>Название</span>
+              <input style={st.mdInput} className="fin" placeholder={isFolder ? "Направление…" : "Название вида дохода…"}
+                value={f.name} onChange={(e) => setF((p) => ({ ...p, name: e.target.value }))} />
+            </div>
+          </div>
+          {isFolder ? (
+            <div style={st.reqField}>
+              <span style={st.reqFieldLbl}>Точка</span>
+              <select style={st.mdSelect} className="fin" value={f.locationId} onChange={(e) => setF((p) => ({ ...p, locationId: e.target.value }))}>
+                <option value="">— вся сеть —</option>
+                {locations.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
+              </select>
+            </div>
+          ) : (
+            <div style={st.reqField}>
+              <span style={st.reqFieldLbl}>Находится в папке</span>
+              <select style={st.mdSelect} className="fin" value={f.parentId} onChange={(e) => setF((p) => ({ ...p, parentId: e.target.value }))}>
+                <option value="">— выберите папку —</option>
+                {folders.map((fl) => <option key={fl.id} value={fl.id}>{fl.code ? `${fl.code} ` : ""}{fl.name}</option>)}
+              </select>
+            </div>
+          )}
+        </div>
+        {err && <div role="alert" style={st.reqError}><AlertCircle size={15} /> {err}</div>}
+        <div style={st.mdActions}>
+          <button style={st.btnGhost} className="btn" onClick={onClose}>Отмена</button>
+          <button style={{ ...st.btnGreen, opacity: busy ? 0.7 : 1 }} className="btn" onClick={submit} disabled={busy}>
+            {busy ? <Loader2 size={15} className="spin" /> : <Plus size={15} />} {isEdit ? "Сохранить" : "Создать"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ---------------------------------------------------------------- Форма ввода дохода
 // Field — на уровне модуля, иначе пересоздание компонента на каждый рендер
