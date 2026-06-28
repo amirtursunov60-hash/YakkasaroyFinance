@@ -19,6 +19,13 @@ import { THEMES, ThemeCtx, applyThemeVars } from "yakkasaroy-management/src/them
 import { makeStyles } from "yakkasaroy-management/src/theme/styles";
 import { makeCss } from "yakkasaroy-management/src/theme/css";
 
+// `useTheme` лежит в theme.js (.js), а синтез-вход берёт только .tsx/.jsx —
+// поэтому хук НЕ попадает на window.YakkasaroyDS, и превью, которым нужен `C`/`st`
+// (компоненты, принимающие их пропсами: CswRow, ItemCard, DecideModal,
+// RequestStatusChips), падали на `useTheme is not a function`. Реэкспортируем
+// через тот же подпуть пакета — хук появляется на глобале, тот же модуль/контекст.
+export { useTheme } from "yakkasaroy-management/src/theme/theme";
+
 export function DSPreviewProvider({ children }: { children?: React.ReactNode }) {
   const C = THEMES.dark;
   const st = React.useMemo(() => makeStyles(C), [C]);

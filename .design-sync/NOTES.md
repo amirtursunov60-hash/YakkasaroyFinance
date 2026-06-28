@@ -49,6 +49,31 @@
   position:"relative", height:N}` делает контейнер containing-block для fixed → модал центрируется
   ВНУТРИ карточки и виден целиком (см. `previews/ConfirmModal.tsx`). cardMode "single" в overrides.
 
+## Ещё фиксы (выяснено при фан-ауте)
+
+- **`useTheme` нет на глобале — реэкспортируем из провайдера.** `theme.js` (.js) не попадает в
+  синтез-вход (только .tsx/.jsx). Превью компонентов, принимающих `C`/`st` пропсами (CswRow,
+  ItemCard, DecideModal, RequestStatusChips), вызывают `useTheme()` → падали «not a function».
+  В `preview-provider.tsx`: `export { useTheme } from "yakkasaroy-management/src/theme/theme"`.
+- **ThemeSwitcher — оборачивать в `.switcher-app`.** Все `.switcher*` стили заданы под этим
+  родителем (в проде его даёт AppShell). Без обёртки контрол — голый `<fieldset>`. См.
+  `previews/ThemeSwitcher.tsx`.
+- **`_ds_bundle.css` содержит удалённый `@import "https://…DM+Sans…"`** (из `switcher-original.css`
+  через `switcher-demo`). В песочнице висит → `networkidle` не наступает → таймаут захвата (ловит
+  Login и иногда др.). Перед capture/validate вырезать из `ds-bundle/_ds_bundle.css`:
+  `perl -0pi -e 's/\@import\s+"[^"]*(?:googleapis|gstatic)[^"]*"\s*;?//g' ds-bundle/_ds_bundle.css`
+  (это правка СБОРКИ, не исходника; в реальном claude.ai/design шрифт грузится нормально — там сеть есть).
+- **SwitcherDemo — без превью** (default export; синтез `export *` его не реэкспортирует) → floor card.
+
+## Floor card (по дизайну, не ошибка) — экраны на Supabase
+
+Эти компоненты рендерятся без данных (тянут `src/lib/api.js`/`PeriodCtx`), поэтому идут floor card —
+реальные импортируемые компоненты, но превью-заглушка: finance/* (AuditLog, BillsScreen, Clients,
+Control, Directive, Expenses, Funds, Income, Payroll, Register, Reports, Requests, Suppliers),
+crm/* (CrmModule, Counterparties), dashboard/* (DashModule, OwnerDashboard), OrgModule, StaffModule,
+StatsModule, MenuModule, MjPanel, AttachmentsBlock, PeriodProvider, LocationPicker, WeekPicker.
+Их можно «оживить», только сымитировав слой Supabase (большая отдельная работа).
+
 ## Авторские превью — конвенции (для фан-аута)
 
 - Импорт компонентов: `import { X } from "yakkasaroy-management"` (шим на `window.YakkasaroyDS`).
