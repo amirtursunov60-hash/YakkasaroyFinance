@@ -1,4 +1,4 @@
-import { Wallet, ArrowUpRight, ArrowDownLeft, Layers, FileText, ClipboardList, SlidersHorizontal, Calculator, BarChart3, CalendarDays, List, LayoutGrid, LayoutDashboard, Users, UserPlus, Contact, Network, PiggyBank, FolderKanban, UtensilsCrossed, ConciergeBell, Armchair, Package, Clock, Flame, TrendingUp, ShieldCheck, Building2, Mail } from "lucide-react";
+import { Wallet, ArrowUpRight, ArrowDownLeft, Layers, FileText, ClipboardList, SlidersHorizontal, Calculator, BarChart3, CalendarDays, List, LayoutGrid, LayoutDashboard, Users, UserPlus, Contact, Network, PiggyBank, FolderKanban, UtensilsCrossed, ConciergeBell, Armchair, Package, Clock, Flame, TrendingUp, ShieldCheck, Building2, Mail, Archive } from "lucide-react";
 
 
 
@@ -30,6 +30,7 @@ export const NAV_FINANCE = [
   { key: "reports", icon: BarChart3, label: "Управленческие отчёты" },
   { key: "register", icon: List, label: "Реестр операций" },
   { key: "audit", icon: ShieldCheck, label: "Журнал аудита" },
+  { key: "archive", icon: Archive, label: "Архив" },
 ];
 
 export const NAV_RESTAURANT = [

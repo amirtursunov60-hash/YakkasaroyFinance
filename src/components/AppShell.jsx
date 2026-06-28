@@ -21,6 +21,7 @@ import { Income } from "../modules/finance/Income";
 import { Payroll } from "../modules/finance/Payroll";
 import { Register } from "../modules/finance/Register";
 import { AuditLog } from "../modules/finance/AuditLog";
+import { ArchiveModule } from "../modules/finance/ArchiveModule";
 import { Reports } from "../modules/finance/Reports";
 import { Requests } from "../modules/finance/Requests";
 import { Suppliers } from "../modules/finance/Suppliers";
@@ -227,6 +228,7 @@ export function App({ onLogout }) {
           {activeModule === "finance" && active === "requests" && <Requests />}
           {activeModule === "finance" && active === "register" && <Register />}
           {activeModule === "finance" && active === "audit" && <AuditLog />}
+          {activeModule === "finance" && active === "archive" && <ArchiveModule />}
           {activeModule === "finance" && active === "funds" && <Funds />}
           {activeModule === "finance" && active === "suppliers" && <Suppliers />}
           {activeModule === "finance" && active === "clients" && <Clients />}
