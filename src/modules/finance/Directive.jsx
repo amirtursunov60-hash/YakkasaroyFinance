@@ -1091,7 +1091,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
                         disabled={locked || !gSel.length}
                         onClick={(e) => e.stopPropagation()} onChange={toggleGroup} />
                       <div style={{ width: 30, height: 30, borderRadius: 9, display: "grid", placeItems: "center",
-                        background: `${C.info}22`, color: C.info, flexShrink: 0 }}>
+                        background: `${C.warning}22`, color: C.warning, flexShrink: 0 }}>
                         <Layers size={16} />
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
@@ -1119,7 +1119,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
                         <input type="checkbox" style={cbStyle} checked={gChecked}
                           disabled={locked || !gSel.length}
                           onClick={(e) => e.stopPropagation()} onChange={toggleGroup} />
-                        <Layers size={15} color={C.info} style={{ flexShrink: 0 }} />
+                        <Layers size={15} color={C.warning} style={{ flexShrink: 0 }} />
                         <b style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>{folderById[fid]?.name || "Группа"}</b>
                         <ChevronRight size={14} style={{ flexShrink: 0, transform: isOpen ? "rotate(90deg)" : "none", transition: "transform .2s", color: C.faint }} />
                       </div>

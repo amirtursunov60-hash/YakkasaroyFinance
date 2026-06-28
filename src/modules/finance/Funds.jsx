@@ -366,7 +366,7 @@ export function Funds() {
             const sub = r.children.reduce((acc, c) => { const mm = metrics(c); acc.remaining += mm.remaining; acc.available += mm.available; acc.debt += mm.debt; return acc; }, { remaining: 0, available: 0, debt: 0 });
             return (
               <FolderCard key={"sec" + r.section} C={C} st={st} folder={folder} sub={sub} childCount={r.children.length}
-                color={colorOf(folder)} debtColor={debtColor} debtLabel={debtLabel} availColor={availColor}
+                color={C.warning} debtColor={debtColor} debtLabel={debtLabel} availColor={availColor}
                 open={openFolders[r.section]} isFinAdmin={isFinAdmin} busy={busy}
                 onToggle={() => setOpenFolders((o) => ({ ...o, [r.section]: !o[r.section] }))}
                 onStatement={() => openFolderStatement(folder)} onEdit={() => setEditingFolder(folder)}
@@ -660,7 +660,7 @@ function FolderCard({ C, st, folder, sub, childCount, color, debtColor, debtLabe
   return (
     <div onClick={onToggle} style={{ gridColumn: "1 / -1", position: "relative", display: "flex", flexDirection: "column", gap: 10,
       padding: "14px 16px 14px 20px", borderRadius: 16,
-      background: `linear-gradient(135deg, ${color}26, ${C.panel} 70%)`,
+      background: C.panel2,
       border: `1px solid ${color}55`, boxShadow: `0 2px 12px ${C.shadow}`, cursor: "pointer", overflow: "hidden" }}>
       <span style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 6, background: color }} />
       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
