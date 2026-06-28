@@ -9,9 +9,15 @@
 // Форма значения повторяет `ctxVal` из `src/App.jsx`. При изменении формы там —
 // обновить здесь (см. .design-sync/NOTES.md → Re-sync risks).
 import React from "react";
-import { THEMES, ThemeCtx, applyThemeVars } from "@/theme/theme";
-import { makeStyles } from "@/theme/styles";
-import { makeCss } from "@/theme/css";
+// ВАЖНО: импортируем тему через подпуть пакета (тот же, что и компоненты:
+// `node_modules/yakkasaroy-management/src/theme/*`), а НЕ через `@/...`.
+// Алиас `@/` esbuild резолвит в реальный путь репозитория, а компоненты идут
+// через симлинк node_modules/<pkg> — это РАЗНЫЕ модули для esbuild, отчего
+// theme.js (и `ThemeCtx`) дублируется и контекст провайдера не доходит до
+// компонентов (`st` = null → падение). Один и тот же подпуть = один модуль.
+import { THEMES, ThemeCtx, applyThemeVars } from "yakkasaroy-management/src/theme/theme";
+import { makeStyles } from "yakkasaroy-management/src/theme/styles";
+import { makeCss } from "yakkasaroy-management/src/theme/css";
 
 export function DSPreviewProvider({ children }: { children?: React.ReactNode }) {
   const C = THEMES.dark;
@@ -26,7 +32,11 @@ export function DSPreviewProvider({ children }: { children?: React.ReactNode }) 
     if (typeof document !== "undefined" && !document.getElementById(id)) {
       const el = document.createElement("style");
       el.id = id;
-      el.textContent = makeCss(C);
+      // Убираем удалённые @import (Google Fonts Inter) — в песочнице рендера
+      // запрос к fonts.googleapis.com висит и ломает networkidle (таймауты,
+      // медленный захват). Превью используют системный стек шрифтов (задан на
+      // обёртке ниже), Inter как фоллбэк не критичен.
+      el.textContent = makeCss(C).replace(/@import\s+url\([^)]*\)\s*;?/g, "");
       document.head.appendChild(el);
     }
   }, [C]);

@@ -5,13 +5,21 @@
   "srcDir": "src",
   "tsconfig": "tsconfig.json",
   "cssEntry": "src/index.css",
-  "extraEntries": ["./.design-sync/preview-provider.tsx"],
-  "provider": { "component": "DSPreviewProvider" },
+  "extraEntries": [
+    "./.design-sync/preview-provider.tsx"
+  ],
+  "provider": {
+    "component": "DSPreviewProvider"
+  },
   "componentSrcMap": {
     "App": null,
+    "YakkasaroyFinance": null,
     "DSPreviewProvider": null
   },
   "overrides": {
-    "ConfirmModal": { "cardMode": "single", "viewport": "560x420" }
+    "ConfirmModal": {
+      "cardMode": "single",
+      "viewport": "560x560"
+    }
   }
 }

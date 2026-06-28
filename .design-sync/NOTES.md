@@ -30,6 +30,34 @@
   `src/components/ui/*`, `src/components/common.jsx`, `src/components/charts/*`,
   `src/components/InfoHint.tsx`, `src/components/TopWidgets.jsx`, `src/modules/manajet/MjPanel.jsx`.
 
+## Критичные фиксы рендера превью (выяснено при калибровке — НЕ ломать)
+
+- **`main.jsx` гард.** Синтез-вход делает `export * from src/main.jsx`, а тот в модульной
+  области вызывает `createRoot(document.getElementById("root"))`. Без `#root` это падает и
+  бандл НЕ присваивает `window.YakkasaroyDS` (все компоненты «not a component» в `[BUNDLE_EXPORT]`).
+  Фикс — гард в `src/main.jsx`: монтируемся только если `#root` есть (в проде не меняется).
+- **Импорты темы в провайдере — через подпуть пакета, НЕ `@/`.** `preview-provider.tsx` импортирует
+  `yakkasaroy-management/src/theme/{theme,styles,css}`. Алиас `@/` esbuild резолвит в реальный путь
+  репо, а компоненты идут через симлинк `node_modules/yakkasaroy-management/src/...` — это РАЗНЫЕ
+  модули, отчего `theme.js`/`ThemeCtx` дублируется и `useTheme()` в компонентах возвращает дефолт
+  (`st: null` → падение `Cannot read 'statLabel'`). Один путь = один модуль = контекст доходит.
+- **Из `makeCss` убираем удалённые `@import`.** В `css.js` есть `@import url(fonts.googleapis…Inter)`.
+  Провайдер инжектит `makeCss(C)` с вырезанным `@import url(...)` — иначе запрос к Google Fonts висит
+  в песочнице, `networkidle` не наступает → таймауты захвата и ~12 с/превью. Превью на системном стеке.
+- **Оверлеи/модалы — оборачивать в контейнер с `transform`.** `position:fixed` оверлей (`st.mdOverlay`)
+  иначе кадрируется обрезанным (заголовок выходит за край). Обёртка `{transform:"translateZ(0)",
+  position:"relative", height:N}` делает контейнер containing-block для fixed → модал центрируется
+  ВНУТРИ карточки и виден целиком (см. `previews/ConfirmModal.tsx`). cardMode "single" в overrides.
+
+## Авторские превью — конвенции (для фан-аута)
+
+- Импорт компонентов: `import { X } from "yakkasaroy-management"` (шим на `window.YakkasaroyDS`).
+- Провайдер темы оборачивает каждую ячейку автоматически (cfg.provider=DSPreviewProvider) — в превью
+  его добавлять НЕ нужно, `useTheme()` уже работает.
+- Контент — реалистичный, на русском, ХМС-термины не переводить (фонды ФД, Директива, ЗРС, смони…).
+- Контролируемые компоненты (value/onChange) — оборачивать в локальный `useState`.
+- Каждый named export = одна ячейка-история; 2–6 на компонент.
+
 ## Окружение
 
 - Облачная сессия Claude Code на вебе: **DesignSync-авторизация недоступна** (`/design-login`
