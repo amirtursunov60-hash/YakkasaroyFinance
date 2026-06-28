@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { ClipboardList, Calculator, CalendarDays, Check, RotateCcw, RotateCw, Lock, Unlock, Ban, ArrowRightLeft, Loader2, AlertCircle, CheckCircle2, X, Layers, ChevronRight, Scale, Banknote, Wallet, Coins, List, LayoutList, ShieldCheck, Gavel, Undo2 } from "lucide-react";
+import { ClipboardList, Calculator, CalendarDays, Check, RotateCcw, RotateCw, Lock, Unlock, Ban, ArrowRightLeft, Loader2, AlertCircle, CheckCircle2, X, Layers, ChevronRight, Scale, Banknote, Wallet, FileText, List, LayoutList, ShieldCheck, Gavel, Undo2 } from "lucide-react";
 import { Stat, ConfirmModal } from "../../components/common";
 import { useTheme } from "../../theme/theme";
 import { useScrollLock } from "../../hooks/useScrollLock";
@@ -944,7 +944,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <input type="checkbox" style={cbStyle} checked={checked.has(x.fund.id)}
               disabled={!rowEditable} onChange={() => toggleOne(x.fund.id)} />
-            <Coins size={14} color={C.money} style={{ flexShrink: 0 }} />
+            <FileText size={14} color={C.info} style={{ flexShrink: 0 }} />
             <span style={st.fundCode}>{x.fund?.code}</span>
             <span style={{ fontWeight: 700, fontSize: 13.5, flex: 1, minWidth: 0 }}>{x.fund?.name}</span>
             {x.fund?.is_restricted && <Lock size={12} color={C.faint} />}
@@ -975,7 +975,7 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
           <div style={{ ...st.fundTop, minWidth: 0 }}>
             <input type="checkbox" style={cbStyle} checked={checked.has(x.fund.id)}
               disabled={!rowEditable} onChange={() => toggleOne(x.fund.id)} />
-            <Coins size={14} color={C.money} style={{ flexShrink: 0, ...(child ? { marginLeft: 14 } : {}) }} />
+            <FileText size={14} color={C.info} style={{ flexShrink: 0, ...(child ? { marginLeft: 14 } : {}) }} />
             <span style={st.fundCode}>{x.fund?.code}</span>
             <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>{x.fund?.name}</span>
             {x.fund?.is_restricted && <Lock size={12} color={C.faint} />}
