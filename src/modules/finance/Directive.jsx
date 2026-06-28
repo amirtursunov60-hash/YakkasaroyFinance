@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { ClipboardList, Calculator, CalendarDays, Check, RotateCcw, RotateCw, Lock, Unlock, Ban, ArrowRightLeft, Loader2, AlertCircle, CheckCircle2, X, Layers, ChevronRight, Scale, Banknote, Wallet, FileText, List, LayoutList, ShieldCheck, Gavel, Undo2 } from "lucide-react";
+import { ClipboardList, Calculator, CalendarDays, Check, RotateCcw, RotateCw, Lock, Unlock, Ban, ArrowRightLeft, Loader2, AlertCircle, CheckCircle2, X, Layers, ChevronRight, Scale, Banknote, Wallet, FileText, List, LayoutList, Gavel, Undo2 } from "lucide-react";
 import { Stat, ConfirmModal } from "../../components/common";
 import { useTheme } from "../../theme/theme";
 import { useScrollLock } from "../../hooks/useScrollLock";
@@ -338,7 +338,7 @@ export function Directive() {
     const blockers = weekCloseBlockReasons({ prevPeriod, weekReqs, remainder, funds,
       period: { ...period, is_baf_confirmed: true } });
     if (blockers.length) { setCloseMsg(blockers); return; }
-    if (!(await askConfirm({ title: "Закрыть период ФП", message: "Неделя будет одобрена финкомитетом и закрыта: все операции периода будут заблокированы, протокол Директивы сохранится.", tone: "warning", confirmLabel: "Одобрить и закрыть" }))) return;
+    if (!(await askConfirm({ title: "Закрыть неделю ФП", message: "Все операции периода будут заблокированы, протокол Директивы сохранится.", tone: "warning", confirmLabel: "Закрыть неделю" }))) return;
     setBusy("close");
     try {
       // Закрытие финдиректором/владельцем = одобрение финкомитетом (BAF).
@@ -352,7 +352,7 @@ export function Directive() {
       };
       await closePeriod(periodId, protocol);
       await Promise.all([reloadPeriods(true), reloadPeriodData()]);
-      setDone("Период закрыт и одобрен финкомитетом, протокол Директивы сохранён. Следующая неделя создана — выберите её в шапке.");
+      setDone("Период закрыт, протокол Директивы сохранён. Следующая неделя создана — выберите её в шапке.");
     } catch (e) { setErr(e?.message || String(e)); }
     finally { setBusy(null); }
   };
@@ -481,10 +481,10 @@ export function Directive() {
         ))}
       </div>
     )}
-    {/* Закрытая неделя помечается как одобренная финкомитетом (закрытие = одобрение). */}
-    {isClosed && period?.is_baf_confirmed && (
+    {/* Закрытая неделя: одобрена финкомитетом и закрыта. */}
+    {isClosed && (
       <div style={{ display: "flex", alignItems: "center", gap: 7, color: C.money, fontSize: 12.5, fontWeight: 700, marginTop: 14 }}>
-        <CheckCircle2 size={15} /> Неделя одобрена финкомитетом
+        <CheckCircle2 size={15} /> Неделя одобрена финкомитетом и закрыта
       </div>
     )}
 
@@ -497,20 +497,20 @@ export function Directive() {
           style={{ ...(period.is_executive_confirmed ? st.btnGhost : st.btnGreen), width: "100%", justifyContent: "center",
             opacity: (busy === "confirm:executive" || !canConfirmExec) ? 0.6 : 1, cursor: canConfirmExec ? "pointer" : "not-allowed" }}
           className="btn" disabled={busy || !canConfirmExec}
-          title={!canConfirmExec ? "Исполнительное одобрение даёт директор" : (period.is_executive_confirmed ? "Снять исполнительное одобрение" : "Исполнительное одобрение недели")}
+          title={!canConfirmExec ? "Одобрение финкомитета даёт директор" : (period.is_executive_confirmed ? "Снять одобрение финкомитета" : "Одобрить неделю финкомитетом")}
           onClick={() => doConfirm(!period.is_executive_confirmed)}>
           {busy === "confirm:executive" ? <Loader2 size={15} className="spin" />
-            : period.is_executive_confirmed ? <Check size={15} /> : <ShieldCheck size={15} />}
-          {period.is_executive_confirmed ? " Исполнительное одобрено" : " Исполнительное одобрение"}
+            : period.is_executive_confirmed ? <Check size={15} /> : <Gavel size={15} />}
+          {period.is_executive_confirmed ? " Одобрено финкомитетом" : " Одобрить финкомитетом"}
         </button>
         <button
           style={{ ...st.btnGreen, width: "100%", justifyContent: "center",
             opacity: (busy === "close" || !canClose) ? 0.6 : 1, cursor: canClose ? "pointer" : "not-allowed" }}
           className="btn glass" disabled={busy || !canClose}
-          title={!canClose ? "Одобрить финкомитетом и закрыть может только финдиректор/владелец" : "Одобрить финкомитетом и закрыть неделю"}
+          title={!canClose ? "Закрыть неделю может только финдиректор/владелец" : "Закрыть неделю ФП (нужно одобрение финкомитета)"}
           onClick={doToggleClose}>
-          {busy === "close" ? <Loader2 size={15} className="spin" /> : <Gavel size={15} />}
-          {" Одобрить Финкомитетом"}
+          {busy === "close" ? <Loader2 size={15} className="spin" /> : <Lock size={15} />}
+          {" Закрыть неделю ФП"}
         </button>
       </div>
     )}
