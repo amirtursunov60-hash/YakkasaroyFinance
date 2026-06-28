@@ -842,7 +842,7 @@ function RequestReviewControls({ C, st, isMobile, item, funds, isFinAdmin, onApp
 function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders, stageFact, onCalc, onApprove, onReset, onResetApproved, onOpenCalc }) {
   const [openFolders, setOpenFolders] = useState({});
   const [checked, setChecked] = useState(() => new Set());
-  const [collapsed, setCollapsed] = useState(true); // по умолчанию этап свёрнут
+  const [collapsed, setCollapsed] = useState(false); // по умолчанию этап развёрнут
   const calcBusy = busy === `calc:${sg.key}`;
   const apprBusy = busy === `appr:${sg.key}`;
   const resetBusy = busy === `reset:${sg.key}`;
