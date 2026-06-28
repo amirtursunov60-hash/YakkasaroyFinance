@@ -5,7 +5,7 @@ import { Stat } from "../../components/common";
 import { useTheme } from "../../theme/theme";
 import { fmt } from "../../utils/format";
 import { usePeriod, periodTitle, periodTitleShort } from "../../lib/PeriodCtx";
-import { fetchReportData, fetchFundFlows, fetchFunds, fetchIncomeRefs } from "../../lib/api";
+import { fetchReportData, fetchFundFlows, fetchFunds, fetchIncomeRefs, fetchTurnoverSheet, fetchCashAccounts } from "../../lib/api";
 import {
   expenseAmount, expenseLocation, marginPct,
   filterIncomesByLocation, filterExpensesByLocation,
@@ -26,6 +26,7 @@ const TABS = [
   { key: "pnl", label: "P&L · прибыль и убытки" },
   { key: "points", label: "По точкам" },
   { key: "funds", label: "По фондам" },
+  { key: "osv", label: "ОСВ · оборотка" },
 ];
 const EXP_LABELS = {
   request_payment: "Оплаты заявок",
@@ -33,6 +34,36 @@ const EXP_LABELS = {
   payroll_payment: "Зарплата (ФОТ)",
   off_plan: "Траты вне ФП",
 };
+
+// Карточка строки ОСВ (фонд/счёт ДС): вход/приход/расход/исход за период.
+// Вынесена на уровень модуля — иначе пересоздавалась бы на каждый рендер.
+function OsvCard({ C, st, isMobile, title, rows }) {
+  return (
+    <section style={{ ...st.fpCard, marginTop: 0, marginBottom: 16 }}>
+      <div style={{ fontSize: 14, fontWeight: 800, marginBottom: 10 }}>{title}</div>
+      {!rows.length ? <div style={st.empty}>Нет оборотов за неделю</div> : (
+        <div style={{ display: "grid", gap: 8, gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill, minmax(320px, 1fr))" }}>
+          {rows.map((r) => (
+            <div key={r.id} style={{ ...st.locCard, padding: "10px 14px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+                <span style={{ fontSize: 13, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.label}</span>
+                {r.cur && <span style={{ ...st.weekTag, marginLeft: "auto", color: C.sub, background: `${C.sub}1a` }}>{r.cur}</span>}
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 6, fontSize: 11.5 }}>
+                {[["Вход", r.opening, C.sub], ["Приход", r.inflow, C.money], ["Расход", r.outflow, C.danger], ["Исход", r.closing, C.text]].map(([l, v, col]) => (
+                  <div key={l}>
+                    <div style={{ color: C.faint, textTransform: "uppercase", letterSpacing: 0.3 }}>{l}</div>
+                    <div style={{ fontWeight: 700, color: col, fontVariantNumeric: "tabular-nums" }}>{l === "Расход" && v ? `−${fmt(v)}` : fmt(v)}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
 
 export function Reports() {
   const { C, st, isMobile } = useTheme();
@@ -45,6 +76,8 @@ export function Reports() {
   const [fundFlows, setFundFlows] = useState({});
   const [funds, setFunds] = useState([]);
   const [locations, setLocations] = useState([]);
+  const [cashAccounts, setCashAccounts] = useState([]);
+  const [osv, setOsv] = useState({ funds: [], cash: [] });
 
   // Последние N недель (по возрастанию для графиков)
   const range = useMemo(
@@ -56,15 +89,18 @@ export function Reports() {
     if (periodsLoading) return;
     setErr("");
     try {
-      const [d, ff, fs, refs] = await Promise.all([
+      const [d, ff, fs, refs, ts, ca] = await Promise.all([
         fetchReportData(range.map((p) => p.id)),
         fetchFundFlows(periodId),
         fetchFunds(),
         fetchIncomeRefs(),
+        fetchTurnoverSheet(periodId),
+        fetchCashAccounts(),
       ]);
       setData(d); setFundFlows(ff);
       setFunds(fs.sort((a, b) => a.code.localeCompare(b.code, "ru", { numeric: true })));
       setLocations(refs.locations);
+      setOsv(ts); setCashAccounts(ca);
     } catch (e) {
       setErr("Не удалось загрузить данные отчёта: " + (e?.message || e));
     } finally {
@@ -303,5 +339,29 @@ export function Reports() {
         </section>
       </div>
     )}
+
+    {/* ---------------- ОСВ (оборотно-сальдовая ведомость) */}
+    {tab === "osv" && (() => {
+      const fundById = Object.fromEntries(funds.map((f) => [f.id, f]));
+      const cashById = Object.fromEntries(cashAccounts.map((c) => [c.id, c]));
+      // Валюту показываем только если она не базовая (фонд/счёт может быть не в TJS).
+      const curCode = (ent) => (ent?.currency && !ent.currency.is_base ? ent.currency.code : "");
+      const fundRows = osv.funds
+        .map((r) => ({ ...r, label: fundById[r.id] ? `${fundById[r.id].code} · ${fundById[r.id].name}` : "—", cur: curCode(fundById[r.id]), sort: fundById[r.id]?.code || "" }))
+        .filter((r) => r.opening || r.inflow || r.outflow || r.closing)
+        .sort((a, b) => a.sort.localeCompare(b.sort, "ru", { numeric: true }));
+      const cashRows = osv.cash
+        .map((r) => ({ ...r, label: cashById[r.id]?.name || "—", cur: curCode(cashById[r.id]) }))
+        .filter((r) => r.opening || r.inflow || r.outflow || r.closing)
+        .sort((a, b) => a.label.localeCompare(b.label, "ru"));
+      return (<>
+        <div style={{ fontSize: 12, color: C.faint, marginBottom: 12 }}>
+          Оборотно-сальдовая ведомость · {period ? periodTitle(period) : "—"} · вся сеть (консолидированно).
+          Суммы — в валюте фонда/счёта (базовая — TJS). Вход — остаток на начало недели, Исход — на конец.
+        </div>
+        <OsvCard C={C} st={st} isMobile={isMobile} title="Фонды" rows={fundRows} />
+        <OsvCard C={C} st={st} isMobile={isMobile} title="Счета ДС" rows={cashRows} />
+      </>);
+    })()}
   </>);
 }
