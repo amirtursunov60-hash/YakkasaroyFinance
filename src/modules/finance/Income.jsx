@@ -334,6 +334,13 @@ export function Income() {
                       <Calculator size={15} />
                     </button>
                   ) : null;
+                  const editBtn = isFinAdmin ? (
+                    <button style={{ width: 30, height: 30, borderRadius: 9, display: "grid", placeItems: "center", flexShrink: 0,
+                        border: `1px solid ${C.line}`, background: "transparent", color: C.faint, cursor: "pointer" }}
+                      className="btn" title="Редактировать" onClick={(e) => { e.stopPropagation(); setEditingType(c); }}>
+                      <Pencil size={15} />
+                    </button>
+                  ) : null;
                   const archBtn = isFinAdmin && !c.children.length ? (
                     <button style={{ width: 30, height: 30, borderRadius: 9, display: "grid", placeItems: "center", flexShrink: 0,
                         border: `1px solid ${C.line}`, background: "transparent", color: C.faint, cursor: "pointer" }}
@@ -348,9 +355,9 @@ export function Income() {
                       <div key={c.id} style={{ padding: "11px 18px", borderTop: `1px solid ${C.line}` }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
                           <span style={st.itemCode}>{c.code}</span>
-                          <span style={{ fontWeight: 600, fontSize: 13, flex: 1, minWidth: 0, ...(isFinAdmin ? { cursor: "pointer" } : {}) }}
-                            onClick={isFinAdmin ? () => setEditingType(c) : undefined}>{c.name}</span>
+                          <span style={{ fontWeight: 600, fontSize: 13, flex: 1, minWidth: 0 }}>{c.name}</span>
                           {calcBtn}
+                          {editBtn}
                           {archBtn}
                         </div>
                         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
@@ -370,9 +377,9 @@ export function Income() {
                     <div key={c.id} style={st.itemRow} className="itemRow">
                       <div style={st.itemName}>
                         <span style={st.itemCode}>{c.code}</span>
-                        <span style={isFinAdmin ? { cursor: "pointer" } : undefined} title={isFinAdmin ? "Редактировать" : undefined}
-                          onClick={isFinAdmin ? () => setEditingType(c) : undefined}>{c.name}</span>
+                        <span>{c.name}</span>
                         {calcBtn}
+                        {editBtn}
                         {archBtn}
                       </div>
                       <div style={st.itemPrev}>{fmt(rc.prev)}</div>
@@ -596,6 +603,7 @@ function IncomeTypeFormModal({ st, node, folders, locations, onClose, onSaved })
     code: node?.code || "", name: node?.name || "",
     parentId: node?.parent_id || "", locationId: node?.location_id || "",
   });
+  const [newFolder, setNewFolder] = useState(""); // создать папку на лету (как у фонда)
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
 
@@ -603,18 +611,23 @@ function IncomeTypeFormModal({ st, node, folders, locations, onClose, onSaved })
     if (busy) return;
     setErr("");
     if (!f.name.trim()) return setErr("Укажите название");
-    if (!isFolder && !f.parentId) return setErr("Выберите папку-направление для вида дохода");
+    if (!isFolder && !f.parentId && !newFolder.trim()) return setErr("Выберите папку или впишите новую");
     setBusy(true);
     try {
+      // Для вида дохода: если вписана новая папка — создаём её и кладём вид туда.
+      let parentId = f.parentId;
+      if (!isFolder && newFolder.trim()) {
+        parentId = (await createIncomeType({ name: newFolder.trim(), parentId: null })).id;
+      }
       if (isEdit) {
         const patch = isFolder
           ? { code: f.code.trim() || null, name: f.name.trim(), location_id: f.locationId || null }
-          : { code: f.code.trim() || null, name: f.name.trim(), parent_id: f.parentId };
+          : { code: f.code.trim() || null, name: f.name.trim(), parent_id: parentId };
         await updateIncomeType(node.id, patch);
       } else if (isFolder) {
         await createIncomeType({ code: f.code.trim(), name: f.name.trim(), parentId: null, locationId: f.locationId || null });
       } else {
-        await createIncomeType({ code: f.code.trim(), name: f.name.trim(), parentId: f.parentId });
+        await createIncomeType({ code: f.code.trim(), name: f.name.trim(), parentId });
       }
       await onSaved();
     } catch (e) {
@@ -636,24 +649,22 @@ function IncomeTypeFormModal({ st, node, folders, locations, onClose, onSaved })
         </div>
         <div style={{ display: "grid", gap: 10 }}>
           <div style={st.reqField}>
+            <span style={st.reqFieldLbl}>Код (номер)</span>
+            <input style={st.mdInput} className="fin" placeholder="напр. D10" autoFocus
+              value={f.code} onChange={(e) => setF((p) => ({ ...p, code: e.target.value }))} />
+          </div>
+          <div style={st.reqField}>
+            <span style={st.reqFieldLbl}>Название</span>
+            <input style={st.mdInput} className="fin" placeholder={isFolder ? "Направление…" : "Название вида дохода…"}
+              value={f.name} onChange={(e) => setF((p) => ({ ...p, name: e.target.value }))} />
+          </div>
+          <div style={st.reqField}>
             <span style={st.reqFieldLbl}>Тип</span>
             <select style={st.mdSelect} className="fin" value={isFolder ? "folder" : "leaf"} disabled={isEdit}
               onChange={(e) => setIsFolder(e.target.value === "folder")}>
               <option value="leaf">Вид дохода (статья)</option>
               <option value="folder">Папка (направление)</option>
             </select>
-          </div>
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-            <div style={{ ...st.reqField, flex: "0 0 120px" }}>
-              <span style={st.reqFieldLbl}>Код</span>
-              <input style={st.mdInput} className="fin" placeholder="напр. D10" autoFocus
-                value={f.code} onChange={(e) => setF((p) => ({ ...p, code: e.target.value }))} />
-            </div>
-            <div style={{ ...st.reqField, flex: 1, minWidth: 160 }}>
-              <span style={st.reqFieldLbl}>Название</span>
-              <input style={st.mdInput} className="fin" placeholder={isFolder ? "Направление…" : "Название вида дохода…"}
-                value={f.name} onChange={(e) => setF((p) => ({ ...p, name: e.target.value }))} />
-            </div>
           </div>
           {isFolder ? (
             <div style={st.reqField}>
@@ -666,10 +677,13 @@ function IncomeTypeFormModal({ st, node, folders, locations, onClose, onSaved })
           ) : (
             <div style={st.reqField}>
               <span style={st.reqFieldLbl}>Находится в папке</span>
-              <select style={st.mdSelect} className="fin" value={f.parentId} onChange={(e) => setF((p) => ({ ...p, parentId: e.target.value }))}>
+              <select style={st.mdSelect} className="fin" value={f.parentId}
+                onChange={(e) => setF((p) => ({ ...p, parentId: e.target.value }))} disabled={!!newFolder.trim()}>
                 <option value="">— выберите папку —</option>
                 {folders.map((fl) => <option key={fl.id} value={fl.id}>{fl.code ? `${fl.code} ` : ""}{fl.name}</option>)}
               </select>
+              <input style={{ ...st.mdInput, marginTop: 6 }} className="fin" placeholder="…или новая папка"
+                value={newFolder} onChange={(e) => setNewFolder(e.target.value)} />
             </div>
           )}
         </div>
