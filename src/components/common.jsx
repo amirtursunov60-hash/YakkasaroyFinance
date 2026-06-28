@@ -20,6 +20,7 @@ export function Stat({ label, value, unit, accent, tone }) {
   const color = tone === "danger" ? C.danger
     : tone === "warning" ? C.warning
     : negative ? C.danger
+    : tone === "info" ? C.info
     : (tone === "success" || accent) ? C.green
     : C.text;
   return <div><div style={st.statLabel}>{label}</div><div style={{ ...st.statValue, color }}>{value} <span style={st.statUnit}>{unit}</span></div></div>;

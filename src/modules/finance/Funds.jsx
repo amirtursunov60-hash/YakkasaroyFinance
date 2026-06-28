@@ -275,7 +275,7 @@ export function Funds() {
           </div>
         </div>
         <div style={st.heroStats}>
-          <Stat label="Всего доступно" value={fmt(totals.available)} unit="TJS" accent />
+          <Stat label="Всего доступно" value={fmt(totals.available)} unit="TJS" tone="info" />
           <Stat label="К оплате (остаток)" value={fmt(totals.remaining)} unit="TJS" />
           <Stat label="Сальдо долгов" value={debtLabel(totals.debt)} unit="TJS" />
           <Stat label="Фондов" value={String(funds.length)} unit="" />
