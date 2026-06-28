@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   RotateCcw, ArrowRightLeft, Clock, Lock, Loader2, AlertCircle, CheckCircle2,
   Plus, X, List, ChevronRight, Pencil, Archive, ArrowDownToLine,
-  ArrowUpFromLine, HandCoins, Boxes,
+  ArrowUpFromLine, HandCoins, Layers,
 } from "lucide-react";
 import { Stat } from "../../components/common";
 import { useTheme } from "../../theme/theme";
@@ -665,7 +665,7 @@ function FolderCard({ C, st, folder, sub, childCount, color, debtColor, debtLabe
       <span style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 6, background: color }} />
       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
         <ChevronRight size={17} style={{ transform: open ? "rotate(90deg)" : "none", transition: "transform .2s", color, flexShrink: 0 }} />
-        <span style={{ display: "inline-flex", padding: 5, borderRadius: 9, background: `${color}2e`, color, flexShrink: 0 }}><Boxes size={15} /></span>
+        <span style={{ display: "inline-flex", padding: 5, borderRadius: 9, background: `${color}2e`, color, flexShrink: 0 }}><Layers size={15} /></span>
         <b style={{ textTransform: "uppercase", fontSize: 13, letterSpacing: 0.4 }}>{folder.name}</b>
         <span style={{ fontSize: 11, color: C.faint }}>· {childCount} фонд(ов)</span>
         {folder.description && <span style={{ fontSize: 11, color: C.faint, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>· {folder.description}</span>}
