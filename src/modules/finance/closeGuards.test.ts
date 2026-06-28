@@ -85,10 +85,10 @@ describe("weekCloseBlockReasons", () => {
     expect(weekCloseBlockReasons(ok)).toEqual([]);
   });
 
-  it("блокирует без исполнительного подтверждения и без BAF", () => {
+  it("блокирует без одобрения финкомитета и без BAF", () => {
     const r = weekCloseBlockReasons({ ...ok, period: { is_executive_confirmed: false, is_baf_confirmed: false } });
     expect(r).toHaveLength(2);
-    expect(r[0]).toMatch(/исполнительного подтверждения/i);
+    expect(r[0]).toMatch(/одобрения финкомитета/i);
     expect(r[1]).toMatch(/финкомитета \(BAF\)/i);
   });
 

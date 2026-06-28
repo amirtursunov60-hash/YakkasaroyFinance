@@ -34,8 +34,15 @@ export default function YakkasaroyFinance() {
 }
 
 function YakkasaroyApp() {
-  const [theme, setTheme] = useState("dark");
-  const [lang, setLang] = useState("ru");
+  // Тема и язык запоминаются между заходами (localStorage): пользователь выбрал
+  // светлую/тёмную — при следующем входе откроется выбранный режим.
+  const [theme, setThemeState] = useState(() => {
+    const saved = localStorage.getItem("yk_theme");
+    return saved && THEMES[saved] ? saved : "dark";
+  });
+  const setTheme = (v) => { setThemeState(v); try { localStorage.setItem("yk_theme", v); } catch { /* приватный режим */ } };
+  const [lang, setLangState] = useState(() => localStorage.getItem("yk_lang") || "ru");
+  const setLang = (v) => { setLangState(v); try { localStorage.setItem("yk_lang", v); } catch { /* приватный режим */ } };
   const [sound, setSoundState] = useState(isSoundOn());   // звук/вибрация отдачи (по умолчанию выкл)
   const setSound = (v) => { setSoundState(v); setSoundOn(v); };
   const [profile, setProfile] = useState(null);  // профиль вошедшего (с ролью) или null
