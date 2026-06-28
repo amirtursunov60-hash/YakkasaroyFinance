@@ -46,6 +46,10 @@ export function Register() {
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState(null); // строка для карточки-деталей (drill-down)
   const [legendOpen, setLegendOpen] = useState(false); // справочник типов операций (§11)
+  const [hasMore, setHasMore] = useState(false);   // есть ли ещё страницы на сервере
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  const PAGE = 100; // размер страницы Реестра (gap-map Реестр §8)
 
   useEffect(() => {
     (async () => {
@@ -59,19 +63,37 @@ export function Register() {
     })();
   }, []);
 
+  const queryArgs = useCallback((offset) => ({
+    periodId: f.scope === "week" ? periodId : null,
+    opType: f.opType || null, fundId: f.fundId || null, cashAccountId: f.accountId || null,
+    counterpartyId: f.counterpartyId || null, paymentTypeId: f.paymentTypeId || null,
+    limit: PAGE, offset,
+  }), [f, periodId]);
+
+  // Первая страница: грузится заново при смене фильтров/недели.
   const load = useCallback(async () => {
     if (periodsLoading) return;
     setErr("");
     try {
-      setRows(await fetchRegister({
-        periodId: f.scope === "week" ? periodId : null,
-        opType: f.opType || null, fundId: f.fundId || null, cashAccountId: f.accountId || null,
-        counterpartyId: f.counterpartyId || null, paymentTypeId: f.paymentTypeId || null,
-      }));
+      const data = await fetchRegister(queryArgs(0));
+      setRows(data);
+      setHasMore(data.length === PAGE);
     } catch (e) { setErr("Не удалось загрузить Реестр: " + (e?.message || e)); }
     finally { setLoading(false); }
-  }, [f, periodId, periodsLoading]);
+  }, [queryArgs, periodsLoading]);
   useEffect(() => { load(); }, [load]);
+
+  // «Показать ещё» — догружает следующую страницу и дополняет ленту.
+  const loadMore = useCallback(async () => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true); setErr("");
+    try {
+      const data = await fetchRegister(queryArgs(rows.length));
+      setRows((prev) => [...prev, ...data]);
+      setHasMore(data.length === PAGE);
+    } catch (e) { setErr("Не удалось догрузить Реестр: " + (e?.message || e)); }
+    finally { setLoadingMore(false); }
+  }, [loadingMore, hasMore, queryArgs, rows.length]);
 
   // Клиентский поиск по ленте: тип, фонд, счёт, контрагент, способ оплаты,
   // комментарий, провёл. Без учёта регистра. Сумму тоже ищем (подстрокой).
@@ -137,7 +159,7 @@ export function Register() {
         </div>
         <div style={st.heroStats}>
           <Stat label="Операций" value={String(filtered.length)}
-            unit={search.trim() ? `из ${rows.length}` : (rows.length === 200 ? "последние 200" : "")} />
+            unit={search.trim() ? `из ${rows.length} загруж.` : (hasMore ? "загружено, есть ещё" : "загружено")} />
           <Stat label="Поступления (+)" value={fmt(sums.inflow)} unit="TJS" />
           <Stat label="Списания (−)" value={fmt(sums.outflow)} unit="TJS" />
           <Stat label="Нетто" value={fmt(sums.net)} unit="TJS" tone={sums.net < -0.01 ? "danger" : "success"} />
@@ -244,6 +266,17 @@ export function Register() {
         );
       })}
     </div>
+
+    {/* Постраничная подгрузка (gap-map Реестр §8). Прячем во время клиентского
+        поиска — он работает по уже загруженной ленте. */}
+    {hasMore && !search.trim() && (
+      <div style={{ display: "flex", justifyContent: "center", marginTop: 12 }}>
+        <button className="btn" style={st.btnGhost} onClick={loadMore} disabled={loadingMore}>
+          {loadingMore ? <Loader2 size={15} className="spin" /> : <ListChecks size={15} />}
+          {loadingMore ? "Загрузка…" : `Показать ещё ${PAGE}`}
+        </button>
+      </div>
+    )}
 
     {/* Справочник типов операций (§11): легенда — что означает каждый тип
         и его цвет. Источник — тот же OP_META, что красит ленту. */}

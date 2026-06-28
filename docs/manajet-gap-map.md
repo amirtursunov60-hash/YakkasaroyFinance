@@ -131,7 +131,7 @@
 | 5 | Фильтр/переход по документу/заявке | `id_fp_purchase_order`, `id_stock_document` | 🟠 | med | M |
 | 6 | Поиск по Реестру (номер/серия) | `ApiFilterRegister.search` | ❌ | med | S |
 | 7 | Фильтр по диапазону дат | `period_begin/end`, `search_date_type` | 🟠 (только неделя/все) | med | S |
-| 8 | Пагинация Реестра (`skip/take`, Count) | `ApiFilterRegister.skip/take` | ❌ (жёсткий limit 200) | med | S |
+| 8 | Пагинация Реестра (`skip/take`, Count) | `ApiFilterRegister.skip/take` | ✅ (страницы по 100, `range(offset)`, кнопка «Показать ещё») | med | S |
 | 9 | ОСВ: вход/оборот/исход остаток за период | `ApiSheetOfAccountTotalOutput` | ✅ (RPC `fp_turnover_sheet`, вкладка «ОСВ» в Отчётах) | med | M |
 | 10 | Карточка операции по id (drill-down) | `GET /api/Register/{id}` | ❌ (строки некликабельны) | med | M |
 | 11 | Справочник типов операций (Consolidation/Debt/DirectArrival/Manual) | `operation_type` enum | 🟠 | med | M |
