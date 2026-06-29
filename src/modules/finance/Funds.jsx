@@ -596,7 +596,7 @@ function FundRow({ C, st, isMobile, grid, child, fund: f, m, color, typeBadge, d
     const mini = (label, value, col, oc) => (
       <div style={{ minWidth: 0, ...(oc ? { cursor: "pointer" } : {}) }} onClick={oc}>
         <div style={{ fontSize: 10, color: C.faint, marginBottom: 2 }}>{label}</div>
-        <div className="denseNum" style={{ fontSize: 13, fontWeight: 700, color: col || C.text, whiteSpace: "nowrap" }}>{value}</div>
+        <div className="denseNum" style={{ fontSize: 13, fontWeight: 700, color: col || C.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{value}</div>
       </div>
     );
     return (
@@ -622,7 +622,7 @@ function FundRow({ C, st, isMobile, grid, child, fund: f, m, color, typeBadge, d
           <span style={typeBadge(f.kind)}>{f.kind === "working" ? "рабочий" : "накопительный"}</span>
           {f.no_transfer && <span style={{ fontSize: 10, fontWeight: 700, color: C.warning, background: `${C.warning}1a`, padding: "2px 7px", borderRadius: 20 }}>без перемещения</span>}
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginTop: 9 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 8, marginTop: 9 }}>
           {mini("Доступно", fmt(m.available), availColor(m.available))}
           {mini("К оплате", fmt(m.remaining), C.sub)}
           {mini("Долги", busy === `loans:${f.id}` ? "…" : debtLabel(m.debt), debtColor(m.debt), m.debt !== 0 ? onLoans : undefined)}

@@ -50,7 +50,7 @@ export const makeStyles = (C) => ({
   nav: { display: "flex", alignItems: "center", gap: 13, padding: "11px 15px", borderRadius: 12, color: C.sub, fontSize: 13.5, cursor: "pointer", fontWeight: 500 },
   sidebarLabel: { fontSize: 11, textTransform: "uppercase", letterSpacing: 0.5, color: C.faint, fontWeight: 700, padding: "4px 15px 8px" },
   navActive: { background: C.green, color: C.onAccent, boxShadow: `0 6px 16px ${C.green}3a` },
-  main: { flex: 1, padding: "8px 8px 24px", minWidth: 0, width: "100%", maxWidth: 1080, margin: "0 auto" },
+  main: { flex: 1, padding: "8px 8px 24px", minWidth: 0, width: "100%", maxWidth: 1080, margin: "0 auto", overflowX: "hidden" },
   // hero
   hero: { position: "relative", borderRadius: 20, overflow: "hidden", background: C.heroGrad, border: `1px solid ${C.line}`, marginBottom: 22 },
   heroGlow: { display: "none" },
