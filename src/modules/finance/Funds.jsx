@@ -39,11 +39,11 @@ const STAGE_OPTS = [
 // фонды хранят выбранный цвет конкретным hex, поэтому пресеты статичны.
 const FUND_COLORS = ["#3ddc84", "#5b8def", "#e8911c", "#ff6b5e", "#9c6ade", "#5bd6c9", "#d6c14a", "#d64ad6"];
 
-// Сетка строки списка фондов (десктоп) — как таблица в «Директиве»:
+// Сетка строки фонда внутри карточки раздела (десктоп):
 // Название · Доступно · К оплате · Долги · действия. На телефоне — карточки.
 const FUND_GRID = {
-  display: "grid", gridTemplateColumns: "minmax(190px,1fr) 120px 120px 110px 150px",
-  alignItems: "center", gap: 12, padding: "12px 18px", minWidth: 730,
+  display: "grid", gridTemplateColumns: "minmax(150px,1fr) 110px 110px 96px 132px",
+  alignItems: "center", gap: 10, padding: "11px 18px",
 };
 
 const OP_LABELS = {
@@ -275,15 +275,17 @@ export function Funds() {
   // Доступно: отрицательное (одобрено больше, чем есть) — тревога, красным
   const availColor = (v) => v < -0.009 ? C.danger : C.info;
 
-  // строки списка: сначала фонды без секции, потом секции с детьми
-  const rows = [
-    ...funds.filter((f) => !f.folder_id).map((f) => ({ fund: f })),
-    ...Object.entries(funds.filter((f) => f.folder_id).reduce((m, f) => { (m[f.folder_id] ??= []).push(f); return m; }, {}))
-      .flatMap(([fid, children]) => [
-        { section: fid, children },
-        ...(openFolders[fid] ? children.map((c) => ({ fund: c, child: true })) : []),
-      ]),
-  ];
+  // Группировка для карточек разделов (как папки во вкладке «Доходы»):
+  // разделы с фондами + отдельная группа «Без раздела» для фондов без папки.
+  const subOf = (list) => list.reduce((acc, c) => { const mm = metrics(c); acc.remaining += mm.remaining; acc.available += mm.available; acc.debt += mm.debt; return acc; }, { remaining: 0, available: 0, debt: 0 });
+  const flatFunds = funds.filter((f) => !f.folder_id);
+  const flatSub = subOf(flatFunds);
+  const folderGroups = Object.entries(
+    funds.filter((f) => f.folder_id).reduce((m, f) => { (m[f.folder_id] ??= []).push(f); return m; }, {}),
+  ).map(([fid, children]) => ({
+    folder: folders.find((x) => x.id === fid) || { id: fid, name: "Раздел" },
+    children, sub: subOf(children),
+  }));
 
   return (<>
     <section style={st.hero}>
@@ -361,71 +363,74 @@ export function Funds() {
       </section>
     )}
 
-    {/* Список фондов — карточки */}
-    <div style={{ ...st.cardWrap, marginTop: 18 }}>
-      <section style={st.card}>
-        <div style={st.cardHead}>
-          <div style={st.cardTitle}>Фонды</div>
-          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-            {isFinAdmin && (
-              <button style={{ ...st.btnGhost, opacity: busy === "import" ? 0.7 : 1 }} className="btn" disabled={!!busy} onClick={importRefs} title="Импортировать фонды, статьи, виды дохода и статистики из ManaJet">
-                {busy === "import" ? <Loader2 size={15} className="spin" /> : <ArrowDownToLine size={15} />} {!isMobile && "Импорт из ManaJet"}
-              </button>
-            )}
-            {isFinAdmin && (
-              <button style={st.btnGhost} className="btn" onClick={() => setEditing("new")}>
-                <Plus size={15} /> {!isMobile && "Новый фонд"}
-              </button>
-            )}
-            <div style={st.cardTotal}>{fmt(totals.available)} <span style={st.unit}>TJS</span></div>
-          </div>
-        </div>
-
-        {/* Десктоп: заголовок колонок (как таблица в «Директиве») */}
-        {!isMobile && rows.length > 0 && (
-          <div style={{ ...FUND_GRID, ...st.frowHead, padding: "10px 18px", borderTop: `1px solid ${C.line}` }}>
-            <div>Название</div>
-            <div style={{ textAlign: "right" }}>Доступно</div>
-            <div style={{ textAlign: "right" }}>К оплате</div>
-            <div style={{ textAlign: "right" }}>Долги</div>
-            <div />
-          </div>
+    {/* Список фондов — карточки разделов (как папки во вкладке «Доходы») */}
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap", margin: "18px 2px 12px" }}>
+      <div style={{ fontSize: 15, fontWeight: 800 }}>Фонды</div>
+      <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+        {isFinAdmin && (
+          <button style={{ ...st.btnGhost, opacity: busy === "import" ? 0.7 : 1 }} className="btn" disabled={!!busy} onClick={importRefs} title="Импортировать фонды, статьи, виды дохода и статистики из ManaJet">
+            {busy === "import" ? <Loader2 size={15} className="spin" /> : <ArrowDownToLine size={15} />} {!isMobile && "Импорт из ManaJet"}
+          </button>
         )}
-        <div className="stagger">
-          {rows.map((r) => r.section ? (() => {
-            const folder = folders.find((x) => x.id === r.section) || { id: r.section, name: "Раздел" };
-            const sub = r.children.reduce((acc, c) => { const mm = metrics(c); acc.remaining += mm.remaining; acc.available += mm.available; acc.debt += mm.debt; return acc; }, { remaining: 0, available: 0, debt: 0 });
-            return (
-              <FolderRow key={"sec" + r.section} C={C} st={st} isMobile={isMobile} grid={FUND_GRID} folder={folder} sub={sub} childCount={r.children.length}
-                color={C.warning} debtColor={debtColor} debtLabel={debtLabel} availColor={availColor}
-                open={openFolders[r.section]} isFinAdmin={isFinAdmin} busy={busy}
-                onToggle={() => setOpenFolders((o) => ({ ...o, [r.section]: !o[r.section] }))}
-                onStatement={() => openFolderStatement(folder)} onEdit={() => setEditingFolder(folder)}
-                onArchive={() => doArchiveFolder(folder)} />
-            );
-          })() : (
-            <FundRow key={r.fund.id} C={C} st={st} isMobile={isMobile} grid={FUND_GRID} child={r.child} fund={r.fund} m={metrics(r.fund)}
-              color={colorOf(r.fund)} typeBadge={typeBadge} debtColor={debtColor} debtLabel={debtLabel} availColor={availColor}
-              isFinAdmin={isFinAdmin} busy={busy}
-              periodBalance={periodBal ? (periodBal[r.fund.id] || 0) : undefined} periodEnd={period?.ends_on}
-              onStatement={() => openStatement(r.fund)} onEdit={() => setEditing(r.fund)}
-              onLoans={() => openLoans(r.fund)} onDelete={() => setDeleting(r.fund)} />
-          ))}
-        </div>
+        {isFinAdmin && (
+          <button style={st.btnGhost} className="btn" onClick={() => setEditing("new")}>
+            <Plus size={15} /> {!isMobile && "Новый фонд"}
+          </button>
+        )}
+        <div style={st.cardTotal}>{fmt(totals.available)} <span style={st.unit}>TJS</span></div>
+      </div>
+    </div>
 
-        {/* Итого — три столбца, выровнены под столбцы карточек (отступ слева как у цвет-метки) */}
-        <div style={{ marginTop: 16, paddingTop: 14, paddingBottom: 10, paddingLeft: 16, paddingRight: 14, borderTop: `2px solid ${C.line}` }}>
-          <div style={{ fontSize: 11, color: C.faint, textTransform: "uppercase", letterSpacing: 0.3, fontWeight: 700, marginBottom: 8 }}>Всего по фондам</div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: isMobile ? 6 : 8, fontVariantNumeric: "tabular-nums" }}>
-            {[["Остаток", fmt(totals.remaining), C.sub], ["Доступно", fmt(totals.available), availColor(totals.available)], ["Долг", debtLabel(totals.debt), debtColor(totals.debt)]].map(([l, v, col]) => (
-              <div key={l} style={{ minWidth: 0 }}>
-                <div style={{ fontSize: 10, color: C.faint, textTransform: "uppercase" }}>{l}</div>
-                <div style={{ fontSize: isMobile ? 12.5 : 15, fontWeight: 800, color: col, lineHeight: 1.2, wordBreak: "break-word" }}>{v}</div>
-              </div>
-            ))}
+    <div style={st.incList} className="stagger">
+      {folderGroups.map((g, i) => {
+        const fundRows = g.children.map((f) => (
+          <FundRow key={f.id} C={C} st={st} isMobile={isMobile} grid={FUND_GRID} fund={f} m={metrics(f)}
+            color={colorOf(f)} typeBadge={typeBadge} debtColor={debtColor} debtLabel={debtLabel} availColor={availColor}
+            isFinAdmin={isFinAdmin} busy={busy}
+            periodBalance={periodBal ? (periodBal[f.id] || 0) : undefined} periodEnd={period?.ends_on}
+            onStatement={() => openStatement(f)} onEdit={() => setEditing(f)}
+            onLoans={() => openLoans(f)} onDelete={() => setDeleting(f)} />
+        ));
+        return (
+          <FundFolderCard key={g.folder.id} C={C} st={st} isMobile={isMobile} folder={g.folder} sub={g.sub} childCount={g.children.length}
+            color={C.chartPalette[i % C.chartPalette.length]} debtLabel={debtLabel}
+            open={!!openFolders[g.folder.id]} isFinAdmin={isFinAdmin} busy={busy}
+            onToggle={() => setOpenFolders((o) => ({ ...o, [g.folder.id]: !o[g.folder.id] }))}
+            onStatement={() => openFolderStatement(g.folder)} onEdit={() => setEditingFolder(g.folder)}
+            onArchive={() => doArchiveFolder(g.folder)}>
+            {fundRows}
+          </FundFolderCard>
+        );
+      })}
+      {flatFunds.length > 0 && (
+        <FundFolderCard key="__none" C={C} st={st} isMobile={isMobile} pseudo
+          folder={{ id: "__none", name: "Без раздела" }} sub={flatSub} childCount={flatFunds.length}
+          color={C.sub} debtLabel={debtLabel}
+          open={openFolders.__none !== false} isFinAdmin={isFinAdmin} busy={busy}
+          onToggle={() => setOpenFolders((o) => ({ ...o, __none: o.__none === false }))}>
+          {flatFunds.map((f) => (
+            <FundRow key={f.id} C={C} st={st} isMobile={isMobile} grid={FUND_GRID} fund={f} m={metrics(f)}
+              color={colorOf(f)} typeBadge={typeBadge} debtColor={debtColor} debtLabel={debtLabel} availColor={availColor}
+              isFinAdmin={isFinAdmin} busy={busy}
+              periodBalance={periodBal ? (periodBal[f.id] || 0) : undefined} periodEnd={period?.ends_on}
+              onStatement={() => openStatement(f)} onEdit={() => setEditing(f)}
+              onLoans={() => openLoans(f)} onDelete={() => setDeleting(f)} />
+          ))}
+        </FundFolderCard>
+      )}
+    </div>
+
+    {/* Итого по фондам */}
+    <div style={{ ...st.dataCard, marginTop: 14, padding: "14px 16px" }}>
+      <div style={{ fontSize: 11, color: C.faint, textTransform: "uppercase", letterSpacing: 0.3, fontWeight: 700, marginBottom: 8 }}>Всего по фондам</div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: isMobile ? 6 : 8, fontVariantNumeric: "tabular-nums" }}>
+        {[["Доступно", fmt(totals.available), availColor(totals.available)], ["К оплате", fmt(totals.remaining), C.sub], ["Долги", debtLabel(totals.debt), debtColor(totals.debt)]].map(([l, v, col]) => (
+          <div key={l} style={{ minWidth: 0 }}>
+            <div style={{ fontSize: 10, color: C.faint, textTransform: "uppercase" }}>{l}</div>
+            <div style={{ fontSize: isMobile ? 12.5 : 15, fontWeight: 800, color: col, lineHeight: 1.2, wordBreak: "break-word" }}>{v}</div>
           </div>
-        </div>
-      </section>
+        ))}
+      </div>
     </div>
 
     {/* Журнал всех операций по фондам */}
@@ -591,7 +596,7 @@ function FundRow({ C, st, isMobile, grid, child, fund: f, m, color, typeBadge, d
     const mini = (label, value, col, oc) => (
       <div style={{ minWidth: 0, ...(oc ? { cursor: "pointer" } : {}) }} onClick={oc}>
         <div style={{ fontSize: 10, color: C.faint, marginBottom: 2 }}>{label}</div>
-        <div className="denseNum" style={{ fontSize: 13, fontWeight: 700, color: col || C.text, whiteSpace: "nowrap" }}>{value}</div>
+        <div className="denseNum" style={{ fontSize: 13, fontWeight: 700, color: col || C.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{value}</div>
       </div>
     );
     return (
@@ -617,7 +622,7 @@ function FundRow({ C, st, isMobile, grid, child, fund: f, m, color, typeBadge, d
           <span style={typeBadge(f.kind)}>{f.kind === "working" ? "рабочий" : "накопительный"}</span>
           {f.no_transfer && <span style={{ fontSize: 10, fontWeight: 700, color: C.warning, background: `${C.warning}1a`, padding: "2px 7px", borderRadius: 20 }}>без перемещения</span>}
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginTop: 9 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 8, marginTop: 9 }}>
           {mini("Доступно", fmt(m.available), availColor(m.available))}
           {mini("К оплате", fmt(m.remaining), C.sub)}
           {mini("Долги", busy === `loans:${f.id}` ? "…" : debtLabel(m.debt), debtColor(m.debt), m.debt !== 0 ? onLoans : undefined)}
@@ -780,82 +785,58 @@ function FundLoansModal({ C, st, data, nameOf, isFinAdmin, busy, onReturn, onClo
 }
 
 
-// ---------------------------------------------------------------- Карточка папки (раздела)
-function FolderRow({ C, st, isMobile, grid, folder, sub, childCount, color, debtColor, debtLabel, availColor, open, isFinAdmin, busy, onToggle, onStatement, onEdit, onArchive }) {
+// ---------------------------------------------------------------- Карточка раздела (как папка в «Доходах»)
+function FundFolderCard({ C, st, isMobile, folder, pseudo, sub, childCount, color, debtLabel, open, isFinAdmin, busy, onToggle, onStatement, onEdit, onArchive, children }) {
   const [confirmArch, setConfirmArch] = useState(false);
   const stop = (fn) => (e) => { e.stopPropagation(); fn(); };
-
-  // -------- Телефон: строка-группа внутри списка (как в «Директиве») --------
-  if (isMobile) {
-    const ab = { ...st.iconBtn, width: 30, height: 30, borderRadius: 9, padding: 0, flexShrink: 0 };
-    const mini = (label, value, col) => (
-      <div style={{ minWidth: 0 }}>
-        <div style={{ fontSize: 10, color: C.faint, marginBottom: 2 }}>{label}</div>
-        <div className="denseNum" style={{ fontSize: 13, fontWeight: 700, color: col || C.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{value}</div>
-      </div>
-    );
-    return (
-      <div className="frow" onClick={onToggle} style={{ padding: "12px 14px", cursor: "pointer",
-        borderTop: `1px solid ${C.line}`, background: open ? `${color}14` : `${color}08` }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
-          <span style={{ width: 30, height: 30, borderRadius: 9, display: "grid", placeItems: "center", background: `${color}22`, color, flexShrink: 0 }}><Layers size={16} /></span>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontWeight: 800, fontSize: 13, textTransform: "uppercase", letterSpacing: 0.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{folder.name}</div>
-            <div style={{ fontSize: 11, color: C.faint }}>{childCount} фонд(ов)</div>
-          </div>
-          <button style={ab} className="btn" disabled={!!busy} title="Подробно" onClick={stop(onStatement)}>
-            {busy === `stmt:${folder.id}` ? <Loader2 size={14} className="spin" /> : <List size={15} />}
-          </button>
-          {isFinAdmin && <button style={ab} className="btn" title="Изменить" onClick={stop(onEdit)}><Pencil size={14} /></button>}
-          {isFinAdmin && (confirmArch ? (
-            <button style={{ ...ab, width: "auto", padding: "0 9px", fontSize: 12, color: C.danger }} className="btn"
-              disabled={busy === `arch:${folder.id}`} onClick={stop(onArchive)}>
-              {busy === `arch:${folder.id}` ? <Loader2 size={13} className="spin" /> : "Точно?"}
-            </button>
-          ) : (
-            <button style={{ ...ab, color: C.danger }} className="btn" title="Архивировать раздел" onClick={stop(() => setConfirmArch(true))}><Archive size={14} /></button>
-          ))}
-          <ChevronRight size={18} style={{ transform: open ? "rotate(90deg)" : "none", transition: "transform .2s", color: C.faint, flexShrink: 0 }} />
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginTop: 10 }}>
-          {mini("Доступно", fmt(sub.available), availColor(sub.available))}
-          {mini("К оплате", fmt(sub.remaining), C.sub)}
-          {mini("Долги", debtLabel(sub.debt), debtColor(sub.debt))}
-        </div>
-      </div>
-    );
-  }
-
-  // -------- Десктоп: строка-группа (как заголовок папки в «Директиве») --------
-  const iconBtn = { ...st.iconBtn, width: 30, height: 30, borderRadius: 9, padding: 0, flexShrink: 0 };
+  const hb = { ...st.iconBtn, padding: 4, flexShrink: 0 };
+  // Действия раздела: выписка / изменить / архив (реальный раздел; «Без раздела» — без действий)
+  const actions = !pseudo && (
+    <>
+      <button style={{ ...hb, color: C.faint }} className="btn" title="Подробно" disabled={!!busy} onClick={stop(onStatement)}>
+        {busy === `stmt:${folder.id}` ? <Loader2 size={15} className="spin" /> : <List size={16} />}
+      </button>
+      {isFinAdmin && <button style={{ ...hb, color: C.faint }} className="btn" title="Изменить" onClick={stop(onEdit)}><Pencil size={15} /></button>}
+      {isFinAdmin && (confirmArch
+        ? <button style={{ ...hb, width: "auto", padding: "2px 8px", color: C.danger, fontSize: 12 }} className="btn" disabled={busy === `arch:${folder.id}`} onClick={stop(onArchive)}>{busy === `arch:${folder.id}` ? <Loader2 size={13} className="spin" /> : "Точно?"}</button>
+        : <button style={{ ...hb, color: C.danger }} className="btn" title="Архивировать раздел" onClick={stop(() => setConfirmArch(true))}><Archive size={15} /></button>)}
+    </>
+  );
   return (
-    <div style={{ ...grid, borderTop: `1px solid ${C.line}`, background: C.panel2, cursor: "pointer" }} className="frow" onClick={onToggle}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
-        <ChevronRight size={16} style={{ transform: open ? "rotate(90deg)" : "none", transition: "transform .2s", color, flexShrink: 0 }} />
-        <span style={{ display: "inline-flex", padding: 5, borderRadius: 8, background: `${color}2e`, color, flexShrink: 0 }}><Layers size={15} /></span>
-        <b style={{ textTransform: "uppercase", fontSize: 13, letterSpacing: 0.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>{folder.name}</b>
-        <span style={{ fontSize: 11, color: C.faint, flexShrink: 0 }}>· {childCount}</span>
+    <div style={st.dataCard}>
+      <div style={st.locHead} className="locHead" onClick={onToggle}>
+        <div style={{ width: 34, height: 34, borderRadius: 10, display: "grid", placeItems: "center", flexShrink: 0, background: `${color}22`, color }}>
+          <Layers size={18} />
+        </div>
+        <div style={st.locTitle}>
+          <div style={st.locName}>{folder.name}</div>
+          <div style={st.locCode}>{childCount} фонд(ов){sub.debt ? ` · долги ${debtLabel(sub.debt)}` : ""}</div>
+        </div>
+        <div style={st.locRight}>
+          <div style={st.locSum}>{fmt(sub.available)} <span style={st.locUnit}>TJS</span></div>
+          <div style={{ fontSize: 11.5, color: C.sub, whiteSpace: "nowrap" }}>к оплате {fmt(sub.remaining)}</div>
+        </div>
+        {!isMobile && actions}
+        <span style={{ ...st.locChevron, transform: open ? "rotate(90deg)" : "none" }}><ChevronRight size={18} /></span>
       </div>
-      <div className="denseNum" style={{ ...st.fNum, fontWeight: 800, color: availColor(sub.available) }}>{fmt(sub.available)}</div>
-      <div className="denseNum" style={{ ...st.fNum, color: C.sub }}>{fmt(sub.remaining)}</div>
-      <div className="denseNum" style={{ ...st.fNum, color: debtColor(sub.debt) }}>{debtLabel(sub.debt)}</div>
-      <div style={{ display: "flex", gap: 6, justifyContent: "flex-end", alignItems: "center" }}>
-        <button style={iconBtn} className="btn" disabled={!!busy} title="Подробно" onClick={stop(onStatement)}>
-          {busy === `stmt:${folder.id}` ? <Loader2 size={14} className="spin" /> : <List size={15} />}
-        </button>
-        {isFinAdmin && (
-          <button style={iconBtn} className="btn" title="Изменить" onClick={stop(onEdit)}><Pencil size={14} /></button>
-        )}
-        {isFinAdmin && (confirmArch ? (
-          <button style={{ ...iconBtn, width: "auto", padding: "0 9px", fontSize: 12, color: C.danger }} className="btn"
-            disabled={busy === `arch:${folder.id}`} onClick={stop(onArchive)}>
-            {busy === `arch:${folder.id}` ? <Loader2 size={13} className="spin" /> : "Точно?"}
-          </button>
-        ) : (
-          <button style={{ ...iconBtn, color: C.danger }} className="btn" title="Архивировать раздел"
-            onClick={stop(() => setConfirmArch(true))}><Archive size={14} /></button>
-        ))}
-      </div>
+
+      {open && (
+        <div style={st.locBody}>
+          {isMobile && !pseudo && (
+            <div style={{ display: "flex", gap: 6, padding: "8px 14px", borderTop: `1px solid ${C.line}` }}>{actions}</div>
+          )}
+          {!isMobile && (
+            <div style={{ ...FUND_GRID, ...st.frowHead, padding: "8px 18px" }}>
+              <div>Фонд</div>
+              <div style={{ textAlign: "right" }}>Доступно</div>
+              <div style={{ textAlign: "right" }}>К оплате</div>
+              <div style={{ textAlign: "right" }}>Долги</div>
+              <div />
+            </div>
+          )}
+          {children}
+        </div>
+      )}
     </div>
   );
 }

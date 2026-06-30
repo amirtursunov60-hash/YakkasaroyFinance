@@ -111,7 +111,7 @@ export function NotifyBell({ onGo }) {
       </button>
       {open && (<>
         <div style={st.weekOverlay} onClick={() => setOpen(false)} />
-        <div style={{ ...st.weekMenu, top: 42, right: 0, width: "min(320px, calc(100vw - 24px))", maxHeight: 420, overflowY: "auto" }}>
+        <div style={{ ...st.weekMenu, top: 42, right: 0, left: "auto", width: "min(320px, calc(100vw - 24px))", maxHeight: 420, overflowY: "auto" }}>
           <div style={{ ...st.weekMenuHead, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
             <span>Уведомления</span>
             {unread > 0 && (
