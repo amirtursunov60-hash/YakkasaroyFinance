@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
-import { CalendarDays, MapPin, ChevronDown, Check, Plus, Trash2, Loader2, AlertCircle } from "lucide-react";
+import { CalendarDays, MapPin, ChevronDown, Check, Plus, Trash2, Loader2, AlertCircle, Lock } from "lucide-react";
 import { useTheme } from "../theme/theme";
 import { isoDate, weekBounds, getPeriodFor, fetchPeriods, createPeriod, periodHasData, deletePeriod, fetchLocations } from "./api";
 
@@ -140,9 +140,17 @@ export function WeekPicker() {
 
   return (
     <div style={st.topWeekWrap}>
-      <button style={{ ...st.topWeekBtn, ...(isMobile ? { padding: "0 10px", gap: 5, fontSize: 12 } : {}) }} className="btn glass-pill-btn" onClick={() => { setOpen((v) => !v); setErr(""); }}>
-        <CalendarDays size={14} color={C.green} />
-        <span>{label}</span>
+      <button
+        style={{ ...st.topWeekBtn, ...(isMobile ? { padding: "0 10px", gap: 5, fontSize: 12 } : {}),
+          ...(period?.status === "closed"
+            ? { background: `${C.danger}14`, border: `1px solid ${C.danger}40`, color: C.danger }
+            : {}) }}
+        className="btn glass-pill-btn" onClick={() => { setOpen((v) => !v); setErr(""); }}
+        title={period?.status === "closed" ? "Неделя закрыта — операции заблокированы" : undefined}>
+        {period?.status === "closed"
+          ? <Lock size={14} color={C.danger} />
+          : <CalendarDays size={14} color={C.green} />}
+        <span style={period?.status === "closed" ? { opacity: 0.9 } : undefined}>{label}</span>
         <ChevronDown size={14} style={{ transform: open ? "rotate(180deg)" : "none", transition: "transform .2s" }} />
       </button>
       {open && (<>

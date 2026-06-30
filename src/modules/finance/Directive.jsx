@@ -38,9 +38,9 @@ const byFundCode = (fundById) => (a, b) =>
 
 // Метаданные статуса периода для бейджа в шапке (цвета — из палитры C).
 const periodStatusMeta = (status, C) => {
-  if (status === "closed") return { label: "Закрыта", color: C.money, Icon: Lock };
+  if (status === "closed") return { label: "Закрыта", color: C.danger, Icon: Lock };
   if (status === "planning") return { label: "На планировании", color: C.warning, Icon: ClipboardList };
-  return { label: "Открыта", color: C.info, Icon: Unlock };
+  return { label: "Открыта", color: C.green, Icon: Unlock };
 };
 
 // Состояние этапа распределения (ожидает → рассчитано → одобрено).
