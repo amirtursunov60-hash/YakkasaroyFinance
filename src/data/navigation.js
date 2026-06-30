@@ -1,4 +1,4 @@
-import { Wallet, ArrowUpRight, ArrowDownLeft, Layers, FileText, ClipboardList, SlidersHorizontal, Calculator, BarChart3, CalendarDays, List, LayoutGrid, LayoutDashboard, Users, UserPlus, Contact, Network, PiggyBank, FolderKanban, UtensilsCrossed, ConciergeBell, Armchair, Package, Clock, Flame, TrendingUp, ShieldCheck, Building2, Mail, Archive } from "lucide-react";
+import { Wallet, ArrowUpRight, ArrowDownLeft, Layers, FileText, ClipboardList, SlidersHorizontal, Calculator, BarChart3, CalendarDays, List, LayoutGrid, LayoutDashboard, Users, UserPlus, Contact, Network, PiggyBank, FolderKanban, ConciergeBell, Flame, TrendingUp, ShieldCheck, Building2, Mail, Archive } from "lucide-react";
 
 
 
@@ -9,9 +9,11 @@ export const MODULES = [
   { key: "crm", icon: Contact, label: "CRM" },
   { key: "orgchart", icon: Network, label: "Организующая схема" },
   { key: "finance", icon: PiggyBank, label: "Финансовое планирование" },
-  // «Ресторан» скрыт из меню: по ТЗ v2 §4.11 модуль не входит в продукт (его
-  // заменит интеграция iiko). Экраны и моки сохранены как дизайн-референс
-  // (src/modules/restaurant, src/data/restaurant.js), но из сайдбара убраны.
+  // «Ресторан» — наш новый модуль (репо pos-and-menu, тот же Vercel), показывается
+  // целиком в iframe (#/restaurant). Меню — это вкладка ВНУТРИ ресторан-модуля,
+  // поэтому отдельного пункта «Меню» в сайдбаре нет. Прежние мок-экраны restaurant
+  // (RestOrders/Tables/Stock) остаются в src/modules/restaurant как дизайн-референс.
+  { key: "restaurant", icon: ConciergeBell, label: "Ресторан" },
   { key: "projects", icon: FolderKanban, label: "Управление проектами" },
 ];
 
@@ -33,12 +35,10 @@ export const NAV_FINANCE = [
   { key: "archive", icon: Archive, label: "Архив" },
 ];
 
+// Ресторан — единый модуль (своя внутренняя навигация внутри iframe,
+// включая вкладку «Меню»), поэтому в Финансе у него один раздел на всю область.
 export const NAV_RESTAURANT = [
-  { key: "r_orders", icon: ConciergeBell, label: "Заказы" },
-  { key: "r_tables", icon: Armchair, label: "Столы" },
-  { key: "r_menu", icon: UtensilsCrossed, label: "Меню" },
-  { key: "r_stock", icon: Package, label: "Склад" },
-  { key: "r_shifts", icon: Clock, label: "Смены" },
+  { key: "r_app", icon: ConciergeBell, label: "Ресторан" },
 ];
 
 export const NAV_STATS = [

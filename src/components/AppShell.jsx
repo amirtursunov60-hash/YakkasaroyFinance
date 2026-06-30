@@ -26,10 +26,7 @@ import { Reports } from "../modules/finance/Reports";
 import { Requests } from "../modules/finance/Requests";
 import { Suppliers } from "../modules/finance/Suppliers";
 import { OrgModule } from "../modules/org/OrgModule";
-import { MenuModule } from "../modules/menu/MenuModule";
-import { RestOrders } from "../modules/restaurant/RestOrders";
-import { RestStock } from "../modules/restaurant/RestStock";
-import { RestTables } from "../modules/restaurant/RestTables";
+import { RestaurantModule } from "../modules/restaurant/RestaurantModule";
 import { StaffModule } from "../modules/staff/StaffModule";
 import { StatsModule } from "../modules/stats/StatsModule";
 import { makeCss } from "../theme/css";
@@ -91,7 +88,7 @@ export function App({ onLogout }) {
   }, [active, activeModule, isMobile, navList.length]);
   const pick = (key) => { setActive(key); setMenuOpen(false); };
   // Раздел по умолчанию при переходе в модуль: Финансы → Директива, Ресторан → Меню
-  const DEFAULT_SECTION = { finance: "directive", restaurant: "r_menu" };
+  const DEFAULT_SECTION = { finance: "directive", restaurant: "r_app" };
   const defaultSection = (key) => DEFAULT_SECTION[key] || MODULE_NAV[key][0].key;
   const pickModule = (key) => {
     if (!MODULE_NAV[key]) return;
@@ -192,13 +189,17 @@ export function App({ onLogout }) {
         </div>
       </header>
 
-      <nav ref={navBarRef} style={st.modBar} className="modbar">
-        <div className="modpill" style={{ ...st.modPill, left: pill.left, width: pill.width, opacity: pill.ready ? 1 : 0 }} />
-        {navList.map((n) => { const Icon = n.icon; const on = active === n.key; return (
-          <div key={n.key} ref={on ? activeNavRef : null} style={{ ...st.mod, ...(on ? st.modActive : {}) }} className="mod" onClick={() => pick(n.key)}>
-            <Icon size={17} strokeWidth={2} color={on ? C.text : C.sub} /><span>{n.label}</span>
-          </div>); })}
-      </nav>
+      {/* Лента разделов с «жидкой» пилюлей. В модуле «Ресторан» не нужна:
+          раздел один, сам модуль (с собственной навигацией) показан на всю область. */}
+      {activeModule !== "restaurant" && (
+        <nav ref={navBarRef} style={st.modBar} className="modbar">
+          <div className="modpill" style={{ ...st.modPill, left: pill.left, width: pill.width, opacity: pill.ready ? 1 : 0 }} />
+          {navList.map((n) => { const Icon = n.icon; const on = active === n.key; return (
+            <div key={n.key} ref={on ? activeNavRef : null} style={{ ...st.mod, ...(on ? st.modActive : {}) }} className="mod" onClick={() => pick(n.key)}>
+              <Icon size={17} strokeWidth={2} color={on ? C.text : C.sub} /><span>{n.label}</span>
+            </div>); })}
+        </nav>
+      )}
 
       <div style={st.body}>
         {isMobile && menuOpen && <div style={st.overlay} onClick={() => setMenuOpen(false)} />}
@@ -220,7 +221,7 @@ export function App({ onLogout }) {
             </div>); })}
         </aside>
 
-        <main style={{ ...st.main, ...(isMobile ? { padding: (activeModule === "restaurant" && active === "r_menu") ? "1px" : "16px 8px 40px" } : {}) }}>
+        <main style={{ ...st.main, ...(isMobile ? { padding: activeModule === "restaurant" ? "1px" : "16px 8px 40px" } : {}) }}>
           {activeModule === "finance" && active === "control" && <Control />}
           {activeModule === "finance" && active === "directive" && <Directive />}
           {activeModule === "finance" && active === "income" && <Income />}
@@ -249,11 +250,7 @@ export function App({ onLogout }) {
           {activeModule === "crm" && active === "c_massmail" && <MassmailModule />}
           {activeModule === "crm" && active !== "c_counterparties" && active !== "c_massmail" && <CrmModule view={active} />}
 
-          {activeModule === "restaurant" && active === "r_orders" && <RestOrders />}
-          {activeModule === "restaurant" && active === "r_tables" && <RestTables />}
-          {activeModule === "restaurant" && active === "r_menu" && <MenuModule />}
-          {activeModule === "restaurant" && active === "r_stock" && <RestStock />}
-          {activeModule === "restaurant" && active === "r_shifts" && <Stub label="Смены" />}
+          {activeModule === "restaurant" && <RestaurantModule />}
         </main>
       </div>
     </div>
