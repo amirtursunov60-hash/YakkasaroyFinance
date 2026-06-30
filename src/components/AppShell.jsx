@@ -189,13 +189,17 @@ export function App({ onLogout }) {
         </div>
       </header>
 
-      <nav ref={navBarRef} style={st.modBar} className="modbar">
-        <div className="modpill" style={{ ...st.modPill, left: pill.left, width: pill.width, opacity: pill.ready ? 1 : 0 }} />
-        {navList.map((n) => { const Icon = n.icon; const on = active === n.key; return (
-          <div key={n.key} ref={on ? activeNavRef : null} style={{ ...st.mod, ...(on ? st.modActive : {}) }} className="mod" onClick={() => pick(n.key)}>
-            <Icon size={17} strokeWidth={2} color={on ? C.text : C.sub} /><span>{n.label}</span>
-          </div>); })}
-      </nav>
+      {/* Лента разделов с «жидкой» пилюлей. В модуле «Ресторан» не нужна:
+          раздел один, сам модуль (с собственной навигацией) показан на всю область. */}
+      {activeModule !== "restaurant" && (
+        <nav ref={navBarRef} style={st.modBar} className="modbar">
+          <div className="modpill" style={{ ...st.modPill, left: pill.left, width: pill.width, opacity: pill.ready ? 1 : 0 }} />
+          {navList.map((n) => { const Icon = n.icon; const on = active === n.key; return (
+            <div key={n.key} ref={on ? activeNavRef : null} style={{ ...st.mod, ...(on ? st.modActive : {}) }} className="mod" onClick={() => pick(n.key)}>
+              <Icon size={17} strokeWidth={2} color={on ? C.text : C.sub} /><span>{n.label}</span>
+            </div>); })}
+        </nav>
+      )}
 
       <div style={st.body}>
         {isMobile && menuOpen && <div style={st.overlay} onClick={() => setMenuOpen(false)} />}

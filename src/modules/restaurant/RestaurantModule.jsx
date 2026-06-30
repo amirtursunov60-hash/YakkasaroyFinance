@@ -34,7 +34,9 @@ export function RestaurantModule() {
       onLoad={pushTheme}
       style={{
         width: "100%",
-        height: isMobile ? "calc(100dvh - 118px - env(safe-area-inset-top))" : "calc(100dvh - 120px)",
+        // ленты разделов в модуле «Ресторан» нет — остаётся только шапка (60px) и паддинги,
+        // поэтому iframe выше, чем у обычных экранов (без пустой полосы снизу)
+        height: isMobile ? "calc(100dvh - 64px - env(safe-area-inset-top))" : "calc(100dvh - 96px)",
         border: "none", borderRadius: 8, display: "block",
       }}
     />
