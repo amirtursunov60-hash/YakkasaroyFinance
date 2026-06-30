@@ -26,7 +26,6 @@ import { Reports } from "../modules/finance/Reports";
 import { Requests } from "../modules/finance/Requests";
 import { Suppliers } from "../modules/finance/Suppliers";
 import { OrgModule } from "../modules/org/OrgModule";
-import { MenuModule } from "../modules/menu/MenuModule";
 import { RestaurantModule } from "../modules/restaurant/RestaurantModule";
 import { StaffModule } from "../modules/staff/StaffModule";
 import { StatsModule } from "../modules/stats/StatsModule";
@@ -89,7 +88,7 @@ export function App({ onLogout }) {
   }, [active, activeModule, isMobile, navList.length]);
   const pick = (key) => { setActive(key); setMenuOpen(false); };
   // Раздел по умолчанию при переходе в модуль: Финансы → Директива, Ресторан → Меню
-  const DEFAULT_SECTION = { finance: "directive", restaurant: "r_app", menu: "m_menu" };
+  const DEFAULT_SECTION = { finance: "directive", restaurant: "r_app" };
   const defaultSection = (key) => DEFAULT_SECTION[key] || MODULE_NAV[key][0].key;
   const pickModule = (key) => {
     if (!MODULE_NAV[key]) return;
@@ -218,7 +217,7 @@ export function App({ onLogout }) {
             </div>); })}
         </aside>
 
-        <main style={{ ...st.main, ...(isMobile ? { padding: (activeModule === "restaurant" || (activeModule === "menu" && active === "m_menu")) ? "1px" : "16px 8px 40px" } : {}) }}>
+        <main style={{ ...st.main, ...(isMobile ? { padding: activeModule === "restaurant" ? "1px" : "16px 8px 40px" } : {}) }}>
           {activeModule === "finance" && active === "control" && <Control />}
           {activeModule === "finance" && active === "directive" && <Directive />}
           {activeModule === "finance" && active === "income" && <Income />}
@@ -248,7 +247,6 @@ export function App({ onLogout }) {
           {activeModule === "crm" && active !== "c_counterparties" && active !== "c_massmail" && <CrmModule view={active} />}
 
           {activeModule === "restaurant" && <RestaurantModule />}
-          {activeModule === "menu" && active === "m_menu" && <MenuModule />}
         </main>
       </div>
     </div>
