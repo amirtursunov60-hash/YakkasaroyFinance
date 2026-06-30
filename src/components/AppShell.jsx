@@ -27,9 +27,7 @@ import { Requests } from "../modules/finance/Requests";
 import { Suppliers } from "../modules/finance/Suppliers";
 import { OrgModule } from "../modules/org/OrgModule";
 import { MenuModule } from "../modules/menu/MenuModule";
-import { RestOrders } from "../modules/restaurant/RestOrders";
-import { RestStock } from "../modules/restaurant/RestStock";
-import { RestTables } from "../modules/restaurant/RestTables";
+import { RestaurantModule } from "../modules/restaurant/RestaurantModule";
 import { StaffModule } from "../modules/staff/StaffModule";
 import { StatsModule } from "../modules/stats/StatsModule";
 import { makeCss } from "../theme/css";
@@ -91,7 +89,7 @@ export function App({ onLogout }) {
   }, [active, activeModule, isMobile, navList.length]);
   const pick = (key) => { setActive(key); setMenuOpen(false); };
   // Раздел по умолчанию при переходе в модуль: Финансы → Директива, Ресторан → Меню
-  const DEFAULT_SECTION = { finance: "directive", restaurant: "r_menu" };
+  const DEFAULT_SECTION = { finance: "directive", restaurant: "r_app", menu: "m_menu" };
   const defaultSection = (key) => DEFAULT_SECTION[key] || MODULE_NAV[key][0].key;
   const pickModule = (key) => {
     if (!MODULE_NAV[key]) return;
@@ -220,7 +218,7 @@ export function App({ onLogout }) {
             </div>); })}
         </aside>
 
-        <main style={{ ...st.main, ...(isMobile ? { padding: (activeModule === "restaurant" && active === "r_menu") ? "1px" : "16px 8px 40px" } : {}) }}>
+        <main style={{ ...st.main, ...(isMobile ? { padding: (activeModule === "restaurant" || (activeModule === "menu" && active === "m_menu")) ? "1px" : "16px 8px 40px" } : {}) }}>
           {activeModule === "finance" && active === "control" && <Control />}
           {activeModule === "finance" && active === "directive" && <Directive />}
           {activeModule === "finance" && active === "income" && <Income />}
@@ -249,11 +247,8 @@ export function App({ onLogout }) {
           {activeModule === "crm" && active === "c_massmail" && <MassmailModule />}
           {activeModule === "crm" && active !== "c_counterparties" && active !== "c_massmail" && <CrmModule view={active} />}
 
-          {activeModule === "restaurant" && active === "r_orders" && <RestOrders />}
-          {activeModule === "restaurant" && active === "r_tables" && <RestTables />}
-          {activeModule === "restaurant" && active === "r_menu" && <MenuModule />}
-          {activeModule === "restaurant" && active === "r_stock" && <RestStock />}
-          {activeModule === "restaurant" && active === "r_shifts" && <Stub label="Смены" />}
+          {activeModule === "restaurant" && <RestaurantModule />}
+          {activeModule === "menu" && active === "m_menu" && <MenuModule />}
         </main>
       </div>
     </div>

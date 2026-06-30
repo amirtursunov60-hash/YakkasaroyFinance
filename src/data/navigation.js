@@ -1,4 +1,4 @@
-import { Wallet, ArrowUpRight, ArrowDownLeft, Layers, FileText, ClipboardList, SlidersHorizontal, Calculator, BarChart3, CalendarDays, List, LayoutGrid, LayoutDashboard, Users, UserPlus, Contact, Network, PiggyBank, FolderKanban, UtensilsCrossed, ConciergeBell, Armchair, Package, Clock, Flame, TrendingUp, ShieldCheck, Building2, Mail, Archive } from "lucide-react";
+import { Wallet, ArrowUpRight, ArrowDownLeft, Layers, FileText, ClipboardList, SlidersHorizontal, Calculator, BarChart3, CalendarDays, List, LayoutGrid, LayoutDashboard, Users, UserPlus, Contact, Network, PiggyBank, FolderKanban, UtensilsCrossed, ConciergeBell, Flame, TrendingUp, ShieldCheck, Building2, Mail, Archive } from "lucide-react";
 
 
 
@@ -9,10 +9,12 @@ export const MODULES = [
   { key: "crm", icon: Contact, label: "CRM" },
   { key: "orgchart", icon: Network, label: "Организующая схема" },
   { key: "finance", icon: PiggyBank, label: "Финансовое планирование" },
-  // «Ресторан» — дизайн-референс (по ТЗ v2 §4.11 в продукт не входит, его заменит
-  // интеграция iiko). Снова показан в сайдбаре по запросу заказчика для просмотра;
-  // экраны и моки — в src/modules/restaurant, src/data/restaurant.js.
-  { key: "restaurant", icon: UtensilsCrossed, label: "Ресторан" },
+  // «Ресторан» — наш новый модуль (репо pos-and-menu, тот же Vercel), показывается
+  // целиком в iframe (#/restaurant). «Меню» вынесено в отдельную вкладку (корень того
+  // же приложения). Прежние мок-экраны restaurant (RestOrders/Tables/Stock) остаются
+  // в src/modules/restaurant как дизайн-референс, но из навигации убраны.
+  { key: "restaurant", icon: ConciergeBell, label: "Ресторан" },
+  { key: "menu", icon: UtensilsCrossed, label: "Меню" },
   { key: "projects", icon: FolderKanban, label: "Управление проектами" },
 ];
 
@@ -34,12 +36,15 @@ export const NAV_FINANCE = [
   { key: "archive", icon: Archive, label: "Архив" },
 ];
 
+// Ресторан — единый модуль (своя внутренняя навигация внутри iframe),
+// поэтому в Финансе у него один раздел на всю область.
 export const NAV_RESTAURANT = [
-  { key: "r_orders", icon: ConciergeBell, label: "Заказы" },
-  { key: "r_tables", icon: Armchair, label: "Столы" },
-  { key: "r_menu", icon: UtensilsCrossed, label: "Меню" },
-  { key: "r_stock", icon: Package, label: "Склад" },
-  { key: "r_shifts", icon: Clock, label: "Смены" },
+  { key: "r_app", icon: ConciergeBell, label: "Ресторан" },
+];
+
+// Меню — отдельная вкладка (корень того же приложения в iframe).
+export const NAV_MENU = [
+  { key: "m_menu", icon: UtensilsCrossed, label: "Меню" },
 ];
 
 export const NAV_STATS = [
@@ -73,4 +78,4 @@ export const NAV_STAFF = [
   { key: "st_invites", icon: UserPlus, label: "Приглашения" },
 ];
 
-export const MODULE_NAV = { finance: NAV_FINANCE, restaurant: NAV_RESTAURANT, stats: NAV_STATS, orgchart: NAV_ORG, dashboard: NAV_DASH, crm: NAV_CRM, staff: NAV_STAFF };
+export const MODULE_NAV = { finance: NAV_FINANCE, restaurant: NAV_RESTAURANT, menu: NAV_MENU, stats: NAV_STATS, orgchart: NAV_ORG, dashboard: NAV_DASH, crm: NAV_CRM, staff: NAV_STAFF };
