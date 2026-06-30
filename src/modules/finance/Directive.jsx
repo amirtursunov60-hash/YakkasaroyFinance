@@ -59,34 +59,6 @@ function LegendDot({ color, label, value, C }) {
   );
 }
 
-// Каскадный степпер 3 этапов ФРС (Выручка → Маржа → СКД) с состоянием каждого.
-function StageStepper({ stages, C, isMobile }) {
-  return (
-    <div style={{ display: "flex", alignItems: "stretch", gap: isMobile ? 6 : 10, marginBottom: 18 }}>
-      {stages.map((sg, i) => {
-        const s = stageStateMeta(sg, C);
-        const StageIcon = sg.icon || Banknote;
-        return (
-          <div key={sg.key} style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 7,
-            padding: isMobile ? "10px 10px" : "12px 14px", background: C.panel, border: `1px solid ${s.color}33`,
-            borderRadius: 16, boxShadow: `inset 0 1px 0 ${C.glassHi}` }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <div style={{ width: 26, height: 26, borderRadius: 8, display: "grid", placeItems: "center",
-                background: `${s.color}1f`, color: s.color, flexShrink: 0 }}><StageIcon size={15} /></div>
-              <span style={{ fontSize: 10.5, fontWeight: 800, color: C.faint, letterSpacing: 0.4 }}>ЭТАП {i + 1}</span>
-            </div>
-            <div style={{ fontSize: isMobile ? 11.5 : 12.5, fontWeight: 700, lineHeight: 1.2,
-              overflow: "hidden", textOverflow: "ellipsis", whiteSpace: isMobile ? "normal" : "nowrap" }}>{sg.title}</div>
-            <div style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10.5, fontWeight: 700, color: s.color }}>
-              <s.Icon size={11} /> {s.label}
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
 
 export function Directive() {
   const { C, st, isMobile, profile } = useTheme();
@@ -496,8 +468,6 @@ export function Directive() {
         Схема распределения не настроена — примените миграции 006–007 (supabase/README.md).
       </div>
     )}
-
-    {rules.length > 0 && <StageStepper stages={stagesView} C={C} isMobile={isMobile} />}
 
     {stagesView.map((sg) => (
       <LevelCard key={sg.key} sg={sg} C={C} st={st} isMobile={isMobile}
