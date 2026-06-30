@@ -36,6 +36,57 @@ const STAGES = [
 const byFundCode = (fundById) => (a, b) =>
   (fundById[a.fund_id]?.code || "").localeCompare(fundById[b.fund_id]?.code || "", "ru", { numeric: true });
 
+// Метаданные статуса периода для бейджа в шапке (цвета — из палитры C).
+const periodStatusMeta = (status, C) => {
+  if (status === "closed") return { label: "Закрыта", color: C.money, Icon: Lock };
+  if (status === "planning") return { label: "На планировании", color: C.warning, Icon: ClipboardList };
+  return { label: "Открыта", color: C.info, Icon: Unlock };
+};
+
+// Состояние этапа распределения (ожидает → рассчитано → одобрено).
+const stageStateMeta = (sg, C) =>
+  sg.isApproved ? { color: C.money, label: "Одобрено", Icon: CheckCircle2 }
+    : sg.sumCalc > 0 ? { color: C.warning, label: "Рассчитано", Icon: Calculator }
+      : { color: C.faint, label: "Ожидает", Icon: ChevronRight };
+
+// Точка-легенда для стопкового бара итога ФП.
+function LegendDot({ color, label, value, C }) {
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, color: C.sub }}>
+      <span style={{ width: 9, height: 9, borderRadius: 3, background: color, flexShrink: 0 }} />
+      {label} <b className="denseNum" style={{ color: C.text }}>{value}</b>
+    </span>
+  );
+}
+
+// Каскадный степпер 3 этапов ФРС (Выручка → Маржа → СКД) с состоянием каждого.
+function StageStepper({ stages, C, isMobile }) {
+  return (
+    <div style={{ display: "flex", alignItems: "stretch", gap: isMobile ? 6 : 10, marginBottom: 18 }}>
+      {stages.map((sg, i) => {
+        const s = stageStateMeta(sg, C);
+        const StageIcon = sg.icon || Banknote;
+        return (
+          <div key={sg.key} style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 7,
+            padding: isMobile ? "10px 10px" : "12px 14px", background: C.panel, border: `1px solid ${s.color}33`,
+            borderRadius: 16, boxShadow: `inset 0 1px 0 ${C.glassHi}` }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <div style={{ width: 26, height: 26, borderRadius: 8, display: "grid", placeItems: "center",
+                background: `${s.color}1f`, color: s.color, flexShrink: 0 }}><StageIcon size={15} /></div>
+              <span style={{ fontSize: 10.5, fontWeight: 800, color: C.faint, letterSpacing: 0.4 }}>ЭТАП {i + 1}</span>
+            </div>
+            <div style={{ fontSize: isMobile ? 11.5 : 12.5, fontWeight: 700, lineHeight: 1.2,
+              overflow: "hidden", textOverflow: "ellipsis", whiteSpace: isMobile ? "normal" : "nowrap" }}>{sg.title}</div>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10.5, fontWeight: 700, color: s.color }}>
+              <s.Icon size={11} /> {s.label}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 
 export function Directive() {
   const { C, st, isMobile, profile } = useTheme();
@@ -198,6 +249,8 @@ export function Directive() {
   );
   const remainder = income - approvedTotal;
   const fundsTotal = useMemo(() => funds.reduce((a, f) => a + Number(f.balance || 0), 0), [funds]);
+  // Доля одобренного распределения в доходе недели — для прогресс-баров шапки и итога ФП.
+  const distPct = income > 0 ? Math.round((approvedTotal / income) * 1000) / 10 : 0;
 
   // Каскад дохода ПО ВИДАМ через этапы («матрёшка»): на входе каждого этапа доход
   // вида = его остаток после удержаний предыдущих этапов. Калькулятор фонда считает
@@ -394,11 +447,20 @@ export function Directive() {
       <div style={st.heroGlow} />
       <div style={st.heroContent}>
         <div style={st.heroTop}>
-          <div>
+          <div style={{ minWidth: 0 }}>
             <div style={st.heroLabel}>Директива · недельное распределение ФРС</div>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 4 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 4, flexWrap: "wrap" }}>
               <CalendarDays size={18} color={C.green} />
               <span style={st.heroTitle}>{period ? periodTitle(period) : "Период не создан — добавьте неделю в шапке"}</span>
+              {period && (() => {
+                const m = periodStatusMeta(period.status, C);
+                return (
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11.5, fontWeight: 700,
+                    color: m.color, background: `${m.color}1f`, border: `1px solid ${m.color}40`, padding: "4px 11px", borderRadius: 20 }}>
+                    <m.Icon size={12} /> {m.label}
+                  </span>
+                );
+              })()}
             </div>
           </div>
         </div>
@@ -408,6 +470,21 @@ export function Directive() {
           <Stat label="Доход за прошлую неделю" value={fmt(prevIncome)} unit="TJS" />
           <Stat label="Одобрено распределение" value={fmt(approvedTotal)} unit="TJS" />
         </div>
+        {income > 0 && (
+          <div style={{ marginTop: 20 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 7, gap: 12 }}>
+              <span style={{ fontSize: 12, color: C.heroStat, fontWeight: 600 }}>Распределено по фондам</span>
+              <span className="denseNum" style={{ fontSize: 12.5, fontWeight: 800, color: distPct >= 99.5 ? C.money : C.text, whiteSpace: "nowrap" }}>
+                {distPct}% <span style={{ color: C.faint, fontWeight: 600 }}>· остаток {fmt(Math.max(0, remainder))}</span>
+              </span>
+            </div>
+            <div style={{ height: 7, background: C.barBg, borderRadius: 4, overflow: "hidden" }}>
+              <div style={{ height: "100%", width: `${Math.min(100, distPct)}%`,
+                background: `linear-gradient(90deg, ${C.greenSoft}, ${C.money})`,
+                borderRadius: 4, transition: "width .5s ease" }} />
+            </div>
+          </div>
+        )}
       </div>
     </section>
 
@@ -419,6 +496,8 @@ export function Directive() {
         Схема распределения не настроена — примените миграции 006–007 (supabase/README.md).
       </div>
     )}
+
+    {rules.length > 0 && <StageStepper stages={stagesView} C={C} isMobile={isMobile} />}
 
     {stagesView.map((sg) => (
       <LevelCard key={sg.key} sg={sg} C={C} st={st} isMobile={isMobile}
@@ -450,6 +529,23 @@ export function Directive() {
           <span style={{ ...st.fpValBold, color: remainder < -0.01 ? C.danger : C.money }}>{fmt(remainder)}</span>
         </div>
       </div>
+      {income > 0 && (
+        <div style={{ marginTop: 14 }}>
+          <div style={{ display: "flex", height: 10, borderRadius: 6, overflow: "hidden", background: C.barBg }}>
+            <div style={{ width: `${Math.min(100, distPct)}%`, background: C.money, transition: "width .5s ease" }}
+              title={`Распределено ${fmt(approvedTotal)}`} />
+            {remainder > 0.01 && (
+              <div style={{ width: `${Math.max(0, 100 - distPct)}%`, background: C.info, opacity: 0.45, transition: "width .5s ease" }}
+                title={`Остаток ${fmt(remainder)}`} />
+            )}
+          </div>
+          <div style={{ display: "flex", gap: 18, marginTop: 10, flexWrap: "wrap" }}>
+            <LegendDot color={C.money} label="Распределено" value={fmt(approvedTotal)} C={C} />
+            <LegendDot color={C.info} label="Остаток" value={fmt(Math.max(0, remainder))} C={C} />
+            {payable.total > 0 && <LegendDot color={C.warning} label="На оплату" value={fmt(payable.total)} C={C} />}
+          </div>
+        </div>
+      )}
       <div style={st.fpActions} className="fpActions">
         <button style={{ ...st.btnGhost, width: "100%", justifyContent: "center", opacity: busy === "block" ? 0.7 : 1 }}
           className="btn" onClick={toggleRequests} disabled={busy || isClosed || !period}>
@@ -627,7 +723,9 @@ function RequestsReview({ C, st, isMobile, profile, requests, funds, periodId, b
   return (
     <section style={st.reqSection}>
       <div style={st.reqSectionHead}>
-        <ClipboardList size={18} color={C.green} />
+        <div style={{ width: 30, height: 30, borderRadius: 9, display: "grid", placeItems: "center", background: `${C.green}1f`, color: C.green, flexShrink: 0 }}>
+          <ClipboardList size={17} />
+        </div>
         <h3 style={st.reqSectionTitle}>Заявки к рассмотрению</h3>
         <span style={st.reqSectionSub}>от поста · формат ЗРС · поданные на эту неделю</span>
         {blocked && <span style={st.reqBlockedTag}><Lock size={12} /> Подача закрыта</span>}
@@ -872,6 +970,8 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
 
   const cbStyle = { width: 15, height: 15, accentColor: C.green, marginRight: 7, flexShrink: 0, cursor: "pointer" };
   const StageIcon = sg.icon || Banknote; // иконка этапа (Выручка/Маржа/СКД)
+  const stageState = stageStateMeta(sg, C);                 // ожидает / рассчитано / одобрено
+  const apprPct = sg.base > 0 ? Math.min(100, (sg.sumAppr / sg.base) * 100) : 0; // одобрено ÷ база
   // Колонки. На десктопе видны все шесть. На телефоне всё помещается в экран без
   // горизонтального скролла: по умолчанию (режим "base") — Название · % ·
   // калькулятор · Доступно; кнопкой-стрелкой переключаемся в режим "results" —
@@ -1013,16 +1113,30 @@ function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders,
     <div style={st.cardWrap}>
       <section style={st.card}>
         <div style={{ ...st.cardHead, cursor: "pointer" }} onClick={() => setCollapsed((c) => !c)}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
-            <div style={{ width: 30, height: 30, borderRadius: 9, display: "grid", placeItems: "center", background: `${C.green}1f`, color: C.green, flexShrink: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+            <div style={{ width: 30, height: 30, borderRadius: 9, display: "grid", placeItems: "center", background: `${stageState.color}1f`, color: stageState.color, flexShrink: 0 }}>
               <StageIcon size={17} />
             </div>
-            <div style={st.cardTitle}>{sg.title}</div>
+            <div style={{ minWidth: 0 }}>
+              <div style={st.cardTitle}>{sg.title}</div>
+              {!isMobile && <div style={{ fontSize: 11, color: C.faint, marginTop: 1 }}>База этапа · каскад ФРС</div>}
+            </div>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+            {!isMobile && (
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 700,
+                color: stageState.color, background: `${stageState.color}1a`, border: `1px solid ${stageState.color}33`,
+                padding: "4px 10px", borderRadius: 20, whiteSpace: "nowrap" }}>
+                <stageState.Icon size={11} /> {stageState.label}
+              </span>
+            )}
             <div className="denseNum" style={st.cardTotal}>{fmt(sg.base)} <span style={st.unit}>TJS</span></div>
             <ChevronRight size={18} style={{ transform: collapsed ? "none" : "rotate(90deg)", transition: "transform .2s", color: C.sub, flexShrink: 0 }} />
           </div>
+        </div>
+        {/* Прогресс одобрения этапа (одобрено ÷ база) */}
+        <div style={{ height: 4, background: C.barBg, margin: "0 22px", borderRadius: 3, overflow: "hidden" }}>
+          <div style={{ height: "100%", width: `${apprPct}%`, background: stageState.color, borderRadius: 3, transition: "width .5s ease, background .4s ease" }} />
         </div>
         {/* Свёрнутый этап: только выбор всех фондов (итог по этапу — общий блок ниже) */}
         {collapsed && sg.rows.length > 0 && (
