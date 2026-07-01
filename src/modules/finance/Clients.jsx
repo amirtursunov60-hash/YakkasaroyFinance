@@ -1,11 +1,12 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
-import { Banknote, Loader2, AlertCircle, CheckCircle2, Plus, X, Ban, ChevronRight, CalendarDays, PartyPopper, Receipt, Undo2, Printer } from "lucide-react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { Banknote, Loader2, AlertCircle, CheckCircle2, Plus, X, Ban, ChevronRight, CalendarDays, PartyPopper, Receipt, Undo2, Printer, AlertTriangle, ListChecks } from "lucide-react";
 import { Stat } from "../../components/common";
 import { AttachmentsBlock } from "../../components/AttachmentsBlock";
 import { useTheme } from "../../theme/theme";
 import { useScrollLock } from "../../hooks/useScrollLock";
 import { useActionFeedback } from "../../hooks/useActionFeedback";
 import { fmt } from "../../utils/format";
+import { invoiceDebt, isInvoiceOverdue, overdueDays, invoiceMatchesFilter, invoiceFilterCounts } from "../../utils/receivables";
 import { openInvoicePrint } from "../../utils/invoicePrint";
 import { COMPANY } from "../../data/company";
 import { usePeriod } from "../../lib/PeriodCtx";
@@ -23,7 +24,9 @@ import {
 // триггер сам проводит её в Реестр и на счёт ДС. Бронь будущей даты =
 // счёт со статусом planned; после первой предоплаты становится issued.
 
-const FILTERS = [["all", "Все"], ["planned", "Брони"], ["issued", "В работе"], ["paid", "Оплачены"], ["cancelled", "Отменены"]];
+const FILTERS = [["all", "Все"], ["overdue", "Просроченные"], ["planned", "Брони"], ["issued", "В работе"], ["paid", "Оплачены"], ["cancelled", "Отменены"]];
+const PAGE = 100;         // размер страницы счетов (gap-map Счета §7)
+const OVERDUE_LIMIT = 500; // потолок выборки просроченных; при упоре показываем «есть ещё»
 
 export function Clients() {
   const { C, st, isMobile, profile } = useTheme();
@@ -56,24 +59,71 @@ export function Clients() {
   const [showForm, setShowForm] = useState(false);
   const [paying, setPaying] = useState(null);
   const [busy, setBusy] = useState(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
 
-  const load = useCallback(async () => {
+  // Просроченные счета грузятся отдельной выборкой (не постранично): старые
+  // неоплаченные счета — в хвосте списка, и сводка дебиторки не должна
+  // зависеть от того, сколько страниц долистал пользователь. Выборка
+  // от самых старых мероприятий; при упоре в OVERDUE_LIMIT ставим флаг.
+  const [overdueRaw, setOverdueRaw] = useState([]);
+  const [overdueCapped, setOverdueCapped] = useState(false);
+
+  // «Эпоха» запроса (образец — Реестр): каждый новый load() её инкрементит,
+  // устаревшие ответы (в т.ч. долетевший loadMore после смены точки)
+  // отбрасываются — иначе страница старой выборки дописалась бы к новой.
+  const reqEpoch = useRef(0);
+
+  // limitOverride — чтобы после действия (оплата/отмена) перезагрузить столько
+  // счетов, сколько уже было на экране, а не откатываться к первой странице.
+  const load = useCallback(async (limitOverride) => {
+    const epoch = ++reqEpoch.current;
     setErr("");
     try {
-      const [invs, tps, refData, cps] = await Promise.all([
-        fetchInvoices(ctxLocationId), fetchIncomeTypes(), fetchIncomeRefs(), fetchCounterparties(),
+      const limit = Math.max(PAGE, limitOverride || 0);
+      const todayIso = isoDate(new Date());
+      const [invs, ovd, tps, refData, cps] = await Promise.all([
+        fetchInvoices(ctxLocationId, { limit }),
+        fetchInvoices(ctxLocationId, { limit: OVERDUE_LIMIT, overdueBefore: todayIso }),
+        fetchIncomeTypes(), fetchIncomeRefs(), fetchCounterparties(),
       ]);
-      setInvoices(invs); setTypes(tps); setRefs(refData); setCounterparties(cps);
-      const ids = invs.map((i) => i.id);
+      const ids = [...new Set([...invs, ...ovd].map((i) => i.id))];
       const [pays, attMap] = await Promise.all([fetchInvoicePayments(ids), fetchInvoiceAttachments(ids)]);
+      if (epoch !== reqEpoch.current) return; // устаревший ответ
+      setInvoices(invs); setOverdueRaw(ovd); setTypes(tps); setRefs(refData); setCounterparties(cps);
+      setHasMore(invs.length === limit);
+      setOverdueCapped(ovd.length === OVERDUE_LIMIT);
       setPayments(pays); setAtts(attMap);
     } catch (e) {
-      setErr("Не удалось загрузить счета: " + (e?.message || e));
+      if (epoch === reqEpoch.current) setErr("Не удалось загрузить счета: " + (e?.message || e));
     } finally {
-      setLoading(false);
+      if (epoch === reqEpoch.current) setLoading(false);
     }
   }, [ctxLocationId]);
   useEffect(() => { load(); }, [load]);
+
+  // «Показать ещё» — догружает следующую страницу и дополняет список.
+  // Дедупликация по id: вставка нового счёта между страницами сдвигает
+  // offset-выборку, и последняя строка страницы может прийти повторно.
+  const loadMore = useCallback(async () => {
+    if (loadingMore || !hasMore) return;
+    const epoch = reqEpoch.current;
+    setLoadingMore(true);
+    try {
+      const invs = await fetchInvoices(ctxLocationId, { limit: PAGE, offset: invoices.length });
+      const ids = invs.map((i) => i.id);
+      const [pays, attMap] = await Promise.all([fetchInvoicePayments(ids), fetchInvoiceAttachments(ids)]);
+      if (epoch !== reqEpoch.current) return; // точка сменилась во время подгрузки
+      setInvoices((prev) => {
+        const seen = new Set(prev.map((i) => i.id));
+        return [...prev, ...invs.filter((i) => !seen.has(i.id))];
+      });
+      setPayments((prev) => ({ ...prev, ...pays }));
+      setAtts((prev) => ({ ...prev, ...attMap }));
+      setHasMore(invs.length === PAGE);
+    } catch (e) { if (epoch === reqEpoch.current) setErr("Не удалось догрузить счета: " + (e?.message || e)); }
+    finally { if (epoch === reqEpoch.current) setLoadingMore(false); }
+  }, [ctxLocationId, invoices.length, loadingMore, hasMore]);
 
   const paidOf = useCallback((inv) =>
     (payments[inv.id] || []).reduce((a, p) => a + (p.is_return ? -Number(p.amount) : Number(p.amount)), 0),
@@ -95,12 +145,25 @@ export function Clients() {
     }).filter((g) => g.leaves.length);
   }, [types]);
 
+  const today = isoDate(new Date());
+
+  // Просроченная дебиторка (gap-map Счета §12): мероприятие прошло, долг не
+  // закрыт. Из полной выборки кандидатов, а не из загруженных страниц.
+  const overdueInvoices = useMemo(
+    () => overdueRaw.filter((i) => isInvoiceOverdue(i, paidOf(i), today)),
+    [overdueRaw, paidOf, today]);
+
   const sums = useMemo(() => {
     const active = invoices.filter((i) => i.status !== "cancelled");
     const billed = active.reduce((a, i) => a + Number(i.amount), 0);
     const received = active.reduce((a, i) => a + paidOf(i), 0);
-    return { billed, received, debt: billed - received, inWork: invoices.filter((i) => ["planned", "issued"].includes(i.status)).length };
-  }, [invoices, paidOf]);
+    const overdue = overdueInvoices.reduce((a, i) => a + invoiceDebt(Number(i.amount), paidOf(i)), 0);
+    return {
+      billed, received, debt: billed - received,
+      inWork: invoices.filter((i) => ["planned", "issued"].includes(i.status)).length,
+      overdue, overdueN: overdueInvoices.length,
+    };
+  }, [invoices, overdueInvoices, paidOf]);
 
   const displayStatus = (inv) => {
     if (inv.status === "issued" && paidOf(inv) > 0) return "partial";
@@ -113,7 +176,7 @@ export function Clients() {
     setBusy(`cancel:${inv.id}`); setErr(""); setDone("");
     try {
       await cancelInvoice(inv.id);
-      await load();
+      await load(invoices.length);
       setDone(`Счёт №${inv.number} отменён`);
     } catch (e) { setErr(e?.message || String(e)); }
     finally { setBusy(null); }
@@ -128,7 +191,7 @@ export function Clients() {
         invoiceId: inv.id, amount, cashAccountId: accountId,
         paymentTypeId: payTypeId, periodId, receivedOn: date,
       });
-      await load();
+      await load(invoices.length);
       setPaying(null);
       setDone(`Оплата ${fmt(amount)} ${inv.currency?.code} принята — операция дохода проведена`);
     } catch (e) { setErr(e?.message || String(e)); }
@@ -141,7 +204,7 @@ export function Clients() {
     setBusy(`rev:${p.id}`); setErr(""); setDone("");
     try {
       await reverseInvoicePayment(p.id);
-      await load();
+      await load(invoices.length);
       setDone(`Оплата ${fmt(Number(p.amount))} ${inv.currency?.code} отменена — проведён возврат`);
     } catch (e) { setErr(e?.message || String(e)); }
     finally { setBusy(null); }
@@ -154,7 +217,17 @@ export function Clients() {
     return s;
   }, [payments]);
 
-  const filtered = invoices.filter((i) => filter === "all" ? true : i.status === filter);
+  // Фильтр «Просроченные» показывает отдельную (полную) выборку кандидатов,
+  // остальные фильтры — по загруженным страницам.
+  const filtered = filter === "overdue" ? overdueInvoices
+    : invoices.filter((i) => invoiceMatchesFilter(i, filter, paidOf(i), today));
+
+  // Счётчики чипов одним проходом; overdue — из полной выборки.
+  const chipCounts = useMemo(() => {
+    const counts = invoiceFilterCounts(invoices, paidOf, today);
+    counts.overdue = overdueInvoices.length;
+    return counts;
+  }, [invoices, overdueInvoices, paidOf, today]);
 
   if (src === "manajet") return <MjPanel kind="invoices" src={src} setSrc={setSrc} />;
   if (loading || periodsLoading) return <div style={st.empty}><Loader2 size={18} className="spin" /> Загрузка…</div>;
@@ -179,18 +252,30 @@ export function Clients() {
           <Stat label="Выставлено" value={fmt(sums.billed)} unit="TJS" />
           <Stat label="Получено" value={fmt(sums.received)} unit="TJS" accent />
           <Stat label="Осталось собрать" value={fmt(sums.debt)} unit="TJS" />
-          <Stat label="Счетов" value={String(invoices.length)} unit="" />
+          <Stat label="Просрочено" value={fmt(sums.overdue) + (overdueCapped ? "+" : "")} unit="TJS" tone={sums.overdue > 0 ? "danger" : undefined} />
+          <Stat label="Счетов" value={String(invoices.length) + (hasMore ? "+" : "")} unit="" />
         </div>
+        {hasMore && (
+          <div style={{ fontSize: 11.5, color: C.faint, marginTop: 8 }}>
+            Суммы «Выставлено / Получено / Осталось собрать» — по загруженным счетам («Показать ещё» внизу); «Просрочено» — по всем.
+          </div>
+        )}
       </div>
     </section>
 
     {err && <div role="alert" style={{ ...st.reqError, marginBottom: 14 }}><AlertCircle size={15} /> {err}</div>}
     {done && <div style={{ ...st.reqSuccess, marginBottom: 14 }}><CheckCircle2 size={15} /> {done}</div>}
 
+    {sums.overdue > 0 && (
+      <div style={st.stockAlert}><AlertTriangle size={16} /> Просроченная дебиторка: {sums.overdueN} счёт(ов) на {fmt(sums.overdue)} TJS — мероприятия прошли, деньги не собраны{overdueCapped ? ` (показаны первые ${OVERDUE_LIMIT} самых давних — есть ещё)` : ""}</div>
+    )}
+
     <div className="chiptray" style={{ marginBottom: 12 }}>
       {FILTERS.map(([key, label]) => {
         const active = filter === key;
-        const col = ST_META[key]?.color || C.green;
+        const col = key === "overdue" ? C.danger : (ST_META[key]?.color || C.green);
+        // Для статус-чипов при недогруженных страницах count неполный — помечаем «+»
+        const count = chipCounts[key] + (key !== "overdue" && hasMore ? "+" : "");
         return (
           <button key={key} className="btn"
             style={{
@@ -199,7 +284,7 @@ export function Clients() {
               color: active ? "#04130a" : col, background: active ? col : "transparent",
             }}
             onClick={() => setFilter(key)}>
-            {label} · {key === "all" ? invoices.length : invoices.filter((i) => i.status === key).length}
+            {label} · {count}
           </button>
         );
       })}
@@ -232,6 +317,7 @@ export function Clients() {
                 {inv.hall ? ` · ${inv.hall}` : ""}
                 {inv.event_on ? ` · ${new Date(inv.event_on + "T00:00:00").toLocaleDateString("ru")}` : ""}
                 {inv.location ? ` · ${inv.location.name}` : ""}
+                {isInvoiceOverdue(inv, paid, today) && <b style={{ color: C.danger }}> · просрочен {overdueDays(inv.event_on, today)} дн.</b>}
               </div>
               {/* прогресс оплат */}
               <div style={{ ...st.bar, marginTop: 6, maxWidth: 260 }}>
@@ -317,12 +403,21 @@ export function Clients() {
       );
     })}
 
+    {hasMore && filter !== "overdue" && (
+      <div style={{ textAlign: "center", marginTop: 4 }}>
+        <button className="btn" style={st.btnGhost} onClick={loadMore} disabled={loadingMore}>
+          {loadingMore ? <Loader2 size={15} className="spin" /> : <ListChecks size={15} />}
+          {loadingMore ? " Загрузка…" : " Показать ещё"}
+        </button>
+      </div>
+    )}
+
     {showForm && refs && (
       <InvoiceForm st={st} isMobile={isMobile} profile={profile}
         groups={groups} refs={refs} counterparties={counterparties}
         onCounterpartiesChanged={async () => setCounterparties(await fetchCounterparties())}
         onClose={() => setShowForm(false)}
-        onSaved={() => { setShowForm(false); load(); setDone("Счёт выставлен"); }} />
+        onSaved={() => { setShowForm(false); load(invoices.length + 1); setDone("Счёт выставлен"); }} />
     )}
     {paying && refs && (
       <PayModal C={C} st={st} inv={paying} rest={Number(paying.amount) - paidOf(paying)}
