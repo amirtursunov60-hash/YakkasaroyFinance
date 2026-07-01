@@ -867,7 +867,10 @@ export async function deleteCounterpartyContact(id) {
 }
 
 // ---------------------------------------------------------------- Счета клиентов (банкеты)
-export async function fetchInvoices(locationId) {
+// Постранично (gap-map Счета §7): limit/offset — как в Реестре.
+// overdueBefore (ISO-дата) — только кандидаты в просрочку (gap-map Счета §12):
+// активные счета, мероприятие которых прошло; долг досчитывается по оплатам.
+export async function fetchInvoices(locationId, { limit = 100, offset = 0, overdueBefore = null } = {}) {
   let q = supabase
     .from("client_invoices")
     .select(`id, number, status, amount, event_name, hall, event_on, comment, created_at,
@@ -877,7 +880,8 @@ export async function fetchInvoices(locationId) {
       currency:currencies(id, code, is_base)`)
     .eq("is_archived", false)
     .order("created_at", { ascending: false })
-    .limit(200);
+    .range(offset, offset + limit - 1);
+  if (overdueBefore) q = q.in("status", ["planned", "issued"]).lt("event_on", overdueBefore);
   if (locationId) q = q.eq("location_id", locationId);
   const { data, error } = await q;
   if (error) throw error;
