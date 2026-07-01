@@ -177,48 +177,6 @@ export type Database = {
           },
         ]
       }
-      invoice_attachments: {
-        Row: {
-          created_at: string
-          file_name: string
-          file_path: string
-          id: string
-          invoice_id: string
-          uploaded_by: string
-        }
-        Insert: {
-          created_at?: string
-          file_name: string
-          file_path: string
-          id?: string
-          invoice_id: string
-          uploaded_by: string
-        }
-        Update: {
-          created_at?: string
-          file_name?: string
-          file_path?: string
-          id?: string
-          invoice_id?: string
-          uploaded_by?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "invoice_attachments_invoice_id_fkey"
-            columns: ["invoice_id"]
-            isOneToOne: false
-            referencedRelation: "client_invoices"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "invoice_attachments_uploaded_by_fkey"
-            columns: ["uploaded_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       cash_account_folders: {
         Row: {
           id: string
@@ -426,48 +384,6 @@ export type Database = {
           },
         ]
       }
-      counterparty_attachments: {
-        Row: {
-          counterparty_id: string
-          created_at: string
-          file_name: string
-          file_path: string
-          id: string
-          uploaded_by: string
-        }
-        Insert: {
-          counterparty_id: string
-          created_at?: string
-          file_name: string
-          file_path: string
-          id?: string
-          uploaded_by: string
-        }
-        Update: {
-          counterparty_id?: string
-          created_at?: string
-          file_name?: string
-          file_path?: string
-          id?: string
-          uploaded_by?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "counterparty_attachments_counterparty_id_fkey"
-            columns: ["counterparty_id"]
-            isOneToOne: false
-            referencedRelation: "counterparties"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "counterparty_attachments_uploaded_by_fkey"
-            columns: ["uploaded_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       counterparties: {
         Row: {
           address: string | null
@@ -532,6 +448,48 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "counterparty_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      counterparty_attachments: {
+        Row: {
+          counterparty_id: string
+          created_at: string
+          file_name: string
+          file_path: string
+          id: string
+          uploaded_by: string
+        }
+        Insert: {
+          counterparty_id: string
+          created_at?: string
+          file_name: string
+          file_path: string
+          id?: string
+          uploaded_by: string
+        }
+        Update: {
+          counterparty_id?: string
+          created_at?: string
+          file_name?: string
+          file_path?: string
+          id?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "counterparty_attachments_counterparty_id_fkey"
+            columns: ["counterparty_id"]
+            isOneToOne: false
+            referencedRelation: "counterparties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "counterparty_attachments_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -1761,6 +1719,48 @@ export type Database = {
           },
         ]
       }
+      invoice_attachments: {
+        Row: {
+          created_at: string
+          file_name: string
+          file_path: string
+          id: string
+          invoice_id: string
+          uploaded_by: string
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          file_path: string
+          id?: string
+          invoice_id: string
+          uploaded_by: string
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          file_path?: string
+          id?: string
+          invoice_id?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_attachments_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "client_invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_attachments_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       locations: {
         Row: {
           city: string
@@ -1801,568 +1801,6 @@ export type Database = {
             columns: ["manager_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      mj_bills: {
-        Row: {
-          company_name: string | null
-          data: Json
-          doc_date: string | null
-          expense_name: string | null
-          id: number
-          marked_payed: boolean | null
-          mj_id: number
-          number: string | null
-          payed_amount: number | null
-          planned_date: string | null
-          remaining_amount: number | null
-          seria: string | null
-          synced_at: string
-          total_amount: number | null
-        }
-        Insert: {
-          company_name?: string | null
-          data: Json
-          doc_date?: string | null
-          expense_name?: string | null
-          id?: never
-          marked_payed?: boolean | null
-          mj_id: number
-          number?: string | null
-          payed_amount?: number | null
-          planned_date?: string | null
-          remaining_amount?: number | null
-          seria?: string | null
-          synced_at?: string
-          total_amount?: number | null
-        }
-        Update: {
-          company_name?: string | null
-          data?: Json
-          doc_date?: string | null
-          expense_name?: string | null
-          id?: never
-          marked_payed?: boolean | null
-          mj_id?: number
-          number?: string | null
-          payed_amount?: number | null
-          planned_date?: string | null
-          remaining_amount?: number | null
-          seria?: string | null
-          synced_at?: string
-          total_amount?: number | null
-        }
-        Relationships: []
-      }
-      mj_companies: {
-        Row: {
-          data: Json
-          id: number
-          is_customer: boolean | null
-          is_private_person: boolean | null
-          is_vendor: boolean | null
-          mj_id: number
-          name: string | null
-          synced_at: string
-        }
-        Insert: {
-          data: Json
-          id?: never
-          is_customer?: boolean | null
-          is_private_person?: boolean | null
-          is_vendor?: boolean | null
-          mj_id: number
-          name?: string | null
-          synced_at?: string
-        }
-        Update: {
-          data?: Json
-          id?: never
-          is_customer?: boolean | null
-          is_private_person?: boolean | null
-          is_vendor?: boolean | null
-          mj_id?: number
-          name?: string | null
-          synced_at?: string
-        }
-        Relationships: []
-      }
-      mj_funds: {
-        Row: {
-          data: Json
-          id: number
-          in_archive: boolean | null
-          mj_id: number
-          name: string | null
-          number: string | null
-          synced_at: string
-        }
-        Insert: {
-          data: Json
-          id?: never
-          in_archive?: boolean | null
-          mj_id: number
-          name?: string | null
-          number?: string | null
-          synced_at?: string
-        }
-        Update: {
-          data?: Json
-          id?: never
-          in_archive?: boolean | null
-          mj_id?: number
-          name?: string | null
-          number?: string | null
-          synced_at?: string
-        }
-        Relationships: []
-      }
-      mj_incomes: {
-        Row: {
-          amount: number | null
-          company_name: string | null
-          data: Json
-          date_operation: string | null
-          id: number
-          income_type_name: string | null
-          mj_id: number
-          payment_type_name: string | null
-          period_mj_id: number | null
-          synced_at: string
-        }
-        Insert: {
-          amount?: number | null
-          company_name?: string | null
-          data: Json
-          date_operation?: string | null
-          id?: never
-          income_type_name?: string | null
-          mj_id: number
-          payment_type_name?: string | null
-          period_mj_id?: number | null
-          synced_at?: string
-        }
-        Update: {
-          amount?: number | null
-          company_name?: string | null
-          data?: Json
-          date_operation?: string | null
-          id?: never
-          income_type_name?: string | null
-          mj_id?: number
-          payment_type_name?: string | null
-          period_mj_id?: number | null
-          synced_at?: string
-        }
-        Relationships: []
-      }
-      mj_invoices: {
-        Row: {
-          company_name: string | null
-          data: Json
-          doc_date: string | null
-          id: number
-          mj_id: number
-          number: string | null
-          payed_amount: number | null
-          remaining_amount: number | null
-          seria: string | null
-          synced_at: string
-          total_amount: number | null
-        }
-        Insert: {
-          company_name?: string | null
-          data: Json
-          doc_date?: string | null
-          id?: never
-          mj_id: number
-          number?: string | null
-          payed_amount?: number | null
-          remaining_amount?: number | null
-          seria?: string | null
-          synced_at?: string
-          total_amount?: number | null
-        }
-        Update: {
-          company_name?: string | null
-          data?: Json
-          doc_date?: string | null
-          id?: never
-          mj_id?: number
-          number?: string | null
-          payed_amount?: number | null
-          remaining_amount?: number | null
-          seria?: string | null
-          synced_at?: string
-          total_amount?: number | null
-        }
-        Relationships: []
-      }
-      mj_periods: {
-        Row: {
-          data: Json
-          date_from: string | null
-          date_to: string | null
-          id: number
-          is_baf_confirmed: boolean | null
-          is_executive_confirmed: boolean | null
-          mj_id: number
-          synced_at: string
-        }
-        Insert: {
-          data: Json
-          date_from?: string | null
-          date_to?: string | null
-          id?: never
-          is_baf_confirmed?: boolean | null
-          is_executive_confirmed?: boolean | null
-          mj_id: number
-          synced_at?: string
-        }
-        Update: {
-          data?: Json
-          date_from?: string | null
-          date_to?: string | null
-          id?: never
-          is_baf_confirmed?: boolean | null
-          is_executive_confirmed?: boolean | null
-          mj_id?: number
-          synced_at?: string
-        }
-        Relationships: []
-      }
-      mj_persons: {
-        Row: {
-          data: Json
-          first_name: string | null
-          id: number
-          is_disabled: boolean | null
-          last_name: string | null
-          mj_id: number
-          name: string | null
-          synced_at: string
-        }
-        Insert: {
-          data: Json
-          first_name?: string | null
-          id?: never
-          is_disabled?: boolean | null
-          last_name?: string | null
-          mj_id: number
-          name?: string | null
-          synced_at?: string
-        }
-        Update: {
-          data?: Json
-          first_name?: string | null
-          id?: never
-          is_disabled?: boolean | null
-          last_name?: string | null
-          mj_id?: number
-          name?: string | null
-          synced_at?: string
-        }
-        Relationships: []
-      }
-      mj_positions: {
-        Row: {
-          data: Json
-          full_number: string | null
-          functional: string | null
-          id: number
-          in_archive: boolean | null
-          mj_id: number
-          name: string | null
-          person_name: string | null
-          synced_at: string
-        }
-        Insert: {
-          data: Json
-          full_number?: string | null
-          functional?: string | null
-          id?: never
-          in_archive?: boolean | null
-          mj_id: number
-          name?: string | null
-          person_name?: string | null
-          synced_at?: string
-        }
-        Update: {
-          data?: Json
-          full_number?: string | null
-          functional?: string | null
-          id?: never
-          in_archive?: boolean | null
-          mj_id?: number
-          name?: string | null
-          person_name?: string | null
-          synced_at?: string
-        }
-        Relationships: []
-      }
-      mj_purchase_orders: {
-        Row: {
-          confirmed_value: number | null
-          csw_data: string | null
-          csw_situation: string | null
-          csw_solution: string | null
-          data: Json
-          expense_name: string | null
-          fund_name: string | null
-          id: number
-          mj_id: number
-          name: string | null
-          payed_amount: number | null
-          planned_value: number | null
-          position_name: string | null
-          status: number | null
-          synced_at: string
-        }
-        Insert: {
-          confirmed_value?: number | null
-          csw_data?: string | null
-          csw_situation?: string | null
-          csw_solution?: string | null
-          data: Json
-          expense_name?: string | null
-          fund_name?: string | null
-          id?: never
-          mj_id: number
-          name?: string | null
-          payed_amount?: number | null
-          planned_value?: number | null
-          position_name?: string | null
-          status?: number | null
-          synced_at?: string
-        }
-        Update: {
-          confirmed_value?: number | null
-          csw_data?: string | null
-          csw_situation?: string | null
-          csw_solution?: string | null
-          data?: Json
-          expense_name?: string | null
-          fund_name?: string | null
-          id?: never
-          mj_id?: number
-          name?: string | null
-          payed_amount?: number | null
-          planned_value?: number | null
-          position_name?: string | null
-          status?: number | null
-          synced_at?: string
-        }
-        Relationships: []
-      }
-      mj_stat_values: {
-        Row: {
-          amount: number | null
-          data: Json
-          description: string | null
-          id: number
-          is_quota: boolean
-          period_begin: string
-          period_end: string
-          stat_mj_id: number
-          synced_at: string
-        }
-        Insert: {
-          amount?: number | null
-          data: Json
-          description?: string | null
-          id?: never
-          is_quota?: boolean
-          period_begin: string
-          period_end: string
-          stat_mj_id: number
-          synced_at?: string
-        }
-        Update: {
-          amount?: number | null
-          data?: Json
-          description?: string | null
-          id?: never
-          is_quota?: boolean
-          period_begin?: string
-          period_end?: string
-          stat_mj_id?: number
-          synced_at?: string
-        }
-        Relationships: []
-      }
-      mj_stats: {
-        Row: {
-          data: Json
-          id: number
-          max_val: number | null
-          min_val: number | null
-          mj_id: number
-          name: string | null
-          period: number | null
-          position_name: string | null
-          sign: boolean | null
-          stat_type: number | null
-          synced_at: string
-          unit: string | null
-        }
-        Insert: {
-          data: Json
-          id?: never
-          max_val?: number | null
-          min_val?: number | null
-          mj_id: number
-          name?: string | null
-          period?: number | null
-          position_name?: string | null
-          sign?: boolean | null
-          stat_type?: number | null
-          synced_at?: string
-          unit?: string | null
-        }
-        Update: {
-          data?: Json
-          id?: never
-          max_val?: number | null
-          min_val?: number | null
-          mj_id?: number
-          name?: string | null
-          period?: number | null
-          position_name?: string | null
-          sign?: boolean | null
-          stat_type?: number | null
-          synced_at?: string
-          unit?: string | null
-        }
-        Relationships: []
-      }
-      mj_sync_log: {
-        Row: {
-          entities: Json | null
-          error: string | null
-          finished_at: string | null
-          id: number
-          ok: boolean | null
-          started_at: string
-          trigger: string | null
-        }
-        Insert: {
-          entities?: Json | null
-          error?: string | null
-          finished_at?: string | null
-          id?: never
-          ok?: boolean | null
-          started_at?: string
-          trigger?: string | null
-        }
-        Update: {
-          entities?: Json | null
-          error?: string | null
-          finished_at?: string | null
-          id?: never
-          ok?: boolean | null
-          started_at?: string
-          trigger?: string | null
-        }
-        Relationships: []
-      }
-      org_divisions: {
-        Row: {
-          ckp: string | null
-          code: string
-          color: string | null
-          id: string
-          name: string
-          sort: number
-        }
-        Insert: {
-          ckp?: string | null
-          code: string
-          color?: string | null
-          id?: string
-          name: string
-          sort?: number
-        }
-        Update: {
-          ckp?: string | null
-          code?: string
-          color?: string | null
-          id?: string
-          name?: string
-          sort?: number
-        }
-        Relationships: []
-      }
-      org_positions: {
-        Row: {
-          ckp: string | null
-          code: string
-          division_id: string | null
-          duties: Json
-          id: string
-          is_archived: boolean
-          is_executive: boolean
-          location_id: string | null
-          name: string
-          outer_id: string | null
-          parent_id: string | null
-          section: string | null
-          sort: number
-          statistic: string | null
-        }
-        Insert: {
-          ckp?: string | null
-          code: string
-          division_id?: string | null
-          duties?: Json
-          id?: string
-          is_archived?: boolean
-          is_executive?: boolean
-          location_id?: string | null
-          name: string
-          outer_id?: string | null
-          parent_id?: string | null
-          section?: string | null
-          sort?: number
-          statistic?: string | null
-        }
-        Update: {
-          ckp?: string | null
-          code?: string
-          division_id?: string | null
-          duties?: Json
-          id?: string
-          is_archived?: boolean
-          is_executive?: boolean
-          location_id?: string | null
-          name?: string
-          outer_id?: string | null
-          parent_id?: string | null
-          section?: string | null
-          sort?: number
-          statistic?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "org_positions_division_id_fkey"
-            columns: ["division_id"]
-            isOneToOne: false
-            referencedRelation: "org_divisions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "org_positions_location_id_fkey"
-            columns: ["location_id"]
-            isOneToOne: false
-            referencedRelation: "locations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "org_positions_parent_id_fkey"
-            columns: ["parent_id"]
-            isOneToOne: false
-            referencedRelation: "org_positions"
             referencedColumns: ["id"]
           },
         ]
@@ -2498,6 +1936,106 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      org_divisions: {
+        Row: {
+          ckp: string | null
+          code: string
+          color: string | null
+          id: string
+          name: string
+          sort: number
+        }
+        Insert: {
+          ckp?: string | null
+          code: string
+          color?: string | null
+          id?: string
+          name: string
+          sort?: number
+        }
+        Update: {
+          ckp?: string | null
+          code?: string
+          color?: string | null
+          id?: string
+          name?: string
+          sort?: number
+        }
+        Relationships: []
+      }
+      org_positions: {
+        Row: {
+          ckp: string | null
+          code: string
+          division_id: string | null
+          duties: Json
+          id: string
+          is_archived: boolean
+          is_executive: boolean
+          location_id: string | null
+          name: string
+          outer_id: string | null
+          parent_id: string | null
+          section: string | null
+          sort: number
+          statistic: string | null
+        }
+        Insert: {
+          ckp?: string | null
+          code: string
+          division_id?: string | null
+          duties?: Json
+          id?: string
+          is_archived?: boolean
+          is_executive?: boolean
+          location_id?: string | null
+          name: string
+          outer_id?: string | null
+          parent_id?: string | null
+          section?: string | null
+          sort?: number
+          statistic?: string | null
+        }
+        Update: {
+          ckp?: string | null
+          code?: string
+          division_id?: string | null
+          duties?: Json
+          id?: string
+          is_archived?: boolean
+          is_executive?: boolean
+          location_id?: string | null
+          name?: string
+          outer_id?: string | null
+          parent_id?: string | null
+          section?: string | null
+          sort?: number
+          statistic?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_positions_division_id_fkey"
+            columns: ["division_id"]
+            isOneToOne: false
+            referencedRelation: "org_divisions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_positions_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_positions_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "org_positions"
             referencedColumns: ["id"]
           },
         ]
@@ -2884,6 +2422,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      posting_rules: {
+        Row: {
+          component: string
+          created_at: string
+          credit_code: string
+          debit_code: string
+          id: string
+          op_type: Database["public"]["Enums"]["register_op_type"]
+        }
+        Insert: {
+          component: string
+          created_at?: string
+          credit_code: string
+          debit_code: string
+          id?: string
+          op_type: Database["public"]["Enums"]["register_op_type"]
+        }
+        Update: {
+          component?: string
+          created_at?: string
+          credit_code?: string
+          debit_code?: string
+          id?: string
+          op_type?: Database["public"]["Enums"]["register_op_type"]
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -3541,6 +3106,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      app_secret: { Args: { p_name: string }; Returns: string }
       fp_cash_transfer: {
         Args: {
           p_amount: number
@@ -3550,6 +3116,18 @@ export type Database = {
           p_to: string
         }
         Returns: undefined
+      }
+      fp_chart_turnover: {
+        Args: { p_period_id: string }
+        Returns: {
+          account_type: string
+          closing: number
+          code: string
+          credit_turnover: number
+          debit_turnover: number
+          name: string
+          opening: number
+        }[]
       }
       fp_close_period: {
         Args: { p_period_id: string; p_protocol?: Json }
@@ -3606,6 +3184,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      fp_generate_due_reminders: { Args: never; Returns: number }
       fp_pay_bill: {
         Args: {
           p_amount?: number
@@ -3643,6 +3222,31 @@ export type Database = {
         }
         Returns: undefined
       }
+      fp_period_balances: {
+        Args: { p_period_id: string }
+        Returns: {
+          balance: number
+          entity_id: string
+          kind: string
+        }[]
+      }
+      fp_postings: {
+        Args: { p_period_id: string }
+        Returns: {
+          amount: number
+          comment: string
+          component: string
+          credit_code: string
+          credit_name: string
+          credit_sub: string
+          debit_code: string
+          debit_name: string
+          debit_sub: string
+          op_type: string
+          posted_on: string
+          reg_id: number
+        }[]
+      }
       fp_reconcile_balances: {
         Args: never
         Returns: {
@@ -3662,17 +3266,21 @@ export type Database = {
       fp_reverse_bill_payment: { Args: { p_id: number }; Returns: undefined }
       fp_reverse_fund_op: { Args: { p_id: number }; Returns: undefined }
       fp_reverse_income: { Args: { p_income_id: string }; Returns: undefined }
-      fp_reverse_invoice_payment: { Args: { p_income_id: string }; Returns: undefined }
-      fp_reverse_request_payment: { Args: { p_id: number }; Returns: undefined }
-      fp_set_period_confirmation: {
-        Args: { p_period_id: string; p_kind: string; p_value: boolean }
+      fp_reverse_invoice_payment: {
+        Args: { p_income_id: string }
         Returns: undefined
       }
+      fp_reverse_request_payment: { Args: { p_id: number }; Returns: undefined }
+      fp_set_base_currency: { Args: { p_id: string }; Returns: undefined }
       fp_set_fund_stage: {
         Args: {
           p_fund: string
           p_stage: Database["public"]["Enums"]["distribution_stage"]
         }
+        Returns: undefined
+      }
+      fp_set_period_confirmation: {
+        Args: { p_kind: string; p_period_id: string; p_value: boolean }
         Returns: undefined
       }
       fp_turnover_sheet: {
@@ -3686,13 +3294,14 @@ export type Database = {
           outflow: number
         }[]
       }
-      fp_withdraw_request: { Args: { p_request_id: string }; Returns: undefined }
+      fp_withdraw_request: {
+        Args: { p_request_id: string }
+        Returns: undefined
+      }
       has_fund_access: { Args: { f: string }; Returns: boolean }
       has_location_access: { Args: { loc: string }; Returns: boolean }
       holds_position: { Args: { pos: string }; Returns: boolean }
       is_fin_admin: { Args: never; Returns: boolean }
-      mj_cron_sync: { Args: { p_entities: string[] }; Returns: number }
-      mj_secret: { Args: { p_name: string }; Returns: string }
       my_role: { Args: never; Returns: Database["public"]["Enums"]["app_role"] }
       redeem_invite: {
         Args: { p_full_name?: string; p_token: string }
@@ -3920,7 +3529,15 @@ export const Constants = {
         "fund_income",
         "fund_return",
       ],
-      request_status: ["submitted", "planning", "approved", "rejected", "paid"],
+      request_status: [
+        "submitted",
+        "planning",
+        "approved",
+        "rejected",
+        "paid",
+        "withdrawn",
+        "revision",
+      ],
       task_priority: ["low", "mid", "high"],
       task_status: ["new", "progress", "done"],
     },

@@ -84,14 +84,14 @@ Deno.serve(async (req) => {
 
     // --- ключ Claude (Vault). Нет ключа — фича «спит»; ошибку RPC отличаем
     // от отсутствия ключа, чтобы поломка Vault не маскировалась под «нет ключа» ---
-    const { data: apiKey, error: keyErr } = await admin.rpc("mj_secret", { p_name: "anthropic_api_key" });
-    if (keyErr) { console.error("mj_secret error:", keyErr); return json({ skipped: "secret_error" }); }
+    const { data: apiKey, error: keyErr } = await admin.rpc("app_secret", { p_name: "anthropic_api_key" });
+    if (keyErr) { console.error("app_secret error:", keyErr); return json({ skipped: "secret_error" }); }
     if (!apiKey) return json({ skipped: "no_key" });
-    const { data: modelSecret } = await admin.rpc("mj_secret", { p_name: "anthropic_model" });
+    const { data: modelSecret } = await admin.rpc("app_secret", { p_name: "anthropic_model" });
     const model = (modelSecret as string | null) || "claude-haiku-4-5-20251001";
     // Промпт можно переопределить из Vault (секрет 'ai_review_prompt') — тогда
     // правки тона/поведения финдиректора не требуют передеплоя функции.
-    const { data: promptSecret } = await admin.rpc("mj_secret", { p_name: "ai_review_prompt" });
+    const { data: promptSecret } = await admin.rpc("app_secret", { p_name: "ai_review_prompt" });
     const systemPrompt = (promptSecret as string | null) || SYSTEM_PROMPT;
 
     // --- антидубль (не чаще 30с) + потолок ответов финдиректора на заявку

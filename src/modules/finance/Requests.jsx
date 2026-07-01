@@ -7,7 +7,6 @@ import { useScrollLock } from "../../hooks/useScrollLock";
 import { fmt, avatarColor } from "../../utils/format";
 import { usePeriod, periodTitle } from "../../lib/PeriodCtx";
 import { AttachmentsBlock } from "../../components/AttachmentsBlock";
-import { MjPanel, MjSwitch } from "../manajet/MjPanel";
 import { feedbackSuccess, feedbackError } from "../../lib/feedback";
 import {
   fetchRequests, payRequest, fetchRequestPayments, reverseRequestPayment,
@@ -108,7 +107,6 @@ export function Requests() {
   const [withdrawTarget, setWithdrawTarget] = useState(null); // заявка к отзыву (подтверждение)
   const [withdrawErr, setWithdrawErr] = useState("");          // ошибка отзыва — показывается в самой модалке
   const [reqFilter, setReqFilter] = useState("approved");   // здесь оплачиваем — по умолчанию «Одобрено»
-  const [src, setSrc] = useState("ours");                   // источник: наши данные / зеркало ManaJet
 
   // «Копировать заявку» — открыть форму ЗРС, предзаполненную данными заявки
   // (для быстрого повтора регулярных). Пост — свой, период/точка — из шапки.
@@ -253,7 +251,6 @@ export function Requests() {
     finally { setBusy(null); }
   };
 
-  if (src === "manajet") return <MjPanel kind="requests" src={src} setSrc={setSrc} />;
   if (loading || periodsLoading) return <div style={st.empty}><Loader2 size={18} className="spin" /> Загрузка…</div>;
 
   // Заявка-ЗРС: оплата одобренной (рассмотрение — в Директиве), правка своей
@@ -285,7 +282,6 @@ export function Requests() {
   };
 
   return (<>
-    <MjSwitch src={src} setSrc={setSrc} />
     <section style={st.hero}>
       <div style={st.heroGlow} />
       <div style={st.heroContent}>
