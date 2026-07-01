@@ -5,6 +5,8 @@ import { fileURLToPath, URL } from "node:url";
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  // Vitest: только unit-тесты в src; e2e/ — это Playwright (npm run test:e2e)
+  test: { include: ["src/**/*.{test,spec}.{js,ts,jsx,tsx}"] },
   resolve: {
     alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) },
   },
