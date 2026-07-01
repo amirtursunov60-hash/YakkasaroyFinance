@@ -867,9 +867,12 @@ export async function deleteCounterpartyContact(id) {
 }
 
 // ---------------------------------------------------------------- Счета клиентов (банкеты)
-// Постранично (gap-map Счета §7): limit/offset — как в Реестре.
+// Постранично (gap-map Счета §7): limit/offset — как в Реестре. Внимание:
+// дефолт limit = 100 (раньше функция без опций возвращала до 200 строк).
 // overdueBefore (ISO-дата) — только кандидаты в просрочку (gap-map Счета §12):
-// активные счета, мероприятие которых прошло; долг досчитывается по оплатам.
+// выставленные счета, мероприятие которых прошло; долг досчитывается по
+// оплатам. Сортировка у кандидатов — от самых старых мероприятий, чтобы при
+// упоре в limit терялись новейшие, а не самые давние долги.
 export async function fetchInvoices(locationId, { limit = 100, offset = 0, overdueBefore = null } = {}) {
   let q = supabase
     .from("client_invoices")
@@ -879,26 +882,41 @@ export async function fetchInvoices(locationId, { limit = 100, offset = 0, overd
       income_type:income_types(code, name),
       currency:currencies(id, code, is_base)`)
     .eq("is_archived", false)
-    .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1);
-  if (overdueBefore) q = q.in("status", ["planned", "issued"]).lt("event_on", overdueBefore);
+  if (overdueBefore) {
+    q = q.eq("status", "issued").lt("event_on", overdueBefore).order("event_on", { ascending: true });
+  } else {
+    q = q.order("created_at", { ascending: false });
+  }
   if (locationId) q = q.eq("location_id", locationId);
   const { data, error } = await q;
   if (error) throw error;
   return data;
 }
 
+// Разбивка списка id на пачки для .in(): один запрос с сотнями uuid упирается
+// в лимит длины URL (PostgREST кодирует .in() в query string).
+const ID_CHUNK = 150;
+const chunkIds = (ids) => {
+  const out = [];
+  for (let i = 0; i < ids.length; i += ID_CHUNK) out.push(ids.slice(i, i + ID_CHUNK));
+  return out;
+};
+
 // Оплаты по счетам — операции дохода с invoice_id: { [invoice_id]: [{...}] }
 export async function fetchInvoicePayments(invoiceIds) {
   if (!invoiceIds.length) return {};
-  const { data, error } = await supabase
-    .from("incomes")
-    .select("id, invoice_id, amount, is_return, reverses_income_id, received_on, payment_type:payment_types(name), cash_account:cash_accounts(name)")
-    .in("invoice_id", invoiceIds)
-    .order("received_on", { ascending: false });
-  if (error) throw error;
+  const chunks = await Promise.all(chunkIds(invoiceIds).map(async (ids) => {
+    const { data, error } = await supabase
+      .from("incomes")
+      .select("id, invoice_id, amount, is_return, reverses_income_id, received_on, payment_type:payment_types(name), cash_account:cash_accounts(name)")
+      .in("invoice_id", ids)
+      .order("received_on", { ascending: false });
+    if (error) throw error;
+    return data;
+  }));
   const m = {};
-  for (const r of data) (m[r.invoice_id] ??= []).push(r);
+  for (const r of chunks.flat()) (m[r.invoice_id] ??= []).push(r);
   return m;
 }
 
@@ -966,14 +984,17 @@ export async function deleteAttachment(kind, id, filePath) {
 // Вложения по списку счетов клиентов: { [invoice_id]: [{...}] }
 export async function fetchInvoiceAttachments(invoiceIds) {
   if (!invoiceIds.length) return {};
-  const { data, error } = await supabase
-    .from("invoice_attachments")
-    .select("id, invoice_id, file_path, file_name, uploaded_by, created_at")
-    .in("invoice_id", invoiceIds)
-    .order("created_at", { ascending: true });
-  if (error) throw error;
+  const chunks = await Promise.all(chunkIds(invoiceIds).map(async (ids) => {
+    const { data, error } = await supabase
+      .from("invoice_attachments")
+      .select("id, invoice_id, file_path, file_name, uploaded_by, created_at")
+      .in("invoice_id", ids)
+      .order("created_at", { ascending: true });
+    if (error) throw error;
+    return data;
+  }));
   const m = {};
-  for (const r of data) (m[r.invoice_id] ??= []).push(r);
+  for (const r of chunks.flat()) (m[r.invoice_id] ??= []).push(r);
   return m;
 }
 
