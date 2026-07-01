@@ -14,6 +14,7 @@ import { usePeriod, periodTitle } from "../../lib/PeriodCtx";
 import { PaymentTypesManager } from "./PaymentTypesManager";
 import { CurrenciesManager, ExchangeRatesManager } from "./CurrencyManager";
 import { ChartAccountsManager } from "./ChartAccountsManager";
+import { PostingRulesManager } from "./PostingRulesManager";
 import {
   fetchFunds, fetchIncomeRefs, createFund, updateFund, archiveFund,
   fetchFundDebts, fetchFundCommitments, fetchFundJournal, fetchFundLoans,
@@ -463,6 +464,7 @@ export function Funds() {
     {isFinAdmin && <CurrenciesManager />}
     {isFinAdmin && <ExchangeRatesManager />}
     {isFinAdmin && <ChartAccountsManager />}
+    {isFinAdmin && <PostingRulesManager />}
 
     {statement && (
       <FundStatementModal C={C} st={st} statement={statement} period={period}
