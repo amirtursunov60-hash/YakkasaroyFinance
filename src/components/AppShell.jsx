@@ -7,6 +7,7 @@ import { Stub, Loading } from "./common";
 import { RestaurantModule } from "../modules/restaurant/RestaurantModule";
 import { MODULES, MODULE_NAV } from "../data/navigation";
 import { parseHash, buildHash } from "../utils/route";
+import { ROLE_LABELS } from "../lib/constants";
 import { avatarColor } from "../utils/format";
 import { feedbackSuccess } from "../lib/feedback";
 import { makeCss } from "../theme/css";
@@ -80,14 +81,6 @@ const StatsModule = lazyScreen(() => import("../modules/stats/StatsModule"), "St
 export function App({ onLogout }) {
   const { C, st, theme, setTheme, lang, setLang, sound, setSound, isMobile, profile } = useTheme();
   const isWide = useIsWide(); // поиск в шапке — только на десктопе (не в альбомной на телефоне)
-  const ROLE_LABELS = {
-    owner: "Владелец",
-    fin_director: "Финансовый директор",
-    ops_director: "Операционный директор",
-    location_manager: "Управляющий точкой",
-    accountant: "Бухгалтер",
-    employee: "Сотрудник",
-  };
   const userName = profile?.full_name || "Пользователь";
   const userRole = ROLE_LABELS[profile?.role] || "—";
   const userEmail = profile?.email || "";
