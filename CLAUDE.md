@@ -21,6 +21,7 @@ npm run build      # сборка в dist/
 npm run preview    # просмотр сборки
 npm test           # Vitest — прогон тестов один раз
 npm run test:watch # Vitest в watch-режиме
+npm run test:e2e   # Playwright-смоук: экран входа + обход вкладок (E2E_BASE_URL, E2E_EMAIL/E2E_PASSWORD)
 npm run lint       # ESLint (flat-config eslint.config.js)
 npm run lint:fix   # ESLint с авто-исправлением
 npm run typecheck  # tsc --noEmit — проверка типов (.ts-файлы)
