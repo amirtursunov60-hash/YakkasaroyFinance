@@ -177,48 +177,6 @@ export type Database = {
           },
         ]
       }
-      invoice_attachments: {
-        Row: {
-          created_at: string
-          file_name: string
-          file_path: string
-          id: string
-          invoice_id: string
-          uploaded_by: string
-        }
-        Insert: {
-          created_at?: string
-          file_name: string
-          file_path: string
-          id?: string
-          invoice_id: string
-          uploaded_by: string
-        }
-        Update: {
-          created_at?: string
-          file_name?: string
-          file_path?: string
-          id?: string
-          invoice_id?: string
-          uploaded_by?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "invoice_attachments_invoice_id_fkey"
-            columns: ["invoice_id"]
-            isOneToOne: false
-            referencedRelation: "client_invoices"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "invoice_attachments_uploaded_by_fkey"
-            columns: ["uploaded_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       cash_account_folders: {
         Row: {
           id: string
@@ -426,48 +384,6 @@ export type Database = {
           },
         ]
       }
-      counterparty_attachments: {
-        Row: {
-          counterparty_id: string
-          created_at: string
-          file_name: string
-          file_path: string
-          id: string
-          uploaded_by: string
-        }
-        Insert: {
-          counterparty_id: string
-          created_at?: string
-          file_name: string
-          file_path: string
-          id?: string
-          uploaded_by: string
-        }
-        Update: {
-          counterparty_id?: string
-          created_at?: string
-          file_name?: string
-          file_path?: string
-          id?: string
-          uploaded_by?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "counterparty_attachments_counterparty_id_fkey"
-            columns: ["counterparty_id"]
-            isOneToOne: false
-            referencedRelation: "counterparties"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "counterparty_attachments_uploaded_by_fkey"
-            columns: ["uploaded_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       counterparties: {
         Row: {
           address: string | null
@@ -532,6 +448,48 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "counterparty_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      counterparty_attachments: {
+        Row: {
+          counterparty_id: string
+          created_at: string
+          file_name: string
+          file_path: string
+          id: string
+          uploaded_by: string
+        }
+        Insert: {
+          counterparty_id: string
+          created_at?: string
+          file_name: string
+          file_path: string
+          id?: string
+          uploaded_by: string
+        }
+        Update: {
+          counterparty_id?: string
+          created_at?: string
+          file_name?: string
+          file_path?: string
+          id?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "counterparty_attachments_counterparty_id_fkey"
+            columns: ["counterparty_id"]
+            isOneToOne: false
+            referencedRelation: "counterparties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "counterparty_attachments_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -1761,6 +1719,48 @@ export type Database = {
           },
         ]
       }
+      invoice_attachments: {
+        Row: {
+          created_at: string
+          file_name: string
+          file_path: string
+          id: string
+          invoice_id: string
+          uploaded_by: string
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          file_path: string
+          id?: string
+          invoice_id: string
+          uploaded_by: string
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          file_path?: string
+          id?: string
+          invoice_id?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_attachments_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "client_invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_attachments_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       locations: {
         Row: {
           city: string
@@ -1801,6 +1801,94 @@ export type Database = {
             columns: ["manager_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      massmail_campaigns: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          is_archived: boolean
+          location_id: string | null
+          segment_filters: Json | null
+          segment_type: string
+          template_text: string | null
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_archived?: boolean
+          location_id?: string | null
+          segment_filters?: Json | null
+          segment_type: string
+          template_text?: string | null
+          title: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_archived?: boolean
+          location_id?: string | null
+          segment_filters?: Json | null
+          segment_type?: string
+          template_text?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "massmail_campaigns_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      massmail_recipients: {
+        Row: {
+          campaign_id: string
+          id: string
+          is_sent: boolean
+          note: string | null
+          recipient_name: string
+          recipient_phone: string
+          sent_at: string | null
+          source_id: string | null
+          source_type: string
+        }
+        Insert: {
+          campaign_id: string
+          id?: string
+          is_sent?: boolean
+          note?: string | null
+          recipient_name: string
+          recipient_phone: string
+          sent_at?: string | null
+          source_id?: string | null
+          source_type: string
+        }
+        Update: {
+          campaign_id?: string
+          id?: string
+          is_sent?: boolean
+          note?: string | null
+          recipient_name?: string
+          recipient_phone?: string
+          sent_at?: string | null
+          source_id?: string | null
+          source_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "massmail_recipients_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "massmail_campaigns"
             referencedColumns: ["id"]
           },
         ]
@@ -2267,6 +2355,53 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          body: string | null
+          created_at: string
+          id: string
+          is_read: boolean
+          kind: string
+          module: string | null
+          request_id: string | null
+          title: string
+          user_id: string
+          view_key: string | null
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          kind: string
+          module?: string | null
+          request_id?: string | null
+          title: string
+          user_id: string
+          view_key?: string | null
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          kind?: string
+          module?: string | null
+          request_id?: string | null
+          title?: string
+          user_id?: string
+          view_key?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       org_divisions: {
         Row: {
           ckp: string | null
@@ -2363,141 +2498,6 @@ export type Database = {
             columns: ["parent_id"]
             isOneToOne: false
             referencedRelation: "org_positions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      massmail_campaigns: {
-        Row: {
-          created_at: string
-          created_by: string | null
-          id: string
-          is_archived: boolean
-          location_id: string | null
-          segment_filters: Json | null
-          segment_type: string
-          template_text: string | null
-          title: string
-        }
-        Insert: {
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          is_archived?: boolean
-          location_id?: string | null
-          segment_filters?: Json | null
-          segment_type: string
-          template_text?: string | null
-          title: string
-        }
-        Update: {
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          is_archived?: boolean
-          location_id?: string | null
-          segment_filters?: Json | null
-          segment_type?: string
-          template_text?: string | null
-          title?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "massmail_campaigns_location_id_fkey"
-            columns: ["location_id"]
-            isOneToOne: false
-            referencedRelation: "locations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      massmail_recipients: {
-        Row: {
-          campaign_id: string
-          id: string
-          is_sent: boolean
-          note: string | null
-          recipient_name: string
-          recipient_phone: string
-          sent_at: string | null
-          source_id: string | null
-          source_type: string
-        }
-        Insert: {
-          campaign_id: string
-          id?: string
-          is_sent?: boolean
-          note?: string | null
-          recipient_name: string
-          recipient_phone: string
-          sent_at?: string | null
-          source_id?: string | null
-          source_type: string
-        }
-        Update: {
-          campaign_id?: string
-          id?: string
-          is_sent?: boolean
-          note?: string | null
-          recipient_name?: string
-          recipient_phone?: string
-          sent_at?: string | null
-          source_id?: string | null
-          source_type?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "massmail_recipients_campaign_id_fkey"
-            columns: ["campaign_id"]
-            isOneToOne: false
-            referencedRelation: "massmail_campaigns"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      notifications: {
-        Row: {
-          body: string | null
-          created_at: string
-          id: string
-          is_read: boolean
-          kind: string
-          module: string | null
-          request_id: string | null
-          title: string
-          user_id: string
-          view_key: string | null
-        }
-        Insert: {
-          body?: string | null
-          created_at?: string
-          id?: string
-          is_read?: boolean
-          kind: string
-          module?: string | null
-          request_id?: string | null
-          title: string
-          user_id: string
-          view_key?: string | null
-        }
-        Update: {
-          body?: string | null
-          created_at?: string
-          id?: string
-          is_read?: boolean
-          kind?: string
-          module?: string | null
-          request_id?: string | null
-          title?: string
-          user_id?: string
-          view_key?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "notifications_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -2884,6 +2884,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      posting_rules: {
+        Row: {
+          component: string
+          created_at: string
+          credit_code: string
+          debit_code: string
+          id: string
+          op_type: Database["public"]["Enums"]["register_op_type"]
+        }
+        Insert: {
+          component: string
+          created_at?: string
+          credit_code: string
+          debit_code: string
+          id?: string
+          op_type: Database["public"]["Enums"]["register_op_type"]
+        }
+        Update: {
+          component?: string
+          created_at?: string
+          credit_code?: string
+          debit_code?: string
+          id?: string
+          op_type?: Database["public"]["Enums"]["register_op_type"]
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -3551,6 +3578,18 @@ export type Database = {
         }
         Returns: undefined
       }
+      fp_chart_turnover: {
+        Args: { p_period_id: string }
+        Returns: {
+          account_type: string
+          closing: number
+          code: string
+          credit_turnover: number
+          debit_turnover: number
+          name: string
+          opening: number
+        }[]
+      }
       fp_close_period: {
         Args: { p_period_id: string; p_protocol?: Json }
         Returns: undefined
@@ -3606,6 +3645,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      fp_generate_due_reminders: { Args: never; Returns: number }
       fp_pay_bill: {
         Args: {
           p_amount?: number
@@ -3643,6 +3683,31 @@ export type Database = {
         }
         Returns: undefined
       }
+      fp_period_balances: {
+        Args: { p_period_id: string }
+        Returns: {
+          balance: number
+          entity_id: string
+          kind: string
+        }[]
+      }
+      fp_postings: {
+        Args: { p_period_id: string }
+        Returns: {
+          amount: number
+          comment: string
+          component: string
+          credit_code: string
+          credit_name: string
+          credit_sub: string
+          debit_code: string
+          debit_name: string
+          debit_sub: string
+          op_type: string
+          posted_on: string
+          reg_id: number
+        }[]
+      }
       fp_reconcile_balances: {
         Args: never
         Returns: {
@@ -3662,17 +3727,21 @@ export type Database = {
       fp_reverse_bill_payment: { Args: { p_id: number }; Returns: undefined }
       fp_reverse_fund_op: { Args: { p_id: number }; Returns: undefined }
       fp_reverse_income: { Args: { p_income_id: string }; Returns: undefined }
-      fp_reverse_invoice_payment: { Args: { p_income_id: string }; Returns: undefined }
-      fp_reverse_request_payment: { Args: { p_id: number }; Returns: undefined }
-      fp_set_period_confirmation: {
-        Args: { p_period_id: string; p_kind: string; p_value: boolean }
+      fp_reverse_invoice_payment: {
+        Args: { p_income_id: string }
         Returns: undefined
       }
+      fp_reverse_request_payment: { Args: { p_id: number }; Returns: undefined }
+      fp_set_base_currency: { Args: { p_id: string }; Returns: undefined }
       fp_set_fund_stage: {
         Args: {
           p_fund: string
           p_stage: Database["public"]["Enums"]["distribution_stage"]
         }
+        Returns: undefined
+      }
+      fp_set_period_confirmation: {
+        Args: { p_kind: string; p_period_id: string; p_value: boolean }
         Returns: undefined
       }
       fp_turnover_sheet: {
@@ -3686,7 +3755,10 @@ export type Database = {
           outflow: number
         }[]
       }
-      fp_withdraw_request: { Args: { p_request_id: string }; Returns: undefined }
+      fp_withdraw_request: {
+        Args: { p_request_id: string }
+        Returns: undefined
+      }
       has_fund_access: { Args: { f: string }; Returns: boolean }
       has_location_access: { Args: { loc: string }; Returns: boolean }
       holds_position: { Args: { pos: string }; Returns: boolean }
@@ -3920,7 +3992,15 @@ export const Constants = {
         "fund_income",
         "fund_return",
       ],
-      request_status: ["submitted", "planning", "approved", "rejected", "paid"],
+      request_status: [
+        "submitted",
+        "planning",
+        "approved",
+        "rejected",
+        "paid",
+        "withdrawn",
+        "revision",
+      ],
       task_priority: ["low", "mid", "high"],
       task_status: ["new", "progress", "done"],
     },
