@@ -1,9 +1,10 @@
-import { useState, useMemo, useRef, useEffect, lazy, Suspense } from "react";
-import { X, Menu, User2, Settings, LogOut, Volume2, VolumeX, List, Loader2 } from "lucide-react";
+import { useState, useMemo, useRef, useEffect, lazy, Suspense, startTransition } from "react";
+import { X, Menu, User2, Settings, LogOut, Volume2, VolumeX, List } from "lucide-react";
 import { ThemeSwitcher } from "./ui/apple-liquid-glass-switcher";
 import { GlassSegment } from "./ui/glass-segment";
 import "./ui/switcher.css";
-import { Stub } from "./common";
+import { Stub, Loading } from "./common";
+import { RestaurantModule } from "../modules/restaurant/RestaurantModule";
 import { MODULES, MODULE_NAV } from "../data/navigation";
 import { avatarColor } from "../utils/format";
 import { feedbackSuccess } from "../lib/feedback";
@@ -15,8 +16,31 @@ import { useIsWide } from "../hooks/useIsMobile";
 
 // Экраны модулей грузятся лениво: каждый — отдельный чанк, который браузер
 // качает при первом открытии раздела. Первичная загрузка приложения легче
-// (важно на телефоне), кэш чанков между деплоями живёт независимо.
-const lazyScreen = (loader, name) => lazy(() => loader().then((m) => ({ default: m[name] })));
+// (важно на телефоне). Обратная сторона: после каждого деплоя старые чанки
+// исчезают (имена с хэшами), поэтому у загрузчика есть авто-восстановление.
+const CHUNK_RELOAD_KEY = "yk-chunk-reload";
+const lazyScreen = (load, name) => lazy(() =>
+  load().then((m) => {
+    if (!m[name]) throw new Error(`Экран «${name}» не найден в чанке — проверьте имя экспорта`);
+    sessionStorage.removeItem(CHUNK_RELOAD_KEY); // чанк загрузился — сбросить страховку
+    return { default: m[name] };
+  }).catch((e) => {
+    // Чанк не догрузился — обычно вкладка открыта со старого деплоя.
+    // Один раз перезагружаем страницу за свежими файлами (без цикла).
+    const isChunkError = /dynamically imported module|Loading chunk|module script failed/i.test(e?.message || "");
+    if (isChunkError && !sessionStorage.getItem(CHUNK_RELOAD_KEY)) {
+      sessionStorage.setItem(CHUNK_RELOAD_KEY, "1");
+      window.location.reload();
+      return new Promise(() => {}); // страница уже уходит в перезагрузку
+    }
+    throw e;
+  })
+);
+
+// Директива — стартовый экран для всех, её чанк качаем сразу, параллельно
+// с инициализацией приложения (иначе на телефоне лишний круг сети после рендера).
+const directiveLoad = import("../modules/finance/Directive");
+directiveLoad.catch(() => {}); // ошибку обработает lazyScreen при первом рендере
 
 const CrmModule = lazyScreen(() => import("../modules/crm/CrmModule"), "CrmModule");
 const Counterparties = lazyScreen(() => import("../modules/crm/Counterparties"), "Counterparties");
@@ -25,7 +49,7 @@ const DashModule = lazyScreen(() => import("../modules/dashboard/DashModule"), "
 const OwnerDashboard = lazyScreen(() => import("../modules/dashboard/OwnerDashboard"), "OwnerDashboard");
 const Clients = lazyScreen(() => import("../modules/finance/Clients"), "Clients");
 const Control = lazyScreen(() => import("../modules/finance/Control"), "Control");
-const Directive = lazyScreen(() => import("../modules/finance/Directive"), "Directive");
+const Directive = lazyScreen(() => directiveLoad, "Directive");
 const Expenses = lazyScreen(() => import("../modules/finance/Expenses"), "Expenses");
 const Funds = lazyScreen(() => import("../modules/finance/Funds"), "Funds");
 const Income = lazyScreen(() => import("../modules/finance/Income"), "Income");
@@ -37,7 +61,6 @@ const Reports = lazyScreen(() => import("../modules/finance/Reports"), "Reports"
 const Requests = lazyScreen(() => import("../modules/finance/Requests"), "Requests");
 const Suppliers = lazyScreen(() => import("../modules/finance/Suppliers"), "Suppliers");
 const OrgModule = lazyScreen(() => import("../modules/org/OrgModule"), "OrgModule");
-const RestaurantModule = lazyScreen(() => import("../modules/restaurant/RestaurantModule"), "RestaurantModule");
 const StaffModule = lazyScreen(() => import("../modules/staff/StaffModule"), "StaffModule");
 const StatsModule = lazyScreen(() => import("../modules/stats/StatsModule"), "StatsModule");
 
@@ -92,15 +115,19 @@ export function App({ onLogout }) {
     window.addEventListener("resize", measure);
     return () => { cancelAnimationFrame(r); clearTimeout(t); window.removeEventListener("resize", measure); };
   }, [active, activeModule, isMobile, navList.length]);
-  const pick = (key) => { setActive(key); setMenuOpen(false); };
+  // Переключение разделов — через startTransition: пока чанк нового экрана
+  // качается, старый экран остаётся на месте (без вспышки «Загрузка…»).
+  const pick = (key) => { startTransition(() => setActive(key)); setMenuOpen(false); };
   // Раздел по умолчанию при переходе в модуль: Финансы → Директива, Ресторан → Меню
   const DEFAULT_SECTION = { finance: "directive", restaurant: "r_app" };
   const defaultSection = (key) => DEFAULT_SECTION[key] || MODULE_NAV[key][0].key;
   const pickModule = (key) => {
     if (!MODULE_NAV[key]) return;
-    setActiveModule(key);
     const def = defaultSection(key);
-    setActive(MODULE_NAV[key].some((n) => n.key === def) ? def : MODULE_NAV[key][0].key);
+    startTransition(() => {
+      setActiveModule(key);
+      setActive(MODULE_NAV[key].some((n) => n.key === def) ? def : MODULE_NAV[key][0].key);
+    });
     setMenuOpen(false);
   };
   return (
@@ -228,36 +255,36 @@ export function App({ onLogout }) {
         </aside>
 
         <main style={{ ...st.main, ...(isMobile ? { padding: activeModule === "restaurant" ? "1px" : "16px 8px 40px" } : {}) }}>
-          <Suspense fallback={<div style={st.empty}><Loader2 size={18} className="spin" /> Загрузка…</div>}>
-          {activeModule === "finance" && active === "control" && <Control />}
-          {activeModule === "finance" && active === "directive" && <Directive />}
-          {activeModule === "finance" && active === "income" && <Income />}
-          {activeModule === "finance" && active === "expense" && <Expenses />}
-          {activeModule === "finance" && active === "requests" && <Requests />}
-          {activeModule === "finance" && active === "register" && <Register />}
-          {activeModule === "finance" && active === "audit" && <AuditLog />}
-          {activeModule === "finance" && active === "archive" && <ArchiveModule />}
-          {activeModule === "finance" && active === "funds" && <Funds />}
-          {activeModule === "finance" && active === "suppliers" && <Suppliers />}
-          {activeModule === "finance" && active === "clients" && <Clients />}
-          {activeModule === "finance" && active === "reports" && <Reports />}
-          {activeModule === "finance" && active === "payroll" && <Payroll />}
-          {activeModule === "finance" && !["directive", "income", "control", "expense", "requests", "register", "audit", "funds", "suppliers", "clients", "reports", "payroll"].includes(active) && <Stub label={navList.find((n) => n.key === active)?.label} />}
+          <Suspense fallback={<Loading style={{ minHeight: "55vh" }} />}>
+            {activeModule === "finance" && active === "control" && <Control />}
+            {activeModule === "finance" && active === "directive" && <Directive />}
+            {activeModule === "finance" && active === "income" && <Income />}
+            {activeModule === "finance" && active === "expense" && <Expenses />}
+            {activeModule === "finance" && active === "requests" && <Requests />}
+            {activeModule === "finance" && active === "register" && <Register />}
+            {activeModule === "finance" && active === "audit" && <AuditLog />}
+            {activeModule === "finance" && active === "archive" && <ArchiveModule />}
+            {activeModule === "finance" && active === "funds" && <Funds />}
+            {activeModule === "finance" && active === "suppliers" && <Suppliers />}
+            {activeModule === "finance" && active === "clients" && <Clients />}
+            {activeModule === "finance" && active === "reports" && <Reports />}
+            {activeModule === "finance" && active === "payroll" && <Payroll />}
+            {activeModule === "finance" && !["directive", "income", "control", "expense", "requests", "register", "audit", "archive", "funds", "suppliers", "clients", "reports", "payroll"].includes(active) && <Stub label={navList.find((n) => n.key === active)?.label} />}
 
-          {activeModule === "staff" && <StaffModule view={active} />}
+            {activeModule === "staff" && <StaffModule view={active} />}
 
-          {activeModule === "stats" && <StatsModule view={active} />}
+            {activeModule === "stats" && <StatsModule view={active} />}
 
-          {activeModule === "orgchart" && <OrgModule view={active} />}
+            {activeModule === "orgchart" && <OrgModule view={active} />}
 
-          {activeModule === "dashboard" && active === "d_owner" && <OwnerDashboard />}
-          {activeModule === "dashboard" && active !== "d_owner" && <DashModule view={active} />}
+            {activeModule === "dashboard" && active === "d_owner" && <OwnerDashboard />}
+            {activeModule === "dashboard" && active !== "d_owner" && <DashModule view={active} />}
 
-          {activeModule === "crm" && active === "c_counterparties" && <Counterparties />}
-          {activeModule === "crm" && active === "c_massmail" && <MassmailModule />}
-          {activeModule === "crm" && active !== "c_counterparties" && active !== "c_massmail" && <CrmModule view={active} />}
+            {activeModule === "crm" && active === "c_counterparties" && <Counterparties />}
+            {activeModule === "crm" && active === "c_massmail" && <MassmailModule />}
+            {activeModule === "crm" && active !== "c_counterparties" && active !== "c_massmail" && <CrmModule view={active} />}
 
-          {activeModule === "restaurant" && <RestaurantModule />}
+            {activeModule === "restaurant" && <RestaurantModule />}
           </Suspense>
         </main>
       </div>
