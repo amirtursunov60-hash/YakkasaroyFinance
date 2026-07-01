@@ -10,6 +10,14 @@ export function Stub({ label }) {
 
 export function FolderIcon({ color = "#e8911c" }) { return <svg width="16" height="16" viewBox="0 0 24 24" fill={color} style={{ flexShrink: 0 }}><path d="M10 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>; }
 
+// Единый индикатор загрузки (экрана или данных): спиннер + подпись.
+// style — точечные дополнения (например, minHeight у Suspense-фолбэка,
+// чтобы контентная область не схлопывалась на время догрузки чанка).
+export function Loading({ label = "Загрузка…", style }) {
+  const { st } = useTheme();
+  return <div style={{ ...st.empty, ...style }}><Loader2 size={18} className="spin" /> {label}</div>;
+}
+
 // tone: "danger" | "warning" | "success" — для сводных значений со знаком/здоровьем
 // (дефицит, расхождение, нетто). accent — устаревший «зелёный акцент», = tone:"success".
 // Отрицательное значение (строка с ведущим «-»/«−») всегда красное — кроме явного
