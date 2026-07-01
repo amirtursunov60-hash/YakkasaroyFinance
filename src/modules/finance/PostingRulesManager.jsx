@@ -3,7 +3,7 @@ import { Loader2, AlertCircle, CheckCircle2, BookOpenCheck, ChevronRight } from 
 import { useTheme } from "../../theme/theme";
 import { useActionFeedback } from "../../hooks/useActionFeedback";
 import { fetchPostingRules, updatePostingRule, fetchChartAccounts } from "../../lib/api";
-import { OP_LABELS, UNUSED_RULE_COMBOS } from "../../utils/register";
+import { opLabel, UNUSED_RULE_COMBOS } from "../../utils/register";
 
 // ------------------------------------------------------------- POSTING RULES
 // Правила проводок (posting_rules, Реестр §13): как тип операции Реестра
@@ -80,7 +80,7 @@ export function PostingRulesManager() {
             {rules.map((r) => (
               <div key={r.id} style={{ ...st.locCard, padding: "10px 14px", opacity: UNUSED_RULE_COMBOS.has(`${r.op_type}:${r.component}`) ? 0.65 : 1 }}>
                 <div style={{ fontSize: 12.5, fontWeight: 700, marginBottom: 2 }}>
-                  {OP_LABELS[r.op_type] || r.op_type}
+                  {opLabel(r.op_type)}
                   {UNUSED_RULE_COMBOS.has(`${r.op_type}:${r.component}`) &&
                     <span style={{ ...st.weekTag, marginLeft: 6, color: C.sub, background: `${C.sub}1a` }}>пока не встречается</span>}
                 </div>

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Banknote, Loader2, AlertCircle, CheckCircle2, Plus, X, Ban, ChevronRight, CalendarDays, PartyPopper, Receipt, Undo2, Printer, AlertTriangle, ListChecks } from "lucide-react";
-import { Stat } from "../../components/common";
+import { Stat, Loading } from "../../components/common";
 import { AttachmentsBlock } from "../../components/AttachmentsBlock";
 import { useTheme } from "../../theme/theme";
 import { useScrollLock } from "../../hooks/useScrollLock";
@@ -229,7 +229,7 @@ export function Clients() {
     return counts;
   }, [invoices, overdueInvoices, paidOf, today]);
 
-  if (loading || periodsLoading) return <div style={st.empty}><Loader2 size={18} className="spin" /> Загрузка…</div>;
+  if (loading || periodsLoading) return <Loading />;
 
   return (<>
     <section style={st.hero}>
