@@ -120,7 +120,9 @@ export function Clients() {
       setAtts((prev) => ({ ...prev, ...attMap }));
       setHasMore(invs.length === PAGE);
     } catch (e) { if (epoch === reqEpoch.current) setErr("Не удалось догрузить счета: " + (e?.message || e)); }
-    finally { if (epoch === reqEpoch.current) setLoadingMore(false); }
+    // Сброс безусловный: при смене эпохи (сменили точку во время догрузки) флаг
+    // иначе остаётся true навсегда и «Показать ещё» блокируется до перемонтирования.
+    finally { setLoadingMore(false); }
   }, [ctxLocationId, invoices.length, loadingMore, hasMore]);
 
   const paidOf = useCallback((inv) =>

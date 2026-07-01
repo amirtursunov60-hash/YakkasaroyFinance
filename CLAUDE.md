@@ -92,7 +92,7 @@ src/
 
 Компоненты получают всё через `useTheme()`: `{ C, st, theme, setTheme, lang, setLang, isMobile, profile }`. Роли пользователя: `owner`, `fin_director`, `ops_director`, `location_manager`, `accountant`, `employee` (метки — в `AppShell.jsx`, права — в ТЗ v2 §3; реализация прав — RLS-политики Supabase).
 
-Модуль «Ресторан» (`src/modules/restaurant/`) по решению ТЗ v2 §4.11 в продукт **не переносится** (его заменит интеграция iiko) — экраны сохраняются как дизайн-референс. Не развивать его функционально без явного запроса.
+Модуль «Ресторан» в продукте — это **iframe отдельного приложения** `yakkasaroy-menu` (репозиторий `yakkasaroy-Pos-and-menu`, PR #212): `RestaurantModule.jsx` встраивает его и синхронизирует тему/язык через `postMessage`. Нативные мок-экраны `RestMenu/RestOrders/RestTables/RestStock` в `src/modules/restaurant/` — только дизайн-референс (по ТЗ v2 §4.11 их заменит интеграция iiko): не развивать функционально без явного запроса.
 
 ## База данных
 

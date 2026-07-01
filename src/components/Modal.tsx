@@ -25,7 +25,10 @@ export function Modal({ title, onClose, width = 560, closeOnOverlay = true, chil
   const { st } = useTheme() as unknown as { st: Record<string, React.CSSProperties> };
   useScrollLock();
   return (
-    <div style={st.mdOverlay} data-modal="1" onClick={() => { if (closeOnOverlay) onClose(); }}>
+    // Синтетический клик (isTrusted=false) шлют глобальные Esc/«назад»-обработчики
+    // (escClose/modalBackClose кликают по [data-modal]) — он закрывает модал всегда,
+    // closeOnOverlay гасит только случайный реальный тап по подложке.
+    <div style={st.mdOverlay} data-modal="1" onClick={(e) => { if (closeOnOverlay || !e.isTrusted) onClose(); }}>
       <div style={{ ...st.mdCard, width: `min(${width}px, 100%)` }} onClick={(e) => e.stopPropagation()}>
         <div style={st.mdHead}>
           <div style={st.mdTitle}>{title}</div>

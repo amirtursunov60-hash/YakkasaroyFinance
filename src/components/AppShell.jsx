@@ -87,8 +87,10 @@ export function App({ onLogout }) {
   const initials = userName.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
 
   const css = useMemo(() => makeCss(C), [C]);
-  const [activeModule, setActiveModule] = useState(() => initialRoute().module);
-  const [active, setActive] = useState(() => initialRoute().section);
+  // Один разбор hash на монтирование — оба состояния сеются из одного результата
+  const [initial] = useState(initialRoute);
+  const [activeModule, setActiveModule] = useState(initial.module);
+  const [active, setActive] = useState(initial.section);
   // Состояние → URL: первый рендер поправляет адрес без новой записи истории,
   // дальше каждый переход добавляет запись — работает кнопка «назад» браузера.
   const hashInitedRef = useRef(false);
