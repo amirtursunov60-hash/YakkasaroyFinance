@@ -1,5 +1,5 @@
-import { useState, useMemo, useRef, useEffect } from "react";
-import { X, Menu, User2, Settings, LogOut, Volume2, VolumeX, List } from "lucide-react";
+import { useState, useMemo, useRef, useEffect, lazy, Suspense } from "react";
+import { X, Menu, User2, Settings, LogOut, Volume2, VolumeX, List, Loader2 } from "lucide-react";
 import { ThemeSwitcher } from "./ui/apple-liquid-glass-switcher";
 import { GlassSegment } from "./ui/glass-segment";
 import "./ui/switcher.css";
@@ -7,33 +7,39 @@ import { Stub } from "./common";
 import { MODULES, MODULE_NAV } from "../data/navigation";
 import { avatarColor } from "../utils/format";
 import { feedbackSuccess } from "../lib/feedback";
-import { CrmModule } from "../modules/crm/CrmModule";
-import { DashModule } from "../modules/dashboard/DashModule";
-import { OwnerDashboard } from "../modules/dashboard/OwnerDashboard";
-import { Clients } from "../modules/finance/Clients";
-import { Counterparties } from "../modules/crm/Counterparties";
-import { MassmailModule } from "../modules/crm/MassmailModule";
-import { Control } from "../modules/finance/Control";
-import { Directive } from "../modules/finance/Directive";
-import { Expenses } from "../modules/finance/Expenses";
-import { Funds } from "../modules/finance/Funds";
-import { Income } from "../modules/finance/Income";
-import { Payroll } from "../modules/finance/Payroll";
-import { Register } from "../modules/finance/Register";
-import { AuditLog } from "../modules/finance/AuditLog";
-import { ArchiveModule } from "../modules/finance/ArchiveModule";
-import { Reports } from "../modules/finance/Reports";
-import { Requests } from "../modules/finance/Requests";
-import { Suppliers } from "../modules/finance/Suppliers";
-import { OrgModule } from "../modules/org/OrgModule";
-import { RestaurantModule } from "../modules/restaurant/RestaurantModule";
-import { StaffModule } from "../modules/staff/StaffModule";
-import { StatsModule } from "../modules/stats/StatsModule";
 import { makeCss } from "../theme/css";
 import { useTheme } from "../theme/theme";
 import { PeriodProvider, WeekPicker, LocationPicker } from "../lib/PeriodCtx";
 import { GlobalSearch, NotifyBell } from "./TopWidgets";
 import { useIsWide } from "../hooks/useIsMobile";
+
+// Экраны модулей грузятся лениво: каждый — отдельный чанк, который браузер
+// качает при первом открытии раздела. Первичная загрузка приложения легче
+// (важно на телефоне), кэш чанков между деплоями живёт независимо.
+const lazyScreen = (loader, name) => lazy(() => loader().then((m) => ({ default: m[name] })));
+
+const CrmModule = lazyScreen(() => import("../modules/crm/CrmModule"), "CrmModule");
+const Counterparties = lazyScreen(() => import("../modules/crm/Counterparties"), "Counterparties");
+const MassmailModule = lazyScreen(() => import("../modules/crm/MassmailModule"), "MassmailModule");
+const DashModule = lazyScreen(() => import("../modules/dashboard/DashModule"), "DashModule");
+const OwnerDashboard = lazyScreen(() => import("../modules/dashboard/OwnerDashboard"), "OwnerDashboard");
+const Clients = lazyScreen(() => import("../modules/finance/Clients"), "Clients");
+const Control = lazyScreen(() => import("../modules/finance/Control"), "Control");
+const Directive = lazyScreen(() => import("../modules/finance/Directive"), "Directive");
+const Expenses = lazyScreen(() => import("../modules/finance/Expenses"), "Expenses");
+const Funds = lazyScreen(() => import("../modules/finance/Funds"), "Funds");
+const Income = lazyScreen(() => import("../modules/finance/Income"), "Income");
+const Payroll = lazyScreen(() => import("../modules/finance/Payroll"), "Payroll");
+const Register = lazyScreen(() => import("../modules/finance/Register"), "Register");
+const AuditLog = lazyScreen(() => import("../modules/finance/AuditLog"), "AuditLog");
+const ArchiveModule = lazyScreen(() => import("../modules/finance/ArchiveModule"), "ArchiveModule");
+const Reports = lazyScreen(() => import("../modules/finance/Reports"), "Reports");
+const Requests = lazyScreen(() => import("../modules/finance/Requests"), "Requests");
+const Suppliers = lazyScreen(() => import("../modules/finance/Suppliers"), "Suppliers");
+const OrgModule = lazyScreen(() => import("../modules/org/OrgModule"), "OrgModule");
+const RestaurantModule = lazyScreen(() => import("../modules/restaurant/RestaurantModule"), "RestaurantModule");
+const StaffModule = lazyScreen(() => import("../modules/staff/StaffModule"), "StaffModule");
+const StatsModule = lazyScreen(() => import("../modules/stats/StatsModule"), "StatsModule");
 
 
 export function App({ onLogout }) {
@@ -222,6 +228,7 @@ export function App({ onLogout }) {
         </aside>
 
         <main style={{ ...st.main, ...(isMobile ? { padding: activeModule === "restaurant" ? "1px" : "16px 8px 40px" } : {}) }}>
+          <Suspense fallback={<div style={st.empty}><Loader2 size={18} className="spin" /> Загрузка…</div>}>
           {activeModule === "finance" && active === "control" && <Control />}
           {activeModule === "finance" && active === "directive" && <Directive />}
           {activeModule === "finance" && active === "income" && <Income />}
@@ -251,6 +258,7 @@ export function App({ onLogout }) {
           {activeModule === "crm" && active !== "c_counterparties" && active !== "c_massmail" && <CrmModule view={active} />}
 
           {activeModule === "restaurant" && <RestaurantModule />}
+          </Suspense>
         </main>
       </div>
     </div>
