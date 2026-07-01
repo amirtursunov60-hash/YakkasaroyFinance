@@ -13,6 +13,10 @@ import {
   fetchEmployees, fetchFunds, fetchIncomeRefs,
 } from "../../lib/api";
 
+// расчёт (как в прототипе): эффективные баллы = баллы × коэффициент состояния ХМС
+const num = (v) => parseFloat(String(v).replace(",", ".")) || 0;
+const effOf = (r) => num(r.points) * (STATE_COEF[r.state] || 1);
+
 
 // ---------------------------------------------------------------- PAYROLL
 // Живые данные (ТЗ v2 §4.1.11): безокладная ЗП по баллам. Ведомость недели
@@ -75,9 +79,6 @@ export function Payroll() {
 
   const editable = canEdit && sheet?.status === "submitted";
 
-  // -------- расчёт (как в прототипе)
-  const num = (v) => parseFloat(String(v).replace(",", ".")) || 0;
-  const effOf = (r) => num(r.points) * (STATE_COEF[r.state] || 1);
   const totalEff = useMemo(() => rows.reduce((a, r) => a + effOf(r), 0), [rows]);
   const totalBase = useMemo(() => rows.reduce((a, r) => a + num(r.points), 0), [rows]);
   const pointCost = totalEff > 0 ? num(fot) / totalEff : 0;
@@ -395,7 +396,7 @@ export function Payroll() {
 }
 
 // ---------------------------------------------------------------- Выплата
-function PayModal({ C, st, total, accounts, busy, onClose, onConfirm }) {
+function PayModal({ st, total, accounts, busy, onClose, onConfirm }) {
   useScrollLock();
   const [accountId, setAccountId] = useState("");
   return (

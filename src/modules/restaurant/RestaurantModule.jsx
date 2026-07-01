@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useTheme } from "../../theme/theme";
 
 // Вкладка «Ресторан» = ВЕСЬ наш новый Ресторан-модуль (репо pos-and-menu),
@@ -12,19 +12,19 @@ export function RestaurantModule() {
   const ref = useRef(null);
 
   // отправить текущую тему/язык в iframe
-  const pushTheme = () => {
+  const pushTheme = useCallback(() => {
     try { ref.current?.contentWindow?.postMessage({ source: "yk-finance", theme, lang }, "*"); } catch { /* iframe ещё не готов */ }
-  };
+  }, [theme, lang]);
 
   // тема/язык поменялись в Финансе → прокинуть в модуль
-  useEffect(() => { pushTheme(); }, [theme, lang]);
+  useEffect(() => { pushTheme(); }, [pushTheme]);
 
   // модуль сообщил, что готов принять тему → шлём сразу
   useEffect(() => {
     const onMsg = (e) => { if (e.data && e.data.source === "yk-restaurant" && e.data.ready) pushTheme(); };
     window.addEventListener("message", onMsg);
     return () => window.removeEventListener("message", onMsg);
-  }, [theme, lang]);
+  }, [pushTheme]);
 
   return (
     <iframe

@@ -904,7 +904,7 @@ function RequestReviewControls({ C, st, isMobile, item, funds, isFinAdmin, onApp
 // Фонды этапа сгруппированы по папкам (fund_folders) — как в ManaJet.
 // Слева у каждого фонда галочка: отмеченные фонды считаются при «Рассчитать»
 // (если не отмечено ничего — считаются все). Уже одобренные не пересчитываются.
-function LevelCard({ sg, C, st, isMobile, pctOf, setPcts, busy, locked, folders, stageFact, onCalc, onApprove, onReset, onResetApproved, onOpenCalc }) {
+function LevelCard({ sg, C, st, isMobile, pctOf, busy, locked, folders, stageFact, onCalc, onApprove, onReset, onResetApproved, onOpenCalc }) {
   const [openFolders, setOpenFolders] = useState({});
   const [checked, setChecked] = useState(() => new Set());
   const [collapsed, setCollapsed] = useState(false); // по умолчанию этап развёрнут
@@ -1366,7 +1366,7 @@ function FundCalcModal({ C, st, isMobile, fund, stage, rules, incomeByType, appr
 
 
 // ---------------------------------------------------------------- Перенос остатка в фонд
-function TransferModal({ C, st, funds, remainder, busy, onClose, onTransfer }) {
+function TransferModal({ st, funds, remainder, busy, onClose, onTransfer }) {
   useScrollLock();
   const [fundId, setFundId] = useState(funds.find((f) => f.code === "FD6")?.id || funds[0]?.id || "");
   return (

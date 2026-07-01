@@ -341,7 +341,7 @@ const Field = ({ st, label, full, children }) => (
   </div>
 );
 
-function InvoiceForm({ C, st, isMobile, profile, groups, refs, counterparties, onCounterpartiesChanged, onClose, onSaved }) {
+function InvoiceForm({ st, isMobile, profile, groups, refs, counterparties, onCounterpartiesChanged, onClose, onSaved }) {
   useScrollLock();
   const baseCur = refs.currencies.find((c) => c.is_base) || refs.currencies[0];
   const [f, setF] = useState({
