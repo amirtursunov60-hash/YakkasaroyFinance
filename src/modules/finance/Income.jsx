@@ -485,8 +485,8 @@ export function Income() {
 
     {showForm && refs && (
       <IncomeForm
-        refs={refs} tree={tree} byParent={byParent} locationOf={locationOf}
-        period={period} ctxLocationId={ctxLocationId} profile={profile} isMobile={isMobile} C={C} st={st}
+        refs={refs} tree={tree} locationOf={locationOf}
+        period={period} ctxLocationId={ctxLocationId} profile={profile} isMobile={isMobile} st={st}
         initVals={formInit}
         onClose={() => { setShowForm(false); setFormInit(null); }}
         onSaved={() => { setShowForm(false); setFormInit(null); refresh(); }}

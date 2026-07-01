@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { calcState, weekLabels, quotaAchievement } from "./stats";
+import { calcState, weekLabels, quotaAchievement, effectivePoints } from "./stats";
 
 // Состояния ХМС по тренду последних 4 недель (Власть/Изобилие/Норма/ЧП/Опасность).
 // Несуществование — когда данных меньше 4 недель.
@@ -68,5 +68,23 @@ describe("weekLabels", () => {
     const labels = weekLabels(3);
     // последняя метка — самая поздняя (конец периода)
     expect(labels[labels.length - 1]).toBe("10.06");
+  });
+});
+
+// Эффективные баллы для ЗП по результату: баллы × коэффициент состояния ХМС
+describe("effectivePoints", () => {
+  it("умножает баллы на коэффициент состояния", () => {
+    expect(effectivePoints(100, "power")).toBeCloseTo(130);
+    expect(effectivePoints(100, "danger")).toBeCloseTo(70);
+    expect(effectivePoints(100, "normal")).toBe(100);
+  });
+
+  it("неизвестное состояние — коэффициент 1", () => {
+    expect(effectivePoints(50, "")).toBe(50);
+    expect(effectivePoints(50, "unknown")).toBe(50);
+  });
+
+  it("ноль баллов — ноль эффективных", () => {
+    expect(effectivePoints(0, "power")).toBe(0);
   });
 });

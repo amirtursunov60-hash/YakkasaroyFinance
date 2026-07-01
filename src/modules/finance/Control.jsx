@@ -271,12 +271,12 @@ export function Control() {
         onClose={() => setStatement(null)} />
     )}
     {showAdd && refs && (
-      <AddAccountModal C={C} st={st} refs={refs}
+      <AddAccountModal st={st} refs={refs}
         onClose={() => setShowAdd(false)}
         onSaved={async () => { setShowAdd(false); await load(); setDone("Счёт ДС добавлен"); }} />
     )}
     {showTransfer && (
-      <CashTransferModal C={C} st={st} accounts={accounts} periodId={periodId}
+      <CashTransferModal st={st} accounts={accounts} periodId={periodId}
         onClose={() => setShowTransfer(false)}
         onSaved={async (msg) => { setShowTransfer(false); await load(); setDone(msg); }} />
     )}

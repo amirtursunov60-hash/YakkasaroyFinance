@@ -318,7 +318,7 @@ export function Clients() {
     })}
 
     {showForm && refs && (
-      <InvoiceForm C={C} st={st} isMobile={isMobile} profile={profile}
+      <InvoiceForm st={st} isMobile={isMobile} profile={profile}
         groups={groups} refs={refs} counterparties={counterparties}
         onCounterpartiesChanged={async () => setCounterparties(await fetchCounterparties())}
         onClose={() => setShowForm(false)}

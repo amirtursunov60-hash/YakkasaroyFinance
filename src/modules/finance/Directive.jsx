@@ -4,6 +4,7 @@ import { Stat, ConfirmModal } from "../../components/common";
 import { useTheme } from "../../theme/theme";
 import { useScrollLock } from "../../hooks/useScrollLock";
 import { fmt } from "../../utils/format";
+import { parseNum as num } from "../../utils/parse";
 import { feedbackSuccess, feedbackError } from "../../lib/feedback";
 import { cascadeTypeStageBase, calcTypeRulesAmount } from "../../lib/distribution";
 import { usePeriod, periodTitle } from "../../lib/PeriodCtx";
@@ -471,7 +472,7 @@ export function Directive() {
 
     {stagesView.map((sg) => (
       <LevelCard key={sg.key} sg={sg} C={C} st={st} isMobile={isMobile}
-        pctOf={pctOf} setPcts={setPcts} busy={busy} locked={isClosed || !period}
+        pctOf={pctOf} busy={busy} locked={isClosed || !period}
         folders={folders}
         stageFact={typeStageBase[sg.key] || {}}
         onCalc={(ids) => doCalc(sg, ids)} onApprove={(ids) => doApprove(sg, ids)}
@@ -597,7 +598,7 @@ export function Directive() {
     )}
 
     {transferOpen && (
-      <TransferModal C={C} st={st} funds={funds} remainder={remainder}
+      <TransferModal st={st} funds={funds} remainder={remainder}
         busy={busy === "transfer"} onClose={() => setTransferOpen(false)} onTransfer={doTransfer} />
     )}
     {calcFund && (
@@ -1260,7 +1261,6 @@ function FundCalcModal({ C, st, isMobile, fund, stage, rules, incomeByType, appr
       const calc = r.percent ? Math.round(fact * Number(r.percent)) / 100 : Number(r.fixed_amount || 0);
       return [r.id, String(Math.max(0, calc))];
     })));
-  const num = (v) => parseFloat(String(v).replace(",", ".")) || 0;
   const total = rules.reduce((a, r) => a + num(vals[r.id]), 0);
   const factTotal = rules.reduce((a, r) => a + (incomeByType[r.income_type?.id] || 0), 0);
 

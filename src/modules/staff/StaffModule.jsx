@@ -89,7 +89,7 @@ export function StaffModule({ view }) {
   return (<>
     <MjSwitch src={src} setSrc={setSrc} />
     {banner}
-    <PeopleView C={C} st={st} isMobile={isMobile} isFinAdmin={isFinAdmin} profile={profile}
+    <PeopleView C={C} st={st} isFinAdmin={isFinAdmin} profile={profile}
       people={people} positions={positions} locations={locations}
       busy={busy} act={act} expanded={expanded} setExpanded={setExpanded} />
   </>);
