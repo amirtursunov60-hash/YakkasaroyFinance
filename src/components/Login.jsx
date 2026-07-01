@@ -7,7 +7,7 @@ import { signIn, signUp } from "../lib/auth";
 
 // ============================================================================
 export function Login({ onEnter }) {
-  const { C, st, theme, setTheme } = useTheme();
+  const { C, st } = useTheme();
   const lg = useMemo(() => makeLg(C), [C]);
   const css = useMemo(() => makeCss(C), [C]);
   const [email, setEmail] = useState("");

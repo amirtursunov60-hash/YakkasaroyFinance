@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Users, UserPlus, Loader2, AlertCircle, CheckCircle2, X, Plus, Copy, Trash2, ChevronRight, MapPin, Network, Camera } from "lucide-react";
 import { useTheme } from "../../theme/theme";
 import { avatarColor } from "../../utils/format";
@@ -89,7 +89,7 @@ export function StaffModule({ view }) {
   return (<>
     <MjSwitch src={src} setSrc={setSrc} />
     {banner}
-    <PeopleView C={C} st={st} isMobile={isMobile} isFinAdmin={isFinAdmin} profile={profile}
+    <PeopleView C={C} st={st} isFinAdmin={isFinAdmin} profile={profile}
       people={people} positions={positions} locations={locations}
       busy={busy} act={act} expanded={expanded} setExpanded={setExpanded} />
   </>);
@@ -97,9 +97,7 @@ export function StaffModule({ view }) {
 
 
 // ---------------------------------------------------------------- Сотрудники
-function PeopleView({ C, st, isMobile, isFinAdmin, profile, people, positions, locations, busy, act, expanded, setExpanded }) {
-  const locName = useMemo(() => Object.fromEntries(locations.map((l) => [l.id, l.name])), [locations]);
-
+function PeopleView({ C, st, isFinAdmin, profile, people, positions, locations, busy, act, expanded, setExpanded }) {
   return (<>
     <section style={st.reqSectionHead}>
       <Users size={18} color={C.green} />

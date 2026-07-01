@@ -5,13 +5,20 @@ import { useTheme } from "../../theme/theme";
 import { useScrollLock } from "../../hooks/useScrollLock";
 import { useActionFeedback } from "../../hooks/useActionFeedback";
 import { fmt } from "../../utils/format";
-import { STAT_STATES, STATE_COEF } from "../../utils/stats";
+import { STAT_STATES, STATE_COEF, effectivePoints } from "../../utils/stats";
+import { parseNum as num } from "../../utils/parse";
 import { usePeriod, periodTitle } from "../../lib/PeriodCtx";
 import {
   fetchPayrollSheet, createPayrollSheet, updatePayrollSheet,
   upsertPayrollLines, addPayrollLine, deletePayrollLine, payPayroll,
   fetchEmployees, fetchFunds, fetchIncomeRefs,
 } from "../../lib/api";
+
+// расчёт (как в прототипе): эффективные баллы = баллы × коэффициент состояния ХМС;
+// стоимость балла (pointCost) считается в компоненте из ФОТ ÷ Σ эфф. баллов
+const effOf = (r) => effectivePoints(num(r.points), r.state);
+const accruedOf = (r, pointCost) => effOf(r) * pointCost;
+const payoutOf = (r, pointCost) => accruedOf(r, pointCost) - num(r.advance) - num(r.deduction);
 
 
 // ---------------------------------------------------------------- PAYROLL
@@ -75,18 +82,13 @@ export function Payroll() {
 
   const editable = canEdit && sheet?.status === "submitted";
 
-  // -------- расчёт (как в прототипе)
-  const num = (v) => parseFloat(String(v).replace(",", ".")) || 0;
-  const effOf = (r) => num(r.points) * (STATE_COEF[r.state] || 1);
   const totalEff = useMemo(() => rows.reduce((a, r) => a + effOf(r), 0), [rows]);
   const totalBase = useMemo(() => rows.reduce((a, r) => a + num(r.points), 0), [rows]);
   const pointCost = totalEff > 0 ? num(fot) / totalEff : 0;
-  const accruedOf = (r) => effOf(r) * pointCost;
-  const payoutOf = (r) => accruedOf(r) - num(r.advance) - num(r.deduction);
   const totals = useMemo(() => rows.reduce((t, r) => ({
-    accrued: t.accrued + accruedOf(r), advance: t.advance + num(r.advance),
-    deduction: t.deduction + num(r.deduction), payout: t.payout + payoutOf(r),
-  }), { accrued: 0, advance: 0, deduction: 0, payout: 0 }), [rows, pointCost]); // eslint-disable-line react-hooks/exhaustive-deps
+    accrued: t.accrued + accruedOf(r, pointCost), advance: t.advance + num(r.advance),
+    deduction: t.deduction + num(r.deduction), payout: t.payout + payoutOf(r, pointCost),
+  }), { accrued: 0, advance: 0, deduction: 0, payout: 0 }), [rows, pointCost]);
 
   const setRow = (personId, k, v) => {
     setRows((rs) => rs.map((r) => (r.personId === personId ? { ...r, [k]: v } : r)));
@@ -121,7 +123,7 @@ export function Payroll() {
         sheet_id: sheet.id, person_id: r.personId,
         points: num(r.points), state: r.state,
         coefficient: STATE_COEF[r.state] || 1,
-        accrued: Math.round(accruedOf(r) * 100) / 100,
+        accrued: Math.round(accruedOf(r, pointCost) * 100) / 100,
         advance: num(r.advance), deduction: num(r.deduction),
       })));
       await loadSheet();
@@ -176,8 +178,8 @@ export function Payroll() {
     const head = ["Сотрудник", "Баллы", "Состояние", "Коэф", "Эфф. баллы", "Начислено", "Аванс", "Удержания", "К выплате"];
     const lines = rows.map((r) => [
       r.name, num(r.points), STAT_STATES[r.state]?.label || r.state, STATE_COEF[r.state] || 1,
-      effOf(r).toFixed(1), accruedOf(r).toFixed(2), num(r.advance).toFixed(2),
-      num(r.deduction).toFixed(2), payoutOf(r).toFixed(2),
+      effOf(r).toFixed(1), accruedOf(r, pointCost).toFixed(2), num(r.advance).toFixed(2),
+      num(r.deduction).toFixed(2), payoutOf(r, pointCost).toFixed(2),
     ]);
     lines.push(["ИТОГО", totalBase, "", "", totalEff.toFixed(1), totals.accrued.toFixed(2), totals.advance.toFixed(2), totals.deduction.toFixed(2), totals.payout.toFixed(2)]);
     const csv = "﻿" + [head, ...lines].map((l) => l.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(";")).join("\n");
@@ -325,7 +327,7 @@ export function Payroll() {
                 {!isMobile && (
                   <div style={{ ...st.fNum, color: coef > 1 ? C.green : coef < 1 ? C.danger : C.sub, fontWeight: 600 }}>{effOf(r).toFixed(1)}</div>
                 )}
-                {!isMobile && <div style={{ ...st.fNum, fontWeight: 600 }}>{fmt(accruedOf(r))}</div>}
+                {!isMobile && <div style={{ ...st.fNum, fontWeight: 600 }}>{fmt(accruedOf(r, pointCost))}</div>}
                 {!isMobile && (
                   <div style={{ textAlign: "right" }}>
                     <input type="number" inputMode="decimal" value={r.advance} disabled={!editable}
@@ -342,7 +344,7 @@ export function Payroll() {
                       style={{ ...st.pctInput, width: 72, padding: "6px 8px", fontSize: 12.5 }} className="amtIn" />
                   </div>
                 )}
-                <div style={{ ...st.fNum, fontWeight: 800, fontSize: isMobile ? 13 : 15 }}>{fmt(payoutOf(r))}</div>
+                <div style={{ ...st.fNum, fontWeight: 800, fontSize: isMobile ? 13 : 15 }}>{fmt(payoutOf(r, pointCost))}</div>
                 {!isMobile && (
                   <div style={{ textAlign: "right" }}>
                     {editable && (
@@ -388,14 +390,14 @@ export function Payroll() {
     </>)}
 
     {paying && refs && sheet && (
-      <PayModal C={C} st={st} total={totals.payout} accounts={refs.accounts}
+      <PayModal st={st} total={totals.payout} accounts={refs.accounts}
         busy={busy === "pay"} onClose={() => setPaying(false)} onConfirm={doPay} />
     )}
   </>);
 }
 
 // ---------------------------------------------------------------- Выплата
-function PayModal({ C, st, total, accounts, busy, onClose, onConfirm }) {
+function PayModal({ st, total, accounts, busy, onClose, onConfirm }) {
   useScrollLock();
   const [accountId, setAccountId] = useState("");
   return (

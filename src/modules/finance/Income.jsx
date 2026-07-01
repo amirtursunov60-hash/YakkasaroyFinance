@@ -485,8 +485,8 @@ export function Income() {
 
     {showForm && refs && (
       <IncomeForm
-        refs={refs} tree={tree} byParent={byParent} locationOf={locationOf}
-        period={period} ctxLocationId={ctxLocationId} profile={profile} isMobile={isMobile} C={C} st={st}
+        refs={refs} tree={tree} locationOf={locationOf}
+        period={period} ctxLocationId={ctxLocationId} profile={profile} isMobile={isMobile} st={st}
         initVals={formInit}
         onClose={() => { setShowForm(false); setFormInit(null); }}
         onSaved={() => { setShowForm(false); setFormInit(null); refresh(); }}
@@ -701,7 +701,7 @@ const Field = ({ st, label, full, children }) => (
   </div>
 );
 
-function IncomeForm({ refs, tree, byParent, locationOf, period, ctxLocationId, profile, isMobile, C, st, initVals, onClose, onSaved }) {
+function IncomeForm({ refs, tree, locationOf, period, ctxLocationId, profile, isMobile, st, initVals, onClose, onSaved }) {
   useScrollLock();
   const baseCur = refs.currencies.find((c) => c.is_base) || refs.currencies[0];
   // Дата по умолчанию: сегодня, если попадает в выбранную неделю, иначе её начало

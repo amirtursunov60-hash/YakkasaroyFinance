@@ -318,7 +318,7 @@ export function Clients() {
     })}
 
     {showForm && refs && (
-      <InvoiceForm C={C} st={st} isMobile={isMobile} profile={profile}
+      <InvoiceForm st={st} isMobile={isMobile} profile={profile}
         groups={groups} refs={refs} counterparties={counterparties}
         onCounterpartiesChanged={async () => setCounterparties(await fetchCounterparties())}
         onClose={() => setShowForm(false)}
@@ -341,7 +341,7 @@ const Field = ({ st, label, full, children }) => (
   </div>
 );
 
-function InvoiceForm({ C, st, isMobile, profile, groups, refs, counterparties, onCounterpartiesChanged, onClose, onSaved }) {
+function InvoiceForm({ st, isMobile, profile, groups, refs, counterparties, onCounterpartiesChanged, onClose, onSaved }) {
   useScrollLock();
   const baseCur = refs.currencies.find((c) => c.is_base) || refs.currencies[0];
   const [f, setF] = useState({

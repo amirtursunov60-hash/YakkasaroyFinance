@@ -271,12 +271,12 @@ export function Control() {
         onClose={() => setStatement(null)} />
     )}
     {showAdd && refs && (
-      <AddAccountModal C={C} st={st} refs={refs}
+      <AddAccountModal st={st} refs={refs}
         onClose={() => setShowAdd(false)}
         onSaved={async () => { setShowAdd(false); await load(); setDone("Счёт ДС добавлен"); }} />
     )}
     {showTransfer && (
-      <CashTransferModal C={C} st={st} accounts={accounts} periodId={periodId}
+      <CashTransferModal st={st} accounts={accounts} periodId={periodId}
         onClose={() => setShowTransfer(false)}
         onSaved={async (msg) => { setShowTransfer(false); await load(); setDone(msg); }} />
     )}
@@ -285,7 +285,7 @@ export function Control() {
 
 
 // ---------------------------------------------------------------- Перемещение ДС (инкассация)
-function CashTransferModal({ C, st, accounts, periodId, onClose, onSaved }) {
+function CashTransferModal({ st, accounts, periodId, onClose, onSaved }) {
   useScrollLock();
   const [from, setFrom] = useState(accounts[0]?.id || "");
   const [to, setTo] = useState(accounts[1]?.id || "");
@@ -407,7 +407,7 @@ function StatementModal({ C, st, statement, period, onAllTime, onClose }) {
 
 
 // ---------------------------------------------------------------- Новый счёт ДС
-function AddAccountModal({ C, st, refs, onClose, onSaved }) {
+function AddAccountModal({ st, refs, onClose, onSaved }) {
   useScrollLock();
   const baseCur = refs.currencies.find((c) => c.is_base) || refs.currencies[0];
   const [f, setF] = useState({ name: "", type: "cash", locationId: "", currencyId: baseCur?.id || "" });
