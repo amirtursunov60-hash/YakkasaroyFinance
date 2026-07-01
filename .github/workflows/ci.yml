@@ -1,0 +1,42 @@
+# CI-гейт из Definition of Done (CLAUDE.md): зелёные typecheck / lint / test / build
+# обязательны для каждого PR в main. E2E-смоук (Playwright) сюда не включён —
+# ему нужны E2E_BASE_URL и боевые креды; он гоняется вручную по preview-деплою.
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: typecheck · lint · test · build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Установка зависимостей
+        run: npm ci
+
+      - name: Типы (tsc --noEmit)
+        run: npm run typecheck
+
+      - name: Линтер (ESLint)
+        run: npm run lint
+
+      - name: Тесты (Vitest)
+        run: npm test
+
+      - name: Сборка (Vite)
+        run: npm run build

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { Banknote, Save, AlertTriangle, Loader2, AlertCircle, CheckCircle2, Plus, X, List, Landmark, CreditCard, Wifi } from "lucide-react";
 import { Stat } from "../../components/common";
+import { Modal } from "../../components/Modal";
 import { useTheme } from "../../theme/theme";
 import { useScrollLock } from "../../hooks/useScrollLock";
 import { useActionFeedback } from "../../hooks/useActionFeedback";
@@ -286,7 +287,6 @@ export function Control() {
 
 // ---------------------------------------------------------------- Перемещение ДС (инкассация)
 function CashTransferModal({ st, accounts, periodId, onClose, onSaved }) {
-  useScrollLock();
   const [from, setFrom] = useState(accounts[0]?.id || "");
   const [to, setTo] = useState(accounts[1]?.id || "");
   const [amount, setAmount] = useState("");
@@ -310,12 +310,7 @@ function CashTransferModal({ st, accounts, periodId, onClose, onSaved }) {
   };
 
   return (
-    <div style={st.mdOverlay} data-modal="1" onClick={onClose}>
-      <div style={{ ...st.mdCard, width: "min(420px, 100%)" }} onClick={(e) => e.stopPropagation()}>
-        <div style={st.mdHead}>
-          <div style={st.mdTitle}>Перемещение между счетами ДС</div>
-          <button style={st.iconBtn} onClick={onClose} aria-label="Закрыть"><X size={17} /></button>
-        </div>
+    <Modal title="Перемещение между счетами ДС" width={420} onClose={onClose}>
         <div style={{ display: "grid", gap: 10 }}>
           <div style={st.reqField}>
             <span style={st.reqFieldLbl}>Откуда · остаток {fmt(Number(fromAcc?.balance || 0))}</span>
@@ -347,8 +342,7 @@ function CashTransferModal({ st, accounts, periodId, onClose, onSaved }) {
             {busy ? <Loader2 size={15} className="spin" /> : <ArrowRightLeft size={15} />} Переместить
           </button>
         </div>
-      </div>
-    </div>
+    </Modal>
   );
 }
 

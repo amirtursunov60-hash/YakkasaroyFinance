@@ -1,4 +1,5 @@
 import React from "react";
+import { reportError } from "../lib/monitoring";
 
 // Граница ошибок: ловит исключения рендера в поддереве и показывает понятный
 // экран вместо «белого экрана смерти». Текст ошибки виден — его можно прислать
@@ -22,6 +23,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
   componentDidCatch(error: Error, info: React.ErrorInfo): void {
     // Лог в консоль — для диагностики (видно в DevTools / удалённых логах).
     console.error("Перехвачена ошибка интерфейса:", error, info?.componentStack);
+    reportError(error, { componentStack: info?.componentStack });
   }
 
   render(): React.ReactNode {
