@@ -3,7 +3,6 @@ import { Users, UserPlus, Loader2, AlertCircle, CheckCircle2, X, Plus, Copy, Tra
 import { useTheme } from "../../theme/theme";
 import { avatarColor } from "../../utils/format";
 import { useActionFeedback } from "../../hooks/useActionFeedback";
-import { MjPanel, MjSwitch } from "../manajet/MjPanel";
 import {
   fetchEmployees, updateProfile, fetchAllPositions, assignPosition, unassignPosition,
   setLocationAccess, fetchIncomeRefs, uploadAvatar,
@@ -32,7 +31,6 @@ export function StaffModule({ view }) {
   const canInvite = isFinAdmin || profile?.role === "ops_director";
 
   const [loading, setLoading] = useState(true);
-  const [src, setSrc] = useState("ours");   // наши данные / зеркало ManaJet
   const [err, setErr] = useState("");
   const [done, setDone] = useState("");
   useActionFeedback(done, err);
@@ -70,7 +68,6 @@ export function StaffModule({ view }) {
     finally { setBusy(null); }
   };
 
-  if (view !== "st_invites" && src === "manajet") return <MjPanel kind="persons" src={src} setSrc={setSrc} />;
   if (loading) return <div style={st.empty}><Loader2 size={18} className="spin" /> Загрузка…</div>;
 
   const banner = (<>
@@ -87,7 +84,6 @@ export function StaffModule({ view }) {
   }
 
   return (<>
-    <MjSwitch src={src} setSrc={setSrc} />
     {banner}
     <PeopleView C={C} st={st} isFinAdmin={isFinAdmin} profile={profile}
       people={people} positions={positions} locations={locations}

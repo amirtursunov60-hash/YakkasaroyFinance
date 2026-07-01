@@ -16,7 +16,7 @@ import { CurrenciesManager, ExchangeRatesManager } from "./CurrencyManager";
 import { ChartAccountsManager } from "./ChartAccountsManager";
 import { PostingRulesManager } from "./PostingRulesManager";
 import {
-  fetchFunds, fetchIncomeRefs, createFund, updateFund, archiveFund, triggerMjImportRefs,
+  fetchFunds, fetchIncomeRefs, createFund, updateFund, archiveFund,
   fetchFundDebts, fetchFundCommitments, fetchFundJournal, fetchFundLoans,
   fundTransfer, fundLoan, fundLoanReturn, fundIncome, fundReturn,
   fetchFundStatement, fetchFundFolders, createFundFolder, updateFundFolder,
@@ -117,20 +117,6 @@ export function Funds() {
       .catch(() => { if (on) setPeriodBal(null); });
     return () => { on = false; };
   }, [periodId, journal]);
-
-  // Импорт справочников ManaJet (фонды/виды дохода/статьи/статистики) в наши таблицы
-  const importRefs = async () => {
-    setBusy("import"); setErr(""); setDone("");
-    try {
-      const r = await triggerMjImportRefs();
-      if (r && r.ok === false) throw new Error(r.error || "ошибка импорта");
-      const f = r?.entities?.funds;
-      setDone("Справочники ManaJet импортированы" + (f && f.ok != null ? ` (фондов: ${f.ok})` : ""));
-      await load();
-    } catch (e) {
-      setErr("Импорт из ManaJet не удался: " + (e?.message || e));
-    } finally { setBusy(null); }
-  };
 
   const fundById = useMemo(() => Object.fromEntries(funds.map((f) => [f.id, f])), [funds]);
   const nameOf = (id) => { const f = fundById[id]; return f ? `${f.code} — ${f.name}` : "?"; };
@@ -368,11 +354,6 @@ export function Funds() {
         <div style={st.cardHead}>
           <div style={st.cardTitle}>Фонды</div>
           <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-            {isFinAdmin && (
-              <button style={{ ...st.btnGhost, opacity: busy === "import" ? 0.7 : 1 }} className="btn" disabled={!!busy} onClick={importRefs} title="Импортировать фонды, статьи, виды дохода и статистики из ManaJet">
-                {busy === "import" ? <Loader2 size={15} className="spin" /> : <ArrowDownToLine size={15} />} {!isMobile && "Импорт из ManaJet"}
-              </button>
-            )}
             {isFinAdmin && (
               <button style={st.btnGhost} className="btn" onClick={() => setEditing("new")}>
                 <Plus size={15} /> {!isMobile && "Новый фонд"}
