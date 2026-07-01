@@ -751,7 +751,7 @@ export async function fetchPostings(periodId) {
   if (!periodId) return [];
   const { data, error } = await supabase.rpc("fp_postings", { p_period_id: periodId });
   if (error) throw error;
-  return data || [];
+  return (data || []).map((r) => ({ ...r, amount: Number(r.amount || 0) }));
 }
 
 // ОСВ по плану счетов: сальдо на начало / обороты Дт/Кт / сальдо на конец.
@@ -780,11 +780,16 @@ export async function fetchPostingRules() {
 }
 
 export async function updatePostingRule(id, { debitCode, creditCode }) {
-  const { error } = await supabase
+  if (debitCode.trim() === creditCode.trim()) throw new Error("Дебет и кредит не могут быть одним счётом");
+  // .select() — чтобы отличить успех от строки, отфильтрованной RLS
+  // (без него update «мимо прав» молча возвращает 0 строк без ошибки)
+  const { data, error } = await supabase
     .from("posting_rules")
     .update({ debit_code: debitCode.trim(), credit_code: creditCode.trim() })
-    .eq("id", id);
+    .eq("id", id)
+    .select();
   if (error) throw error;
+  if (!data?.length) throw new Error("Нет прав на изменение правил проводок");
 }
 
 // ---- Валюты (справочник currencies, Фонды §3) -----------------------------

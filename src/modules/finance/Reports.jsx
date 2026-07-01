@@ -6,6 +6,7 @@ import { useTheme } from "../../theme/theme";
 import { fmt } from "../../utils/format";
 import { usePeriod, periodTitle, periodTitleShort } from "../../lib/PeriodCtx";
 import { fetchReportData, fetchFundFlows, fetchFunds, fetchIncomeRefs, fetchTurnoverSheet, fetchCashAccounts, fetchPostings, fetchChartTurnover } from "../../lib/api";
+import { OP_LABELS } from "../../utils/register";
 import {
   expenseAmount, expenseLocation, marginPct,
   filterIncomesByLocation, filterExpensesByLocation,
@@ -29,15 +30,7 @@ const TABS = [
   { key: "osv", label: "ОСВ · оборотка" },
   { key: "postings", label: "Проводки · журнал" },
 ];
-
-// Метки типов операций Реестра для журнала проводок (ХМС-термины не переводим)
-const OP_LABELS = {
-  income: "Доход", income_return: "Возврат дохода", distribution: "Распределение в фонд",
-  request_payment: "Оплата заявки", bill_payment: "Оплата счёта", payroll_payment: "Выплата ЗП",
-  cash_transfer: "Перевод между счетами", fx_exchange: "Обмен валюты", off_plan: "Вне ФП",
-  adjustment: "Корректировка", fund_income: "Приход фонда", fund_return: "Изъятие из фонда",
-  fund_transfer: "Перемещение фондов", fund_loan: "Заём фонда", fund_loan_return: "Возврат займа",
-};
+const JOURNAL_PAGE = 200; // порция журнала проводок на экране
 const EXP_LABELS = {
   request_payment: "Оплаты заявок",
   bill_payment: "Оплаты счетов и обязательств",
@@ -88,8 +81,33 @@ export function Reports() {
   const [locations, setLocations] = useState([]);
   const [cashAccounts, setCashAccounts] = useState([]);
   const [osv, setOsv] = useState({ funds: [], cash: [] });
+  // Леджерные выборки (журнал проводок + ОСВ по плану счетов) — проекции
+  // всего Реестра, тяжёлые: грузим лениво при открытии вкладки и кэшируем
+  // на период; их ошибка не валит остальные вкладки отчётов.
   const [postings, setPostings] = useState([]);
   const [chartOsv, setChartOsv] = useState([]);
+  const [ledgerFor, setLedgerFor] = useState(null);   // periodId загруженного леджера
+  const [ledgerErr, setLedgerErr] = useState("");
+  const [shownN, setShownN] = useState(JOURNAL_PAGE); // порция журнала на экране
+
+  useEffect(() => {
+    if (!["osv", "postings"].includes(tab) || !periodId || ledgerFor === periodId) return;
+    let cancelled = false;
+    (async () => {
+      setLedgerErr("");
+      try {
+        const [ps, ct] = await Promise.all([fetchPostings(periodId), fetchChartTurnover(periodId)]);
+        if (cancelled) return;
+        setPostings(ps); setChartOsv(ct); setLedgerFor(periodId); setShownN(JOURNAL_PAGE);
+      } catch (e) {
+        if (!cancelled) setLedgerErr("Не удалось загрузить проводки: " + (e?.message || e));
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [tab, periodId, ledgerFor]);
+
+  const ledgerLoading = ["osv", "postings"].includes(tab) && ledgerFor !== periodId && !ledgerErr;
+  const postingsTotal = useMemo(() => postings.reduce((a, p) => a + Number(p.amount), 0), [postings]);
 
   // Последние N недель (по возрастанию для графиков)
   const range = useMemo(
@@ -101,21 +119,18 @@ export function Reports() {
     if (periodsLoading) return;
     setErr("");
     try {
-      const [d, ff, fs, refs, ts, ca, ps, ct] = await Promise.all([
+      const [d, ff, fs, refs, ts, ca] = await Promise.all([
         fetchReportData(range.map((p) => p.id)),
         fetchFundFlows(periodId),
         fetchFunds(),
         fetchIncomeRefs(),
         fetchTurnoverSheet(periodId),
         fetchCashAccounts(),
-        fetchPostings(periodId),
-        fetchChartTurnover(periodId),
       ]);
       setData(d); setFundFlows(ff);
       setFunds(fs.sort((a, b) => a.code.localeCompare(b.code, "ru", { numeric: true })));
       setLocations(refs.locations);
       setOsv(ts); setCashAccounts(ca);
-      setPostings(ps); setChartOsv(ct);
     } catch (e) {
       setErr("Не удалось загрузить данные отчёта: " + (e?.message || e));
     } finally {
@@ -154,6 +169,10 @@ export function Reports() {
         const ff = fundFlows[f.id] || { in: 0, out: 0 };
         return [f.code, f.name, ff.in.toFixed(2), ff.out.toFixed(2), Number(f.balance).toFixed(2)];
       });
+    }
+    if (tab === "osv") {
+      head = ["Код", "Счёт", "Сальдо нач.", "Оборот Дт", "Оборот Кт", "Сальдо кон."];
+      rows = chartOsv.map((r) => [r.code, r.name, r.opening.toFixed(2), r.debit_turnover.toFixed(2), r.credit_turnover.toFixed(2), r.closing.toFixed(2)]);
     }
     if (tab === "postings") {
       head = ["Дата", "Операция", "Дт", "Дт счёт", "Кт", "Кт счёт", "Сумма", "Комментарий"];
@@ -392,7 +411,9 @@ export function Reports() {
           <div style={{ fontSize: 11.5, color: C.faint, marginBottom: 10 }}>
             Проекция Реестра в двойную запись по правилам проводок. Сальдо: активные счета — по дебету, пассивные — по кредиту.
           </div>
-          {!chartOsv.length ? <div style={st.empty}>Нет оборотов за неделю</div> : (
+          {ledgerErr && <div role="alert" style={{ ...st.reqError, marginBottom: 10 }}>{ledgerErr}</div>}
+          {ledgerLoading ? <div style={st.empty}><Loader2 size={16} className="spin" /> Загрузка…</div>
+          : !chartOsv.length ? <div style={st.empty}>Нет оборотов за неделю</div> : (
             <div style={{ display: "grid", gap: 8, gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill, minmax(320px, 1fr))" }}>
               {chartOsv.map((r) => {
                 // Пассивные счета (обязательства/капитал/доход) живут в кредите:
@@ -428,9 +449,11 @@ export function Reports() {
         Журнал проводок · {period ? periodTitle(period) : "—"} · вся сеть. Проводки — проекция Реестра
         (источника истины) по правилам «тип операции → Дт/Кт»; правила настраиваются во вкладке «Фонды».
       </div>
-      {!postings.length ? <div style={{ ...st.locCard, ...st.empty }}>Нет проводок за неделю</div> : (
+      {ledgerErr && <div role="alert" style={{ ...st.reqError, marginBottom: 12 }}>{ledgerErr}</div>}
+      {ledgerLoading ? <div style={{ ...st.locCard, ...st.empty }}><Loader2 size={16} className="spin" /> Загрузка…</div>
+      : !postings.length ? <div style={{ ...st.locCard, ...st.empty }}>Нет проводок за неделю</div> : (
         <section style={{ ...st.fpCard, marginTop: 0 }}>
-          {postings.map((p, i) => (
+          {postings.slice(0, shownN).map((p, i) => (
             <div key={`${p.reg_id}-${p.component}`} style={{
               display: "grid", gap: isMobile ? 4 : 10, alignItems: "center",
               gridTemplateColumns: isMobile ? "1fr auto" : "86px minmax(150px, 1.2fr) 1fr 1fr auto",
@@ -463,9 +486,16 @@ export function Reports() {
               )}
             </div>
           ))}
+          {postings.length > shownN && (
+            <div style={{ textAlign: "center", padding: "10px 0" }}>
+              <button className="btn" style={st.btnGhost} onClick={() => setShownN((n) => n + JOURNAL_PAGE)}>
+                Показать ещё ({postings.length - shownN})
+              </button>
+            </div>
+          )}
           <div style={{ display: "flex", justifyContent: "flex-end", gap: 14, paddingTop: 10, borderTop: `2px solid ${C.line}`, fontSize: 12.5, fontWeight: 800 }}>
-            <span style={{ color: C.sub }}>Σ Дт = Σ Кт</span>
-            <span style={{ fontVariantNumeric: "tabular-nums" }}>{fmt(postings.reduce((a, p) => a + Number(p.amount), 0))} TJS</span>
+            <span style={{ color: C.sub }}>Σ Дт = Σ Кт (все {postings.length})</span>
+            <span style={{ fontVariantNumeric: "tabular-nums" }}>{fmt(postingsTotal)} TJS</span>
           </div>
         </section>
       )}

@@ -3,6 +3,7 @@ import { Loader2, AlertCircle, CheckCircle2, BookOpenCheck, ChevronRight } from 
 import { useTheme } from "../../theme/theme";
 import { useActionFeedback } from "../../hooks/useActionFeedback";
 import { fetchPostingRules, updatePostingRule, fetchChartAccounts } from "../../lib/api";
+import { OP_LABELS, UNUSED_RULE_COMBOS } from "../../utils/register";
 
 // ------------------------------------------------------------- POSTING RULES
 // Правила проводок (posting_rules, Реестр §13): как тип операции Реестра
@@ -11,13 +12,6 @@ import { fetchPostingRules, updatePostingRule, fetchChartAccounts } from "../../
 // правила мгновенно меняет журнал и ОСВ по плану счетов (проекция, не данные).
 // Только фин-админ (RLS pr_write). Сворачиваемая секция во вкладке «Фонды».
 
-const OP_LABELS = {
-  income: "Доход", income_return: "Возврат дохода", distribution: "Распределение в фонд",
-  request_payment: "Оплата заявки", bill_payment: "Оплата счёта", payroll_payment: "Выплата ЗП",
-  cash_transfer: "Перевод между счетами", fx_exchange: "Обмен валюты", off_plan: "Вне ФП",
-  adjustment: "Корректировка", fund_income: "Приход фонда", fund_return: "Изъятие из фонда",
-  fund_transfer: "Перемещение фондов", fund_loan: "Заём фонда", fund_loan_return: "Возврат займа",
-};
 const COMPONENT_LABELS = { cash: "деньги (счёт ДС)", fund: "фонд" };
 
 export function PostingRulesManager() {
@@ -44,12 +38,12 @@ export function PostingRulesManager() {
 
   const setCode = async (rule, side, code) => {
     if (busy) return;
+    const debitCode = side === "debit" ? code : rule.debit_code;
+    const creditCode = side === "credit" ? code : rule.credit_code;
+    if (debitCode === creditCode) { setErr("Дебет и кредит не могут быть одним счётом"); return; }
     setBusy(rule.id); setErr(""); setDone("");
     try {
-      await updatePostingRule(rule.id, {
-        debitCode: side === "debit" ? code : rule.debit_code,
-        creditCode: side === "credit" ? code : rule.credit_code,
-      });
+      await updatePostingRule(rule.id, { debitCode, creditCode });
       setRules((rs) => rs.map((r) => (r.id === rule.id ? { ...r, [side === "debit" ? "debit_code" : "credit_code"]: code } : r)));
       setDone("Правило обновлено — журнал и ОСВ пересчитаются при открытии");
     } catch (e) {
@@ -61,7 +55,7 @@ export function PostingRulesManager() {
   const codeSelect = (rule, side, value) => (
     <select value={value} disabled={busy === rule.id}
       onChange={(e) => setCode(rule, side, e.target.value)}
-      style={{ ...st.input, padding: "6px 8px", fontSize: 12, width: "100%" }}>
+      style={{ ...st.input, padding: "6px 8px", fontSize: 12, width: "100%", minWidth: 0 }}>
       {!accounts.some((a) => a.code === value) && <option value={value}>{value} (нет в плане счетов)</option>}
       {accounts.map((a) => <option key={a.id} value={a.code}>{a.code} · {a.name}</option>)}
     </select>
@@ -84,15 +78,19 @@ export function PostingRulesManager() {
         {loading ? <div style={st.empty}><Loader2 size={16} className="spin" /> Загрузка…</div> : (
           <div style={{ display: "grid", gap: 8, gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill, minmax(340px, 1fr))" }}>
             {rules.map((r) => (
-              <div key={r.id} style={{ ...st.locCard, padding: "10px 14px" }}>
-                <div style={{ fontSize: 12.5, fontWeight: 700, marginBottom: 2 }}>{OP_LABELS[r.op_type] || r.op_type}</div>
+              <div key={r.id} style={{ ...st.locCard, padding: "10px 14px", opacity: UNUSED_RULE_COMBOS.has(`${r.op_type}:${r.component}`) ? 0.65 : 1 }}>
+                <div style={{ fontSize: 12.5, fontWeight: 700, marginBottom: 2 }}>
+                  {OP_LABELS[r.op_type] || r.op_type}
+                  {UNUSED_RULE_COMBOS.has(`${r.op_type}:${r.component}`) &&
+                    <span style={{ ...st.weekTag, marginLeft: 6, color: C.sub, background: `${C.sub}1a` }}>пока не встречается</span>}
+                </div>
                 <div style={{ fontSize: 11, color: C.faint, marginBottom: 8 }}>компонента: {COMPONENT_LABELS[r.component] || r.component}</div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                  <div>
+                  <div style={{ minWidth: 0 }}>
                     <div style={{ fontSize: 10.5, color: C.faint, textTransform: "uppercase", marginBottom: 3 }}>Дебет</div>
                     {codeSelect(r, "debit", r.debit_code)}
                   </div>
-                  <div>
+                  <div style={{ minWidth: 0 }}>
                     <div style={{ fontSize: 10.5, color: C.faint, textTransform: "uppercase", marginBottom: 3 }}>Кредит</div>
                     {codeSelect(r, "credit", r.credit_code)}
                   </div>
