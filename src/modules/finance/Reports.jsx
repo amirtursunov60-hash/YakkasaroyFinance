@@ -5,7 +5,7 @@ import { Stat } from "../../components/common";
 import { useTheme } from "../../theme/theme";
 import { fmt } from "../../utils/format";
 import { usePeriod, periodTitle, periodTitleShort } from "../../lib/PeriodCtx";
-import { fetchReportData, fetchFundFlows, fetchFunds, fetchIncomeRefs, fetchTurnoverSheet, fetchCashAccounts } from "../../lib/api";
+import { fetchReportData, fetchFundFlows, fetchFunds, fetchIncomeRefs, fetchTurnoverSheet, fetchCashAccounts, fetchPostings, fetchChartTurnover } from "../../lib/api";
 import {
   expenseAmount, expenseLocation, marginPct,
   filterIncomesByLocation, filterExpensesByLocation,
@@ -27,7 +27,17 @@ const TABS = [
   { key: "points", label: "По точкам" },
   { key: "funds", label: "По фондам" },
   { key: "osv", label: "ОСВ · оборотка" },
+  { key: "postings", label: "Проводки · журнал" },
 ];
+
+// Метки типов операций Реестра для журнала проводок (ХМС-термины не переводим)
+const OP_LABELS = {
+  income: "Доход", income_return: "Возврат дохода", distribution: "Распределение в фонд",
+  request_payment: "Оплата заявки", bill_payment: "Оплата счёта", payroll_payment: "Выплата ЗП",
+  cash_transfer: "Перевод между счетами", fx_exchange: "Обмен валюты", off_plan: "Вне ФП",
+  adjustment: "Корректировка", fund_income: "Приход фонда", fund_return: "Изъятие из фонда",
+  fund_transfer: "Перемещение фондов", fund_loan: "Заём фонда", fund_loan_return: "Возврат займа",
+};
 const EXP_LABELS = {
   request_payment: "Оплаты заявок",
   bill_payment: "Оплаты счетов и обязательств",
@@ -78,6 +88,8 @@ export function Reports() {
   const [locations, setLocations] = useState([]);
   const [cashAccounts, setCashAccounts] = useState([]);
   const [osv, setOsv] = useState({ funds: [], cash: [] });
+  const [postings, setPostings] = useState([]);
+  const [chartOsv, setChartOsv] = useState([]);
 
   // Последние N недель (по возрастанию для графиков)
   const range = useMemo(
@@ -89,18 +101,21 @@ export function Reports() {
     if (periodsLoading) return;
     setErr("");
     try {
-      const [d, ff, fs, refs, ts, ca] = await Promise.all([
+      const [d, ff, fs, refs, ts, ca, ps, ct] = await Promise.all([
         fetchReportData(range.map((p) => p.id)),
         fetchFundFlows(periodId),
         fetchFunds(),
         fetchIncomeRefs(),
         fetchTurnoverSheet(periodId),
         fetchCashAccounts(),
+        fetchPostings(periodId),
+        fetchChartTurnover(periodId),
       ]);
       setData(d); setFundFlows(ff);
       setFunds(fs.sort((a, b) => a.code.localeCompare(b.code, "ru", { numeric: true })));
       setLocations(refs.locations);
       setOsv(ts); setCashAccounts(ca);
+      setPostings(ps); setChartOsv(ct);
     } catch (e) {
       setErr("Не удалось загрузить данные отчёта: " + (e?.message || e));
     } finally {
@@ -139,6 +154,15 @@ export function Reports() {
         const ff = fundFlows[f.id] || { in: 0, out: 0 };
         return [f.code, f.name, ff.in.toFixed(2), ff.out.toFixed(2), Number(f.balance).toFixed(2)];
       });
+    }
+    if (tab === "postings") {
+      head = ["Дата", "Операция", "Дт", "Дт счёт", "Кт", "Кт счёт", "Сумма", "Комментарий"];
+      rows = postings.map((p) => [
+        p.posted_on, OP_LABELS[p.op_type] || p.op_type,
+        p.debit_code, [p.debit_name, p.debit_sub].filter(Boolean).join(" · "),
+        p.credit_code, [p.credit_name, p.credit_sub].filter(Boolean).join(" · "),
+        Number(p.amount).toFixed(2), p.comment || "",
+      ]);
     }
     const csv = "﻿" + [head, ...rows].map((l) => l.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(";")).join("\n");
     const a = document.createElement("a");
@@ -361,7 +385,90 @@ export function Reports() {
         </div>
         <OsvCard C={C} st={st} isMobile={isMobile} title="Фонды" rows={fundRows} />
         <OsvCard C={C} st={st} isMobile={isMobile} title="Счета ДС" rows={cashRows} />
+
+        {/* ОСВ по плану счетов (Реестр §13): сальдо и обороты Дт/Кт */}
+        <section style={{ ...st.fpCard, marginTop: 0, marginBottom: 16 }}>
+          <div style={{ fontSize: 14, fontWeight: 800, marginBottom: 4 }}>По плану счетов</div>
+          <div style={{ fontSize: 11.5, color: C.faint, marginBottom: 10 }}>
+            Проекция Реестра в двойную запись по правилам проводок. Сальдо: активные счета — по дебету, пассивные — по кредиту.
+          </div>
+          {!chartOsv.length ? <div style={st.empty}>Нет оборотов за неделю</div> : (
+            <div style={{ display: "grid", gap: 8, gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill, minmax(320px, 1fr))" }}>
+              {chartOsv.map((r) => {
+                // Пассивные счета (обязательства/капитал/доход) живут в кредите:
+                // показываем сальдо со стороны, естественной для типа счёта.
+                const passive = ["liability", "equity", "income"].includes(r.account_type);
+                const bal = (v) => (passive ? -v : v);
+                return (
+                  <div key={r.code} style={{ ...st.locCard, padding: "10px 14px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+                      <span style={{ ...st.fundCode }}>{r.code}</span>
+                      <span style={{ fontSize: 13, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</span>
+                    </div>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 6, fontSize: 11.5 }}>
+                      {[["Сальдо нач.", bal(r.opening), C.sub], ["Оборот Дт", r.debit_turnover, C.money], ["Оборот Кт", r.credit_turnover, C.danger], ["Сальдо кон.", bal(r.closing), C.text]].map(([l, v, col]) => (
+                        <div key={l}>
+                          <div style={{ color: C.faint, textTransform: "uppercase", letterSpacing: 0.3 }}>{l}</div>
+                          <div style={{ fontWeight: 700, color: col, fontVariantNumeric: "tabular-nums" }}>{fmt(v)}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
       </>);
     })()}
+
+    {/* ---------------- Журнал проводок (двойная запись, Реестр §13) */}
+    {tab === "postings" && (<>
+      <div style={{ fontSize: 12, color: C.faint, marginBottom: 12 }}>
+        Журнал проводок · {period ? periodTitle(period) : "—"} · вся сеть. Проводки — проекция Реестра
+        (источника истины) по правилам «тип операции → Дт/Кт»; правила настраиваются во вкладке «Фонды».
+      </div>
+      {!postings.length ? <div style={{ ...st.locCard, ...st.empty }}>Нет проводок за неделю</div> : (
+        <section style={{ ...st.fpCard, marginTop: 0 }}>
+          {postings.map((p, i) => (
+            <div key={`${p.reg_id}-${p.component}`} style={{
+              display: "grid", gap: isMobile ? 4 : 10, alignItems: "center",
+              gridTemplateColumns: isMobile ? "1fr auto" : "86px minmax(150px, 1.2fr) 1fr 1fr auto",
+              padding: "9px 4px", borderTop: i ? `1px solid ${C.line}` : "none", fontSize: 12.5,
+            }}>
+              {!isMobile && <div style={{ color: C.sub, fontVariantNumeric: "tabular-nums" }}>{new Date(p.posted_on + "T00:00:00").toLocaleDateString("ru")}</div>}
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontWeight: 700 }}>{OP_LABELS[p.op_type] || p.op_type}</div>
+                {isMobile && <div style={{ fontSize: 11, color: C.faint }}>{new Date(p.posted_on + "T00:00:00").toLocaleDateString("ru")}</div>}
+                {p.comment && <div style={{ fontSize: 11, color: C.faint, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.comment}</div>}
+              </div>
+              {isMobile ? (
+                <div style={{ fontWeight: 800, fontVariantNumeric: "tabular-nums", textAlign: "right" }}>{fmt(Number(p.amount))}</div>
+              ) : (<>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ color: C.faint, fontSize: 10.5, textTransform: "uppercase" }}>Дт {p.debit_code}</div>
+                  <div style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{[p.debit_name, p.debit_sub].filter(Boolean).join(" · ")}</div>
+                </div>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ color: C.faint, fontSize: 10.5, textTransform: "uppercase" }}>Кт {p.credit_code}</div>
+                  <div style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{[p.credit_name, p.credit_sub].filter(Boolean).join(" · ")}</div>
+                </div>
+                <div style={{ fontWeight: 800, fontVariantNumeric: "tabular-nums", textAlign: "right" }}>{fmt(Number(p.amount))}</div>
+              </>)}
+              {isMobile && (
+                <div style={{ gridColumn: "1 / -1", display: "flex", gap: 10, fontSize: 11, color: C.sub, minWidth: 0 }}>
+                  <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>Дт {p.debit_code} {[p.debit_name, p.debit_sub].filter(Boolean).join(" · ")}</span>
+                  <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>Кт {p.credit_code} {[p.credit_name, p.credit_sub].filter(Boolean).join(" · ")}</span>
+                </div>
+              )}
+            </div>
+          ))}
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: 14, paddingTop: 10, borderTop: `2px solid ${C.line}`, fontSize: 12.5, fontWeight: 800 }}>
+            <span style={{ color: C.sub }}>Σ Дт = Σ Кт</span>
+            <span style={{ fontVariantNumeric: "tabular-nums" }}>{fmt(postings.reduce((a, p) => a + Number(p.amount), 0))} TJS</span>
+          </div>
+        </section>
+      )}
+    </>)}
   </>);
 }

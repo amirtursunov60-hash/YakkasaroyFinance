@@ -744,6 +744,49 @@ export async function setChartAccountArchived(id, archived) {
   if (error) throw error;
 }
 
+// ---- Проводки двойной записи (Реестр §13) ----------------------------------
+// Журнал — детерминированная проекция Реестра по правилам posting_rules;
+// ничего не хранится и не пишется, Реестр остаётся источником истины.
+export async function fetchPostings(periodId) {
+  if (!periodId) return [];
+  const { data, error } = await supabase.rpc("fp_postings", { p_period_id: periodId });
+  if (error) throw error;
+  return data || [];
+}
+
+// ОСВ по плану счетов: сальдо на начало / обороты Дт/Кт / сальдо на конец.
+export async function fetchChartTurnover(periodId) {
+  if (!periodId) return [];
+  const { data, error } = await supabase.rpc("fp_chart_turnover", { p_period_id: periodId });
+  if (error) throw error;
+  return (data || []).map((r) => ({
+    ...r,
+    opening: Number(r.opening || 0),
+    debit_turnover: Number(r.debit_turnover || 0),
+    credit_turnover: Number(r.credit_turnover || 0),
+    closing: Number(r.closing || 0),
+  }));
+}
+
+// Правила проводок: (тип операции, компонента cash|fund) → Дт/Кт.
+// Запись — только фин-админ (RLS pr_write).
+export async function fetchPostingRules() {
+  const { data, error } = await supabase
+    .from("posting_rules")
+    .select("id, op_type, component, debit_code, credit_code")
+    .order("op_type").order("component");
+  if (error) throw error;
+  return data;
+}
+
+export async function updatePostingRule(id, { debitCode, creditCode }) {
+  const { error } = await supabase
+    .from("posting_rules")
+    .update({ debit_code: debitCode.trim(), credit_code: creditCode.trim() })
+    .eq("id", id);
+  if (error) throw error;
+}
+
 // ---- Валюты (справочник currencies, Фонды §3) -----------------------------
 // CRUD под RLS currencies_insert/update = is_fin_admin(). Удаление не даём
 // (валюта ссылается из счетов/фондов/операций). Базовая — через RPC ниже.
