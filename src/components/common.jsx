@@ -1,6 +1,6 @@
-import { Construction, AlertTriangle, X, Loader2 } from "lucide-react";
+import { Construction, AlertTriangle, Loader2 } from "lucide-react";
 import { useTheme } from "../theme/theme";
-import { useScrollLock } from "../hooks/useScrollLock";
+import { Modal } from "./Modal";
 
 
 export function Stub({ label }) {
@@ -39,7 +39,6 @@ export function Stat({ label, value, unit, accent, tone }) {
 // Оверлей и «Отмена» вызывают onCancel; основное действие — onConfirm. busy блокирует кнопки.
 export function ConfirmModal({ title, message, error, confirmLabel = "Подтвердить", cancelLabel = "Отмена", tone = "default", busy = false, onConfirm, onCancel }) {
   const { C, st, isMobile } = useTheme();
-  useScrollLock();
   const accent = tone === "danger" ? C.danger : tone === "warning" ? C.warning : C.green;
   const baseBtn = { display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7,
     padding: "11px 18px", borderRadius: 14, fontSize: 13.5, fontWeight: 700, cursor: "pointer",
@@ -50,18 +49,16 @@ export function ConfirmModal({ title, message, error, confirmLabel = "Подтв
     : { ...baseBtn, background: accent, color: "#fff" };
 
   return (
-    <div style={st.mdOverlay} data-modal="1" onClick={() => !busy && onCancel?.()}>
-      <div style={{ ...st.mdCard, width: "min(440px, 100%)" }} onClick={(e) => e.stopPropagation()}>
-        <div style={st.mdHead}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
-            <div style={{ width: 34, height: 34, borderRadius: 10, display: "grid", placeItems: "center",
-              background: `${accent}22`, color: accent, flexShrink: 0 }}>
-              <AlertTriangle size={18} />
-            </div>
-            <div style={st.mdTitle}>{title}</div>
-          </div>
-          <button style={st.iconBtn} className="btn" onClick={() => !busy && onCancel?.()} aria-label="Закрыть"><X size={17} /></button>
-        </div>
+    <Modal width={440} onClose={() => !busy && onCancel?.()}
+      title={
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+          <span style={{ width: 34, height: 34, borderRadius: 10, display: "grid", placeItems: "center",
+            background: `${accent}22`, color: accent, flexShrink: 0 }}>
+            <AlertTriangle size={18} />
+          </span>
+          {title}
+        </span>
+      }>
         {message && <div style={{ fontSize: 13.5, lineHeight: 1.5, color: C.sub }}>{message}</div>}
         {error && (
           <div role="alert" style={{ display: "flex", alignItems: "flex-start", gap: 8, marginTop: 12,
@@ -78,7 +75,6 @@ export function ConfirmModal({ title, message, error, confirmLabel = "Подтв
             {busy ? <Loader2 size={15} className="spin" /> : <AlertTriangle size={15} />} {confirmLabel}
           </button>
         </div>
-      </div>
-    </div>
+    </Modal>
   );
 }

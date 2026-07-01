@@ -1,12 +1,12 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { Loader2, AlertCircle, Download } from "lucide-react";
+import { AlertCircle, Download } from "lucide-react";
 import { BarsChart } from "../../components/charts/BarsChart";
-import { Stat } from "../../components/common";
+import { Stat, Loading } from "../../components/common";
 import { useTheme } from "../../theme/theme";
 import { fmt } from "../../utils/format";
 import { usePeriod, periodTitle, periodTitleShort } from "../../lib/PeriodCtx";
 import { fetchReportData, fetchFundFlows, fetchFunds, fetchIncomeRefs, fetchTurnoverSheet, fetchCashAccounts, fetchPostings, fetchChartTurnover } from "../../lib/api";
-import { OP_LABELS } from "../../utils/register";
+import { opLabel } from "../../utils/register";
 import {
   expenseAmount, expenseLocation, marginPct,
   filterIncomesByLocation, filterExpensesByLocation,
@@ -106,7 +106,10 @@ export function Reports() {
     return () => { cancelled = true; };
   }, [tab, periodId, ledgerFor]);
 
-  const ledgerLoading = ["osv", "postings"].includes(tab) && ledgerFor !== periodId && !ledgerErr;
+  // Леджер вкладки ещё не соответствует выбранной неделе (грузится или упал) —
+  // на это время блокируем экспорт CSV, иначе выгрузится прошлая неделя/пустота.
+  const ledgerStale = ["osv", "postings"].includes(tab) && ledgerFor !== periodId;
+  const ledgerLoading = ledgerStale && !ledgerErr;
   const postingsTotal = useMemo(() => postings.reduce((a, p) => a + Number(p.amount), 0), [postings]);
 
   // Последние N недель (по возрастанию для графиков)
@@ -177,7 +180,7 @@ export function Reports() {
     if (tab === "postings") {
       head = ["Дата", "Операция", "Дт", "Дт счёт", "Кт", "Кт счёт", "Сумма", "Комментарий"];
       rows = postings.map((p) => [
-        p.posted_on, OP_LABELS[p.op_type] || p.op_type,
+        p.posted_on, opLabel(p.op_type),
         p.debit_code, [p.debit_name, p.debit_sub].filter(Boolean).join(" · "),
         p.credit_code, [p.credit_name, p.credit_sub].filter(Boolean).join(" · "),
         Number(p.amount).toFixed(2), p.comment || "",
@@ -191,7 +194,7 @@ export function Reports() {
     URL.revokeObjectURL(a.href);
   };
 
-  if (loading || periodsLoading) return <div style={st.empty}><Loader2 size={18} className="spin" /> Загрузка…</div>;
+  if (loading || periodsLoading) return <Loading />;
 
   const rangeLabel = range.length
     ? `${periodTitleShort(range[0])} — ${periodTitleShort(range.at(-1))}`
@@ -213,7 +216,9 @@ export function Reports() {
               <option value={8}>8 недель</option>
               <option value={12}>12 недель</option>
             </select>
-            <button style={st.btnGhost} className="btn" onClick={exportCsv} title="Экспорт CSV" aria-label="Экспорт CSV">
+            <button style={{ ...st.btnGhost, opacity: ledgerStale ? 0.55 : 1 }} className="btn"
+              onClick={exportCsv} disabled={ledgerStale}
+              title={ledgerStale ? "Дождитесь загрузки данных недели" : "Экспорт CSV"} aria-label="Экспорт CSV">
               <Download size={15} /> {!isMobile && "Экспорт CSV"}
             </button>
           </div>
@@ -412,7 +417,7 @@ export function Reports() {
             Проекция Реестра в двойную запись по правилам проводок. Сальдо: активные счета — по дебету, пассивные — по кредиту.
           </div>
           {ledgerErr && <div role="alert" style={{ ...st.reqError, marginBottom: 10 }}>{ledgerErr}</div>}
-          {ledgerLoading ? <div style={st.empty}><Loader2 size={16} className="spin" /> Загрузка…</div>
+          {ledgerLoading ? <Loading />
           : !chartOsv.length ? <div style={st.empty}>Нет оборотов за неделю</div> : (
             <div style={{ display: "grid", gap: 8, gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill, minmax(320px, 1fr))" }}>
               {chartOsv.map((r) => {
@@ -450,7 +455,7 @@ export function Reports() {
         (источника истины) по правилам «тип операции → Дт/Кт»; правила настраиваются во вкладке «Фонды».
       </div>
       {ledgerErr && <div role="alert" style={{ ...st.reqError, marginBottom: 12 }}>{ledgerErr}</div>}
-      {ledgerLoading ? <div style={{ ...st.locCard, ...st.empty }}><Loader2 size={16} className="spin" /> Загрузка…</div>
+      {ledgerLoading ? <Loading style={st.locCard} />
       : !postings.length ? <div style={{ ...st.locCard, ...st.empty }}>Нет проводок за неделю</div> : (
         <section style={{ ...st.fpCard, marginTop: 0 }}>
           {postings.slice(0, shownN).map((p, i) => (
@@ -461,7 +466,7 @@ export function Reports() {
             }}>
               {!isMobile && <div style={{ color: C.sub, fontVariantNumeric: "tabular-nums" }}>{new Date(p.posted_on + "T00:00:00").toLocaleDateString("ru")}</div>}
               <div style={{ minWidth: 0 }}>
-                <div style={{ fontWeight: 700 }}>{OP_LABELS[p.op_type] || p.op_type}</div>
+                <div style={{ fontWeight: 700 }}>{opLabel(p.op_type)}</div>
                 {isMobile && <div style={{ fontSize: 11, color: C.faint }}>{new Date(p.posted_on + "T00:00:00").toLocaleDateString("ru")}</div>}
                 {p.comment && <div style={{ fontSize: 11, color: C.faint, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.comment}</div>}
               </div>
