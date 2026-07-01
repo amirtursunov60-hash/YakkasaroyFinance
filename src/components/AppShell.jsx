@@ -6,6 +6,7 @@ import "./ui/switcher.css";
 import { Stub, Loading } from "./common";
 import { RestaurantModule } from "../modules/restaurant/RestaurantModule";
 import { MODULES, MODULE_NAV } from "../data/navigation";
+import { parseHash, buildHash } from "../utils/route";
 import { avatarColor } from "../utils/format";
 import { feedbackSuccess } from "../lib/feedback";
 import { makeCss } from "../theme/css";
@@ -41,6 +42,17 @@ const lazyScreen = (load, name) => lazy(() =>
 // с инициализацией приложения (иначе на телефоне лишний круг сети после рендера).
 const directiveLoad = import("../modules/finance/Directive");
 directiveLoad.catch(() => {}); // ошибку обработает lazyScreen при первом рендере
+
+// Раздел по умолчанию при переходе в модуль: Финансы → Директива, Ресторан → r_app
+const DEFAULT_SECTION = { finance: "directive", restaurant: "r_app" };
+const defaultSection = (key) => DEFAULT_SECTION[key] || MODULE_NAV[key][0].key;
+// Стартовый экран берём из URL-hash (#/модуль/раздел) — так работают прямые
+// ссылки на экран и восстановление места после F5; без hash — Директива.
+const initialRoute = () => {
+  const r = typeof window !== "undefined" ? parseHash(window.location.hash, MODULE_NAV) : null;
+  if (!r) return { module: "finance", section: DEFAULT_SECTION.finance };
+  return { module: r.module, section: r.section || defaultSection(r.module) };
+};
 
 const CrmModule = lazyScreen(() => import("../modules/crm/CrmModule"), "CrmModule");
 const Counterparties = lazyScreen(() => import("../modules/crm/Counterparties"), "Counterparties");
@@ -82,8 +94,31 @@ export function App({ onLogout }) {
   const initials = userName.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
 
   const css = useMemo(() => makeCss(C), [C]);
-  const [activeModule, setActiveModule] = useState("finance");
-  const [active, setActive] = useState("directive");
+  const [activeModule, setActiveModule] = useState(() => initialRoute().module);
+  const [active, setActive] = useState(() => initialRoute().section);
+  // Состояние → URL: первый рендер поправляет адрес без новой записи истории,
+  // дальше каждый переход добавляет запись — работает кнопка «назад» браузера.
+  const hashInitedRef = useRef(false);
+  useEffect(() => {
+    const next = buildHash(activeModule, active);
+    if (window.location.hash === next) { hashInitedRef.current = true; return; }
+    if (hashInitedRef.current) window.history.pushState(null, "", next);
+    else window.history.replaceState(null, "", next);
+    hashInitedRef.current = true;
+  }, [activeModule, active]);
+  // URL → состояние: назад/вперёд и правка hash руками
+  useEffect(() => {
+    const onPop = () => {
+      const r = parseHash(window.location.hash, MODULE_NAV);
+      if (!r) return;
+      startTransition(() => {
+        setActiveModule(r.module);
+        setActive(r.section || defaultSection(r.module));
+      });
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const navList = MODULE_NAV[activeModule] || [];
@@ -118,9 +153,6 @@ export function App({ onLogout }) {
   // Переключение разделов — через startTransition: пока чанк нового экрана
   // качается, старый экран остаётся на месте (без вспышки «Загрузка…»).
   const pick = (key) => { startTransition(() => setActive(key)); setMenuOpen(false); };
-  // Раздел по умолчанию при переходе в модуль: Финансы → Директива, Ресторан → Меню
-  const DEFAULT_SECTION = { finance: "directive", restaurant: "r_app" };
-  const defaultSection = (key) => DEFAULT_SECTION[key] || MODULE_NAV[key][0].key;
   const pickModule = (key) => {
     if (!MODULE_NAV[key]) return;
     const def = defaultSection(key);
