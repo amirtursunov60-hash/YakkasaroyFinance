@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { Banknote, Save, AlertTriangle, Loader2, AlertCircle, CheckCircle2, Plus, X, List, Landmark, CreditCard, Wifi } from "lucide-react";
+import { Banknote, Save, AlertTriangle, Loader2, AlertCircle, CheckCircle2, Plus, X, List, Landmark, CreditCard, Wifi, Pencil, Archive, ArchiveRestore } from "lucide-react";
 import { Stat } from "../../components/common";
 import { Modal } from "../../components/Modal";
 import { useTheme } from "../../theme/theme";
@@ -8,16 +8,21 @@ import { useActionFeedback } from "../../hooks/useActionFeedback";
 import { fmt } from "../../utils/format";
 import { usePeriod, periodTitle } from "../../lib/PeriodCtx";
 import { ArrowRightLeft } from "lucide-react";
+import { CASH_FLOW_ROLE_LABELS } from "../../lib/constants";
+import { buildControlSum } from "./controlSum";
 import {
-  fetchCashAccounts, createCashAccount, fetchReconciliations, saveReconciliations,
-  fetchAccountStatement, fetchIncomeRefs, cashTransfer,
+  fetchCashAccounts, createCashAccount, updateCashAccount, setCashAccountArchived,
+  fetchReconciliations, saveReconciliations, fetchAccountStatement, fetchIncomeRefs,
+  cashTransfer, fetchControlSum, fetchTurnoverSheet,
 } from "../../lib/api";
 
 
 // ---------------------------------------------------------------- CONTROL
-// Живые данные (ТЗ v2 §4.1.8): счета ДС с расчётным остатком из Реестра,
-// сверка бухгалтером (снимок факт/расчёт на выбранную неделю, повторная
-// сверка перезаписывает), выписка по счёту, добавление счетов.
+// Живые данные (ТЗ v2 §4.1.8) + доработка по образцу ManaJet (02.07.2026):
+// счета ДС с расчётным остатком из Реестра, движение за выбранную неделю
+// (вход/приход/расход/исход — RPC fp_turnover_sheet), сверка бухгалтером
+// (снимок факт/расчёт), группировка «Приходные/Расходные» (система расчётных
+// счетов ФП), редактирование/архив счёта, «Контрольная сумма» (fp_control_sum).
 // Конвенция Реестра: суммы операций и балансы счетов — в базовой валюте (TJS).
 
 const TYPE_META = {
@@ -32,6 +37,7 @@ const OP_LABELS = {
   fund_loan: "Заём фонда", fund_loan_return: "Возврат займа", fx_exchange: "Обмен валют",
   cash_transfer: "Перемещение ДС", off_plan: "Трата вне ФП", adjustment: "Корректировка",
 };
+const GROUP_LABELS = { incoming: "Приходные счета", outgoing: "Расходные счета", none: "Без классификации" };
 
 export function Control() {
   const { C, st, isMobile, profile } = useTheme();
@@ -43,28 +49,34 @@ export function Control() {
   const [done, setDone] = useState("");
   useActionFeedback(done, err);
   const [accounts, setAccounts] = useState([]);
+  const [withArchived, setWithArchived] = useState(false);
   const [recons, setRecons] = useState({});
   const [values, setValues] = useState({});      // ввод факта { accountId: строка }
+  const [turnover, setTurnover] = useState({});  // { accountId: {opening, inflow, outflow, closing} }
+  const [ctlSum, setCtlSum] = useState(null);    // ControlSumView | null
+  const [ctlErr, setCtlErr] = useState("");
   const [busy, setBusy] = useState(null);
   const [statement, setStatement] = useState(null); // { account, rows, allTime }
   const [showAdd, setShowAdd] = useState(false);
+  const [editAccount, setEditAccount] = useState(null);
   const [showTransfer, setShowTransfer] = useState(false);
   const [refs, setRefs] = useState(null);
 
   const load = useCallback(async () => {
     setErr("");
     try {
-      const [accs, refData] = await Promise.all([fetchCashAccounts(), fetchIncomeRefs()]);
+      const [accs, refData] = await Promise.all([fetchCashAccounts({ withArchived }), fetchIncomeRefs()]);
       setAccounts(accs); setRefs(refData);
     } catch (e) {
       setErr("Не удалось загрузить счета: " + (e?.message || e));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [withArchived]);
   useEffect(() => { load(); }, [load]);
 
-  // Сверки выбранной недели → предзаполняем «факт»
+  // Сверки выбранной недели → предзаполняем «факт»; движение за неделю и
+  // контрольная сумма — из Реестра (read-only RPC).
   useEffect(() => {
     if (periodsLoading) return;
     (async () => {
@@ -74,22 +86,49 @@ export function Control() {
         setValues(Object.fromEntries(Object.entries(r).map(([accId, row]) => [accId, String(row.actual_balance)])));
         setDone("");
       } catch (e) { setErr("Не удалось загрузить сверки: " + (e?.message || e)); }
+      try {
+        const t = await fetchTurnoverSheet(periodId);
+        setTurnover(Object.fromEntries(t.cash.map((r) => [r.id, r])));
+      } catch { setTurnover({}); }
+      if (canEdit) {
+        try {
+          const cs = await fetchControlSum(periodId);
+          setCtlSum(cs ? buildControlSum(cs) : null); setCtlErr("");
+        } catch (e) { setCtlSum(null); setCtlErr(e?.message || String(e)); }
+      }
     })();
-  }, [periodId, periodsLoading]);
+  }, [periodId, periodsLoading, canEdit]);
 
   const shownAccounts = useMemo(
     () => ctxLocationId ? accounts.filter((a) => a.location_id === ctxLocationId || !a.location_id) : accounts,
     [accounts, ctxLocationId]);
 
+  // Расчётный остаток: на конец выбранной недели (Реестр до конца недели N);
+  // пока движение не загружено — live-баланс (для текущей недели они равны).
+  const calcOf = useCallback(
+    (a) => turnover[a.id] ? turnover[a.id].closing : Number(a.balance) || 0,
+    [turnover]);
+
+  // Группировка «Приходные/Расходные» (папки М1/Д1 у ManaJet) — появляется,
+  // как только хотя бы у одного счёта задана классификация.
+  const groups = useMemo(() => {
+    if (!shownAccounts.some((a) => a.flow_role)) return [{ key: "all", label: null, items: shownAccounts }];
+    const g = { incoming: [], outgoing: [], none: [] };
+    for (const a of shownAccounts) g[a.flow_role || "none"].push(a);
+    return ["incoming", "outgoing", "none"]
+      .filter((k) => g[k].length)
+      .map((k) => ({ key: k, label: GROUP_LABELS[k], items: g[k] }));
+  }, [shownAccounts]);
+
   const totals = useMemo(() => {
     let calc = 0, fact = 0, entered = 0;
     for (const a of shownAccounts) {
-      calc += Number(a.balance) || 0;
+      calc += calcOf(a);
       const v = values[a.id];
       if (v !== undefined && v !== "") { fact += Number(v) || 0; entered++; }
     }
     return { calc, fact, entered, diff: fact - (entered ? calc : 0) };
-  }, [shownAccounts, values]);
+  }, [shownAccounts, values, calcOf]);
   const anyEntered = totals.entered > 0;
   const allEntered = totals.entered === shownAccounts.length && shownAccounts.length > 0;
   const diffTotal = allEntered ? totals.fact - totals.calc : null;
@@ -102,7 +141,7 @@ export function Control() {
       .map((a) => ({
         cash_account_id: a.id, period_id: periodId,
         actual_balance: Number(values[a.id]) || 0,
-        system_balance: Number(a.balance) || 0,
+        system_balance: calcOf(a),
         created_by: profile.id,
       }));
     if (!rows.length) { setErr("Введите фактические остатки хотя бы по одному счёту"); return; }
@@ -128,9 +167,87 @@ export function Control() {
 
   // minmax(0,…) — чтобы колонка-имя могла сжиматься уже своего контента
   // (иначе на телефоне строка не влезает в ширину экрана). minWidth строки
-  // (унаследованный из st.frow=720) на мобайле сбрасываем ниже.
-  const GRID = isMobile ? "minmax(0,1fr) 105px 120px" : "1fr 70px 140px 170px 140px 90px";
-  const frowFit = isMobile ? { minWidth: 0 } : null;
+  // на мобайле сбрасываем, на десктопе расширяем под колонки движения.
+  const GRID = isMobile
+    ? "minmax(0,1fr) 105px 120px"
+    : "minmax(0,1.3fr) 105px 105px 105px 120px 150px 110px 88px";
+  const frowFit = isMobile ? { minWidth: 0 } : { minWidth: 990 };
+
+  const renderRow = (a) => {
+    const Icon = TYPE_META[a.type]?.icon || Banknote;
+    const tv = turnover[a.id];
+    const calc = calcOf(a);
+    const v = values[a.id] === undefined || values[a.id] === "" ? null : Number(values[a.id]) || 0;
+    const d = v === null ? null : v - calc;
+    const ok = d !== null && Math.abs(d) < 0.01;
+    const saved = recons[a.id];
+    return (
+      <div key={a.id} style={{ ...st.frow, gridTemplateColumns: GRID, ...frowFit, opacity: a.is_archived ? 0.55 : 1 }} className="frow">
+        <div style={st.fName}>
+          <div style={st.fundTop}>
+            <Icon size={15} color={C.green} />
+            <span>{a.name}</span>
+            {a.is_archived && <span style={{ fontSize: 10.5, color: C.faint, border: `1px solid ${C.line}`, borderRadius: 6, padding: "1px 5px", flexShrink: 0 }}>в архиве</span>}
+            {saved && <CheckCircle2 size={13} color={ok || (saved && Math.abs(Number(saved.difference)) < 0.01) ? C.green : C.danger} />}
+            {/* «Подробно» (выписка) и карандаш прямо в строке на телефоне */}
+            {isMobile && (
+              <span style={{ display: "flex", gap: 6, marginLeft: "auto", flexShrink: 0 }}>
+                {canEdit && (
+                  <button style={{ width: 28, height: 28, borderRadius: 8, display: "grid", placeItems: "center",
+                      border: `1px solid ${C.line}`, background: C.panel2, color: C.sub, cursor: "pointer" }}
+                    className="btn" title="Редактировать счёт" onClick={() => setEditAccount(a)}>
+                    <Pencil size={13} />
+                  </button>
+                )}
+                <button style={{ width: 28, height: 28, borderRadius: 8, display: "grid", placeItems: "center",
+                    border: `1px solid ${C.line}`, background: C.panel2, color: C.sub, cursor: "pointer" }}
+                  className="btn" disabled={!!busy} title="Выписка по счёту" onClick={() => openStatement(a)}>
+                  {busy === `stmt:${a.id}` ? <Loader2 size={13} className="spin" /> : <List size={13} />}
+                </button>
+              </span>
+            )}
+          </div>
+          <div style={{ fontSize: 11.5, color: C.faint, marginTop: 2 }}>
+            {TYPE_META[a.type]?.label}
+            {a.location ? ` · ${a.location.name}` : ""}
+            {a.currency?.code && !a.currency?.is_base ? ` · ${a.currency.code}` : ""}
+            {isMobile && tv && <span> · нач {fmt(tv.opening)} · +{fmt(tv.inflow)} · −{fmt(tv.outflow)}</span>}
+            {isMobile && d !== null && <span style={{ color: ok ? C.green : C.danger, fontWeight: 700 }}> · {ok ? "✓ сходится" : fmt(d)}</span>}
+          </div>
+        </div>
+        {!isMobile && <div style={{ ...st.fNum, color: C.faint }}>{tv ? fmt(tv.opening) : "—"}</div>}
+        {!isMobile && <div style={{ ...st.fNum, color: tv && tv.inflow ? C.green : C.faint }}>{tv ? (tv.inflow ? `+${fmt(tv.inflow)}` : "0") : "—"}</div>}
+        {!isMobile && <div style={{ ...st.fNum, color: tv && tv.outflow ? C.danger : C.faint }}>{tv ? (tv.outflow ? `−${fmt(tv.outflow)}` : "0") : "—"}</div>}
+        <div style={{ ...st.fNum, color: C.sub, fontWeight: 600 }}>{fmt(calc)}</div>
+        <div style={{ textAlign: "right" }}>
+          <input type="number" value={values[a.id] ?? ""} disabled={!canEdit}
+            onChange={(e) => { setValues((p) => ({ ...p, [a.id]: e.target.value })); setDone(""); }}
+            placeholder="0" style={{ ...st.numInput, width: isMobile ? 105 : 150 }} />
+        </div>
+        {!isMobile && (
+          <div style={{ ...st.fNum, fontWeight: 700, color: d === null ? C.faint : ok ? C.green : C.danger }}>
+            {d === null ? "—" : ok ? "✓ сходится" : fmt(d)}
+          </div>
+        )}
+        {!isMobile && (
+          <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
+            {canEdit && (
+              <button style={{ width: 30, height: 30, borderRadius: 8, display: "grid", placeItems: "center",
+                  border: `1px solid ${C.line}`, background: C.panel2, color: C.sub, cursor: "pointer" }}
+                className="btn" title="Редактировать счёт" onClick={() => setEditAccount(a)}>
+                <Pencil size={14} />
+              </button>
+            )}
+            <button style={{ width: 30, height: 30, borderRadius: 8, display: "grid", placeItems: "center",
+                border: `1px solid ${C.line}`, background: C.panel2, color: C.sub, cursor: "pointer" }}
+              className="btn" disabled={!!busy} title="Выписка по счёту" onClick={() => openStatement(a)}>
+              {busy === `stmt:${a.id}` ? <Loader2 size={14} className="spin" /> : <List size={14} />}
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (<>
     <section style={st.hero}>
@@ -160,9 +277,15 @@ export function Control() {
 
     <div style={st.cardWrap}>
       <section style={st.card}>
-        <div style={st.cardHead}>
+        <div style={{ ...st.cardHead, flexWrap: "wrap", gap: 8 }}>
           <div style={st.cardTitle}>Остатки по счетам</div>
-          <div style={{ display: "flex", gap: 8 }}>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {canEdit && (
+              <button style={{ ...st.btnGhost, ...(withArchived ? { borderColor: C.green, color: C.green } : {}) }}
+                className="btn" title="Показывать архивные счета" onClick={() => setWithArchived((v) => !v)}>
+                <Archive size={15} /> {!isMobile && "С архивом"}
+              </button>
+            )}
             {canEdit && (
               <button style={st.btnGhost} className="btn" onClick={() => setShowTransfer(true)}>
                 <ArrowRightLeft size={15} /> {!isMobile && "Переместить ДС"}
@@ -185,68 +308,30 @@ export function Control() {
         {shownAccounts.length > 0 && (<>
           <div style={{ ...st.frow, ...st.frowHead, gridTemplateColumns: GRID, ...frowFit }}>
             <div style={st.fName}>Счёт / касса</div>
-            {!isMobile && <div style={st.fPct}>Валюта</div>}
-            <div style={st.fNum}>Расчёт</div>
+            {!isMobile && <div style={st.fNum}>На начало</div>}
+            {!isMobile && <div style={st.fNum}>Приход</div>}
+            {!isMobile && <div style={st.fNum}>Расход</div>}
+            <div style={st.fNum}>{isMobile ? "Расчёт" : "Расчёт на конец"}</div>
             <div style={st.fNum}>Факт</div>
             {!isMobile && <div style={st.fNum}>Расхождение</div>}
             {!isMobile && <div style={st.fNum} />}
           </div>
-          {shownAccounts.map((a) => {
-            const Icon = TYPE_META[a.type]?.icon || Banknote;
-            const calc = Number(a.balance) || 0;
-            const v = values[a.id] === undefined || values[a.id] === "" ? null : Number(values[a.id]) || 0;
-            const d = v === null ? null : v - calc;
-            const ok = d !== null && Math.abs(d) < 0.01;
-            const saved = recons[a.id];
-            return (
-              <div key={a.id} style={{ ...st.frow, gridTemplateColumns: GRID, ...frowFit }} className="frow">
-                <div style={st.fName}>
-                  <div style={st.fundTop}>
-                    <Icon size={15} color={C.green} />
-                    <span>{a.name}</span>
-                    {saved && <CheckCircle2 size={13} color={ok || (saved && Math.abs(Number(saved.difference)) < 0.01) ? C.green : C.danger} />}
-                    {/* «Подробно» (выписка) прямо в строке на телефоне —
-                        вместо отдельного дублирующего ряда снизу. */}
-                    {isMobile && (
-                      <button style={{ width: 28, height: 28, borderRadius: 8, display: "grid", placeItems: "center",
-                          flexShrink: 0, marginLeft: "auto", border: `1px solid ${C.line}`, background: C.panel2,
-                          color: C.sub, cursor: "pointer" }}
-                        className="btn" disabled={!!busy} title="Выписка по счёту" onClick={() => openStatement(a)}>
-                        {busy === `stmt:${a.id}` ? <Loader2 size={13} className="spin" /> : <List size={13} />}
-                      </button>
-                    )}
-                  </div>
-                  <div style={{ fontSize: 11.5, color: C.faint, marginTop: 2 }}>
-                    {TYPE_META[a.type]?.label}{a.location ? ` · ${a.location.name}` : ""}
-                    {isMobile && d !== null && <span style={{ color: ok ? C.green : C.danger, fontWeight: 700 }}> · {ok ? "✓ сходится" : fmt(d)}</span>}
-                  </div>
+          {groups.map((g) => (
+            <div key={g.key}>
+              {g.label && (
+                <div style={{ padding: "9px 12px 4px", fontSize: 11.5, fontWeight: 700, letterSpacing: 0.4,
+                    textTransform: "uppercase", color: C.faint }}>
+                  {g.label} · {g.items.length}
                 </div>
-                {!isMobile && <div style={st.fPct}>{a.currency?.code}</div>}
-                <div style={{ ...st.fNum, color: C.sub }}>{fmt(calc)}</div>
-                <div style={{ textAlign: "right" }}>
-                  <input type="number" value={values[a.id] ?? ""} disabled={!canEdit}
-                    onChange={(e) => { setValues((p) => ({ ...p, [a.id]: e.target.value })); setDone(""); }}
-                    placeholder="0" style={{ ...st.numInput, width: isMobile ? 105 : 150 }} />
-                </div>
-                {!isMobile && (
-                  <div style={{ ...st.fNum, fontWeight: 700, color: d === null ? C.faint : ok ? C.green : C.danger }}>
-                    {d === null ? "—" : ok ? "✓ сходится" : fmt(d)}
-                  </div>
-                )}
-                {!isMobile && (
-                  <div style={{ textAlign: "right" }}>
-                    <button style={{ ...st.btnGhost, padding: "6px 10px", fontSize: 12 }} className="btn"
-                      disabled={!!busy} onClick={() => openStatement(a)}>
-                      {busy === `stmt:${a.id}` ? <Loader2 size={13} className="spin" /> : <List size={13} />} Подробно
-                    </button>
-                  </div>
-                )}
-              </div>
-            );
-          })}
+              )}
+              {g.items.map(renderRow)}
+            </div>
+          ))}
           <div style={{ ...st.frow, ...st.frowTotal, gridTemplateColumns: GRID, ...frowFit }}>
             <div style={st.fName}><b>Итого (TJS)</b></div>
-            {!isMobile && <div style={st.fPct} />}
+            {!isMobile && <div style={st.fNum} />}
+            {!isMobile && <div style={st.fNum} />}
+            {!isMobile && <div style={st.fNum} />}
             <div style={{ ...st.fNum, fontWeight: 700, color: C.sub }}>{fmt(totals.calc)}</div>
             <div style={{ ...st.fNum, fontWeight: 800, color: C.money, fontSize: 16 }}>{anyEntered ? fmt(totals.fact) : "—"}</div>
             {!isMobile && (
@@ -260,6 +345,10 @@ export function Control() {
       </section>
     </div>
 
+    {canEdit && periodId && (
+      <ControlSumCard C={C} st={st} isMobile={isMobile} ctlSum={ctlSum} ctlErr={ctlErr} period={period} />
+    )}
+
     <div style={st.vibeNote}>
       <b style={{ color: C.green }}>Принцип:</b> «чтобы ни одна копейка не пропала». Расчётный остаток система
       ведёт сама по Реестру (доходы на счёт − оплаты со счёта). Бухгалтер вводит фактические остатки на конец
@@ -272,16 +361,84 @@ export function Control() {
         onClose={() => setStatement(null)} />
     )}
     {showAdd && refs && (
-      <AddAccountModal st={st} refs={refs}
+      <AccountFormModal st={st} refs={refs}
         onClose={() => setShowAdd(false)}
         onSaved={async () => { setShowAdd(false); await load(); setDone("Счёт ДС добавлен"); }} />
     )}
+    {editAccount && refs && (
+      <AccountFormModal st={st} refs={refs} account={editAccount}
+        onClose={() => setEditAccount(null)}
+        onSaved={async (msg) => { setEditAccount(null); await load(); setDone(msg || "Счёт обновлён"); }} />
+    )}
     {showTransfer && (
-      <CashTransferModal st={st} accounts={accounts} periodId={periodId}
+      <CashTransferModal st={st} accounts={accounts.filter((a) => !a.is_archived)} periodId={periodId}
         onClose={() => setShowTransfer(false)}
         onSaved={async (msg) => { setShowTransfer(false); await load(); setDone(msg); }} />
     )}
   </>);
+}
+
+
+// ---------------------------------------------------------------- Контрольная сумма
+// Уравнение ФП (образец — ManaJet): деньги на счетах = нераспределённые доходы
+// + фонды (доступно + одобренные невыплаченные заявки/счета). Разница ≠ 0 —
+// сигнал: внеплановые траты, корректировки, ручные операции фондов.
+function ControlSumCard({ C, st, isMobile, ctlSum, ctlErr, period }) {
+  const row = (label, value, { bold, indent, tone } = {}) => (
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10,
+        padding: isMobile ? "8px 0" : "9px 0", borderBottom: `1px solid ${C.line}`,
+        paddingLeft: indent ? 18 : 0 }}>
+      <div style={{ fontSize: bold ? 13.5 : 13, fontWeight: bold ? 800 : 500, color: indent ? C.sub : C.text }}>{label}</div>
+      <div style={{ fontWeight: bold ? 800 : 650, fontVariantNumeric: "tabular-nums", fontSize: bold ? 15 : 13.5,
+          color: tone === "danger" ? C.danger : tone === "success" ? C.green : bold ? C.money : C.text, flexShrink: 0 }}>
+        {fmt(value)}
+      </div>
+    </div>
+  );
+  return (
+    <div style={st.cardWrap}>
+      <section style={st.card}>
+        <div style={{ ...st.cardHead, flexWrap: "wrap", gap: 8 }}>
+          <div style={st.cardTitle}>Контрольная сумма</div>
+          <div style={{ fontSize: 11.5, color: C.faint }}>
+            вся сеть · на конец недели {period ? periodTitle(period) : "—"}
+          </div>
+        </div>
+        {!ctlSum && (
+          <div style={st.empty}>
+            {ctlErr ? "Контрольная сумма недоступна — требуется обновление БД (fp_control_sum)" : <><Loader2 size={16} className="spin" /> Расчёт…</>}
+          </div>
+        )}
+        {ctlSum && (<>
+          <div>
+            {row("Деньги на счетах ДС", ctlSum.cashTotal, { bold: true })}
+            {row("Нераспределённые доходы", ctlSum.incomesUndistributed)}
+            {row("Фонды: доступно", ctlSum.fundsAvailable)}
+            {row("Невыплаченные заявки (одобренные)", ctlSum.requestsUnpaid, { indent: true })}
+            {row("Невыплаченные счета поставщиков", ctlSum.billsUnpaid, { indent: true })}
+            {row("Итого должно быть на счетах", ctlSum.total, { bold: true })}
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, marginTop: 10,
+              padding: "10px 12px", borderRadius: 10,
+              background: ctlSum.matches ? `${C.green}14` : `${C.danger}14`,
+              border: `1px solid ${ctlSum.matches ? `${C.green}44` : `${C.danger}44`}` }}>
+            <div style={{ fontSize: 13.5, fontWeight: 800, color: ctlSum.matches ? C.green : C.danger }}>
+              {ctlSum.matches ? "✓ Сходится" : "Разница"}
+            </div>
+            <div style={{ fontWeight: 800, fontVariantNumeric: "tabular-nums", fontSize: 15,
+                color: ctlSum.matches ? C.green : C.danger }}>
+              {fmt(ctlSum.difference)}
+            </div>
+          </div>
+          <div style={{ fontSize: 11.5, color: C.faint, marginTop: 10, lineHeight: 1.5 }}>
+            Уравнение ФП: деньги на счетах = нераспределённые доходы + фонды (доступно + невыплаченные
+            обязательства). Разница ≠ 0 — были движения мимо распределения: внеплановые траты,
+            корректировки или ручные операции фондов. Невыплаченные заявки и счета — по текущему состоянию.
+          </div>
+        </>)}
+      </section>
+    </div>
+  );
 }
 
 
@@ -400,11 +557,20 @@ function StatementModal({ C, st, statement, period, onAllTime, onClose }) {
 }
 
 
-// ---------------------------------------------------------------- Новый счёт ДС
-function AddAccountModal({ st, refs, onClose, onSaved }) {
-  useScrollLock();
+// ---------------------------------------------------------------- Счёт ДС: создание и редактирование
+// Один модал на обе операции (account == null → создание). Валюта задаётся
+// только при создании: записи Реестра уже сделаны в валюте счёта.
+function AccountFormModal({ st, refs, account, onClose, onSaved }) {
+  const { C } = useTheme();
+  const isEdit = !!account;
   const baseCur = refs.currencies.find((c) => c.is_base) || refs.currencies[0];
-  const [f, setF] = useState({ name: "", type: "cash", locationId: "", currencyId: baseCur?.id || "" });
+  const [f, setF] = useState({
+    name: account?.name || "",
+    type: account?.type || "cash",
+    locationId: account?.location_id || "",
+    currencyId: baseCur?.id || "",
+    flowRole: account?.flow_role || "",
+  });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
 
@@ -414,52 +580,83 @@ function AddAccountModal({ st, refs, onClose, onSaved }) {
     if (!f.name.trim()) return setErr("Введите название счёта");
     setBusy(true);
     try {
-      await createCashAccount({ name: f.name.trim(), type: f.type, locationId: f.locationId, currencyId: f.currencyId });
-      onSaved();
+      if (isEdit) {
+        await updateCashAccount(account.id, { name: f.name.trim(), type: f.type, locationId: f.locationId, flowRole: f.flowRole });
+        onSaved("Счёт обновлён");
+      } else {
+        await createCashAccount({ name: f.name.trim(), type: f.type, locationId: f.locationId, currencyId: f.currencyId, flowRole: f.flowRole });
+        onSaved();
+      }
+    } catch (e) { setErr(e?.message || String(e)); setBusy(false); }
+  };
+
+  const toggleArchive = async () => {
+    if (busy) return;
+    setBusy(true); setErr("");
+    try {
+      await setCashAccountArchived(account.id, !account.is_archived);
+      onSaved(account.is_archived ? "Счёт возвращён из архива" : "Счёт перемещён в архив");
     } catch (e) { setErr(e?.message || String(e)); setBusy(false); }
   };
 
   return (
-    <div style={st.mdOverlay} data-modal="1" onClick={onClose}>
-      <div style={{ ...st.mdCard, width: "min(420px, 100%)" }} onClick={(e) => e.stopPropagation()}>
-        <div style={st.mdHead}>
-          <div style={st.mdTitle}>Новый счёт ДС</div>
-          <button style={st.iconBtn} onClick={onClose} aria-label="Закрыть"><X size={17} /></button>
+    <Modal title={isEdit ? "Счёт ДС · редактирование" : "Новый счёт ДС"} width={420} onClose={onClose}>
+      <div style={{ display: "grid", gap: 10 }}>
+        <div style={st.reqField}>
+          <span style={st.reqFieldLbl}>Название</span>
+          <input style={st.mdInput} className="fin" placeholder="Касса Душанбе" autoFocus
+            value={f.name} onChange={(e) => setF((p) => ({ ...p, name: e.target.value }))} />
         </div>
-        <div style={{ display: "grid", gap: 10 }}>
-          <div style={st.reqField}>
-            <span style={st.reqFieldLbl}>Название</span>
-            <input style={st.mdInput} className="fin" placeholder="Касса Душанбе" autoFocus
-              value={f.name} onChange={(e) => setF((p) => ({ ...p, name: e.target.value }))} />
-          </div>
-          <div style={st.reqField}>
-            <span style={st.reqFieldLbl}>Тип</span>
-            <select style={st.mdSelect} className="fin" value={f.type} onChange={(e) => setF((p) => ({ ...p, type: e.target.value }))}>
-              {Object.entries(TYPE_META).map(([v, m]) => <option key={v} value={v}>{m.label}</option>)}
-            </select>
-          </div>
-          <div style={st.reqField}>
-            <span style={st.reqFieldLbl}>Точка</span>
-            <select style={st.mdSelect} className="fin" value={f.locationId} onChange={(e) => setF((p) => ({ ...p, locationId: e.target.value }))}>
-              <option value="">— вся сеть —</option>
-              {refs.locations.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
-            </select>
-          </div>
+        <div style={st.reqField}>
+          <span style={st.reqFieldLbl}>Тип</span>
+          <select style={st.mdSelect} className="fin" value={f.type} onChange={(e) => setF((p) => ({ ...p, type: e.target.value }))}>
+            {Object.entries(TYPE_META).map(([v, m]) => <option key={v} value={v}>{m.label}</option>)}
+          </select>
+        </div>
+        <div style={st.reqField}>
+          <span style={st.reqFieldLbl}>Классификация (система расчётных счетов)</span>
+          <select style={st.mdSelect} className="fin" value={f.flowRole} onChange={(e) => setF((p) => ({ ...p, flowRole: e.target.value }))}>
+            <option value="">— без классификации —</option>
+            {Object.entries(CASH_FLOW_ROLE_LABELS).map(([v, label]) => <option key={v} value={v}>{label}</option>)}
+          </select>
+        </div>
+        <div style={st.reqField}>
+          <span style={st.reqFieldLbl}>Точка</span>
+          <select style={st.mdSelect} className="fin" value={f.locationId} onChange={(e) => setF((p) => ({ ...p, locationId: e.target.value }))}>
+            <option value="">— вся сеть —</option>
+            {refs.locations.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
+          </select>
+        </div>
+        {!isEdit && (
           <div style={st.reqField}>
             <span style={st.reqFieldLbl}>Валюта</span>
             <select style={st.mdSelect} className="fin" value={f.currencyId} onChange={(e) => setF((p) => ({ ...p, currencyId: e.target.value }))}>
               {refs.currencies.map((c) => <option key={c.id} value={c.id}>{c.code} — {c.name}</option>)}
             </select>
           </div>
-        </div>
-        {err && <div role="alert" style={st.reqError}><AlertCircle size={15} /> {err}</div>}
-        <div style={st.mdActions}>
-          <button style={st.btnGhost} className="btn" onClick={onClose}>Отмена</button>
-          <button style={{ ...st.btnGreen, opacity: busy ? 0.7 : 1 }} className="btn" onClick={submit} disabled={busy}>
-            {busy ? <Loader2 size={15} className="spin" /> : <Plus size={15} />} Добавить
-          </button>
-        </div>
+        )}
+        {isEdit && (
+          <div style={{ fontSize: 11.5, color: C.faint }}>
+            Валюта: {account.currency?.code || "—"} (не меняется — операции Реестра уже сделаны в ней).
+            Баланс ведут триггеры Реестра.
+          </div>
+        )}
       </div>
-    </div>
+      {err && <div role="alert" style={st.reqError}><AlertCircle size={15} /> {err}</div>}
+      <div style={{ ...st.mdActions, flexWrap: "wrap" }}>
+        {isEdit && (
+          <button style={{ ...st.btnGhost, marginRight: "auto", color: account.is_archived ? C.green : C.danger }}
+            className="btn" onClick={toggleArchive} disabled={busy}>
+            {account.is_archived ? <ArchiveRestore size={15} /> : <Archive size={15} />}
+            {account.is_archived ? "Из архива" : "В архив"}
+          </button>
+        )}
+        <button style={st.btnGhost} className="btn" onClick={onClose}>Отмена</button>
+        <button style={{ ...st.btnGreen, opacity: busy ? 0.7 : 1 }} className="btn" onClick={submit} disabled={busy}>
+          {busy ? <Loader2 size={15} className="spin" /> : isEdit ? <Save size={15} /> : <Plus size={15} />}
+          {isEdit ? "Сохранить" : "Добавить"}
+        </button>
+      </div>
+    </Modal>
   );
 }

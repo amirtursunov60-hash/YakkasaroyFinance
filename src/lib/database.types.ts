@@ -207,6 +207,7 @@ export type Database = {
         Row: {
           balance: number
           currency_id: string
+          flow_role: string | null
           folder_id: string | null
           id: string
           is_archived: boolean
@@ -218,6 +219,7 @@ export type Database = {
         Insert: {
           balance?: number
           currency_id: string
+          flow_role?: string | null
           folder_id?: string | null
           id?: string
           is_archived?: boolean
@@ -229,6 +231,7 @@ export type Database = {
         Update: {
           balance?: number
           currency_id?: string
+          flow_role?: string | null
           folder_id?: string | null
           id?: string
           is_archived?: boolean
@@ -3177,6 +3180,16 @@ export type Database = {
         Args: { p_period_id: string; p_protocol?: Json }
         Returns: undefined
       }
+      fp_control_sum: {
+        Args: { p_period_id: string }
+        Returns: {
+          bills_unpaid: number
+          cash_total: number
+          funds_total: number
+          incomes_undistributed: number
+          requests_unpaid: number
+        }[]
+      }
       fp_distribute_stage: {
         Args: { p_allocations: Json; p_period_id: string; p_stage: string }
         Returns: undefined
@@ -3587,4 +3600,3 @@ export const Constants = {
     },
   },
 } as const
-
