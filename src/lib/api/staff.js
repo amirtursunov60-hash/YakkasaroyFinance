@@ -68,7 +68,7 @@ export async function setLocationAccess(personId, locationId, grant) {
 export async function fetchInvites() {
   const { data, error } = await supabase
     .from("invites")
-    .select(`id, token, role, expires_at, used_at,
+    .select(`id, token, role, expires_at, used_at, phone,
       location:locations(name),
       position:org_positions(code, name),
       used_profile:profiles!invites_used_by_fkey(full_name)`)
@@ -77,10 +77,13 @@ export async function fetchInvites() {
   return data;
 }
 
-export async function createInvite({ role, locationId, positionId, createdBy }) {
+export async function createInvite({ role, locationId, positionId, phone, createdBy }) {
   const { data, error } = await supabase
     .from("invites")
-    .insert({ role, location_id: locationId || null, position_id: positionId || null, created_by: createdBy })
+    .insert({
+      role, location_id: locationId || null, position_id: positionId || null,
+      phone: phone?.trim() || null, created_by: createdBy,
+    })
     .select().single();
   if (error) throw error;
   return data;

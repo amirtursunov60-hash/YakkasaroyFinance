@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Users, UserPlus, Loader2, AlertCircle, CheckCircle2, X, Plus, Copy, Trash2, ChevronRight, MapPin, Network, Camera } from "lucide-react";
+import { Users, UserPlus, Loader2, AlertCircle, CheckCircle2, X, Plus, Copy, Trash2, ChevronRight, MapPin, Network, Camera, MessageCircle, Send } from "lucide-react";
 import { useTheme } from "../../theme/theme";
 import { avatarColor } from "../../utils/format";
 import { useActionFeedback } from "../../hooks/useActionFeedback";
@@ -24,6 +24,17 @@ const ROLE_LABELS = {
   employee: "Сотрудник",
 };
 const ROLE_OPTIONS = Object.entries(ROLE_LABELS);
+
+// Отправка ссылки-приглашения в мессенджеры (deep-ссылки, шлюза нет).
+// WhatsApp открывается прямо на номер приглашаемого; Telegram не умеет слать по
+// номеру (ограничение Telegram) — открывает выбор контакта с готовой ссылкой.
+const onlyDigits = (s) => String(s || "").replace(/\D/g, "");
+const inviteMessage = (link) =>
+  `Здравствуйте! Приглашаем вас в систему «Яккасарой Финанс». Откройте ссылку и зарегистрируйтесь:\n${link}`;
+const waLink = (phone, text) =>
+  `https://wa.me/${onlyDigits(phone)}${text ? `?text=${encodeURIComponent(text)}` : ""}`;
+const tgLink = (link) =>
+  `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent("Приглашение в «Яккасарой Финанс» — откройте ссылку и зарегистрируйтесь")}`;
 
 export function StaffModule({ view }) {
   const { C, st, isMobile, profile } = useTheme();
@@ -220,7 +231,7 @@ function PeopleView({ C, st, isFinAdmin, profile, people, positions, locations, 
 
 // ---------------------------------------------------------------- Приглашения
 function InvitesView({ C, st, isMobile, profile, canInvite, invites, positions, locations, busy, act }) {
-  const [f, setF] = useState({ role: "employee", locationId: "", positionId: "" });
+  const [f, setF] = useState({ role: "employee", locationId: "", positionId: "", phone: "" });
   const [copied, setCopied] = useState(null);
 
   const linkOf = (token) =>
@@ -255,7 +266,7 @@ function InvitesView({ C, st, isMobile, profile, canInvite, invites, positions, 
 
     {/* Создание */}
     <div style={{ ...st.locCard, marginBottom: 14, padding: 16 }}>
-      <div style={{ display: "grid", gap: 10, gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr auto", alignItems: "end" }}>
+      <div style={{ display: "grid", gap: 10, gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr 1fr auto", alignItems: "end" }}>
         <div style={st.reqField}>
           <span style={st.reqFieldLbl}>Роль</span>
           <select style={st.mdSelect} className="fin" value={f.role} onChange={(e) => setF((p) => ({ ...p, role: e.target.value }))}>
@@ -276,10 +287,15 @@ function InvitesView({ C, st, isMobile, profile, canInvite, invites, positions, 
             {positions.map((x) => <option key={x.id} value={x.id}>{x.code} · {x.name}</option>)}
           </select>
         </div>
+        <div style={st.reqField}>
+          <span style={st.reqFieldLbl}>Телефон (для WhatsApp)</span>
+          <input style={st.mdInput} className="fin" type="tel" inputMode="tel" placeholder="+992 …"
+            value={f.phone} onChange={(e) => setF((p) => ({ ...p, phone: e.target.value }))} />
+        </div>
         <button style={{ ...st.btnGreen, whiteSpace: "nowrap" }} className="btn" disabled={!!busy}
           onClick={() => act("invite", () => createInvite({
-            role: f.role, locationId: f.locationId, positionId: f.positionId, createdBy: profile.id,
-          }), "Приглашение создано — скопируйте ссылку и отправьте сотруднику")}>
+            role: f.role, locationId: f.locationId, positionId: f.positionId, phone: f.phone, createdBy: profile.id,
+          }), "Приглашение создано — отправьте ссылку сотруднику (WhatsApp/Telegram/копировать)")}>
           {busy === "invite" ? <Loader2 size={15} className="spin" /> : <Plus size={15} />} Создать
         </button>
       </div>
@@ -298,16 +314,29 @@ function InvitesView({ C, st, isMobile, profile, canInvite, invites, positions, 
               <div style={st.locCode}>
                 {inv.location?.name || "без точки"}
                 {inv.position ? ` · ${inv.position.code} ${inv.position.name}` : ""}
+                {inv.phone ? ` · ${inv.phone}` : ""}
               </div>
             </div>
-            <div style={{ display: "flex", gap: 6, alignItems: "center", marginLeft: "auto" }}>
+            <div style={{ display: "flex", gap: 6, alignItems: "center", marginLeft: "auto", flexWrap: "wrap", justifyContent: "flex-end" }}>
               <span style={{ ...st.weekTag, marginLeft: 0, color: s.color, background: `${s.color}1a` }}>{s.label}</span>
-              {!inv.used_at && (
+              {!inv.used_at && (<>
+                {inv.phone && (
+                  <a href={waLink(inv.phone, inviteMessage(linkOf(inv.token)))} target="_blank" rel="noopener noreferrer"
+                    title="Отправить в WhatsApp на номер сотрудника"
+                    style={{ ...st.btnGhost, padding: "6px 10px", color: C.green, textDecoration: "none" }} className="btn">
+                    <MessageCircle size={14} />{!isMobile && " WhatsApp"}
+                  </a>
+                )}
+                <a href={tgLink(linkOf(inv.token))} target="_blank" rel="noopener noreferrer"
+                  title="Отправить в Telegram (выбрать контакт)"
+                  style={{ ...st.btnGhost, padding: "6px 10px", color: C.info, textDecoration: "none" }} className="btn">
+                  <Send size={14} />{!isMobile && " Telegram"}
+                </a>
                 <button style={{ ...st.btnGhost, padding: "6px 10px" }} className="btn" onClick={() => copy(inv)}>
                   {copied === inv.id ? <CheckCircle2 size={14} color={C.green} /> : <Copy size={14} />}
                   {!isMobile && (copied === inv.id ? " Скопировано" : " Ссылка")}
                 </button>
-              )}
+              </>)}
               <button style={{ ...st.iconBtn, color: C.danger }} className="btn" disabled={!!busy} aria-label="Удалить приглашение"
                 onClick={() => window.confirm("Удалить приглашение? Ссылка перестанет работать.") &&
                   act(`del:${inv.id}`, () => deleteInvite(inv.id), "Приглашение удалено")}>
