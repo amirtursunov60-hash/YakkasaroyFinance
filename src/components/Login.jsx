@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { makeCss } from "../theme/css";
 import { useTheme } from "../theme/theme";
-import { signIn, signUp } from "../lib/auth";
+import { signIn, registerByInvite } from "../lib/auth";
 
 
 // ============================================================================
@@ -28,23 +28,18 @@ export function Login({ onEnter, initialError = "" }) {
     setBusy(true);
     try {
       if (inviteMode) {
-        localStorage.setItem("yk_invite_name", name.trim());
-        // Возврат после подтверждения — на сам адрес приложения (не дефолтный
-        // Site URL), с токеном приглашения, чтобы оно применилось и на другом
-        // устройстве.
-        // База всегда содержит query (?confirm=1), чтобы шаблон письма мог
-        // безопасно дописать &token_hash=…&type=email к {{ .RedirectTo }}.
+        // Регистрация по приглашению без письма-подтверждения: серверная функция
+        // создаёт аккаунт уже подтверждённым и применяет приглашение (проверив
+        // одноразовый токен). Затем сразу входим по паролю.
         const inviteTok = localStorage.getItem("yk_invite");
-        const redirect = `${window.location.origin}${window.location.pathname}?confirm=1` +
-          (inviteTok ? `&invite=${encodeURIComponent(inviteTok)}` : "");
-        const data = await signUp(email.trim(), pass, redirect);
-        if (!data.session) {
-          // включено подтверждение почты — приглашение применится при первом входе
-          setInfo("Мы отправили письмо для подтверждения. Откройте его и войдите — приглашение применится автоматически.");
-          setBusy(false);
-          return;
-        }
-        onEnter(); // сессия есть — App применит приглашение сам
+        const res = await registerByInvite({
+          token: inviteTok, email: email.trim(), password: pass, fullName: name.trim(),
+        });
+        if (!res.ok) { setErr(res.error || "Не удалось зарегистрироваться"); setBusy(false); return; }
+        await signIn(email.trim(), pass);
+        localStorage.removeItem("yk_invite");
+        localStorage.removeItem("yk_invite_name");
+        onEnter(); // приглашение уже применено функцией — просто входим
         return;
       }
       await signIn(email.trim(), pass);
