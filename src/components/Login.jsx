@@ -2,11 +2,11 @@ import { useState, useMemo } from "react";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { makeCss } from "../theme/css";
 import { useTheme } from "../theme/theme";
-import { signIn, signUp } from "../lib/auth";
+import { signIn, registerByInvite } from "../lib/auth";
 
 
 // ============================================================================
-export function Login({ onEnter }) {
+export function Login({ onEnter, initialError = "" }) {
   const { C, st } = useTheme();
   const lg = useMemo(() => makeLg(C), [C]);
   const css = useMemo(() => makeCss(C), [C]);
@@ -15,7 +15,7 @@ export function Login({ onEnter }) {
   const [name, setName] = useState("");
   const [show, setShow] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState("");
+  const [err, setErr] = useState(initialError);
   const [info, setInfo] = useState("");
   // Приглашение по ссылке: токен сохраняет App.jsx до завершения регистрации
   const [inviteMode, setInviteMode] = useState(() => !!localStorage.getItem("yk_invite"));
@@ -28,15 +28,18 @@ export function Login({ onEnter }) {
     setBusy(true);
     try {
       if (inviteMode) {
-        localStorage.setItem("yk_invite_name", name.trim());
-        const data = await signUp(email.trim(), pass);
-        if (!data.session) {
-          // включено подтверждение почты — приглашение применится при первом входе
-          setInfo("Мы отправили письмо для подтверждения. Откройте его и войдите — приглашение применится автоматически.");
-          setBusy(false);
-          return;
-        }
-        onEnter(); // сессия есть — App применит приглашение сам
+        // Регистрация по приглашению без письма-подтверждения: серверная функция
+        // создаёт аккаунт уже подтверждённым и применяет приглашение (проверив
+        // одноразовый токен). Затем сразу входим по паролю.
+        const inviteTok = localStorage.getItem("yk_invite");
+        const res = await registerByInvite({
+          token: inviteTok, email: email.trim(), password: pass, fullName: name.trim(),
+        });
+        if (!res.ok) { setErr(res.error || "Не удалось зарегистрироваться"); setBusy(false); return; }
+        await signIn(email.trim(), pass);
+        localStorage.removeItem("yk_invite");
+        localStorage.removeItem("yk_invite_name");
+        onEnter(); // приглашение уже применено функцией — просто входим
         return;
       }
       await signIn(email.trim(), pass);
