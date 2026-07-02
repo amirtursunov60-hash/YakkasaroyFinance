@@ -1707,6 +1707,7 @@ export type Database = {
           expires_at: string
           id: string
           location_id: string | null
+          phone: string | null
           position_id: string | null
           role: Database["public"]["Enums"]["app_role"]
           token: string
@@ -1718,6 +1719,7 @@ export type Database = {
           expires_at?: string
           id?: string
           location_id?: string | null
+          phone?: string | null
           position_id?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           token?: string
@@ -1729,6 +1731,7 @@ export type Database = {
           expires_at?: string
           id?: string
           location_id?: string | null
+          phone?: string | null
           position_id?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           token?: string
