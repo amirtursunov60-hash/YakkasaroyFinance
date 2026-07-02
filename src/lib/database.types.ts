@@ -291,6 +291,50 @@ export type Database = {
         }
         Relationships: []
       }
+      client_errors: {
+        Row: {
+          component_stack: string | null
+          created_at: string
+          id: number
+          is_archived: boolean
+          message: string
+          profile_id: string | null
+          stack: string | null
+          url: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          component_stack?: string | null
+          created_at?: string
+          id?: never
+          is_archived?: boolean
+          message: string
+          profile_id?: string | null
+          stack?: string | null
+          url?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          component_stack?: string | null
+          created_at?: string
+          id?: never
+          is_archived?: boolean
+          message?: string
+          profile_id?: string | null
+          stack?: string | null
+          url?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_errors_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_invoices: {
         Row: {
           amount: number
@@ -3543,3 +3587,4 @@ export const Constants = {
     },
   },
 } as const
+
