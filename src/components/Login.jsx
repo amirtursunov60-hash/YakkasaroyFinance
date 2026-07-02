@@ -32,9 +32,11 @@ export function Login({ onEnter, initialError = "" }) {
         // Возврат после подтверждения — на сам адрес приложения (не дефолтный
         // Site URL), с токеном приглашения, чтобы оно применилось и на другом
         // устройстве.
+        // База всегда содержит query (?confirm=1), чтобы шаблон письма мог
+        // безопасно дописать &token_hash=…&type=email к {{ .RedirectTo }}.
         const inviteTok = localStorage.getItem("yk_invite");
-        const redirect = `${window.location.origin}${window.location.pathname}` +
-          (inviteTok ? `?invite=${encodeURIComponent(inviteTok)}` : "");
+        const redirect = `${window.location.origin}${window.location.pathname}?confirm=1` +
+          (inviteTok ? `&invite=${encodeURIComponent(inviteTok)}` : "");
         const data = await signUp(email.trim(), pass, redirect);
         if (!data.session) {
           // включено подтверждение почты — приглашение применится при первом входе

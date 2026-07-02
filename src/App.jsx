@@ -72,6 +72,7 @@ function YakkasaroyApp() {
   const [profile, setProfile] = useState(null);  // профиль вошедшего (с ролью) или null
   const [hasUser, setHasUser] = useState(false);  // есть сессия, но возможно нет профиля
   const [loading, setLoading] = useState(true);   // идёт первичная проверка сессии
+  const [authMsg, setAuthMsg] = useState(authCallbackError); // сообщение по ссылке подтверждения
   const isMobile = useIsMobile();
   const C = THEMES[theme];
   const st = useMemo(() => makeStyles(C), [C]);
@@ -92,6 +93,22 @@ function YakkasaroyApp() {
       // Без ключей Supabase не дёргаем auth (клиент-заглушка) — сразу показываем
       // экран настройки.
       if (!isSupabaseConfigured) { if (active) setLoading(false); return; }
+      // Подтверждение почты по одноразовому token_hash (шаблон письма Supabase
+      // ведёт на адрес приложения с token_hash+type). Устойчиво к предзагрузке
+      // ссылки почтовыми сканерами: токен тратится только этим явным verifyOtp,
+      // а не GET-запросом сканера к прежнему /verify.
+      const q = new URLSearchParams(window.location.search);
+      const tokenHash = q.get("token_hash");
+      const otpType = q.get("type");
+      if (tokenHash && otpType) {
+        const { error } = await supabase.auth.verifyOtp({ type: otpType, token_hash: tokenHash });
+        const clean = new URL(window.location.href);
+        ["token_hash", "type", "confirm"].forEach((k) => clean.searchParams.delete(k));
+        window.history.replaceState({}, "", clean);
+        if (error && active) {
+          setAuthMsg("Не удалось подтвердить почту: ссылка недействительна или устарела. Попросите новое приглашение и войдите заново.");
+        }
+      }
       // Приглашение: после первого входа применяем роль/точку/пост из инвайта
       const token = localStorage.getItem("yk_invite");
       if (token) {
@@ -188,7 +205,7 @@ VITE_SUPABASE_KEY=…`}
     <ThemeCtx.Provider value={ctxVal}>
       <ErrorBoundary>
         {!profile
-          ? <Login initialError={authCallbackError} onEnter={() => { /* профиль подтянется через onAuthStateChange */ }} />
+          ? <Login initialError={authMsg} onEnter={() => { /* профиль подтянется через onAuthStateChange */ }} />
           : <App onLogout={handleLogout} />}
       </ErrorBoundary>
     </ThemeCtx.Provider>
