@@ -8,6 +8,7 @@ import { useActionFeedback } from "../../hooks/useActionFeedback";
 import { fmt } from "../../utils/format";
 import { usePeriod, periodTitle } from "../../lib/PeriodCtx";
 import { ArrowRightLeft } from "lucide-react";
+import { opLabel } from "../../utils/register";
 import { CASH_FLOW_ROLE_LABELS } from "../../lib/constants";
 import { buildControlSum } from "./controlSum";
 import {
@@ -31,13 +32,17 @@ const TYPE_META = {
   card:      { label: "карта",     icon: CreditCard },
   acquiring: { label: "эквайринг", icon: Wifi },
 };
-const OP_LABELS = {
-  income: "Доход", income_return: "Возврат дохода", distribution: "Распределение",
-  request_payment: "Оплата заявки", bill_payment: "Оплата счёта", payroll_payment: "Выплата ЗП", fund_transfer: "Перемещение фондов",
-  fund_loan: "Заём фонда", fund_loan_return: "Возврат займа", fx_exchange: "Обмен валют",
-  cash_transfer: "Перемещение ДС", off_plan: "Трата вне ФП", adjustment: "Корректировка",
-};
 const GROUP_LABELS = { incoming: "Приходные счета", outgoing: "Расходные счета", none: "Без классификации" };
+
+// Квадратная мини-кнопка действия в строке счёта (единый вид mobile/desktop).
+function RowIconBtn({ st, size, title, disabled, onClick, children }) {
+  return (
+    <button style={{ ...st.iconBtn, width: size, height: size, borderRadius: 8, flexShrink: 0 }}
+      className="btn" title={title} disabled={disabled} onClick={onClick}>
+      {children}
+    </button>
+  );
+}
 
 export function Control() {
   const { C, st, isMobile, profile } = useTheme();
@@ -65,8 +70,7 @@ export function Control() {
   const load = useCallback(async () => {
     setErr("");
     try {
-      const [accs, refData] = await Promise.all([fetchCashAccounts({ withArchived }), fetchIncomeRefs()]);
-      setAccounts(accs); setRefs(refData);
+      setAccounts(await fetchCashAccounts({ withArchived }));
     } catch (e) {
       setErr("Не удалось загрузить счета: " + (e?.message || e));
     } finally {
@@ -75,28 +79,46 @@ export function Control() {
   }, [withArchived]);
   useEffect(() => { load(); }, [load]);
 
+  // Справочники (валюты/точки) не зависят от тумблера архива — грузим один раз.
+  useEffect(() => {
+    (async () => {
+      try { setRefs(await fetchIncomeRefs()); }
+      catch (e) { setErr("Не удалось загрузить справочники: " + (e?.message || e)); }
+    })();
+  }, []);
+
   // Сверки выбранной недели → предзаполняем «факт»; движение за неделю и
-  // контрольная сумма — из Реестра (read-only RPC).
+  // контрольная сумма — из Реестра (read-only RPC). Три независимых запроса —
+  // параллельно; guard `on` защищает от гонки при быстрой смене недель.
   useEffect(() => {
     if (periodsLoading) return;
+    let on = true;
     (async () => {
-      try {
-        const r = await fetchReconciliations(periodId);
-        setRecons(r);
-        setValues(Object.fromEntries(Object.entries(r).map(([accId, row]) => [accId, String(row.actual_balance)])));
+      const [recRes, tvRes, csRes] = await Promise.allSettled([
+        fetchReconciliations(periodId),
+        fetchTurnoverSheet(periodId),
+        canEdit ? fetchControlSum(periodId) : Promise.resolve(null),
+      ]);
+      if (!on) return;
+      if (recRes.status === "fulfilled") {
+        setRecons(recRes.value);
+        setValues(Object.fromEntries(Object.entries(recRes.value).map(([accId, row]) => [accId, String(row.actual_balance)])));
         setDone("");
-      } catch (e) { setErr("Не удалось загрузить сверки: " + (e?.message || e)); }
-      try {
-        const t = await fetchTurnoverSheet(periodId);
-        setTurnover(Object.fromEntries(t.cash.map((r) => [r.id, r])));
-      } catch { setTurnover({}); }
+      } else setErr("Не удалось загрузить сверки: " + (recRes.reason?.message || recRes.reason));
+      if (tvRes.status === "fulfilled") {
+        setTurnover(Object.fromEntries(tvRes.value.cash.map((r) => [r.id, r])));
+      } else {
+        // Без движения «Расчёт» откатывается на live-баланс — это неверно для
+        // прошлых недель, поэтому ошибку показываем, а не глотаем.
+        setTurnover({});
+        setErr("Не удалось загрузить движение за неделю: " + (tvRes.reason?.message || tvRes.reason));
+      }
       if (canEdit) {
-        try {
-          const cs = await fetchControlSum(periodId);
-          setCtlSum(cs ? buildControlSum(cs) : null); setCtlErr("");
-        } catch (e) { setCtlSum(null); setCtlErr(e?.message || String(e)); }
+        if (csRes.status === "fulfilled") { setCtlSum(csRes.value ? buildControlSum(csRes.value) : null); setCtlErr(""); }
+        else { setCtlSum(null); setCtlErr(csRes.reason?.message || String(csRes.reason)); }
       }
     })();
+    return () => { on = false; };
   }, [periodId, periodsLoading, canEdit]);
 
   const shownAccounts = useMemo(
@@ -120,23 +142,27 @@ export function Control() {
       .map((k) => ({ key: k, label: GROUP_LABELS[k], items: g[k] }));
   }, [shownAccounts]);
 
+  // Итоги и сверка — только по активным счетам: архивные показываются
+  // справочно (тумблер «С архивом») и не должны раздувать «Итого».
+  const activeAccounts = useMemo(() => shownAccounts.filter((a) => !a.is_archived), [shownAccounts]);
+
   const totals = useMemo(() => {
     let calc = 0, fact = 0, entered = 0;
-    for (const a of shownAccounts) {
+    for (const a of activeAccounts) {
       calc += calcOf(a);
       const v = values[a.id];
       if (v !== undefined && v !== "") { fact += Number(v) || 0; entered++; }
     }
     return { calc, fact, entered, diff: fact - (entered ? calc : 0) };
-  }, [shownAccounts, values, calcOf]);
+  }, [activeAccounts, values, calcOf]);
   const anyEntered = totals.entered > 0;
-  const allEntered = totals.entered === shownAccounts.length && shownAccounts.length > 0;
+  const allEntered = totals.entered === activeAccounts.length && activeAccounts.length > 0;
   const diffTotal = allEntered ? totals.fact - totals.calc : null;
 
   const save = async () => {
     if (busy) return;
     if (!periodId) { setErr("Нет выбранного периода ФП — добавьте неделю в шапке"); return; }
-    const rows = shownAccounts
+    const rows = activeAccounts
       .filter((a) => values[a.id] !== undefined && values[a.id] !== "")
       .map((a) => ({
         cash_account_id: a.id, period_id: periodId,
@@ -193,17 +219,13 @@ export function Control() {
             {isMobile && (
               <span style={{ display: "flex", gap: 6, marginLeft: "auto", flexShrink: 0 }}>
                 {canEdit && (
-                  <button style={{ width: 28, height: 28, borderRadius: 8, display: "grid", placeItems: "center",
-                      border: `1px solid ${C.line}`, background: C.panel2, color: C.sub, cursor: "pointer" }}
-                    className="btn" title="Редактировать счёт" onClick={() => setEditAccount(a)}>
+                  <RowIconBtn st={st} size={28} title="Редактировать счёт" onClick={() => setEditAccount(a)}>
                     <Pencil size={13} />
-                  </button>
+                  </RowIconBtn>
                 )}
-                <button style={{ width: 28, height: 28, borderRadius: 8, display: "grid", placeItems: "center",
-                    border: `1px solid ${C.line}`, background: C.panel2, color: C.sub, cursor: "pointer" }}
-                  className="btn" disabled={!!busy} title="Выписка по счёту" onClick={() => openStatement(a)}>
+                <RowIconBtn st={st} size={28} title="Выписка по счёту" disabled={!!busy} onClick={() => openStatement(a)}>
                   {busy === `stmt:${a.id}` ? <Loader2 size={13} className="spin" /> : <List size={13} />}
-                </button>
+                </RowIconBtn>
               </span>
             )}
           </div>
@@ -220,7 +242,7 @@ export function Control() {
         {!isMobile && <div style={{ ...st.fNum, color: tv && tv.outflow ? C.danger : C.faint }}>{tv ? (tv.outflow ? `−${fmt(tv.outflow)}` : "0") : "—"}</div>}
         <div style={{ ...st.fNum, color: C.sub, fontWeight: 600 }}>{fmt(calc)}</div>
         <div style={{ textAlign: "right" }}>
-          <input type="number" value={values[a.id] ?? ""} disabled={!canEdit}
+          <input type="number" value={values[a.id] ?? ""} disabled={!canEdit || a.is_archived}
             onChange={(e) => { setValues((p) => ({ ...p, [a.id]: e.target.value })); setDone(""); }}
             placeholder="0" style={{ ...st.numInput, width: isMobile ? 105 : 150 }} />
         </div>
@@ -232,17 +254,13 @@ export function Control() {
         {!isMobile && (
           <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
             {canEdit && (
-              <button style={{ width: 30, height: 30, borderRadius: 8, display: "grid", placeItems: "center",
-                  border: `1px solid ${C.line}`, background: C.panel2, color: C.sub, cursor: "pointer" }}
-                className="btn" title="Редактировать счёт" onClick={() => setEditAccount(a)}>
+              <RowIconBtn st={st} size={30} title="Редактировать счёт" onClick={() => setEditAccount(a)}>
                 <Pencil size={14} />
-              </button>
+              </RowIconBtn>
             )}
-            <button style={{ width: 30, height: 30, borderRadius: 8, display: "grid", placeItems: "center",
-                border: `1px solid ${C.line}`, background: C.panel2, color: C.sub, cursor: "pointer" }}
-              className="btn" disabled={!!busy} title="Выписка по счёту" onClick={() => openStatement(a)}>
+            <RowIconBtn st={st} size={30} title="Выписка по счёту" disabled={!!busy} onClick={() => openStatement(a)}>
               {busy === `stmt:${a.id}` ? <Loader2 size={14} className="spin" /> : <List size={14} />}
-            </button>
+            </RowIconBtn>
           </div>
         )}
       </div>
@@ -264,7 +282,7 @@ export function Control() {
           <Stat label="Факт (введено)" value={anyEntered ? fmt(totals.fact) : "—"} unit={anyEntered ? "TJS" : ""} />
           <Stat label="Расхождение" value={diffTotal === null ? "—" : fmt(diffTotal)} unit={diffTotal === null ? "" : "TJS"}
             tone={diffTotal === null ? undefined : Math.abs(diffTotal) < 0.01 ? "success" : "danger"} />
-          <Stat label="Сверено счетов" value={`${Object.keys(recons).length} / ${shownAccounts.length}`} unit="" />
+          <Stat label="Сверено счетов" value={`${Object.keys(recons).length} / ${activeAccounts.length}`} unit="" />
         </div>
       </div>
     </section>
@@ -345,7 +363,10 @@ export function Control() {
       </section>
     </div>
 
-    {canEdit && periodId && (
+    {/* Контрольная сумма — всегда по всей сети (RPC не делит по точкам),
+        поэтому при выбранной точке в шапке блок прячем, чтобы цифры на экране
+        не расходились с отфильтрованной таблицей. */}
+    {canEdit && periodId && !ctxLocationId && (
       <ControlSumCard C={C} st={st} isMobile={isMobile} ctlSum={ctlSum} ctlErr={ctlErr} period={period} />
     )}
 
@@ -413,9 +434,16 @@ function ControlSumCard({ C, st, isMobile, ctlSum, ctlErr, period }) {
           <div>
             {row("Деньги на счетах ДС", ctlSum.cashTotal, { bold: true })}
             {row("Нераспределённые доходы", ctlSum.incomesUndistributed)}
-            {row("Фонды: доступно", ctlSum.fundsAvailable)}
-            {row("Невыплаченные заявки (одобренные)", ctlSum.requestsUnpaid, { indent: true })}
-            {row("Невыплаченные счета поставщиков", ctlSum.billsUnpaid, { indent: true })}
+            {/* Обязательства (заявки/счета) — текущее состояние, а не снимок недели:
+                для закрытых недель раскладку «доступно/обязательства» не показываем,
+                чтобы не смешивать исторические фонды с сегодняшними обязательствами. */}
+            {period?.status === "closed" ? (
+              row("Фонды (на конец недели)", ctlSum.fundsTotal)
+            ) : (<>
+              {row("Фонды: доступно", ctlSum.fundsAvailable)}
+              {row("Невыплаченные заявки (одобренные)", ctlSum.requestsUnpaid, { indent: true })}
+              {row("Невыплаченные счета поставщиков", ctlSum.billsUnpaid, { indent: true })}
+            </>)}
             {row("Итого должно быть на счетах", ctlSum.total, { bold: true })}
           </div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, marginTop: 10,
@@ -536,7 +564,7 @@ function StatementModal({ C, st, statement, period, onAllTime, onClose }) {
               }}>
                 <div style={{ minWidth: 0 }}>
                   <div style={{ fontSize: 13, fontWeight: 600, color: offPlan ? C.danger : C.text }}>
-                    {OP_LABELS[r.op_type] || r.op_type}
+                    {opLabel(r.op_type)}
                     {r.counterparty ? ` · ${r.counterparty.name}` : ""}
                   </div>
                   <div style={{ fontSize: 11.5, color: C.faint, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -592,6 +620,11 @@ function AccountFormModal({ st, refs, account, onClose, onSaved }) {
 
   const toggleArchive = async () => {
     if (busy) return;
+    // Счёт с деньгами архивировать нельзя (инвариант держит и триггер БД):
+    // остаток «исчез» бы из списка, оставаясь в Реестре и контрольной сумме.
+    if (!account.is_archived && Math.abs(Number(account.balance) || 0) > 0.005) {
+      return setErr(`На счёте остаток ${fmt(Number(account.balance))} — сначала переместите деньги («Переместить ДС»)`);
+    }
     setBusy(true); setErr("");
     try {
       await setCashAccountArchived(account.id, !account.is_archived);
