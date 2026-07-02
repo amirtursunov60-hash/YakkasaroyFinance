@@ -27,6 +27,30 @@ if (inviteParam) {
   window.history.replaceState({}, "", url);
 }
 
+// Ошибка из ссылки подтверждения почты: Supabase возвращает её в hash или query
+// (например #error=access_denied&error_code=otp_expired…). Раньше сотрудник видел
+// пустой экран входа без объяснений — теперь показываем понятное сообщение.
+const authCallbackError = (() => {
+  const parts = [window.location.hash.replace(/^#/, ""), window.location.search.replace(/^\?/, "")];
+  for (const raw of parts) {
+    if (!raw) continue;
+    const sp = new URLSearchParams(raw);
+    const code = sp.get("error_code");
+    const err = sp.get("error");
+    if (!code && !err) continue;
+    // Чистим URL от ошибки, чтобы она не «прилипала» после перезагрузки.
+    const clean = new URL(window.location.href);
+    clean.hash = "";
+    ["error", "error_code", "error_description"].forEach((k) => clean.searchParams.delete(k));
+    window.history.replaceState({}, "", clean);
+    if (code === "otp_expired" || err === "access_denied") {
+      return "Ссылка подтверждения недействительна или устарела. Попросите выслать новое приглашение и войдите заново.";
+    }
+    return sp.get("error_description") || "Не удалось подтвердить почту. Попробуйте войти заново.";
+  }
+  return "";
+})();
+
 
 export default function YakkasaroyFinance() {
   if (isSwitcherDemo) return <SwitcherDemo />;
@@ -164,7 +188,7 @@ VITE_SUPABASE_KEY=…`}
     <ThemeCtx.Provider value={ctxVal}>
       <ErrorBoundary>
         {!profile
-          ? <Login onEnter={() => { /* профиль подтянется через onAuthStateChange */ }} />
+          ? <Login initialError={authCallbackError} onEnter={() => { /* профиль подтянется через onAuthStateChange */ }} />
           : <App onLogout={handleLogout} />}
       </ErrorBoundary>
     </ThemeCtx.Provider>

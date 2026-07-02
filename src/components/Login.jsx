@@ -6,7 +6,7 @@ import { signIn, signUp } from "../lib/auth";
 
 
 // ============================================================================
-export function Login({ onEnter }) {
+export function Login({ onEnter, initialError = "" }) {
   const { C, st } = useTheme();
   const lg = useMemo(() => makeLg(C), [C]);
   const css = useMemo(() => makeCss(C), [C]);
@@ -15,7 +15,7 @@ export function Login({ onEnter }) {
   const [name, setName] = useState("");
   const [show, setShow] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState("");
+  const [err, setErr] = useState(initialError);
   const [info, setInfo] = useState("");
   // Приглашение по ссылке: токен сохраняет App.jsx до завершения регистрации
   const [inviteMode, setInviteMode] = useState(() => !!localStorage.getItem("yk_invite"));
@@ -29,7 +29,13 @@ export function Login({ onEnter }) {
     try {
       if (inviteMode) {
         localStorage.setItem("yk_invite_name", name.trim());
-        const data = await signUp(email.trim(), pass);
+        // Возврат после подтверждения — на сам адрес приложения (не дефолтный
+        // Site URL), с токеном приглашения, чтобы оно применилось и на другом
+        // устройстве.
+        const inviteTok = localStorage.getItem("yk_invite");
+        const redirect = `${window.location.origin}${window.location.pathname}` +
+          (inviteTok ? `?invite=${encodeURIComponent(inviteTok)}` : "");
+        const data = await signUp(email.trim(), pass, redirect);
         if (!data.session) {
           // включено подтверждение почты — приглашение применится при первом входе
           setInfo("Мы отправили письмо для подтверждения. Откройте его и войдите — приглашение применится автоматически.");

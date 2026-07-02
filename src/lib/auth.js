@@ -7,9 +7,17 @@ export async function signIn(email, password) {
   return data;
 }
 
-// Регистрация по приглашению (профиль создаст redeem_invite после входа)
-export async function signUp(email, password) {
-  const { data, error } = await supabase.auth.signUp({ email, password });
+// Регистрация по приглашению (профиль создаст redeem_invite после входа).
+// emailRedirectTo — куда Supabase вернёт сотрудника после подтверждения почты:
+// адрес самого приложения (а не дефолтный Site URL, который может смотреть на
+// localhost). Ссылка несёт токен приглашения, поэтому приглашение применяется
+// даже если письмо открыто на другом устройстве.
+export async function signUp(email, password, emailRedirectTo) {
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: emailRedirectTo ? { emailRedirectTo } : undefined,
+  });
   if (error) throw error;
   return data;
 }
