@@ -23,6 +23,7 @@ export * from "./api/funds";
 export * from "./api/archive";
 export * from "./api/payroll";
 export * from "./api/reports";
+export * from "./api/errors";
 export * from "./api/stats";
 export * from "./api/crm";
 export * from "./api/dashboard";

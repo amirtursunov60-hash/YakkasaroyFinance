@@ -20,3 +20,4 @@
 | [0006](0006-restoran-iframe.md) | Модуль «Ресторан» — iframe приложения yakkasaroy-menu | 2026-06-30 |
 | [0007](0007-staging-first-migracii.md) | Миграции сначала на staging (qa-staging), потом в прод | 2026-07-01 |
 | [0008](0008-vne-perimetra.md) | Осознанно вне периметра: НДС, склад, банковская интеграция | 2026-06-24 |
+| [0009](0009-zhurnal-oshibok-v-supabase.md) | Мониторинг ошибок: журнал client_errors в Supabase + опциональный Sentry | 2026-07-02 |
